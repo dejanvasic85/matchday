@@ -1,0 +1,26 @@
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+coverage/
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# scraped/staging data
+data/external/
+*.tmp
