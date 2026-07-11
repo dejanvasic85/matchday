@@ -1,6 +1,6 @@
 # 0004. Scraping depth
 
-- Status: proposed
+- Status: decided
 - Date: 2026-07-12
 
 ## Context
@@ -32,8 +32,18 @@ without over-collecting data no one uses yet.
 
 Defer player-level match stats to a later ADR.
 
+### Images / logos
+
+**Self-host logos** rather than hotlinking Dribl (`ocean.dribl.com`). On scrape, download
+each logo and store it in our own bucket — **Cloudflare R2** (S3-compatible, no egress fees,
+pairs with the Cloudflare edge in 0009). The entity stores our own asset URL; the original
+Dribl URL is retained on the `external_ref`/source record for re-fetch. Content-hash or
+entity-id keyed object names to allow idempotent re-upload only on change.
+
 ## Consequences
 
 - Schema models competition/season/league explicitly — enables 0006's relational joins.
 - Slightly more transform work than today's flat records.
 - Player stats can be added later without reworking core entities.
+- Scraper gains an image-mirroring step to Cloudflare R2; adds R2 to the infra in 0009.
+- Independent of Dribl CDN uptime for serving branding.

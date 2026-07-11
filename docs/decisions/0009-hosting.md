@@ -29,7 +29,9 @@ The system has three parts with different needs:
 - **Edge/CDN**:
   - **Cloudflare** in front of the API for caching, TLS, and rate limiting — recommended
     (free PAYG).
-- **Static assets** (logos, etc.): AWS S3 if we self-host images instead of hotlinking Dribl.
+- **Static assets** (logos, etc.): **Cloudflare R2** to self-host images (per 0004) —
+  S3-compatible, no egress fees, pairs with the Cloudflare edge; user is consolidating on
+  Cloudflare. AWS S3 is the fallback alternative.
 
 ## Recommendation
 
