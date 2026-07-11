@@ -15,6 +15,7 @@ then `decided`.
 | 0007 | [API style](0007-api-style.md)               | proposed | REST with OpenAPI                                          |
 | 0008 | [Language / runtime](0008-language-runtime.md) | proposed | TypeScript                                               |
 | 0009 | [Hosting](0009-hosting.md)                    | proposed | Postgres (Supabase/Vercel) + scheduled scraper + Vercel API + Cloudflare edge |
+| 0010 | [Monorepo tooling](0010-monorepo-tooling.md) | proposed | pnpm workspaces + Turborepo; apps/ + packages/ layout    |
 
 ## Format
 
