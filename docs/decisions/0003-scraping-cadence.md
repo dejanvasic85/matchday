@@ -1,6 +1,6 @@
 # 0003. Scraping cadence
 
-- Status: proposed
+- Status: decided
 - Date: 2026-07-12
 
 ## Context
@@ -13,25 +13,48 @@ season). Over-scraping wastes resources and load on Dribl; under-scraping means 
 
 - **Single fixed interval for everything** — simple, but either too frequent for schedules
   or too slow for live results.
-- **Tiered, data-type-aware schedule (recommended)** — different cadences per data type and
-  per season phase.
+- **Per-job cadences (recommended)** — separate jobs for club-directory vs competition data;
+  competition crawl varies by season phase / match window.
 - **On-demand / webhook** — Dribl offers no webhooks, so not viable.
+
+Trigger for the frequent (match-window) cadence:
+- **Fixture-derived (recommended)** — upcoming fixture dates/times decide when to run often;
+  self-adjusting, handles midweek games and any timezone.
+- **Static weekend windows** — simplest cron, but assumes fixed match days.
 
 ## Recommendation
 
-**Tiered cron schedule per competition:**
+**Two scheduled jobs, each on its own cadence.**
 
-| Data          | Match days (Sat/Sun, in season) | Weekdays (in season) | Off-season |
-| ------------- | ------------------------------- | -------------------- | ---------- |
-| Fixtures/schedule | daily                       | daily                | weekly     |
-| Results       | every 15–30 min                 | daily                | weekly     |
-| Ladder tables | every 15–30 min                 | daily                | weekly     |
+### 1. Clubs sync (independent)
 
-Match-day windows can be bounded to typical fixture hours to avoid overnight polling.
+A full club-directory crawl (`list/clubs`) — needed even when targeting one club, because its
+teams play opponents whose club info (name, logo, socials, address) we must have. Not tied to
+any competition. **Runs daily** (matches current behaviour).
+
+### 2. Competition crawl (fixtures + results + ladders in one pass)
+
+Competition-keyed (per 0002); a single crawl pass fetches fixtures, results, and ladder tables
+together — one Cloudflare-bypass session per run. Runs at **two frequencies**:
+
+| Phase                         | Cadence          |
+| ----------------------------- | ---------------- |
+| Match window (fixtures due)   | every 30 min     |
+| Otherwise, in season          | daily            |
+| Off-season                    | weekly           |
+
+**Match-window triggering is derived from fixture data**, not hard-coded weekend windows: the
+scheduler inspects upcoming fixture dates/times and runs the frequent cadence around them,
+falling back to daily otherwise. This self-adjusts to midweek games and any competition/timezone
+with no manual config.
 
 ## Consequences
 
-- Scheduler must be config-driven (per competition, per season phase).
-- Need a notion of "in season" and "match day" per competition.
-- Frequent match-day scraping requires the scraper runtime to handle Cloudflare bypass
-  reliably at cadence (see 0009 hosting).
+- Two jobs: `clubs-sync` (daily) and `competition-crawl` (fixture-derived frequency).
+- Fixtures/results/ladders share one crawl pass — fewer Cloudflare-bypass sessions.
+- Scheduler reads fixture data to decide match windows — depends on having fixtures already
+  scraped (bootstrap: run daily until first fixtures land, then match-window logic engages).
+- Frequent match-day scraping needs the scraper runtime to handle Cloudflare bypass reliably
+  at cadence (see 0009 hosting).
+- 30-min match-window interval chosen for amateur fixtures where results post after full time,
+  not live; revisit if faster freshness is needed.
