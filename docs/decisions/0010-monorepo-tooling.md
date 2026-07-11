@@ -1,6 +1,6 @@
 # 0010. Monorepo tooling
 
-- Status: proposed
+- Status: decided
 - Date: 2026-07-12
 
 ## Context
@@ -25,9 +25,8 @@ williamstownsc already uses **pnpm**, so the team is familiar with it.
 
 ## Recommendation
 
-**pnpm workspaces**, with **Turborepo** for task orchestration and caching. Start pnpm-only
-if we want minimal setup, and introduce Turbo as soon as cross-package build/test
-orchestration is needed — but plan for both from the outset.
+**pnpm workspaces + Turborepo** from the outset. pnpm for install/linking (matches WSC),
+Turborepo for cached/parallel build and test orchestration across packages.
 
 Proposed initial workspace layout:
 

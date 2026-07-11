@@ -1,6 +1,6 @@
 # 0008. Language / runtime
 
-- Status: proposed
+- Status: decided
 - Date: 2026-07-12
 
 ## Context
