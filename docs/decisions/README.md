@@ -10,7 +10,7 @@ then `decided`.
 | 0002 | [Scraping scope](0002-scraping-scope.md)     | proposed | Scrape all clubs per competition, not per-club             |
 | 0003 | [Scraping cadence](0003-scraping-cadence.md) | proposed | Tiered: match-day frequent, daily otherwise, weekly off-season |
 | 0004 | [Scraping depth](0004-scraping-depth.md)     | proposed | Self-sufficient fixture + club + ladder; no player stats v1 |
-| 0005 | [Identifiers](0005-identifiers.md)           | proposed | Own IDs + stored external Dribl ref mapping                |
+| 0005 | [Identifiers](0005-identifiers.md)           | decided  | Prefixed-nanoid own IDs (`clb_…`) + external Dribl ref mapping |
 | 0006 | [Datastore](0006-datastore.md)               | decided  | Relational Postgres                                        |
 | 0007 | [API style](0007-api-style.md)               | proposed | REST with OpenAPI                                          |
 | 0008 | [Language / runtime](0008-language-runtime.md) | proposed | TypeScript                                               |
