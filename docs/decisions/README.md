@@ -7,7 +7,7 @@ then `decided`.
 | #    | Decision                          | Status   | Summary of recommendation                                  |
 | ---- | --------------------------------- | -------- | ---------------------------------------------------------- |
 | 0001 | [Naming](0001-naming.md)          | decided  | `matchday`, single monorepo (scraper + API + infra)        |
-| 0002 | [Scraping scope](0002-scraping-scope.md)     | proposed | Scrape all clubs per competition, not per-club             |
+| 0002 | [Scraping scope](0002-scraping-scope.md)     | decided  | Crawl by competition (dedup intrinsic); registry seeded from tenants, scales to whole association |
 | 0003 | [Scraping cadence](0003-scraping-cadence.md) | proposed | Tiered: match-day frequent, daily otherwise, weekly off-season |
 | 0004 | [Scraping depth](0004-scraping-depth.md)     | decided  | Self-sufficient fixture + club + ladder; logos self-hosted on R2; no player stats v1 |
 | 0005 | [Identifiers](0005-identifiers.md)           | decided  | Prefixed-nanoid own IDs (`clb_…`) + external Dribl ref mapping |
