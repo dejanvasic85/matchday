@@ -10,7 +10,8 @@ This monorepo will contain the scraper, the API, and supporting infrastructure.
 Early planning. Direction is being locked through architecture decision records before any
 service code is written.
 
-See [docs/decisions](docs/decisions/README.md).
+- Decisions: [docs/decisions](docs/decisions/README.md) — all 10 locked (0001–0010).
+- Build backlog: [docs/todo.md](docs/todo.md) — sequenced, dependency-ordered.
 
 ## Background
 
