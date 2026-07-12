@@ -14,7 +14,7 @@ then `decided`.
 | 0006 | [Datastore](0006-datastore.md)               | decided  | Relational Postgres                                        |
 | 0007 | [API style](0007-api-style.md)               | decided  | REST with OpenAPI spec + generated typed clients          |
 | 0008 | [Language / runtime](0008-language-runtime.md) | decided  | TypeScript                                               |
-| 0009 | [Hosting](0009-hosting.md)                    | proposed | Postgres (Supabase/Vercel) + scheduled scraper + Vercel API + Cloudflare edge |
+| 0009 | [Hosting](0009-hosting.md)                    | decided  | Best-of-breed per component: R2 + Cloudflare edge + Vercel API; scraper on thanos (managed browser fallback); DB/cron confirmed at build |
 | 0010 | [Monorepo tooling](0010-monorepo-tooling.md) | decided  | pnpm workspaces + Turborepo; apps/ + packages/ layout    |
 
 ## Format
