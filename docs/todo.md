@@ -19,8 +19,8 @@ maintainability, not just "it works".
 
 Project setup + standards. Mostly mirrors what williamstownsc already has; port and adapt.
 
-- [ ] **Monorepo scaffold** — pnpm workspaces + Turborepo; `apps/{api,scraper}`,
-  `packages/{domain,db}`, `infra/`. Root `pnpm-workspace.yaml`, `turbo.json`. (→ 0010)
+- [ ] **Monorepo scaffold** — pnpm workspaces + Vite+ (`vp`); `apps/{api,scraper}`,
+  `packages/{domain,db}`, `infra/`. Root `pnpm-workspace.yaml`, `vite.config.ts`. (→ 0010)
 - [ ] **Node/runtime + Mise** — pin Node (and Bun if used for scraper) via Mise, matching WSC.
 - [ ] **TypeScript config** — shared base `tsconfig`, per-package extends, strict mode,
   path aliases. (→ 0008)
