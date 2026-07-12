@@ -32,8 +32,18 @@ aggressively at Cloudflare with per-resource TTLs.
 tRPC and a shared-types package were considered but rejected: both assume a TS-only world and
 lack a language-agnostic contract / auto-generated docs suited to a multi-tenant public API.
 
+### Framework & runtime
+
+**Hono** on **Cloudflare Workers** (see 0009). Hono is edge-native, runs the same code on
+Workers/Bun/Node (so the runtime stays reversible), and has first-class OpenAPI support
+(`@hono/zod-openapi`) — the spec and the Zod validation come from one source. Postgres is
+reached from the Worker via the Neon serverless driver or Cloudflare Hyperdrive (a raw TCP
+`pg` connection doesn't work from a V8 isolate).
+
 ## Consequences
 
 - OpenAPI spec is the API contract; generate consumer types from it.
 - Edge caching keyed on URL — align cache TTLs with scrape cadence (0003).
 - Revisit GraphQL only if consumers need highly variable nested queries later.
+- Hono keeps the runtime reversible (Workers → Bun/Node) if Worker isolate limits bite.
+- Use `@hono/zod-openapi` so Zod schemas (per 0004/0005) generate the OpenAPI spec.

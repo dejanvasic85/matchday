@@ -15,7 +15,7 @@ clubs ↔ teams ↔ competitions ↔ seasons ↔ fixtures ↔ ladder entries.
 
 - **Relational (Postgres) (chosen)** — normalized entities with foreign keys.
   - Pros: natural joins, dedup, ordering, multi-tenant filtering; strong constraints;
-    idempotent upserts via external-ref keys (0005); Supabase/Vercel Postgres hosting.
+    idempotent upserts via external-ref keys (0005); hosted on Neon (0009).
   - Cons: bigger shift from JSON docs; migrations to manage.
 - **Document DB** — closer to current model.
   - Pros: simple writes, familiar per-team shape.
@@ -31,5 +31,5 @@ and joined to both teams.
 
 - Introduces schema + migrations tooling.
 - Enables efficient multi-tenant and cross-club queries and a stable API surface.
-- Pairs with Supabase or Vercel Postgres hosting (see 0009).
+- Hosted on Neon (see 0009); reached from Workers via serverless driver / Hyperdrive.
 - Ingest becomes upserts keyed on external refs rather than file writes.
