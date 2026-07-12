@@ -1,6 +1,6 @@
 # 0007. API style
 
-- Status: proposed
+- Status: decided
 - Date: 2026-07-12
 
 ## Context
@@ -23,9 +23,14 @@ Cloudflare for edge caching.
 
 ## Recommendation
 
-**REST with an OpenAPI spec.** Resource-oriented endpoints (e.g.
-`/clubs/{id}`, `/teams/{id}/fixtures`, `/competitions/{id}/table`), typed client generated
-from the spec. Cache aggressively at Cloudflare with sensible TTLs per resource.
+**REST with an OpenAPI spec as the contract.** Resource-oriented endpoints (e.g.
+`/clubs/{id}`, `/teams/{id}/fixtures`, `/competitions/{id}/table`). Consumers — starting with
+WSC's Next.js app — **generate typed clients from the OpenAPI spec**, giving end-to-end type
+safety while staying language-agnostic for any future non-TS or third-party consumer. Cache
+aggressively at Cloudflare with per-resource TTLs.
+
+tRPC and a shared-types package were considered but rejected: both assume a TS-only world and
+lack a language-agnostic contract / auto-generated docs suited to a multi-tenant public API.
 
 ## Consequences
 
