@@ -8,6 +8,11 @@ tick it, and commit.
 Conventions: `[ ]` todo · `[~]` in progress · `[x]` done. Each item links the ADR(s) it
 implements. Keep this file updated as work completes.
 
+**Guiding principle:** hold a very high standard throughout — clean, maintainable code and a
+project that stays easy to reason about. Prefer small, well-named functions over cleverness;
+no dead code or speculative abstraction; strong types and tests. Every phase is judged on
+maintainability, not just "it works".
+
 ---
 
 ## Phase 0 — Foundations (do first)
