@@ -15,7 +15,7 @@ then `decided`.
 | 0007 | [API style](0007-api-style.md)               | decided  | REST + OpenAPI (Hono on CF Workers); generated typed clients |
 | 0008 | [Language / runtime](0008-language-runtime.md) | decided  | TypeScript                                               |
 | 0009 | [Hosting](0009-hosting.md)                    | decided  | CF Workers API + R2 + edge; Neon Postgres; scraper on thanos (managed browser fallback); per-job cron open |
-| 0010 | [Monorepo tooling](0010-monorepo-tooling.md) | decided  | pnpm workspaces + Turborepo; apps/ + packages/ layout    |
+| 0010 | [Monorepo tooling](0010-monorepo-tooling.md) | decided  | pnpm workspaces + Vite+ (`vp`); apps/ + packages/ layout  |
 
 ## Format
 
