@@ -10,32 +10,32 @@ matchday is a **multi-tenant sports competition data service** — it scrapes Dr
 results and ladder tables and serves them via an API so multiple clubs consume one dataset. It is
 a **backend + scraper; there is no UI in this repo.**
 
-pnpm + Vite+ monorepo (→ 0010):
+pnpm + Vite+ monorepo:
 
-- `apps/api` — REST API (→ 0007)
-- `apps/scraper` — Dribl crawler + scheduler (→ 0002, 0003)
-- `packages/domain` — Zod schemas, entity types, ID service, Dribl→domain mappers (→ 0004, 0005)
-- `packages/db` — Drizzle schema, migrations, data access (→ 0006)
-- `infra/` — deployment/infra config (→ 0009)
+- `apps/api` — REST API
+- `apps/scraper` — Dribl crawler + scheduler
+- `packages/domain` — Zod schemas, entity types, ID service, Dribl→domain mappers
+- `packages/db` — Drizzle schema, migrations, data access
+- `infra/` — deployment/infra config
 
 The **ADRs in `docs/decisions/` are the source of truth**; read the relevant one before a change.
 `docs/todo.md` is the sequenced build backlog.
 
 ## Tech stack (from ADRs — target this stack)
 
-- **Language:** TypeScript everywhere, ESM, `strict` (→ 0008).
+- **Language:** TypeScript everywhere, ESM, `strict`.
 - **API:** **Hono on Cloudflare Workers**; REST + OpenAPI via `@hono/zod-openapi` (one Zod source
-  drives validation and the spec). Consumers generate typed clients from the spec (→ 0007).
+  drives validation and the spec). Consumers generate typed clients from the spec.
 - **Database:** **Postgres on Neon**, via **Drizzle**. From a Worker, reach it through the Neon
-  serverless driver / Hyperdrive — **never a raw `pg` TCP connection from a V8 isolate** (→ 0006, 0009).
+  serverless driver / Hyperdrive — **never a raw `pg` TCP connection from a V8 isolate**.
 - **Scraper:** **playwright-core** with real Chrome to clear Dribl's Cloudflare, then direct
   `mc-api.dribl.com` calls. The browser endpoint is abstracted (thanos primary ↔ managed-browser
-  fallback) so switching is a config change, not a rewrite (→ 0009). See the `dribl-crawling` skill.
+  fallback) so switching is a config change, not a rewrite. See the `dribl-crawling` skill.
 - **Identifiers:** app-owned **prefixed-nanoid** primary IDs (`clb_`/`tea_`/`cmp_`/`sea_`/`mtc_`/`lad_`);
   external identity lives in an `external_ref (source, source_id)` mapping. Ingest **upserts by
   `(source, source_id)`** for idempotent re-scraping. Prefer branded ID types. The ID service lives in
-  `packages/domain` (→ 0005).
-- **Assets:** club logos on **Cloudflare R2**; edge caching on Cloudflare (→ 0004, 0009).
+  `packages/domain`.
+- **Assets:** club logos on **Cloudflare R2**; edge caching on Cloudflare.
 
 ## Vite+ workflow (required)
 
@@ -74,10 +74,10 @@ Pre-commit runs via Vite+ staged checks; include any auto-fixes in the commit.
     is the unit-tested layer.
   - **Transport** — thin Hono handlers / scraper jobs that construct the real dependencies and call
     the service. Keep it glue-only.
-  This is a principle, not a rigid file-naming scheme — the DB layer is a Drizzle package, not
-  per-entity files.
+    This is a principle, not a rigid file-naming scheme — the DB layer is a Drizzle package, not
+    per-entity files.
 - **Mappers** are explicit named transform functions at the Dribl-raw→domain boundary, Zod-validated
-  on both sides, living in `packages/domain` (→ Phase 2).
+  on both sides, living in `packages/domain`.
 - **Structured logging:** an injected logger `{ debug, info, warn, error }` where each takes
   `(event, msg, fields?)`. Events are dotted namespaces (`"crawl.competition"`, `"api.club.get"`).
   Emit one JSON line in prod; route `warn`/`error` through `console.warn`/`console.error` so
@@ -138,3 +138,20 @@ With no UI, unit tests are the primary safety net — hold them to a high standa
 
 - Store plans as `docs/plans/YYYY-MM-DD-description.md`; keep `docs/todo.md` current as work lands.
 - Keep plans concise: Purpose, Requirements, an ordered todo list, and any open questions at the end.
+
+<!--VITE PLUS START-->
+
+# Using Vite+, the Unified Toolchain for the Web
+
+This project is using Vite+, a unified toolchain built on top of Vite, Rolldown, Vitest, tsdown, Oxlint, Oxfmt, and Vite Task. Vite+ wraps runtime management, package management, and frontend tooling in a single global CLI called `vp`. Vite+ is distinct from Vite, and it invokes Vite through `vp dev` and `vp build`. Run `vp help` to print a list of commands and `vp <command> --help` for information about a specific command.
+
+Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.dev/guide/.
+
+## Review Checklist
+
+- [ ] Run `vp install` after pulling remote changes and before getting started.
+- [ ] Run `vp check` and `vp test` to format, lint, type check and test changes.
+- [ ] Check if there are `vite.config.ts` tasks or `package.json` scripts necessary for validation, run via `vp run <script>`.
+- [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
+
+<!--VITE PLUS END-->

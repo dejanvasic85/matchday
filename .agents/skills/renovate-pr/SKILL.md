@@ -1,7 +1,7 @@
 ---
 name: renovate-pr
-description: 'Fix failing Renovate dependency-upgrade pull requests with minimal, evidence-based changes. Use for CI failures in Renovate PRs, dependency compatibility breaks, lockfile drift, peer mismatch, or tooling version issues.'
-argument-hint: 'GitHub PR number or URL (preferred). Example: 12345'
+description: "Fix failing Renovate dependency-upgrade pull requests with minimal, evidence-based changes. Use for CI failures in Renovate PRs, dependency compatibility breaks, lockfile drift, peer mismatch, or tooling version issues."
+argument-hint: "GitHub PR number or URL (preferred). Example: 12345"
 user-invocable: true
 ---
 

@@ -28,14 +28,14 @@ free / third-party services (including external cron) is explicitly fine**. Some
 are settled now; only the scraper runtime carries a primary direction plus a fallback to be
 firmed up during build.
 
-| Component     | Choice                                | Status                    |
-| ------------- | ------------------------------------- | ------------------------- |
-| Logos/assets  | **Cloudflare R2** (per 0004)          | settled                   |
-| Edge / CDN    | **Cloudflare** (cache, TLS)           | settled                   |
-| API (REST)    | **Cloudflare Workers + Hono** (per 0007) | settled                |
-| Database      | **Neon** (existing free project); Postgres per 0006 | settled            |
-| Scraper       | **thanos (self-hosted Unraid)** primary; managed browser service fallback | direction set, see below |
-| Scheduling    | Flexible — GitHub Actions / thanos cron / CF Cron Triggers; combine free tiers | open, per job |
+| Component    | Choice                                                                         | Status                   |
+| ------------ | ------------------------------------------------------------------------------ | ------------------------ |
+| Logos/assets | **Cloudflare R2** (per 0004)                                                   | settled                  |
+| Edge / CDN   | **Cloudflare** (cache, TLS)                                                    | settled                  |
+| API (REST)   | **Cloudflare Workers + Hono** (per 0007)                                       | settled                  |
+| Database     | **Neon** (existing free project); Postgres per 0006                            | settled                  |
+| Scraper      | **thanos (self-hosted Unraid)** primary; managed browser service fallback      | direction set, see below |
+| Scheduling   | Flexible — GitHub Actions / thanos cron / CF Cron Triggers; combine free tiers | open, per job            |
 
 ## Scraper runtime (the awkward part)
 

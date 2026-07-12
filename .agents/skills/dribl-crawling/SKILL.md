@@ -40,12 +40,12 @@ the new IDs are cached — regrades are handled automatically.
 
 **List endpoints (all require the `tenant` param):**
 
-| What           | Endpoint                                                      | Notes                                                     |
-| -------------- | ------------------------------------------------------------- | --------------------------------------------------------- |
-| Tenant ID      | `api/tenants?mc_link=<host>&slug=<slug>`                      | Returns a single object at `data.id` (not an array)       |
-| Season ID      | `api/list/seasons?disable_paging=true&tenant=…`               | Match on `name` (e.g. "2026")                             |
-| Competition ID | `api/list/competitions?disable_paging=true&tenant=…`          | Match on full competition `name`                          |
-| League ID      | `api/list/leagues?disable_paging=true&tenant=…&competition=…` | Match on `name`; **skip** `(Removed)`-prefixed entries    |
+| What           | Endpoint                                                      | Notes                                                  |
+| -------------- | ------------------------------------------------------------- | ------------------------------------------------------ |
+| Tenant ID      | `api/tenants?mc_link=<host>&slug=<slug>`                      | Returns a single object at `data.id` (not an array)    |
+| Season ID      | `api/list/seasons?disable_paging=true&tenant=…`               | Match on `name` (e.g. "2026")                          |
+| Competition ID | `api/list/competitions?disable_paging=true&tenant=…`          | Match on full competition `name`                       |
+| League ID      | `api/list/leagues?disable_paging=true&tenant=…&competition=…` | Match on `name`; **skip** `(Removed)`-prefixed entries |
 
 **Tenant note:** `api/tenants` returns `data` as a single object; every other list endpoint returns
 `data` as an array.
@@ -73,7 +73,7 @@ export async function resolveLeagueIds(
   page: Page,
   leagueName: string,
   competitionName: string,
-  seasonYear: string
+  seasonYear: string,
 ): Promise<DriblLeagueIds> {
   const cache = loadCache();
   if (cache.leagues[leagueName]) return cache.leagues[leagueName]; // cache hit
@@ -98,7 +98,7 @@ All API calls go through the browser context so Cloudflare cookies apply:
 ```typescript
 async function browserFetch(page: Page, url: string): Promise<unknown> {
   const raw = await page.evaluate(async (u: string) => {
-    const r = await fetch(u, { headers: { accept: 'application/json' } });
+    const r = await fetch(u, { headers: { accept: "application/json" } });
     if (!r.ok) throw new Error(`HTTP ${r.status} fetching ${u}`);
     return r.text();
   }, url);
@@ -120,8 +120,8 @@ function buildApiUrl(endpoint: string, ids: LeagueIds, extra?: Record<string, st
     competition: ids.competition,
     league: ids.league,
     tenant: ids.tenant,
-    timezone: 'Australia/Melbourne',
-    ...extra
+    timezone: "Australia/Melbourne",
+    ...extra,
   });
   return `https://mc-api.dribl.com/api/${endpoint}?${params.toString()}`;
 }
@@ -137,7 +137,7 @@ async function crawlTeamByRounds(page, team, ids) {
   const maxRounds = 40; // hard safety cap
 
   for (let round = 1; round <= maxRounds; round++) {
-    const url = buildApiUrl('fixtures', ids, { round: String(round) });
+    const url = buildApiUrl("fixtures", ids, { round: String(round) });
     const json = await browserFetch(page, url);
     const validated = externalFixturesApiResponseSchema.parse(json);
 
@@ -160,7 +160,7 @@ After the round crawl, hit `api/ladders` directly with the same IDs — no SPA n
 
 ```typescript
 async function crawlTeamTable(page, ids) {
-  const url = buildApiUrl('ladders', ids);
+  const url = buildApiUrl("ladders", ids);
   const json = await browserFetch(page, url);
   const validated = externalTableApiResponseSchema.parse(json);
   if (validated.data.length === 0) return undefined; // e.g. MiniRoos have no ladder
@@ -207,21 +207,25 @@ const unique = items.filter((item) => {
 ## Best practices
 
 **Cloudflare clearance:**
+
 - One `page.goto()` per browser session is enough — clearance persists for all `fetch()` calls.
 - Wait ~3s after the goto before starting API calls.
 - Keep the same page alive; don't close and reopen between teams.
 
 **Empty-round handling:**
+
 - Stop after `maxConsecutiveEmptyRounds = 2` consecutive empty rounds.
 - A single empty round is a scheduling gap, not the end of the season.
 - `maxRounds = 40` is a hard safety cap.
 
 **ID cache:**
+
 - Re-resolve any league name not in cache — this handles regrades automatically.
 - Tenant ID is stable; only re-fetch it if the cache is empty.
 - Skip `(Removed)`-prefixed league names (old/regraded leagues).
 
 **Error handling & session:**
+
 - Run a single browser session; collect per-team failures and continue to the next team.
 - Throw once at the end if any team failed, so the caller sees partial failure.
 - Close the browser in a `finally` block regardless of outcome.
@@ -232,9 +236,9 @@ const unique = items.filter((item) => {
 let browser: Browser | undefined;
 const failures: string[] = [];
 try {
-  browser = await chromium.launch({ headless: false, channel: 'chrome' });
-  const page = await (await browser.newContext({ userAgent: '...' })).newPage();
-  await page.goto(siteUrl, { waitUntil: 'domcontentloaded' });
+  browser = await chromium.launch({ headless: false, channel: "chrome" });
+  const page = await (await browser.newContext({ userAgent: "..." })).newPage();
+  await page.goto(siteUrl, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(3000);
 
   for (const team of teams) {
@@ -248,7 +252,7 @@ try {
 } finally {
   if (browser) await browser.close();
 }
-if (failures.length > 0) throw new Error(`Failed: ${failures.join(', ')}`);
+if (failures.length > 0) throw new Error(`Failed: ${failures.join(", ")}`);
 ```
 
 ## CI note
