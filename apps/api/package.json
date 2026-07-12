@@ -1,0 +1,19 @@
+{
+  "name": "@matchday/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vp test run",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@matchday/db": "workspace:*",
+    "@matchday/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vite-plus": "0.2.4"
+  }
+}

@@ -18,6 +18,7 @@ season). Over-scraping wastes resources and load on Dribl; under-scraping means 
 - **On-demand / webhook** — Dribl offers no webhooks, so not viable.
 
 Trigger for the frequent (match-window) cadence:
+
 - **Fixture-derived (recommended)** — upcoming fixture dates/times decide when to run often;
   self-adjusting, handles midweek games and any timezone.
 - **Static weekend windows** — simplest cron, but assumes fixed match days.
@@ -37,11 +38,11 @@ any competition. **Runs daily** (matches current behaviour).
 Competition-keyed (per 0002); a single crawl pass fetches fixtures, results, and ladder tables
 together — one Cloudflare-bypass session per run. Runs at **two frequencies**:
 
-| Phase                         | Cadence          |
-| ----------------------------- | ---------------- |
-| Match window (fixtures due)   | every 30 min     |
-| Otherwise, in season          | daily            |
-| Off-season                    | weekly           |
+| Phase                       | Cadence      |
+| --------------------------- | ------------ |
+| Match window (fixtures due) | every 30 min |
+| Otherwise, in season        | daily        |
+| Off-season                  | weekly       |
 
 **Match-window triggering is derived from fixture data**, not hard-coded weekend windows: the
 scheduler inspects upcoming fixture dates/times and runs the frequent cadence around them,
