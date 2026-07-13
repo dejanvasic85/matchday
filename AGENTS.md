@@ -7,7 +7,7 @@ just "it works".
 ## Project context
 
 matchday is a **multi-tenant sports competition data service** — it scrapes Dribl fixtures,
-results and ladder tables and serves them via an API so multiple clubs consume one dataset. It is
+results and league tables and serves them via an API so multiple clubs consume one dataset. It is
 a **backend + scraper; there is no UI in this repo.**
 
 pnpm + Vite+ monorepo:
@@ -31,7 +31,7 @@ The **ADRs in `docs/decisions/` are the source of truth**; read the relevant one
 - **Scraper:** **playwright-core** with real Chrome to clear Dribl's Cloudflare, then direct
   `mc-api.dribl.com` calls. The browser endpoint is abstracted (thanos primary ↔ managed-browser
   fallback) so switching is a config change, not a rewrite. See the `dribl-crawling` skill.
-- **Identifiers:** app-owned **prefixed-nanoid** primary IDs (`clb_`/`tea_`/`cmp_`/`sea_`/`mtc_`/`lad_`);
+- **Identifiers:** app-owned **prefixed-nanoid** primary IDs (`clb_`/`tea_`/`cmp_`/`sea_`/`lea_`/`mtc_`/`tab_`);
   external identity lives in an `external_ref (source, source_id)` mapping. Ingest **upserts by
   `(source, source_id)`** for idempotent re-scraping. Prefer branded ID types. The ID service lives in
   `packages/domain`.
@@ -46,8 +46,21 @@ install/link layer underneath.
 - `vp check` — lint + format + type-check
 - `vp test` — run tests (`vp test --coverage` for coverage)
 - `vp build` — production build
-- `vp run <script>` — a custom `package.json` script
+- `vp run <script>` — a custom `package.json` script. To run a package's script from the repo
+  root, select the package with `--filter` (a bare path arg is passed to the task, not used as a
+  selector): `vp run --filter @matchday/db db:migrate`, or `cd packages/db && vp run db:migrate`.
 - `vp add` / `vp remove` — manage dependencies
+
+## Local development / database
+
+- **There is no local Docker Postgres.** Local dev uses a **Neon `matchday-dev`** database
+  (`matchday` is prod). Both are reached through the **neon-http/serverless driver**, which speaks
+  Neon's HTTP/WebSocket protocol — it **cannot** connect to a raw-TCP local Postgres, so don't
+  introduce one or add a `pg` driver for it.
+- **Migrations** run via drizzle-kit: `cd packages/db && vp run db:migrate`. `drizzle.config.ts`
+  auto-loads `packages/db/.env.local` (gitignored) — put the **dev** `DATABASE_URL` there (Neon
+  **pooled** host, `?sslmode=require`). Never run migrations against prod locally: prod migrations
+  run only in CI (`.github/workflows/deploy.yml`, on push to `main`) from the `DATABASE_URL` secret.
 
 ## Quality gates (before every PR/push)
 

@@ -16,6 +16,7 @@ then `decided`.
 | 0008 | [Language / runtime](0008-language-runtime.md) | decided | TypeScript                                                                                                 |
 | 0009 | [Hosting](0009-hosting.md)                     | decided | CF Workers API + R2 + edge; Neon Postgres; scraper on thanos (managed browser fallback); per-job cron open |
 | 0010 | [Monorepo tooling](0010-monorepo-tooling.md)   | decided | pnpm workspaces + Vite+ (`vp`); apps/ + packages/ layout                                                   |
+| 0011 | [Data model & schema](0011-data-model.md)      | decided | 9 tables (Drizzle/Neon neon-http); prefixed-nanoid PKs; polymorphic `external_ref`; league first-class     |
 
 ## Format
 

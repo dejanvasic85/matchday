@@ -39,10 +39,10 @@ Project setup + standards. Mostly mirrors what williamstownsc already has; port 
 
 ## Phase 1 — Data model & schema (keystone)
 
-- [ ] **0011 data-model ADR** — `docs/decisions/0011-data-model.md`: entities (club, team,
+- [x] **0011 data-model ADR** — `docs/decisions/0011-data-model.md`: entities (club, team,
       competition, season, fixture, ladder_entry, tracked_competition, external_ref), fields
       from 0004, relationships, ID prefixes from 0005. Unblocks everything below. (→ 0004,0005,0006)
-- [ ] **DB package + Drizzle** — `packages/db`: Drizzle schema modelling 0011, migrations,
+- [x] **DB package + Drizzle** — `packages/db`: Drizzle schema modelling 0011, migrations,
       Neon connection (serverless driver / Hyperdrive). (→ 0006, 0009)
 - [ ] **Neon project setup** — create/confirm Neon project + branches (dev/prod); run first
       migration. (→ 0009)

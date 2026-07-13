@@ -6,7 +6,10 @@ packages:
 catalogMode: prefer
 
 catalog:
+  "@neondatabase/serverless": 1.1.0
   "@types/node": ^24
+  drizzle-kit: 0.31.10
+  drizzle-orm: 0.45.2
   typescript: ^5
   zod: 4.4.3
 
@@ -20,3 +23,6 @@ peerDependencyRules:
   allowedVersions:
     vite: "*"
     vitest: "*"
+
+allowBuilds:
+  esbuild: true

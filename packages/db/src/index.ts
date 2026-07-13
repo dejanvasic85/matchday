@@ -1,5 +1,16 @@
 // Drizzle schema, migrations, and data access for matchday's Postgres (Neon).
 // Data-access functions return `Result` from @matchday/domain; no business rules here.
-// Schema + connection land with the data-model work (see docs/todo.md Phase 1).
 
-export {};
+export * as schema from "./schema.ts";
+export { type Socials } from "./schema.ts";
+export { createDbClient, type Db } from "./client.ts";
+export { getDbConfig, type DbConfig } from "./config.ts";
+export {
+  fixtureStatusValue,
+  sourceValue,
+  externalRefEntityTypeValue,
+  type FixtureStatus,
+  type Source,
+  type ExternalRefEntityType,
+} from "./constants.ts";
+export { listClubs, getClubById, upsertExternalRef, findExternalRef } from "./queries.ts";
