@@ -9,5 +9,9 @@ export default defineConfig({
     globals: true,
     clearMocks: true,
     passWithNoTests: true,
+    coverage: {
+      // Declarative schema + thin connection wiring; unit tests cover config + query mapping.
+      exclude: ["src/schema.ts", "src/client.ts", "drizzle.config.ts"],
+    },
   },
 });
