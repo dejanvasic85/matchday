@@ -21,7 +21,7 @@ Project setup + standards. Mostly mirrors what williamstownsc already has; port 
 
 - [x] **Monorepo scaffold** — pnpm workspaces + Vite+ (`vp`); `apps/{api,scraper}`,
       `packages/{domain,db}`. Root `pnpm-workspace.yaml`, `vite.config.ts`. (→ 0010)
-- [ ] **Node/runtime + Mise** — pin Node (and Bun if used for scraper) via Mise, matching WSC.
+- [x] **Node/runtime + Mise** — Node pinned to 24.18.0 via `.mise.toml`, matching WSC.
 - [x] **TypeScript config** — per-package strict `tsconfig` (`nodenext`, `verbatimModuleSyntax`,
       `noUnusedLocals/Parameters`); root base config. (→ 0008)
 - [x] **Lint/format** — Vite+ Oxlint + Oxfmt (replaces ESLint/Prettier); no-`as` casting enforced
@@ -34,8 +34,8 @@ Project setup + standards. Mostly mirrors what williamstownsc already has; port 
       symlinked into `.claude/skills`. (schema/migration skill deferred to Phase 1.)
 - [x] **CI** — GitHub Actions (`voidzero-dev/setup-vp`): `vp check` + `vp run -r test` + `vp run -r build`
       on PR/push to main.
-- [ ] **Env/config** — zod-validated config module per app; `.env.example`; secrets strategy
-      for Workers (wrangler) + scraper (thanos).
+- [x] **Env/config** — Zod-validated config module per app (`getApiConfig`/`getScraperConfig` via a
+      shared `parseEnv` in `packages/domain`) + `.env.example`. Secrets: Wrangler (api) / thanos (scraper).
 
 ## Phase 1 — Data model & schema (keystone)
 

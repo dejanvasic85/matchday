@@ -8,6 +8,7 @@ catalogMode: prefer
 catalog:
   "@types/node": ^24
   typescript: ^5
+  zod: 4.4.3
 
 overrides:
   vite: "npm:@voidzero-dev/vite-plus-core@0.2.4"
