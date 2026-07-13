@@ -63,9 +63,14 @@ Phase 2). Finalised prefixes:
 | `sea_` | season              |
 | `lea_` | league              |
 | `mtc_` | fixture (match)     |
-| `lad_` | ladder_entry        |
+| `tab_` | table_entry         |
 | `ext_` | external_ref        |
 | `trk_` | tracked_competition |
+
+> **Terminology note:** earlier ADRs (0002–0007) call the standings entity a "ladder" (`lad_`),
+> which is AFL/NRL vernacular. matchday is soccer-oriented, so the entity is named **`table_entry`
+> (`tab_`)** here — a row in a league table. The older ADRs are left as historical records; this
+> schema is the source of truth.
 
 ### Entities
 
@@ -84,9 +89,9 @@ written camelCase in Drizzle and mapped to snake_case in Postgres via `casing: "
   `latitude`/`longitude` (`numeric(9,6)`, nullable); `kickoffAt` (single `timestamptz` combining
   Dribl's date+time); `status` (`text`); `homeScore`/`awayScore` (`integer`, nullable);
   `isBye` (`boolean`, default false). **Stored once** and joined to both teams (0006).
-- **ladder_entry** — id; `leagueId` → league, `competitionId` → competition, `seasonId` → season,
+- **table_entry** — id; `leagueId` → league, `competitionId` → competition, `seasonId` → season,
   `teamId` → team; `position`, `played`, `won`, `drawn`, `lost`, `goalsFor`, `goalsAgainst`,
-  `goalDifference`, `points` (all `integer`).
+  `goalDifference`, `points` (all `integer`). One row per team's standing in a league table.
 - **external_ref** — id; `entityType` (`text`), `internalId` (`text`), `source` (`text`, default
   `'dribl'`), `sourceId` (`text`), `sourceUrl` (`text`, nullable — retains the original Dribl logo
   URL for R2 re-fetch, per 0004). **Unique `(source, sourceId)`** — the idempotency key; unique
@@ -115,6 +120,6 @@ written camelCase in Drizzle and mapped to snake_case in Postgres via `casing: "
 - Introduces Drizzle schema + drizzle-kit migrations in `packages/db`; migrations are committed.
 - Ingest becomes upserts keyed on `external_ref (source, source_id)` (idempotent re-scraping, 0005).
 - The Phase 2 ID service must emit exactly these nine prefixes; branded ID types map to them.
-- `league` is a first-class entity, so fixtures and ladder entries carry a `leagueId` FK.
+- `league` is a first-class entity, so fixtures and table entries carry a `leagueId` FK.
 - Worker → Neon uses the neon-http driver (isolate-safe); no interactive transactions on that path.
 - Player-level stats remain deferred (0004); adding them later does not rework these tables.

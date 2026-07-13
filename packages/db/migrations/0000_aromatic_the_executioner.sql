@@ -49,7 +49,23 @@ CREATE TABLE "fixture" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "ladder_entry" (
+CREATE TABLE "league" (
+	"id" text PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"competition_id" text NOT NULL,
+	"season_id" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "season" (
+	"id" text PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "table_entry" (
 	"id" text PRIMARY KEY NOT NULL,
 	"league_id" text NOT NULL,
 	"competition_id" text NOT NULL,
@@ -64,22 +80,6 @@ CREATE TABLE "ladder_entry" (
 	"goals_against" integer NOT NULL,
 	"goal_difference" integer NOT NULL,
 	"points" integer NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "league" (
-	"id" text PRIMARY KEY NOT NULL,
-	"name" text NOT NULL,
-	"competition_id" text NOT NULL,
-	"season_id" text NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "season" (
-	"id" text PRIMARY KEY NOT NULL,
-	"name" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -108,12 +108,12 @@ ALTER TABLE "fixture" ADD CONSTRAINT "fixture_competition_id_competition_id_fk" 
 ALTER TABLE "fixture" ADD CONSTRAINT "fixture_season_id_season_id_fk" FOREIGN KEY ("season_id") REFERENCES "public"."season"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "fixture" ADD CONSTRAINT "fixture_home_team_id_team_id_fk" FOREIGN KEY ("home_team_id") REFERENCES "public"."team"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "fixture" ADD CONSTRAINT "fixture_away_team_id_team_id_fk" FOREIGN KEY ("away_team_id") REFERENCES "public"."team"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ladder_entry" ADD CONSTRAINT "ladder_entry_league_id_league_id_fk" FOREIGN KEY ("league_id") REFERENCES "public"."league"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ladder_entry" ADD CONSTRAINT "ladder_entry_competition_id_competition_id_fk" FOREIGN KEY ("competition_id") REFERENCES "public"."competition"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ladder_entry" ADD CONSTRAINT "ladder_entry_season_id_season_id_fk" FOREIGN KEY ("season_id") REFERENCES "public"."season"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ladder_entry" ADD CONSTRAINT "ladder_entry_team_id_team_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."team"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "league" ADD CONSTRAINT "league_competition_id_competition_id_fk" FOREIGN KEY ("competition_id") REFERENCES "public"."competition"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "league" ADD CONSTRAINT "league_season_id_season_id_fk" FOREIGN KEY ("season_id") REFERENCES "public"."season"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "table_entry" ADD CONSTRAINT "table_entry_league_id_league_id_fk" FOREIGN KEY ("league_id") REFERENCES "public"."league"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "table_entry" ADD CONSTRAINT "table_entry_competition_id_competition_id_fk" FOREIGN KEY ("competition_id") REFERENCES "public"."competition"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "table_entry" ADD CONSTRAINT "table_entry_season_id_season_id_fk" FOREIGN KEY ("season_id") REFERENCES "public"."season"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "table_entry" ADD CONSTRAINT "table_entry_team_id_team_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."team"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "team" ADD CONSTRAINT "team_club_id_club_id_fk" FOREIGN KEY ("club_id") REFERENCES "public"."club"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tracked_competition" ADD CONSTRAINT "tracked_competition_competition_id_competition_id_fk" FOREIGN KEY ("competition_id") REFERENCES "public"."competition"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tracked_competition" ADD CONSTRAINT "tracked_competition_season_id_season_id_fk" FOREIGN KEY ("season_id") REFERENCES "public"."season"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

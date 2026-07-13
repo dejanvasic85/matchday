@@ -97,7 +97,7 @@ export const fixture = pgTable("fixture", {
   ...timestamps,
 });
 
-export const ladderEntry = pgTable("ladder_entry", {
+export const tableEntry = pgTable("table_entry", {
   id: text("id").primaryKey(),
   leagueId: text("league_id")
     .notNull()
@@ -186,7 +186,7 @@ export const leagueRelations = relations(league, ({ one, many }) => ({
   }),
   season: one(season, { fields: [league.seasonId], references: [season.id] }),
   fixtures: many(fixture),
-  ladderEntries: many(ladderEntry),
+  tableEntries: many(tableEntry),
 }));
 
 export const fixtureRelations = relations(fixture, ({ one }) => ({
@@ -200,9 +200,9 @@ export const fixtureRelations = relations(fixture, ({ one }) => ({
   awayTeam: one(team, { fields: [fixture.awayTeamId], references: [team.id] }),
 }));
 
-export const ladderEntryRelations = relations(ladderEntry, ({ one }) => ({
-  league: one(league, { fields: [ladderEntry.leagueId], references: [league.id] }),
-  team: one(team, { fields: [ladderEntry.teamId], references: [team.id] }),
+export const tableEntryRelations = relations(tableEntry, ({ one }) => ({
+  league: one(league, { fields: [tableEntry.leagueId], references: [league.id] }),
+  team: one(team, { fields: [tableEntry.teamId], references: [team.id] }),
 }));
 
 export const trackedCompetitionRelations = relations(trackedCompetition, ({ one }) => ({

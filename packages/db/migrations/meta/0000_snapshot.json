@@ -1,5 +1,5 @@
 {
-  "id": "79777cd7-50b2-43f0-be03-3a57d84140cf",
+  "id": "818db53b-1a5c-4e10-802c-4ea44a5e462e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -415,154 +415,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.ladder_entry": {
-      "name": "ladder_entry",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "league_id": {
-          "name": "league_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "competition_id": {
-          "name": "competition_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "season_id": {
-          "name": "season_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "team_id": {
-          "name": "team_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "position": {
-          "name": "position",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "played": {
-          "name": "played",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "won": {
-          "name": "won",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "drawn": {
-          "name": "drawn",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "lost": {
-          "name": "lost",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "goals_for": {
-          "name": "goals_for",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "goals_against": {
-          "name": "goals_against",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "goal_difference": {
-          "name": "goal_difference",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "points": {
-          "name": "points",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "ladder_entry_league_id_league_id_fk": {
-          "name": "ladder_entry_league_id_league_id_fk",
-          "tableFrom": "ladder_entry",
-          "tableTo": "league",
-          "columnsFrom": ["league_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "ladder_entry_competition_id_competition_id_fk": {
-          "name": "ladder_entry_competition_id_competition_id_fk",
-          "tableFrom": "ladder_entry",
-          "tableTo": "competition",
-          "columnsFrom": ["competition_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "ladder_entry_season_id_season_id_fk": {
-          "name": "ladder_entry_season_id_season_id_fk",
-          "tableFrom": "ladder_entry",
-          "tableTo": "season",
-          "columnsFrom": ["season_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "ladder_entry_team_id_team_id_fk": {
-          "name": "ladder_entry_team_id_team_id_fk",
-          "tableFrom": "ladder_entry",
-          "tableTo": "team",
-          "columnsFrom": ["team_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.league": {
       "name": "league",
       "schema": "",
@@ -666,6 +518,154 @@
       },
       "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.table_entry": {
+      "name": "table_entry",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "league_id": {
+          "name": "league_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "competition_id": {
+          "name": "competition_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "season_id": {
+          "name": "season_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "played": {
+          "name": "played",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "won": {
+          "name": "won",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "drawn": {
+          "name": "drawn",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lost": {
+          "name": "lost",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "goals_for": {
+          "name": "goals_for",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "goals_against": {
+          "name": "goals_against",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "goal_difference": {
+          "name": "goal_difference",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "points": {
+          "name": "points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "table_entry_league_id_league_id_fk": {
+          "name": "table_entry_league_id_league_id_fk",
+          "tableFrom": "table_entry",
+          "tableTo": "league",
+          "columnsFrom": ["league_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "table_entry_competition_id_competition_id_fk": {
+          "name": "table_entry_competition_id_competition_id_fk",
+          "tableFrom": "table_entry",
+          "tableTo": "competition",
+          "columnsFrom": ["competition_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "table_entry_season_id_season_id_fk": {
+          "name": "table_entry_season_id_season_id_fk",
+          "tableFrom": "table_entry",
+          "tableTo": "season",
+          "columnsFrom": ["season_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "table_entry_team_id_team_id_fk": {
+          "name": "table_entry_team_id_team_id_fk",
+          "tableFrom": "table_entry",
+          "tableTo": "team",
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
