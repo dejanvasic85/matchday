@@ -16,6 +16,7 @@ jobs:
   migrate:
     name: Migrate database
     runs-on: ubuntu-latest
+    environment: production
     timeout-minutes: 10
     steps:
       - name: Checkout
