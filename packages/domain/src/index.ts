@@ -8,3 +8,4 @@ export {
   type Result,
   type ResultError,
 } from "./result.ts";
+export { parseEnv } from "./config.ts";
