@@ -2,11 +2,10 @@
 // by Drizzle selects) for use in data-access fakes. Fill sensible defaults; pass only the fields a
 // test asserts on via `overrides`.
 
-import { sourceValue } from "../../src/constants.ts";
-import type { club, externalRef } from "../../src/schema.ts";
+import { schema, sourceValue } from "@matchday/db";
 
-type ClubRow = typeof club.$inferSelect;
-type ExternalRefRow = typeof externalRef.$inferSelect;
+type ClubRow = typeof schema.club.$inferSelect;
+type ExternalRefRow = typeof schema.externalRef.$inferSelect;
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 
