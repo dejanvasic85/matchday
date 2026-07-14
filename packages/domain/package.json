@@ -13,6 +13,7 @@
     "check": "vp check"
   },
   "dependencies": {
+    "nanoid": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
