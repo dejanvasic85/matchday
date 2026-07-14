@@ -52,7 +52,11 @@ Project setup + standards. Mostly mirrors what williamstownsc already has; port 
 - [x] **Domain package** — `packages/domain`: Zod schemas for entities, prefixed-nanoid ID
       service (`clb_`/`tea_`/`cmp_`/`sea_`/`lea_`/`mtc_`/`tab_`/`ext_`/`trk_`), branded ID types.
       (→ 0004, 0005, 0011)
-- [ ] **Transformers** — Dribl raw → domain (port WSC's transform/mapper logic).
+- [x] **Transformers** — Dribl raw → domain (port WSC's transform/mapper logic). Raw external
+      Zod schemas (`external/driblClub.ts`, `driblFixture.ts`, `driblTableEntry.ts`) +
+      `mapDriblClub`/`mapDriblFixture`/`mapDriblTableEntry` mappers in `packages/domain`.
+      Mappers stop short of resolving club/team/competition/season/league entity IDs (needs DB
+      lookups); that resolution is a Phase 3 crawler-core/service concern.
 
 ## Phase 3 — Scraper
 
