@@ -109,6 +109,12 @@ export async function resolveLeagueIds(
   }
   const tenantId = tenantResult.value;
 
+  // Save the tenant id as soon as it's known, before the (more failure-prone) list lookups
+  // below, so a season/competition/league failure doesn't force tenant re-resolution too.
+  if (cache.tenant === undefined) {
+    await cacheStore.save({ tenant: tenantId, leagues: cache.leagues });
+  }
+
   const seasonResult = await resolveListId(
     page,
     `${apiBase}/list/seasons?disable_paging=true&tenant=${tenantId}`,

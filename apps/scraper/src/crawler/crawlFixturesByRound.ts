@@ -35,8 +35,10 @@ export async function crawlFixturesByRound(
 
   const rawResponses: unknown[] = [];
   let emptyStreak = 0;
+  let lastRound = 0;
 
   for (let round = 1; round <= maxRounds; round++) {
+    lastRound = round;
     const url = buildDriblApiUrl("fixtures", ids, { round: String(round) });
     const fetched = await browserFetch(page, url);
     if (!fetched.ok) {
@@ -73,6 +75,12 @@ export async function crawlFixturesByRound(
       round,
       fixtures: parsed.data.data.length,
       key,
+    });
+  }
+
+  if (lastRound === maxRounds) {
+    logger.warn("crawl.fixturesRound", "hit maxRounds safety cap without a natural stop", {
+      maxRounds,
     });
   }
 

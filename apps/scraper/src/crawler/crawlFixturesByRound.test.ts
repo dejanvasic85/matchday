@@ -103,4 +103,26 @@ describe("crawlFixturesByRound", () => {
     expect(result.ok).toBe(false);
     expect(rawStorage.puts).toHaveLength(0);
   });
+
+  it("warns when the crawl hits the maxRounds safety cap without a natural stop", async () => {
+    const page = makeQueuedFakePage(Array.from({ length: 40 }, () => makeFixtureResponse(1)));
+    const rawStorage = makeFakeRawStorage();
+    const logger = makeFakeLogger();
+
+    const result = await crawlFixturesByRound({
+      page,
+      rawStorage,
+      logger,
+      ids,
+      trackedCompetitionId: "trk_abc",
+      crawlRunId: "run_1",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(logger.warn).toHaveBeenCalledWith(
+      "crawl.fixturesRound",
+      "hit maxRounds safety cap without a natural stop",
+      { maxRounds: 40 },
+    );
+  });
 });

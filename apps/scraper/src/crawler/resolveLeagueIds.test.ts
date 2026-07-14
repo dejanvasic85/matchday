@@ -126,4 +126,53 @@ describe("resolveLeagueIds", () => {
 
     expect(result.ok).toBe(false);
   });
+
+  it("saves the resolved tenant id even when a later list lookup fails", async () => {
+    const cacheStore = createInMemoryIdCacheStore();
+    const page = makeFakePage({
+      ...baseResponses,
+      "list/leagues": { data: [] },
+    });
+
+    await resolveLeagueIds({
+      page,
+      cacheStore,
+      logger: makeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      leagueName: "Girls U12",
+      competitionName: "FFV",
+      seasonYear: "2026",
+    });
+    const cache = await cacheStore.load();
+
+    expect(cache.tenant).toBe("tenant-id");
+    expect(cache.leagues["Girls U12"]).toBeUndefined();
+  });
+
+  it("does not re-fetch the tenant on a second call once it's cached from a prior failure", async () => {
+    const cacheStore = createInMemoryIdCacheStore({ tenant: "tenant-id", leagues: {} });
+    const page = makeFakePage(baseResponses);
+
+    const result = await resolveLeagueIds({
+      page,
+      cacheStore,
+      logger: makeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      leagueName: "Girls U12",
+      competitionName: "FFV",
+      seasonYear: "2026",
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        tenant: "tenant-id",
+        season: "season-id",
+        competition: "competition-id",
+        league: "league-id",
+      },
+    });
+  });
 });

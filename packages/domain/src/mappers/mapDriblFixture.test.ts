@@ -50,6 +50,7 @@ describe("mapDriblFixture", () => {
       longitude: 144.783747,
       kickoffAt: new Date("2026-04-25T23:00:00.000Z"),
       status: fixtureStatusValue.scheduled,
+      unmappedStatus: null,
       homeScore: null,
       awayScore: null,
       isBye: false,
@@ -64,6 +65,14 @@ describe("mapDriblFixture", () => {
     expect(result.kickoffAt).toEqual(new Date("2026-04-26T03:15:00.000Z"));
   });
 
+  it("preserves an existing timezone offset instead of appending Z", () => {
+    const fixture = makeDriblFixture({ date: "2026-04-26T13:15:00+10:00" });
+
+    const result = mapDriblFixture(fixture);
+
+    expect(result.kickoffAt).toEqual(new Date("2026-04-26T13:15:00+10:00"));
+  });
+
   it("maps a completed status with scores to the completed domain status", () => {
     const fixture = makeDriblFixture({ status: "complete", home_score: 3, away_score: 1 });
 
@@ -74,12 +83,21 @@ describe("mapDriblFixture", () => {
     expect(result.awayScore).toBe(1);
   });
 
-  it("falls back to scheduled for an unrecognised raw status", () => {
+  it("falls back to scheduled for an unrecognised raw status and surfaces it as unmapped", () => {
     const fixture = makeDriblFixture({ status: "some_new_dribl_status" });
 
     const result = mapDriblFixture(fixture);
 
     expect(result.status).toBe(fixtureStatusValue.scheduled);
+    expect(result.unmappedStatus).toBe("some_new_dribl_status");
+  });
+
+  it("leaves unmappedStatus null for a recognised status", () => {
+    const fixture = makeDriblFixture({ status: "complete" });
+
+    const result = mapDriblFixture(fixture);
+
+    expect(result.unmappedStatus).toBeNull();
   });
 
   it("maps a bye fixture with a null opponent and ground", () => {

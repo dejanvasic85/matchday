@@ -21,7 +21,10 @@ export const driblFixtureAttributesSchema = z.object({
   competition_name: z.string(),
   league_name: z.string(),
   status: z.string(),
-  bye_flag: z.union([z.boolean(), z.number()]).transform((value) => Boolean(value)),
+  // Dribl sends this as a boolean or a 0/1 number depending on endpoint; narrow to those two
+  // literals (not a bare z.number()) so an unexpected numeric value fails validation loudly
+  // instead of silently coercing truthy.
+  bye_flag: z.union([z.boolean(), z.literal(0), z.literal(1)]).transform((value) => Boolean(value)),
   home_score: z.number().nullable(),
   away_score: z.number().nullable(),
 });

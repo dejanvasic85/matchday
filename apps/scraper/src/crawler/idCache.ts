@@ -36,6 +36,8 @@ export function createFileIdCacheStore(filePath: string): IdCacheStore {
         const raw = await fs.readFile(filePath, "utf-8");
         return idCacheSchema.parse(JSON.parse(raw));
       } catch {
+        // Missing file (first run), corrupt JSON, or a stale shape all self-heal the same way:
+        // start from empty and let resolveLeagueIds re-resolve and overwrite on next save.
         return emptyCache();
       }
     },
