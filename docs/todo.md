@@ -49,8 +49,9 @@ Project setup + standards. Mostly mirrors what williamstownsc already has; port 
 
 ## Phase 2 — Domain
 
-- [ ] **Domain package** — `packages/domain`: Zod schemas for entities, prefixed-nanoid ID
-      service (`clb_`/`tea_`/`cmp_`/`sea_`/`mtc_`/`lad_`), branded ID types. (→ 0004, 0005)
+- [x] **Domain package** — `packages/domain`: Zod schemas for entities, prefixed-nanoid ID
+      service (`clb_`/`tea_`/`cmp_`/`sea_`/`lea_`/`mtc_`/`tab_`/`ext_`/`trk_`), branded ID types.
+      (→ 0004, 0005, 0011)
 - [ ] **Transformers** — Dribl raw → domain (port WSC's transform/mapper logic).
 
 ## Phase 3 — Scraper
