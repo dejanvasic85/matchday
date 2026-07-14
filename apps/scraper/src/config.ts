@@ -18,6 +18,9 @@ const scraperEnvSchema = z.object({
   R2_ACCESS_KEY_ID: z.string().min(1),
   R2_SECRET_ACCESS_KEY: z.string().min(1),
   R2_BUCKET_NAME: z.string().min(1),
+  // Cloudflare R2 for staging raw Dribl API responses pre-transform (0004); bucket has a
+  // 7-day lifecycle expiry, separate from the (permanent) logos bucket above.
+  R2_RAW_BUCKET_NAME: z.string().min(1),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 

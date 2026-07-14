@@ -10,6 +10,7 @@
   "dependencies": {
     "@matchday/db": "workspace:*",
     "@matchday/domain": "workspace:*",
+    "aws4fetch": "catalog:",
     "playwright-core": "catalog:",
     "zod": "catalog:"
   },

@@ -6,7 +6,7 @@ import { err, ok, type Result } from "@matchday/domain";
 
 /** The slice of playwright-core's `Page` this module depends on — narrow for easy faking in tests. */
 export type FetchPage = {
-  evaluate: <T>(fn: (url: string) => Promise<T>, arg: string) => Promise<T>;
+  evaluate: (fn: (url: string) => Promise<string>, arg: string) => Promise<string>;
 };
 
 async function fetchInPage(url: string): Promise<string> {

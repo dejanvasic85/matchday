@@ -14,7 +14,7 @@ function makeFakePage(responses: Record<string, unknown>): FetchPage {
       if (matched === undefined) {
         throw new Error(`No fake response registered for ${url}`);
       }
-      return JSON.stringify(matched[1]) as never;
+      return JSON.stringify(matched[1]);
     },
   };
 }

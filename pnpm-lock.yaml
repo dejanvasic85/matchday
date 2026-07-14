@@ -12,6 +12,9 @@ catalogs:
     '@types/node':
       specifier: ^26.0.0
       version: 26.1.1
+    aws4fetch:
+      specifier: 1.0.20
+      version: 1.0.20
     drizzle-kit:
       specifier: 0.31.10
       version: 0.31.10
@@ -81,6 +84,9 @@ importers:
       '@matchday/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      aws4fetch:
+        specifier: 'catalog:'
+        version: 1.0.20
       playwright-core:
         specifier: 'catalog:'
         version: 1.61.1
@@ -1138,6 +1144,9 @@ packages:
 
   ast-v8-to-istanbul@1.0.4:
     resolution: {integrity: sha512-0bC0/4bTSrnwdhU3IsZDwEdojvuPrSg59OYZfKsLRtJZ0u8VBx9DebfqqG8bRdCC0I7vjgxmPi41P0lpkhJHtA==}
+
+  aws4fetch@1.0.20:
+    resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
 
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
@@ -2234,6 +2243,8 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.31
       estree-walker: 3.0.3
       js-tokens: 10.0.0
+
+  aws4fetch@1.0.20: {}
 
   buffer-from@1.1.2: {}
 
