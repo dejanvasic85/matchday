@@ -72,6 +72,25 @@ Run in order; never push red:
 
 Pre-commit runs via Vite+ staged checks; include any auto-fixes in the commit.
 
+## Slice workflow (multi-slice / phased work)
+
+When picking up a phase or backlog item that's naturally built as a sequence of slices (e.g. a
+todo.md item broken into mapper → crawler → resolution → wiring), work one slice at a time and
+close the loop on each before starting the next:
+
+1. Implement the slice (code + tests), passing the quality gates above.
+2. Run the `caveman-review` skill against the slice's diff.
+3. Fix the issues it surfaces (or explicitly note why a finding doesn't apply — don't silently
+   drop one).
+4. Push and open a PR; wait for CI checks.
+5. If checks fail: fix, push, and repeat from step 4 until they pass.
+6. Merge the PR once green.
+7. Cut a **fresh branch off latest `main`** for the next slice — don't keep stacking unrelated
+   slices on one branch.
+
+This keeps each slice small, independently reviewable, and validated by CI before the next slice
+builds on top of it, rather than accumulating a large uncheckable stack of commits.
+
 ## Architecture & error handling
 
 - **Functional style — no classes / OO.** Small single-purpose functions; `switch` over long
