@@ -52,17 +52,22 @@ Project setup + standards. Mostly mirrors what williamstownsc already has; port 
 - [x] **Domain package** — `packages/domain`: Zod schemas for entities, prefixed-nanoid ID
       service (`clb_`/`tea_`/`cmp_`/`sea_`/`lea_`/`mtc_`/`tab_`/`ext_`/`trk_`), branded ID types.
       (→ 0004, 0005, 0011)
-- [ ] **Transformers** — Dribl raw → domain (port WSC's transform/mapper logic).
+- [x] **Transformers** — Dribl raw → domain (port WSC's transform/mapper logic). Raw external
+      Zod schemas (`external/driblClub.ts`, `driblFixture.ts`, `driblTableEntry.ts`) +
+      `mapDriblClub`/`mapDriblFixture`/`mapDriblTableEntry` mappers in `packages/domain`.
+      Mappers stop short of resolving club/team/competition/season/league entity IDs (needs DB
+      lookups); that resolution is a Phase 3 crawler-core/service concern.
 
 ## Phase 3 — Scraper
 
 - [ ] **Crawler core** — port WSC playwright-core crawler; Cloudflare bypass via browser
-      context; browser endpoint abstracted (thanos local ↔ managed fallback). (→ 0009)
+      context; browser endpoint abstracted (thanos local ↔ managed fallback); raw API
+      responses written to R2 (7-day expiry) before transform, per updated 0004. (→ 0009)
 - [ ] **Clubs sync job** — full `list/clubs` crawl → upsert clubs by external_ref. Daily.
       (→ 0003)
 - [ ] **Competition crawl job** — competition-keyed; fixtures + results + ladders in one pass;
-      upsert by external_ref; logo mirroring to R2. Fixture-derived match-window cadence.
-      (→ 0002, 0003, 0004)
+      raw responses staged to R2, then transformed and upserted by external_ref; logo
+      mirroring to R2. Fixture-derived match-window cadence. (→ 0002, 0003, 0004)
 - [ ] **tracked_competition registry** — seed from tenant teams; drives the crawl. (→ 0002)
 - [ ] **Scheduling** — wire per-job triggers (thanos cron / GH Actions / CF Cron). (→ 0003, 0009)
 

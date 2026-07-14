@@ -8,9 +8,11 @@ catalogMode: prefer
 catalog:
   "@neondatabase/serverless": 1.1.0
   "@types/node": ^26.0.0
+  aws4fetch: 1.0.20
   drizzle-kit: 0.31.10
   drizzle-orm: 0.45.2
   nanoid: 6.0.0
+  playwright-core: 1.61.1
   typescript: ^7.0.0
   zod: 4.4.3
 

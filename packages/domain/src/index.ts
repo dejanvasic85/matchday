@@ -9,6 +9,7 @@ export {
   type ResultError,
 } from "./result.ts";
 export { parseEnv } from "./config.ts";
+export type { LogFields, Logger } from "./logger.ts";
 export {
   generateId,
   idPrefixValue,
@@ -47,3 +48,39 @@ export {
   trackedCompetitionSchema,
   type TrackedCompetition,
 } from "./entities/trackedCompetition.ts";
+export {
+  driblClubAddressSchema,
+  driblClubAttributesSchema,
+  driblClubSchema,
+  driblClubSocialSchema,
+  driblClubsApiResponseSchema,
+  type DriblClub,
+  type DriblClubAttributes,
+  type DriblClubsApiResponse,
+} from "./external/driblClub.ts";
+export {
+  driblFixtureAttributesSchema,
+  driblFixtureSchema,
+  driblFixturesApiResponseSchema,
+  type DriblFixture,
+  type DriblFixtureAttributes,
+  type DriblFixturesApiResponse,
+} from "./external/driblFixture.ts";
+export {
+  driblTableApiResponseSchema,
+  driblTableEntryAttributesSchema,
+  driblTableEntrySchema,
+  type DriblTableApiResponse,
+  type DriblTableEntry,
+  type DriblTableEntryAttributes,
+} from "./external/driblTableEntry.ts";
+export {
+  driblListResponseSchema,
+  driblTenantResponseSchema,
+  type DriblListItem,
+  type DriblListResponse,
+  type DriblTenantResponse,
+} from "./external/driblListEndpoints.ts";
+export { mapDriblClub, type MappedClub } from "./mappers/mapDriblClub.ts";
+export { mapDriblFixture, type MappedFixture } from "./mappers/mapDriblFixture.ts";
+export { mapDriblTableEntry, type MappedTableEntry } from "./mappers/mapDriblTableEntry.ts";

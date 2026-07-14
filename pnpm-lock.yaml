@@ -12,6 +12,9 @@ catalogs:
     '@types/node':
       specifier: ^26.0.0
       version: 26.1.1
+    aws4fetch:
+      specifier: 1.0.20
+      version: 1.0.20
     drizzle-kit:
       specifier: 0.31.10
       version: 0.31.10
@@ -21,6 +24,9 @@ catalogs:
     nanoid:
       specifier: 6.0.0
       version: 6.0.0
+    playwright-core:
+      specifier: 1.61.1
+      version: 1.61.1
     typescript:
       specifier: ^7.0.0
       version: 7.0.2
@@ -78,6 +84,12 @@ importers:
       '@matchday/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      aws4fetch:
+        specifier: 'catalog:'
+        version: 1.0.20
+      playwright-core:
+        specifier: 'catalog:'
+        version: 1.61.1
       zod:
         specifier: 'catalog:'
         version: 4.4.3
@@ -1253,6 +1265,9 @@ packages:
   ast-v8-to-istanbul@1.0.4:
     resolution: {integrity: sha512-0bC0/4bTSrnwdhU3IsZDwEdojvuPrSg59OYZfKsLRtJZ0u8VBx9DebfqqG8bRdCC0I7vjgxmPi41P0lpkhJHtA==}
 
+  aws4fetch@1.0.20:
+    resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
+
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
 
@@ -1582,6 +1597,11 @@ packages:
   picomatch@4.0.5:
     resolution: {integrity: sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==}
     engines: {node: '>=12'}
+
+  playwright-core@1.61.1:
+    resolution: {integrity: sha512-h7Qlt6m4REp25qvIdvbDtVmD4LqVXfpRxhORv9L0jzETM05p4fuPJ3dKyuSXQxDSbXnmS79HAgi9589lGSpLkg==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   pngjs@7.0.0:
     resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
@@ -2442,6 +2462,8 @@ snapshots:
       estree-walker: 3.0.3
       js-tokens: 10.0.0
 
+  aws4fetch@1.0.20: {}
+
   buffer-from@1.1.2: {}
 
   chai@6.2.2: {}
@@ -2773,6 +2795,8 @@ snapshots:
   picocolors@1.1.1: {}
 
   picomatch@4.0.5: {}
+
+  playwright-core@1.61.1: {}
 
   pngjs@7.0.0: {}
 
