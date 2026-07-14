@@ -28,7 +28,7 @@ without over-collecting data no one uses yet.
 - **Club**: name, display name, logo, email, website, address, socials.
 - **Team**: name, age group, gender, competition membership.
 - **Competition/Season/League**: as entities with IDs (not just names).
-- **Ladder**: full rows (position, played, W/D/L, GF/GA/GD, points).
+- **Table entry**: full rows (position, played, W/D/L, GF/GA/GD, points).
 
 Defer player-level match stats to a later ADR.
 

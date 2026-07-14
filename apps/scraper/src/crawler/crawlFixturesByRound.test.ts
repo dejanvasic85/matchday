@@ -1,6 +1,6 @@
-import { makeFakeLogger } from "../../test/fixtures/logger.ts";
-import { makeQueuedFakePage } from "../../test/fixtures/fakePage.ts";
-import { makeFakeRawStorage } from "../../test/fixtures/rawStorage.ts";
+import { makeFakeLogger } from "@/test/fixtures/logger.ts";
+import { makeQueuedFakePage } from "@/test/fixtures/fakePage.ts";
+import { makeFakeRawStorage } from "@/test/fixtures/rawStorage.ts";
 import type { DriblLeagueIds } from "./buildDriblApiUrl.ts";
 import { crawlFixturesByRound } from "./crawlFixturesByRound.ts";
 

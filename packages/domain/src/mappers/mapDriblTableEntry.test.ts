@@ -6,7 +6,7 @@ function makeDriblTableEntry(
 ): DriblTableEntry {
   return {
     type: "ladder-entry",
-    id: "ladder001",
+    id: "table001",
     attributes: {
       team_hash_id: "hteam001",
       team_name: "Altona North SC U08",
@@ -29,7 +29,7 @@ function makeDriblTableEntry(
 }
 
 describe("mapDriblTableEntry", () => {
-  it("maps a raw ladder entry to the mapped domain shape", () => {
+  it("maps a raw table entry to the mapped domain shape", () => {
     const result = mapDriblTableEntry(makeDriblTableEntry());
 
     expect(result).toEqual({

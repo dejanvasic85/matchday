@@ -10,6 +10,6 @@ export function buildRawFixturesKey(
   return `raw/${trackedCompetitionId}/${crawlRunId}/fixtures-round-${round}.json`;
 }
 
-export function buildRawLaddersKey(trackedCompetitionId: string, crawlRunId: string): string {
-  return `raw/${trackedCompetitionId}/${crawlRunId}/ladders.json`;
+export function buildRawTableKey(trackedCompetitionId: string, crawlRunId: string): string {
+  return `raw/${trackedCompetitionId}/${crawlRunId}/table.json`;
 }

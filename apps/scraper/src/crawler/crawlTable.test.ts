@@ -1,15 +1,15 @@
-import { makeFakeLogger } from "../../test/fixtures/logger.ts";
-import { makeQueuedFakePage } from "../../test/fixtures/fakePage.ts";
-import { makeFakeRawStorage } from "../../test/fixtures/rawStorage.ts";
+import { makeFakeLogger } from "@/test/fixtures/logger.ts";
+import { makeQueuedFakePage } from "@/test/fixtures/fakePage.ts";
+import { makeFakeRawStorage } from "@/test/fixtures/rawStorage.ts";
 import type { DriblLeagueIds } from "./buildDriblApiUrl.ts";
-import { crawlLadders } from "./crawlLadders.ts";
+import { crawlTable } from "./crawlTable.ts";
 
 const ids: DriblLeagueIds = { season: "s", competition: "c", league: "l", tenant: "t" };
 
-function makeLadderEntry() {
+function makeTableEntry() {
   return {
     type: "ladder-entry" as const,
-    id: "ladder-1",
+    id: "table-1",
     attributes: {
       team_hash_id: "team-1",
       team_name: "Home",
@@ -30,12 +30,12 @@ function makeLadderEntry() {
   };
 }
 
-describe("crawlLadders", () => {
-  it("stages the ladder response to R2 when entries are present", async () => {
-    const page = makeQueuedFakePage([{ data: [makeLadderEntry()] }]);
+describe("crawlTable", () => {
+  it("stages the table response to R2 when entries are present", async () => {
+    const page = makeQueuedFakePage([{ data: [makeTableEntry()] }]);
     const rawStorage = makeFakeRawStorage();
 
-    const result = await crawlLadders({
+    const result = await crawlTable({
       page,
       rawStorage,
       logger: makeFakeLogger(),
@@ -46,14 +46,14 @@ describe("crawlLadders", () => {
 
     expect(result.ok).toBe(true);
     expect(rawStorage.puts).toHaveLength(1);
-    expect(rawStorage.puts[0]?.key).toBe("raw/trk_abc/run_1/ladders.json");
+    expect(rawStorage.puts[0]?.key).toBe("raw/trk_abc/run_1/table.json");
   });
 
-  it("skips staging and returns undefined when there are no ladder entries", async () => {
+  it("skips staging and returns undefined when there are no table entries", async () => {
     const page = makeQueuedFakePage([{ data: [] }]);
     const rawStorage = makeFakeRawStorage();
 
-    const result = await crawlLadders({
+    const result = await crawlTable({
       page,
       rawStorage,
       logger: makeFakeLogger(),
@@ -70,7 +70,7 @@ describe("crawlLadders", () => {
     const page = makeQueuedFakePage([{ data: [{ bad: "shape" }] }]);
     const rawStorage = makeFakeRawStorage();
 
-    const result = await crawlLadders({
+    const result = await crawlTable({
       page,
       rawStorage,
       logger: makeFakeLogger(),

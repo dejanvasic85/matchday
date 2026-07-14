@@ -1,13 +1,14 @@
-// Ladder (table) crawl: a single request after the round crawl, using the same resolved IDs
-// (dribl-crawling skill). Raw response staged to R2 before mapping, per 0004.
+// Table (ladder) crawl: a single request after the round crawl, using the same resolved IDs
+// (dribl-crawling skill). Raw response staged to R2 before mapping, per 0004. Dribl's own
+// endpoint/wire format calls this a "ladder" — our side of the boundary calls it "table".
 
 import { driblTableApiResponseSchema, err, ok, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "./browserFetch.ts";
 import { buildDriblApiUrl, type DriblLeagueIds } from "./buildDriblApiUrl.ts";
 import type { RawStorage } from "./rawStorage.ts";
-import { buildRawLaddersKey } from "./rawStorageKey.ts";
+import { buildRawTableKey } from "./rawStorageKey.ts";
 
-export type CrawlLaddersInput = {
+export type CrawlTableInput = {
   page: FetchPage;
   rawStorage: RawStorage;
   logger: Logger;
@@ -16,8 +17,8 @@ export type CrawlLaddersInput = {
   crawlRunId: string;
 };
 
-/** `undefined` when the league has no ladder (e.g. MiniRoos) — not an error. */
-export async function crawlLadders(input: CrawlLaddersInput): Promise<Result<unknown>> {
+/** `undefined` when the league has no table (e.g. MiniRoos) — not an error. */
+export async function crawlTable(input: CrawlTableInput): Promise<Result<unknown>> {
   const { page, rawStorage, logger, ids, trackedCompetitionId, crawlRunId } = input;
 
   const url = buildDriblApiUrl("ladders", ids);
@@ -28,20 +29,20 @@ export async function crawlLadders(input: CrawlLaddersInput): Promise<Result<unk
 
   const parsed = driblTableApiResponseSchema.safeParse(fetched.value);
   if (!parsed.success) {
-    return err({ message: "Failed to validate ladders response", cause: parsed.error });
+    return err({ message: "Failed to validate table response", cause: parsed.error });
   }
 
   if (parsed.data.data.length === 0) {
-    logger.debug("crawl.ladders", "no ladder entries, skipping");
+    logger.debug("crawl.table", "no table entries, skipping");
     return ok(undefined);
   }
 
-  const key = buildRawLaddersKey(trackedCompetitionId, crawlRunId);
+  const key = buildRawTableKey(trackedCompetitionId, crawlRunId);
   const staged = await rawStorage.putJson(key, parsed.data);
   if (!staged.ok) {
     return staged;
   }
 
-  logger.info("crawl.ladders", "ladder staged", { entries: parsed.data.data.length, key });
+  logger.info("crawl.table", "table staged", { entries: parsed.data.data.length, key });
   return ok(parsed.data);
 }

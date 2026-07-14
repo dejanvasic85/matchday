@@ -1,4 +1,4 @@
-import { buildRawFixturesKey, buildRawLaddersKey } from "./rawStorageKey.ts";
+import { buildRawFixturesKey, buildRawTableKey } from "./rawStorageKey.ts";
 
 describe("buildRawFixturesKey", () => {
   it("builds a key grouped by tracked competition and crawl run", () => {
@@ -8,8 +8,8 @@ describe("buildRawFixturesKey", () => {
   });
 });
 
-describe("buildRawLaddersKey", () => {
+describe("buildRawTableKey", () => {
   it("builds a key grouped by tracked competition and crawl run", () => {
-    expect(buildRawLaddersKey("trk_abc", "run_1")).toBe("raw/trk_abc/run_1/ladders.json");
+    expect(buildRawTableKey("trk_abc", "run_1")).toBe("raw/trk_abc/run_1/table.json");
   });
 });
