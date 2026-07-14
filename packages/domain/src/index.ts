@@ -9,6 +9,7 @@ export {
   type ResultError,
 } from "./result.ts";
 export { parseEnv } from "./config.ts";
+export type { LogFields, Logger } from "./logger.ts";
 export {
   generateId,
   idPrefixValue,
@@ -73,6 +74,13 @@ export {
   type DriblTableEntry,
   type DriblTableEntryAttributes,
 } from "./external/driblTableEntry.ts";
+export {
+  driblListResponseSchema,
+  driblTenantResponseSchema,
+  type DriblListItem,
+  type DriblListResponse,
+  type DriblTenantResponse,
+} from "./external/driblListEndpoints.ts";
 export { mapDriblClub, type MappedClub } from "./mappers/mapDriblClub.ts";
 export { mapDriblFixture, type MappedFixture } from "./mappers/mapDriblFixture.ts";
 export { mapDriblTableEntry, type MappedTableEntry } from "./mappers/mapDriblTableEntry.ts";
