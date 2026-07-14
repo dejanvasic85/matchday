@@ -44,7 +44,7 @@ Project setup + standards. Mostly mirrors what williamstownsc already has; port 
       from 0004, relationships, ID prefixes from 0005. Unblocks everything below. (→ 0004,0005,0006)
 - [x] **DB package + Drizzle** — `packages/db`: Drizzle schema modelling 0011, migrations,
       Neon connection (serverless driver / Hyperdrive). (→ 0006, 0009)
-- [ ] **Neon project setup** — create/confirm Neon project + branches (dev/prod); run first
+- [x] **Neon project setup** — create/confirm Neon project + branches (dev/prod); run first
       migration. (→ 0009)
 
 ## Phase 2 — Domain
