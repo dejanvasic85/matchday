@@ -22,18 +22,19 @@ raw responses to R2 on the critical path, so R2 is required, not optional.
 ### 1. Prerequisites
 
 - **Google Chrome installed** — playwright-core drives your real Chrome (`channel: "chrome"`) to
-  clear Cloudflare. Leave `BROWSER_WS_ENDPOINT` unset to launch it locally (thanos-primary mode).
+  clear Cloudflare, launched locally in thanos-primary mode.
 - **Neon `matchday-dev`** connection string (pooled host, `?sslmode=require`).
 - **Cloudflare R2**: two buckets and an API token (see below).
 
 ### 2. Cloudflare R2 buckets
 
-Create both buckets in your Cloudflare account and an R2 API token with read/write to them:
+Create both buckets in your Cloudflare account and an R2 API token with read/write to them (exact
+bucket-name vars are in `.env.example`):
 
-- **`matchday-raw`** — raw Dribl API responses, staged pre-transform. Add a **7-day lifecycle
-  expiry rule** (ADR 0004) so staged objects self-delete.
-- **`matchday-logos`** — club logos (used by the competition crawl; not written by `mday clubs`
-  yet, but the config requires the name).
+- A **raw-response** bucket — raw Dribl API responses, staged pre-transform. Add a **7-day
+  lifecycle expiry rule** (ADR 0004) so staged objects self-delete.
+- A **logos** bucket — club logos (used by the competition crawl; not written by `mday clubs` yet,
+  but the config requires it).
 
 ### 3. Environment
 
@@ -64,7 +65,7 @@ The `mday` script runs `node --env-file-if-exists=.env.local ./src/index.ts`, so
 picked up with no dotenv dependency. `mday --help` (or `mday clubs --help`) lists commands.
 
 Logs are JSON lines: `info`/`debug` on stdout, `warn`/`error` on stderr (so Cloudflare Workers Logs
-classifies them in production). Control verbosity with `LOG_LEVEL` (`debug|info|warn|error`).
+classifies them in production). Log verbosity is configurable via `.env.example`.
 
 ## Tests & checks
 
