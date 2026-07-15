@@ -3,6 +3,11 @@
 // leaving the fixture's team id null if unknown (the schema already allows null, for byes).
 // Table-entry data carries team name + club name together, so it's the one place that creates
 // teams, resolving/creating the club alongside.
+//
+// TODO(0012): the club link here goes through resolveClub's logo/name matching, which 0012
+// supersedes — the ladder row's `club_code` is the stable club key and should drive club
+// resolution (and set `team.clubId`) instead. Rewire this when the competition-crawl job lands;
+// resolveClub's logo lookup then survives only as clubs-sync's enrichment attach.
 
 import {
   err,

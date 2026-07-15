@@ -2,9 +2,14 @@
 // packages/db/src/constants.ts; kept as a separate domain-owned copy so `packages/domain`
 // has no dependency on `packages/db` (per AGENTS.md layering).
 
-/** External identity sources (ADR 0005). Dribl is the only source today. */
+/**
+ * External identity sources (ADR 0005, 0012). `dribl` = a Dribl entity's own hashed id (clubs from
+ * clubs-sync, teams via `team_hash_id`). `driblClubCode` = a club's `club_code`, the stable club
+ * key the crawl path exposes on ladder rows (the only club identifier ladders/fixtures carry).
+ */
 export const sourceValue = {
   dribl: "dribl",
+  driblClubCode: "dribl_club_code",
 } as const;
 
 export type Source = (typeof sourceValue)[keyof typeof sourceValue];

@@ -60,14 +60,29 @@ Project setup + standards. Mostly mirrors what williamstownsc already has; port 
 
 ## Phase 3 — Scraper
 
-- [ ] **Crawler core** — port WSC playwright-core crawler; Cloudflare bypass via browser
-      context; browser endpoint abstracted (thanos local ↔ managed fallback); raw API
-      responses written to R2 (7-day expiry) before transform, per updated 0004. (→ 0009)
-- [ ] **Clubs sync job** — full `list/clubs` crawl → upsert clubs by external_ref. Daily.
-      (→ 0003)
+Entity-resolution identity is settled by **0012** (from the 2026-07-15 Dribl investigation):
+team keyed on `team_hash_id`, club on `club_code` (crawl authority) + Dribl club id (clubs-sync
+enrichment); logo is an enrichment-join hint only, never identity; `team.clubId` is nullable.
+
+- [~] **Crawler core** — playwright-core crawler; Cloudflare bypass via browser context; browser
+  endpoint abstracted (thanos local ↔ managed fallback); raw API responses staged to R2
+  (7-day expiry) before transform, per 0004. Building blocks done; `mday` CLI (citty) wires
+  jobs as subcommands. (→ 0009)
+- [ ] **0012 schema follow-ups** — relax `team.clubId` to nullable (migration); add
+      `dribl_club_code` to the `external_ref` source union in `packages/domain`; fix
+      `driblListResponseSchema` (competitions/leagues return `name`/`id` at top level, not under
+      `attributes`); loosen `driblClubSocial` `name` to a tolerant parse. (→ 0012)
+- [ ] **Clubs sync job (enrichment)** — full `list/clubs` crawl → upsert club records
+      (grounds/colours/address/socials) keyed on Dribl club id; attach to the `club_code`-identified
+      club **by logo match**; never create a competing club row. Enrichment, not identity. Daily.
+      (→ 0003, 0012)
+- [ ] **Club enrichment data-model** — home for `grounds` (venue name+address), `color`/`accent`
+      (brand), `email_address`, `store` from the `clubs/{id}` detail endpoint: own venue entity vs
+      club columns. Needs an ADR-ish decision before implementing. (→ 0004, 0012)
 - [ ] **Competition crawl job** — competition-keyed; fixtures + results + ladders in one pass;
-      raw responses staged to R2, then transformed and upserted by external_ref; logo
-      mirroring to R2. Fixture-derived match-window cadence. (→ 0002, 0003, 0004)
+      resolves teams by `team_hash_id`, clubs by `club_code` (creating clubs + setting `team.clubId`
+      from the ladder row); raw responses staged to R2, then transformed and upserted by
+      external_ref. Fixture-derived match-window cadence. (→ 0002, 0003, 0004, 0012)
 - [ ] **tracked_competition registry** — seed from tenant teams; drives the crawl. (→ 0002)
 - [ ] **Scheduling** — wire per-job triggers (thanos cron / GH Actions / CF Cron). (→ 0003, 0009)
 

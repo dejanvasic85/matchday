@@ -39,9 +39,10 @@ export const club = pgTable("club", {
 
 export const team = pgTable("team", {
   id: text("id").primaryKey(),
-  clubId: text("club_id")
-    .notNull()
-    .references(() => club.id),
+  // Nullable per 0012: a team is keyed on the stable `team_hash_id`, but its club association comes
+  // from the ladder row's `club_code`. A team first seen without a resolvable club is stored with a
+  // null clubId and linked later, rather than blocking ingest or fabricating a club.
+  clubId: text("club_id").references(() => club.id),
   name: text("name").notNull(),
   ageGroup: text("age_group"),
   gender: text("gender"),

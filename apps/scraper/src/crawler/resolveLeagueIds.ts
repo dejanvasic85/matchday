@@ -65,10 +65,10 @@ async function resolveListId(
   }
 
   const match = parsed.data.data.find((item) => {
-    if (skipRemoved && item.attributes.name.startsWith(removedLeaguePrefix)) {
+    if (skipRemoved && item.name.startsWith(removedLeaguePrefix)) {
       return false;
     }
-    return item.attributes.name === matchName;
+    return item.name === matchName;
   });
 
   if (match === undefined) {

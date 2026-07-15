@@ -2,15 +2,20 @@
   "name": "@matchday/scraper",
   "version": "0.0.0",
   "private": true,
+  "bin": {
+    "mday": "./src/index.ts"
+  },
   "type": "module",
   "scripts": {
     "test": "vp test run",
-    "check": "vp check"
+    "check": "vp check",
+    "mday": "node --env-file-if-exists=.env.local ./src/index.ts"
   },
   "dependencies": {
     "@matchday/db": "workspace:*",
     "@matchday/domain": "workspace:*",
     "aws4fetch": "catalog:",
+    "citty": "catalog:",
     "playwright-core": "catalog:",
     "zod": "catalog:"
   },

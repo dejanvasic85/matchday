@@ -12,8 +12,11 @@ export const driblClubAddressSchema = z.object({
   postcode: z.string().nullable(),
 });
 
+// `name` is a platform slug — observed values are facebook/instagram/twitter, but it's kept as a
+// tolerant string (not a strict enum) so a newly-supported platform can't fail the whole clubs
+// sync on one unexpected value (0012).
 export const driblClubSocialSchema = z.object({
-  name: z.enum(["facebook", "instagram", "twitter"]),
+  name: z.string(),
   value: z.url(),
 });
 

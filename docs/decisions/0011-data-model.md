@@ -2,6 +2,8 @@
 
 - Status: decided
 - Date: 2026-07-13
+- Amended by: [0012](0012-entity-resolution.md) — `team.clubId` relaxed to nullable; club identity
+  keyed on `club_code` (crawl) + Dribl club id (clubs-sync), not logo/name matching.
 
 ## Context
 

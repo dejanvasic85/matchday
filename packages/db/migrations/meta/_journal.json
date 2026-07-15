@@ -15,6 +15,13 @@
       "when": 1784065896998,
       "tag": "0001_past_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784145042171,
+      "tag": "0002_old_aaron_stack",
+      "breakpoints": true
     }
   ]
 }

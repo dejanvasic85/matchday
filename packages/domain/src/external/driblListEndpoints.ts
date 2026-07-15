@@ -8,9 +8,11 @@ export const driblTenantResponseSchema = z.object({
   data: z.object({ id: z.string() }),
 });
 
+// `list/*` items carry `id` and `name` at the top level (not nested under `attributes`, which the
+// `clubs`/`ladders` payloads use) — confirmed against the live API for competitions and leagues.
 const driblListItemSchema = z.object({
   id: z.string(),
-  attributes: z.object({ name: z.string() }),
+  name: z.string(),
 });
 
 export const driblListResponseSchema = z.object({
