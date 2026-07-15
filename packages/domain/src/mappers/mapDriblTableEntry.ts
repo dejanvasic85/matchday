@@ -9,6 +9,7 @@ export type MappedTableEntry = {
   teamSourceId: string;
   teamName: string;
   clubName: string;
+  clubLogoUrl: string | null;
   leagueName: string;
   seasonName: string;
   position: number;
@@ -28,7 +29,10 @@ export function mapDriblTableEntry(entry: DriblTableEntry): MappedTableEntry {
   return {
     teamSourceId: attributes.team_hash_id,
     teamName: attributes.team_name,
-    clubName: attributes.club_name,
+    // Trimmed so downstream name-based club matching (resolveClub, when no logo match exists)
+    // isn't defeated by incidental whitespace in Dribl's HTML-sourced club names.
+    clubName: attributes.club_name.trim(),
+    clubLogoUrl: attributes.club_logo,
     leagueName: attributes.league_name,
     seasonName: attributes.season_name,
     position: attributes.position,

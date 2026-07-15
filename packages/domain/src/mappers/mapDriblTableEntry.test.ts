@@ -36,6 +36,7 @@ describe("mapDriblTableEntry", () => {
       teamSourceId: "hteam001",
       teamName: "Altona North SC U08",
       clubName: "Altona North SC",
+      clubLogoUrl: "https://ocean.dribl.com/club-logo",
       leagueName: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue",
       seasonName: "2026",
       position: 1,
@@ -48,5 +49,17 @@ describe("mapDriblTableEntry", () => {
       goalDifference: 9,
       points: 13,
     });
+  });
+
+  it("maps a null club logo through as null", () => {
+    const result = mapDriblTableEntry(makeDriblTableEntry({ club_logo: null }));
+
+    expect(result.clubLogoUrl).toBeNull();
+  });
+
+  it("trims incidental whitespace from the club name", () => {
+    const result = mapDriblTableEntry(makeDriblTableEntry({ club_name: "  Altona North SC  " }));
+
+    expect(result.clubName).toBe("Altona North SC");
   });
 });

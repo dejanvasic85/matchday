@@ -97,31 +97,40 @@ export const fixture = pgTable("fixture", {
   ...timestamps,
 });
 
-export const tableEntry = pgTable("table_entry", {
-  id: text("id").primaryKey(),
-  leagueId: text("league_id")
-    .notNull()
-    .references(() => league.id),
-  competitionId: text("competition_id")
-    .notNull()
-    .references(() => competition.id),
-  seasonId: text("season_id")
-    .notNull()
-    .references(() => season.id),
-  teamId: text("team_id")
-    .notNull()
-    .references(() => team.id),
-  position: integer("position").notNull(),
-  played: integer("played").notNull(),
-  won: integer("won").notNull(),
-  drawn: integer("drawn").notNull(),
-  lost: integer("lost").notNull(),
-  goalsFor: integer("goals_for").notNull(),
-  goalsAgainst: integer("goals_against").notNull(),
-  goalDifference: integer("goal_difference").notNull(),
-  points: integer("points").notNull(),
-  ...timestamps,
-});
+export const tableEntry = pgTable(
+  "table_entry",
+  {
+    id: text("id").primaryKey(),
+    leagueId: text("league_id")
+      .notNull()
+      .references(() => league.id),
+    competitionId: text("competition_id")
+      .notNull()
+      .references(() => competition.id),
+    seasonId: text("season_id")
+      .notNull()
+      .references(() => season.id),
+    teamId: text("team_id")
+      .notNull()
+      .references(() => team.id),
+    position: integer("position").notNull(),
+    played: integer("played").notNull(),
+    won: integer("won").notNull(),
+    drawn: integer("drawn").notNull(),
+    lost: integer("lost").notNull(),
+    goalsFor: integer("goals_for").notNull(),
+    goalsAgainst: integer("goals_against").notNull(),
+    goalDifference: integer("goal_difference").notNull(),
+    points: integer("points").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    // A team appears at most once per league's table; re-crawling the same league updates
+    // this row instead of inserting a duplicate (no external_ref — the whole ladder is
+    // re-fetched and replaced each crawl, so there's no stable per-row Dribl id worth tracking).
+    uniqueIndex("table_entry_league_team_key").on(table.leagueId, table.teamId),
+  ],
+);
 
 export const externalRef = pgTable(
   "external_ref",
