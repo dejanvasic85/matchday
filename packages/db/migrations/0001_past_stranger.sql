@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "table_entry_league_team_key" ON "table_entry" USING btree ("league_id","team_id");

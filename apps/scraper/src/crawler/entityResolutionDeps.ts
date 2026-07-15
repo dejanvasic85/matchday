@@ -1,0 +1,48 @@
+// Shared collaborator shape for the entity-resolution services in this directory (resolveClub,
+// resolveTeam, resolveFixtureEntities, resolveTableEntryEntities). Each entry is a @matchday/db
+// query function with `db` already bound — the crawl job builds one `EntityResolutionDeps` per
+// run and threads it through every resolver, so services depend on injectable functions rather
+// than importing @matchday/db directly (AGENTS.md: DI over mocking the DB — tests pass vi.fn()
+// fakes here instead of vi.mock("@matchday/db")).
+
+import {
+  findClubByLogoUrl,
+  findClubByName,
+  findExternalRef,
+  upsertClub,
+  upsertExternalRef,
+  upsertFixture,
+  upsertTableEntry,
+  upsertTeam,
+} from "@matchday/db";
+
+type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
+  ? (...rest: Rest) => Return
+  : never;
+
+export type EntityResolutionDeps = {
+  findClubByLogoUrl: WithoutDb<typeof findClubByLogoUrl>;
+  findClubByName: WithoutDb<typeof findClubByName>;
+  upsertClub: WithoutDb<typeof upsertClub>;
+  upsertTeam: WithoutDb<typeof upsertTeam>;
+  upsertFixture: WithoutDb<typeof upsertFixture>;
+  upsertTableEntry: WithoutDb<typeof upsertTableEntry>;
+  findExternalRef: WithoutDb<typeof findExternalRef>;
+  upsertExternalRef: WithoutDb<typeof upsertExternalRef>;
+};
+
+/** Binds `db` into every @matchday/db query function this module's resolvers need. */
+export function createEntityResolutionDeps(
+  db: Parameters<typeof findClubByLogoUrl>[0],
+): EntityResolutionDeps {
+  return {
+    findClubByLogoUrl: (logoUrl) => findClubByLogoUrl(db, logoUrl),
+    findClubByName: (name) => findClubByName(db, name),
+    upsertClub: (values) => upsertClub(db, values),
+    upsertTeam: (values) => upsertTeam(db, values),
+    upsertFixture: (values) => upsertFixture(db, values),
+    upsertTableEntry: (values) => upsertTableEntry(db, values),
+    findExternalRef: (source, sourceId) => findExternalRef(db, source, sourceId),
+    upsertExternalRef: (values) => upsertExternalRef(db, values),
+  };
+}

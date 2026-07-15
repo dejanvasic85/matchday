@@ -8,6 +8,13 @@
       "when": 1783928184548,
       "tag": "0000_aromatic_the_executioner",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784065896998,
+      "tag": "0001_past_stranger",
+      "breakpoints": true
     }
   ]
 }

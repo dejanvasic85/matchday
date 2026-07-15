@@ -13,4 +13,18 @@ export {
   type Source,
   type ExternalRefEntityType,
 } from "./constants.ts";
-export { listClubs, getClubById, upsertExternalRef, findExternalRef } from "./queries.ts";
+export {
+  listClubs,
+  getClubById,
+  findClubByLogoUrl,
+  findClubByName,
+  upsertClub,
+  upsertTeam,
+  upsertCompetition,
+  upsertSeason,
+  upsertLeague,
+  upsertFixture,
+  upsertTableEntry,
+  upsertExternalRef,
+  findExternalRef,
+} from "./queries.ts";
