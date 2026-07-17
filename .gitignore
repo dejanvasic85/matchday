@@ -21,8 +21,9 @@ pnpm-debug.log*
 .vscode/*
 !.vscode/extensions.json
 
-# AI agent worktrees
+# AI agent worktrees + per-project agent memory (personal, not project files)
 .claude/worktrees/
+.claude/projects/
 
 # scraped/staging data
 data/external/

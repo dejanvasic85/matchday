@@ -60,16 +60,32 @@ Project setup + standards. Mostly mirrors what williamstownsc already has; port 
 
 ## Phase 3 — Scraper
 
-- [ ] **Crawler core** — port WSC playwright-core crawler; Cloudflare bypass via browser
-      context; browser endpoint abstracted (thanos local ↔ managed fallback); raw API
-      responses written to R2 (7-day expiry) before transform, per updated 0004. (→ 0009)
-- [ ] **Clubs sync job** — full `list/clubs` crawl → upsert clubs by external_ref. Daily.
-      (→ 0003)
-- [ ] **Competition crawl job** — competition-keyed; fixtures + results + ladders in one pass;
-      raw responses staged to R2, then transformed and upserted by external_ref; logo
-      mirroring to R2. Fixture-derived match-window cadence. (→ 0002, 0003, 0004)
-- [ ] **tracked_competition registry** — seed from tenant teams; drives the crawl. (→ 0002)
-- [ ] **Scheduling** — wire per-job triggers (thanos cron / GH Actions / CF Cron). (→ 0003, 0009)
+Strategy is set by **0012** (league-focused subscriptions, multi-source, catalog vs deep crawl).
+Crawl building blocks (playwright-core session, browser fetch, `resolveLeagueIds`, `crawlTable`,
+`crawlFixturesByRound`, R2 raw staging, the `mday` CLI shell) exist from an earlier spike and carry
+forward; the strategy below rewires how they're driven.
+
+- [ ] **0012 schema follow-ups** — relax `team.clubId` to nullable (migration); make
+      `external_ref.source` a real multi-value union (`dribl`, `dribl_club_code`, future sources) in
+      `packages/domain` + `packages/db`; fix `driblListResponseSchema` (list items are top-level
+      `name`/`id`); loosen `driblClubSocial.name` to a tolerant parse. (→ 0012)
+- [ ] **Subscription + catalog data model** — subscription entity
+      `(source, year, competition, league, sanityTeamRef)`; source-scoped catalog of
+      competitions/leagues/teams (subsumes `tracked_competition`). Resolve the open **stable
+      league-key** question first (0012). (→ 0011, 0012)
+- [ ] **Catalog crawl job** — cheap, source-wide: enumerate all competitions/leagues/teams for a
+      source + year (Dribl `list/*` + a light latest-round/table pass to list teams). Populates
+      onboarding dropdowns. Runs regardless of subscriptions. (→ 0012)
+- [ ] **Deep crawl job (subscription-driven)** — fixtures + tables for subscribed leagues only;
+      discovers clubs/teams (team by `team_hash_id`, club by `club_code`), sets `team.clubId` from
+      the ladder row; raw staged to R2 then transformed/upserted by external_ref. (→ 0003, 0004, 0012)
+- [ ] **Club enrichment job** — fetch rich club detail (grounds/colours/address/socials) from the
+      `clubs/{id}` endpoint; attach by logo to clubs the deep crawl discovered; never create. Needs a
+      club-enrichment data-model decision (venue entity vs club columns). (→ 0004, 0012)
+- [ ] **Source-abstraction seam** — factor the crawler so a source is an adapter (catalog +
+      deep-crawl + identity mapping). Dribl is the first adapter; designed for a second later. (→ 0012)
+- [ ] **Scheduling** — wire per-job triggers (thanos cron / GH Actions / CF Cron), driven by the
+      subscription set. (→ 0003, 0009, 0012)
 
 ## Phase 4 — API
 

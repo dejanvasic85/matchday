@@ -2,6 +2,9 @@
 
 - Status: decided
 - Date: 2026-07-13
+- Reshaped by: [0012](0012-subscription-multisource.md) — league-focused subscriptions + multi-source
+  ingest; `tracked_competition` subsumed by a subscription entity; `team.clubId` nullable; clubs/teams
+  discovered from the crawl (team by `team_hash_id`, club by `club_code`), not enumerated.
 
 ## Context
 
