@@ -6,7 +6,7 @@
 ## Context
 
 Today every entity keys off **Dribl hash IDs** — `clubs.json.externalId`, fixture
-`home/awayTeamId` (club hashes), ladder `teamId` (team hashes), fixture `hash_id`. There are
+`home/awayTeamId` (club hashes), table `teamId` (team hashes), fixture `hash_id`. There are
 no application-owned IDs. This is brittle: it couples the whole data model to one source, mixes
 ID namespaces (club vs team hashes), and makes a second data source or a Dribl schema change
 painful. It also caused real friction (e.g. `findDuplicateClubIds` where teams share a club
@@ -28,7 +28,7 @@ hash).
 - Slug as PK — renames/collisions painful; not unique across seasons/competitions.
 
 Proposed prefixes: `clb_` club, `tea_` team, `cmp_` competition, `sea_` season,
-`mtc_` match/fixture, `lad_` ladder entry (finalise during schema design).
+`mtc_` match/fixture, `tab_` table entry (finalise during schema design).
 
 ## Recommendation
 

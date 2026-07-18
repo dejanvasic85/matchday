@@ -28,7 +28,7 @@ Dribl.
 ### Key insight: competition-keyed crawling solves dedup
 
 The "same fixture/result scraped multiple times" problem is an artefact of the _per-team_
-model. If the crawl is **keyed on competition**, each fixture and ladder is fetched **exactly
+model. If the crawl is **keyed on competition**, each fixture and table is fetched **exactly
 once** no matter how many tenant teams sit in that competition. Dedup is therefore not a
 separate mechanism — it falls out of the crawl key. This makes competition-keyed crawling the
 right base regardless of how wide we cast the net.
@@ -41,7 +41,7 @@ the Cloudflare-bypass browser step is), which we haven't measured yet.
 
 **Crawl by competition, driven by a tracked-competitions registry, seeded from tenant teams.**
 
-- The crawler iterates a **registry of tracked competitions**, fetching each fixture/ladder
+- The crawler iterates a **registry of tracked competitions**, fetching each fixture/table
   once; per-club and per-team views are derived on top.
 - Seed the registry from the competitions that registered tenant teams play in (lean — scrape
   only what's served today).
@@ -56,4 +56,4 @@ the Cloudflare-bypass browser step is), which we haven't measured yet.
   competitions.
 - Onboarding a club adds only its _new_ competitions to the registry.
 - Path to whole-association scraping is open without redesign; decision gated on efficiency.
-- Enables cross-club and full-ladder queries naturally.
+- Enables cross-club and full-table queries naturally.

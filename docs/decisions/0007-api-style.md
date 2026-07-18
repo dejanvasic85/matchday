@@ -6,7 +6,7 @@
 ## Context
 
 matchday serves read-mostly competition data with a well-defined, stable resource set:
-clubs, teams, competitions, seasons, fixtures, ladder tables. Consumers (starting with
+clubs, teams, competitions, seasons, fixtures, tables. Consumers (starting with
 williamstownsc's Next.js app) need predictable, cacheable responses. The API sits behind
 Cloudflare for edge caching.
 

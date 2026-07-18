@@ -70,11 +70,6 @@ Phase 2). Finalised prefixes:
 | `ext_` | external_ref        |
 | `trk_` | tracked_competition |
 
-> **Terminology note:** earlier ADRs (0002–0007) call the standings entity a "ladder" (`lad_`),
-> which is AFL/NRL vernacular. matchday is soccer-oriented, so the entity is named **`table_entry`
-> (`tab_`)** here — a row in a league table. The older ADRs are left as historical records; this
-> schema is the source of truth.
-
 ### Entities
 
 Every entity table carries `created_at`/`updated_at` (`timestamptz`, default `now()`). Columns are
