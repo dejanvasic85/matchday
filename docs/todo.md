@@ -73,10 +73,11 @@ forward; the strategy below rewires how they're driven.
       keyed on our internal `lea_` id (not Dribl identifiers); subsumes `tracked_competition`.
       Competition/league/team are already first-class 0011 entities; no team↔league join/history
       table (membership is derived from `fixture`/`table_entry`). (→ 0011, 0012)
-- [ ] **Catalog crawl job** — cheap, source-wide: upsert all competitions/leagues/teams for a
+- [x] **Catalog crawl job** — cheap, source-wide: upsert all competitions/leagues/teams for a
       source + year as first-class rows with internal ids + `external_ref` (league keyed on the Dribl
       league hash). Dribl `list/*` + a light latest-round/table pass to list teams. Populates the
-      REST-served onboarding dropdowns. Runs regardless of subscriptions. (→ 0011, 0012)
+      REST-served onboarding dropdowns. Runs regardless of subscriptions. `mday catalog`
+      (`--max-leagues`, `--dry-run`). (→ 0011, 0012)
 - [ ] **Deep crawl job (subscription-driven)** — fixtures + tables for subscribed leagues only;
       discovers clubs/teams (team by `team_hash_id`, club by `club_code`), sets `team.clubId` from
       the table row; raw staged to R2 then transformed/upserted by external_ref. (→ 0003, 0004, 0012)
