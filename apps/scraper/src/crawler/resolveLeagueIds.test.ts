@@ -124,7 +124,7 @@ describe("resolveLeagueIds", () => {
       seasonYear: "2026",
     });
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
   });
 
   it("saves the resolved tenant id even when a later list lookup fails", async () => {

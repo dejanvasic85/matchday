@@ -71,7 +71,7 @@ describe("resolveTableEntryEntities", () => {
 
     const result = await resolveTableEntryEntities(deps, makeMappedTableEntry(), context);
 
-    expect(result.ok).toBe(true);
+    assert(result.ok);
     expect(deps.upsertTableEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         teamId: "tea_existing001",
@@ -91,7 +91,7 @@ describe("resolveTableEntryEntities", () => {
 
     const result = await resolveTableEntryEntities(deps, makeMappedTableEntry(), context);
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
     expect(deps.upsertTableEntry).not.toHaveBeenCalled();
   });
 });

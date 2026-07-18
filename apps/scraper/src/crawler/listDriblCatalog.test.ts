@@ -15,7 +15,7 @@ describe("resolveTenantId", () => {
 
     const result = await resolveTenantId(page, "fv.dribl.com", "fv");
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
   });
 });
 

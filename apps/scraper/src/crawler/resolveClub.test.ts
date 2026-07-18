@@ -74,7 +74,7 @@ describe("resolveClub", () => {
       logoUrl: "https://ocean.dribl.com/new-logo",
     });
 
-    expect(result.ok).toBe(true);
+    assert(result.ok);
     expect(deps.upsertClub).toHaveBeenCalledWith(
       expect.objectContaining({ name: "New Club FC", displayName: "New Club FC" }),
     );
@@ -91,6 +91,6 @@ describe("resolveClub", () => {
       logoUrl: "https://ocean.dribl.com/logo",
     });
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
   });
 });

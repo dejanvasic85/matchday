@@ -65,8 +65,7 @@ describe("crawlCatalog", () => {
       seasonYear: "2026",
     });
 
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
+    assert(result.ok);
     expect(result.value.map((r) => r.leagueName)).toEqual(["NPL VIC Men", "NPL VIC Men - U20"]);
   });
 
@@ -90,8 +89,7 @@ describe("crawlCatalog", () => {
       maxLeagues: 1,
     });
 
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
+    assert(result.ok);
     expect(result.value).toHaveLength(2);
     expect(result.value.map((r) => r.competitionName)).toEqual([
       "Senol NPL Victoria Men",
@@ -161,7 +159,7 @@ describe("crawlCatalog", () => {
       seasonYear: "2026",
     });
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
   });
 
   it("returns ok with an empty result when no competitions are found", async () => {
@@ -197,8 +195,7 @@ describe("crawlCatalog", () => {
       maxLeagues: 1,
     });
 
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
+    assert(result.ok);
     expect(result.value).toHaveLength(1);
     expect(result.value[0]?.competitionName).toBe("Senol NPL Victoria Women");
   });

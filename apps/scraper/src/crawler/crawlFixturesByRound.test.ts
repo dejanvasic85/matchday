@@ -58,7 +58,7 @@ describe("crawlFixturesByRound", () => {
       crawlRunId: "run_1",
     });
 
-    expect(result.ok).toBe(true);
+    assert(result.ok);
     expect(rawStorage.puts).toHaveLength(2);
     expect(rawStorage.puts[0]?.key).toBe("raw/trk_abc/run_1/fixtures-round-1.json");
     expect(rawStorage.puts[1]?.key).toBe("raw/trk_abc/run_1/fixtures-round-2.json");
@@ -83,7 +83,7 @@ describe("crawlFixturesByRound", () => {
       crawlRunId: "run_1",
     });
 
-    expect(result.ok).toBe(true);
+    assert(result.ok);
     expect(rawStorage.puts).toHaveLength(2);
   });
 
@@ -100,7 +100,7 @@ describe("crawlFixturesByRound", () => {
       crawlRunId: "run_1",
     });
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
     expect(rawStorage.puts).toHaveLength(0);
   });
 
@@ -118,7 +118,7 @@ describe("crawlFixturesByRound", () => {
       crawlRunId: "run_1",
     });
 
-    expect(result.ok).toBe(true);
+    assert(result.ok);
     expect(logger.warn).toHaveBeenCalledWith(
       "crawl.fixturesRound",
       "hit maxRounds safety cap without a natural stop",
