@@ -51,7 +51,7 @@ describe("resolveEntityByExternalRef", () => {
       upsertEntity,
     });
 
-    expect(result.ok).toBe(true);
+    assert(result.ok);
     expect(upsertEntity).toHaveBeenCalledTimes(1);
     expect(deps.upsertExternalRef).toHaveBeenCalledWith(
       expect.objectContaining({ entityType: "team", sourceId: "team-source-2" }),
@@ -73,7 +73,7 @@ describe("resolveEntityByExternalRef", () => {
       upsertEntity,
     });
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
     expect(upsertEntity).not.toHaveBeenCalled();
   });
 
@@ -90,7 +90,7 @@ describe("resolveEntityByExternalRef", () => {
       upsertEntity,
     });
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
     expect(deps.upsertExternalRef).not.toHaveBeenCalled();
   });
 });

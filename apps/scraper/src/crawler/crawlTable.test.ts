@@ -45,7 +45,7 @@ describe("crawlTable", () => {
       crawlRunId: "run_1",
     });
 
-    expect(result.ok).toBe(true);
+    assert(result.ok);
     expect(rawStorage.puts).toHaveLength(1);
     expect(rawStorage.puts[0]?.key).toBe("raw/trk_abc/run_1/table.json");
   });
@@ -80,6 +80,6 @@ describe("crawlTable", () => {
       crawlRunId: "run_1",
     });
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
   });
 });

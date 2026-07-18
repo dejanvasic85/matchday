@@ -61,7 +61,7 @@ describe("resolveTeamForFixture", () => {
 
     const result = await resolveTeamForFixture(deps, "team-source-1");
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
   });
 });
 
@@ -84,7 +84,7 @@ describe("resolveTeamForTableEntry", () => {
       clubLogoUrl: "https://ocean.dribl.com/logo",
     });
 
-    expect(result.ok).toBe(true);
+    assert(result.ok);
     expect(deps.upsertTeam).toHaveBeenCalledWith(
       expect.objectContaining({ clubId: "clb_existing0001", name: "Altona North SC U08" }),
     );
@@ -103,7 +103,7 @@ describe("resolveTeamForTableEntry", () => {
       clubLogoUrl: "https://ocean.dribl.com/logo",
     });
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
     expect(deps.findExternalRef).not.toHaveBeenCalled();
   });
 });

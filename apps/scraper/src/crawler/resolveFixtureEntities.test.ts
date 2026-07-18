@@ -66,7 +66,7 @@ describe("resolveFixtureEntities", () => {
 
     const result = await resolveFixtureEntities(deps, makeMappedFixture(), context);
 
-    expect(result.ok).toBe(true);
+    assert(result.ok);
     expect(deps.upsertFixture).toHaveBeenCalledWith(
       expect.objectContaining({
         homeTeamId: "tea_home00000001",
@@ -123,7 +123,7 @@ describe("resolveFixtureEntities", () => {
 
     const result = await resolveFixtureEntities(deps, makeMappedFixture(), context);
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
     expect(deps.upsertFixture).not.toHaveBeenCalled();
   });
 });

@@ -23,6 +23,6 @@ describe("browserFetch", () => {
 
     const result = await browserFetch(page, "https://example.com");
 
-    expect(result.ok).toBe(false);
+    assert(!result.ok);
   });
 });
