@@ -122,8 +122,11 @@ describe("crawlCatalog", () => {
       ok: true,
       value: [
         {
+          competitionSourceId: "comp-1",
           competitionName: "Senol NPL Victoria Men",
+          leagueSourceId: "league-1",
           leagueName: "NPL VIC Men",
+          seasonSourceId: "season-id",
           seasonName: "2026",
           tableEntries: [
             {

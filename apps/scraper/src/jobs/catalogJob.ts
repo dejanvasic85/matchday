@@ -3,24 +3,34 @@
 // dropdowns; runs on a schedule regardless of subscriptions.
 //
 // `maxLeagues` caps how many leagues are crawled per competition (see crawlCatalog) — useful for
-// keeping a run cheap while iterating on the pipeline. Persistence (DB upserts) is a later slice;
-// this job prints the crawled data to the console.
+// keeping a run cheap while iterating on the pipeline. `dryRun` crawls but skips all DB writes,
+// logging the crawled data instead — for inspecting a run without mutating the catalog.
+//
+// This is transport glue (AGENTS.md): it constructs the real browser session + DB client, then
+// delegates crawling and persistence to their pure services.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
+import { createDbClient } from "@matchday/db";
 import { openBrowserSession } from "../crawler/browserSession.ts";
 import { crawlCatalog } from "../crawler/crawlCatalog.ts";
+import { createEntityResolutionDeps } from "../crawler/entityResolutionDeps.ts";
+import { logCatalogDryRun } from "../crawler/logCatalogDryRun.ts";
+import { persistCatalog } from "../crawler/persistCatalog.ts";
 
 export type RunCatalogJobInput = {
   logger: Logger;
+  databaseUrl: string;
   driblSiteUrl: string;
   tenantHost: string;
   tenantSlug: string;
   seasonYear: string;
   maxLeagues?: number;
+  dryRun: boolean;
 };
 
 export async function runCatalogJob(input: RunCatalogJobInput): Promise<Result<void>> {
-  const { logger, driblSiteUrl, tenantHost, tenantSlug, seasonYear, maxLeagues } = input;
+  const { logger, databaseUrl, driblSiteUrl, tenantHost, tenantSlug, seasonYear, maxLeagues } =
+    input;
 
   const sessionResult = await openBrowserSession({ driblSiteUrl });
   if (!sessionResult.ok) {
@@ -41,21 +51,18 @@ export async function runCatalogJob(input: RunCatalogJobInput): Promise<Result<v
       return crawlResult;
     }
 
-    logger.info("catalog.result", "catalog crawl complete", { leagues: crawlResult.value.length });
-
-    for (const { competitionName, leagueName, tableEntries } of crawlResult.value) {
-      for (const entry of tableEntries) {
-        logger.info("catalog.tableEntry", `${entry.position}. ${entry.teamName}`, {
-          competitionName,
-          leagueName,
-          clubName: entry.clubName,
-          clubCode: entry.clubCode,
-          played: entry.played,
-          points: entry.points,
-        });
-      }
+    if (input.dryRun) {
+      logCatalogDryRun(logger, crawlResult.value);
+      return ok(undefined);
     }
 
+    const deps = createEntityResolutionDeps(createDbClient(databaseUrl));
+    const persistResult = await persistCatalog({ deps, logger, leagues: crawlResult.value });
+    if (!persistResult.ok) {
+      return persistResult;
+    }
+
+    logger.info("catalog.result", "catalog crawl persisted", persistResult.value);
     return ok(undefined);
   } finally {
     await close();
