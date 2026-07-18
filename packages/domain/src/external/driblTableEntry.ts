@@ -6,6 +6,7 @@ import { z } from "zod";
 export const driblTableEntryAttributesSchema = z.object({
   team_hash_id: z.string(),
   team_name: z.string(),
+  club_code: z.string(),
   club_name: z.string(),
   club_logo: z.string().nullable(),
   season_name: z.string(),

@@ -22,17 +22,23 @@ export function createCli(): Command {
         "or monthly.",
     )
     .option("--season <year>", "season year to catalog", currentYear)
-    .action((options: { season: string }) => {
+    .action(async (options: { season: string }) => {
       const config = getScraperConfig();
       const logger = createConsoleLogger();
-      runCatalogJob({
+      const result = await runCatalogJob({
         logger,
+        driblSiteUrl: config.DRIBL_SITE_URL,
+        tenantHost: new URL(config.DRIBL_SITE_URL).host,
         tenantSlug: config.DRIBL_TENANT_SLUG,
         seasonYear: options.season,
       });
+      if (!result.ok) {
+        logger.error("catalog.failed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+      }
     });
 
   return program;
 }
 
-createCli().parse();
+await createCli().parseAsync();

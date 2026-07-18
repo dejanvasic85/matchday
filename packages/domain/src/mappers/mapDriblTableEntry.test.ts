@@ -10,6 +10,7 @@ function makeDriblTableEntry(
     attributes: {
       team_hash_id: "hteam001",
       team_name: "Altona North SC U08",
+      club_code: "ANSC",
       club_name: "Altona North SC",
       club_logo: "https://ocean.dribl.com/club-logo",
       season_name: "2026",
@@ -35,6 +36,7 @@ describe("mapDriblTableEntry", () => {
     expect(result).toEqual({
       teamSourceId: "hteam001",
       teamName: "Altona North SC U08",
+      clubCode: "ANSC",
       clubName: "Altona North SC",
       clubLogoUrl: "https://ocean.dribl.com/club-logo",
       leagueName: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue",
