@@ -13,7 +13,7 @@ export const idPrefixValue = {
   fixture: "mtc",
   tableEntry: "tab",
   externalRef: "ext",
-  trackedCompetition: "trk",
+  subscription: "sub",
 } as const;
 
 export type EntityType = keyof typeof idPrefixValue;
@@ -33,7 +33,7 @@ export type LeagueId = EntityId<"league">;
 export type FixtureId = EntityId<"fixture">;
 export type TableEntryId = EntityId<"tableEntry">;
 export type ExternalRefId = EntityId<"externalRef">;
-export type TrackedCompetitionId = EntityId<"trackedCompetition">;
+export type SubscriptionId = EntityId<"subscription">;
 
 const nanoidAlphabetValue = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const nanoidLengthValue = 12;

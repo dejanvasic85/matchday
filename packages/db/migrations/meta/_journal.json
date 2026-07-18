@@ -15,6 +15,13 @@
       "when": 1784065896998,
       "tag": "0001_past_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784371616288,
+      "tag": "0002_subscription_replaces_tracked_competition",
+      "breakpoints": true
     }
   ]
 }

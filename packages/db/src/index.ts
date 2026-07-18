@@ -27,4 +27,7 @@ export {
   upsertTableEntry,
   upsertExternalRef,
   findExternalRef,
+  getLeagueById,
+  upsertSubscription,
+  listSubscribedLeagueIds,
 } from "./queries.ts";

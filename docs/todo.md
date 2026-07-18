@@ -81,6 +81,9 @@ forward; the strategy below rewires how they're driven.
 - [ ] **Deep crawl job (subscription-driven)** — fixtures + tables for subscribed leagues only;
       discovers clubs/teams (team by `team_hash_id`, club by `club_code`), sets `team.clubId` from
       the table row; raw staged to R2 then transformed/upserted by external_ref. (→ 0003, 0004, 0012)
+  - [x] Subscription model: `subscription` table (client_name + `lea_` FK), replaces
+        `tracked_competition`; `upsertSubscription` / `listSubscribedLeagueIds` / `getLeagueById`.
+  - [ ] Deep-crawl pipeline + `mday deep-crawl` (subscribed leagues ∪ `--league`, `--dry-run`).
 - [ ] **Club enrichment job** — fetch rich club detail (grounds/colours/address/socials) from the
       `clubs/{id}` endpoint; attach by logo to clubs the deep crawl discovered; never create. Needs a
       club-enrichment data-model decision (venue entity vs club columns). (→ 0004, 0012)

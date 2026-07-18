@@ -157,21 +157,23 @@ export const externalRef = pgTable(
   ],
 );
 
-export const trackedCompetition = pgTable(
-  "tracked_competition",
+// A client subscribes to one of our leagues (ADR 0012): drives the deep crawl (fixtures + tables
+// are crawled only for subscribed leagues). Keyed on our internal `league.id` — the league already
+// ties competition + season (0011), so the subscription is season-scoped through it. `clientName`
+// is plain text for now; a real client entity is future work. Subsumes the old tracked_competition.
+export const subscription = pgTable(
+  "subscription",
   {
     id: text("id").primaryKey(),
-    competitionId: text("competition_id")
+    clientName: text("client_name").notNull(),
+    leagueId: text("league_id")
       .notNull()
-      .references(() => competition.id),
-    seasonId: text("season_id")
-      .notNull()
-      .references(() => season.id),
-    enabled: boolean("enabled").notNull().default(true),
+      .references(() => league.id),
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("tracked_competition_comp_season_key").on(table.competitionId, table.seasonId),
+    // One subscription per (client, league) — a client subscribes to a given league at most once.
+    uniqueIndex("subscription_client_league_key").on(table.clientName, table.leagueId),
   ],
 );
 
@@ -196,6 +198,7 @@ export const leagueRelations = relations(league, ({ one, many }) => ({
   season: one(season, { fields: [league.seasonId], references: [season.id] }),
   fixtures: many(fixture),
   tableEntries: many(tableEntry),
+  subscriptions: many(subscription),
 }));
 
 export const fixtureRelations = relations(fixture, ({ one }) => ({
@@ -214,13 +217,6 @@ export const tableEntryRelations = relations(tableEntry, ({ one }) => ({
   team: one(team, { fields: [tableEntry.teamId], references: [team.id] }),
 }));
 
-export const trackedCompetitionRelations = relations(trackedCompetition, ({ one }) => ({
-  competition: one(competition, {
-    fields: [trackedCompetition.competitionId],
-    references: [competition.id],
-  }),
-  season: one(season, {
-    fields: [trackedCompetition.seasonId],
-    references: [season.id],
-  }),
+export const subscriptionRelations = relations(subscription, ({ one }) => ({
+  league: one(league, { fields: [subscription.leagueId], references: [league.id] }),
 }));
