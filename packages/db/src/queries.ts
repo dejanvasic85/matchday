@@ -12,6 +12,7 @@ import {
   fixture,
   league,
   season,
+  subscription,
   tableEntry,
   team,
 } from "./schema.ts";
@@ -32,6 +33,8 @@ type TableEntry = typeof tableEntry.$inferSelect;
 type TableEntryInsert = typeof tableEntry.$inferInsert;
 type ExternalRef = typeof externalRef.$inferSelect;
 type ExternalRefInsert = typeof externalRef.$inferInsert;
+type Subscription = typeof subscription.$inferSelect;
+type SubscriptionInsert = typeof subscription.$inferInsert;
 
 function toError(cause: unknown, message: string): Result<never> {
   return err({ message, cause });
@@ -341,5 +344,54 @@ export async function findExternalRef(
     return ok(rows[0] ?? null);
   } catch (cause) {
     return toError(cause, "Failed to find external ref");
+  }
+}
+
+export async function getLeagueById(db: Db, id: string): Promise<Result<League | null>> {
+  try {
+    const rows = await db.select().from(league).where(eq(league.id, id)).limit(1);
+    return ok(rows[0] ?? null);
+  } catch (cause) {
+    return toError(cause, "Failed to get league by id");
+  }
+}
+
+/**
+ * Upsert a subscription by its `(client_name, league_id)` key: a client subscribes to a given
+ * league at most once, so re-adding the same pair is idempotent rather than a duplicate.
+ */
+export async function upsertSubscription(
+  db: Db,
+  values: SubscriptionInsert,
+): Promise<Result<Subscription>> {
+  try {
+    const rows = await db
+      .insert(subscription)
+      .values(values)
+      .onConflictDoUpdate({
+        target: [subscription.clientName, subscription.leagueId],
+        set: { updatedAt: new Date() },
+      })
+      .returning();
+    const row = rows[0];
+    if (row === undefined) {
+      return toError(values, "Upsert of subscription returned no row");
+    }
+    return ok(row);
+  } catch (cause) {
+    return toError(cause, "Failed to upsert subscription");
+  }
+}
+
+/**
+ * The distinct set of league ids that have ≥1 subscription — the deep crawl's scope. A league with
+ * many subscribers is crawled once, so the result is deduplicated in SQL.
+ */
+export async function listSubscribedLeagueIds(db: Db): Promise<Result<string[]>> {
+  try {
+    const rows = await db.selectDistinct({ leagueId: subscription.leagueId }).from(subscription);
+    return ok(rows.map((row) => row.leagueId));
+  } catch (cause) {
+    return toError(cause, "Failed to list subscribed league ids");
   }
 }
