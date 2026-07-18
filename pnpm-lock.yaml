@@ -15,6 +15,9 @@ catalogs:
     aws4fetch:
       specifier: 1.0.20
       version: 1.0.20
+    commander:
+      specifier: 15.0.0
+      version: 15.0.0
     drizzle-kit:
       specifier: 0.31.10
       version: 0.31.10
@@ -87,6 +90,9 @@ importers:
       aws4fetch:
         specifier: 'catalog:'
         version: 1.0.20
+      commander:
+        specifier: 'catalog:'
+        version: 15.0.0
       playwright-core:
         specifier: 'catalog:'
         version: 1.61.1
@@ -1274,6 +1280,10 @@ packages:
   chai@6.2.2:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
     engines: {node: '>=18'}
+
+  commander@15.0.0:
+    resolution: {integrity: sha512-z67u4ZhzCL/Tydu1lJARtEZYWbWaN7oYLHbsuzocr6y4N6WZAagG3RQ4FW61V1/0+jImpj293XfrcYnd1qxtPg==}
+    engines: {node: '>=22.12.0'}
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
@@ -2467,6 +2477,8 @@ snapshots:
   buffer-from@1.1.2: {}
 
   chai@6.2.2: {}
+
+  commander@15.0.0: {}
 
   convert-source-map@2.0.0: {}
 

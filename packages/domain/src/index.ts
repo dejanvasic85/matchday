@@ -10,6 +10,7 @@ export {
 } from "./result.ts";
 export { parseEnv } from "./config.ts";
 export type { LogFields, Logger } from "./logger.ts";
+export { createConsoleLogger } from "./consoleLogger.ts";
 export {
   generateId,
   idPrefixValue,
