@@ -5,8 +5,8 @@
 
 ## Context
 
-Fixtures, results, and ladder tables change at different rates. Schedules are set well ahead
-and rarely move; results and ladders only change when matches are played (mostly weekends in
+Fixtures, results, and tables change at different rates. Schedules are set well ahead
+and rarely move; results and tables only change when matches are played (mostly weekends in
 season). Over-scraping wastes resources and load on Dribl; under-scraping means stale scores.
 
 ## Options
@@ -33,9 +33,9 @@ A full club-directory crawl (`list/clubs`) — needed even when targeting one cl
 teams play opponents whose club info (name, logo, socials, address) we must have. Not tied to
 any competition. **Runs daily** (matches current behaviour).
 
-### 2. Competition crawl (fixtures + results + ladders in one pass)
+### 2. Competition crawl (fixtures + results + tables in one pass)
 
-Competition-keyed (per 0002); a single crawl pass fetches fixtures, results, and ladder tables
+Competition-keyed (per 0002); a single crawl pass fetches fixtures, results, and tables
 together — one Cloudflare-bypass session per run. Runs at **two frequencies**:
 
 | Phase                       | Cadence      |
@@ -52,7 +52,7 @@ with no manual config.
 ## Consequences
 
 - Two jobs: `clubs-sync` (daily) and `competition-crawl` (fixture-derived frequency).
-- Fixtures/results/ladders share one crawl pass — fewer Cloudflare-bypass sessions.
+- Fixtures/results/tables share one crawl pass — fewer Cloudflare-bypass sessions.
 - Scheduler reads fixture data to decide match windows — depends on having fixtures already
   scraped (bootstrap: run daily until first fixtures land, then match-window logic engages).
 - Frequent match-day scraping needs the scraper runtime to handle Cloudflare bypass reliably

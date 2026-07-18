@@ -9,7 +9,7 @@ Current storage is **per-team JSON documents** on disk (`data/matches/<team>.jso
 `data/table/<team>.json`, plus a single `data/clubs/clubs.json`). This duplicates data across
 files (a fixture appears in both teams' files), can't join across entities, and made
 multi-tenant/shared queries awkward. Competition data is inherently relational:
-clubs ↔ teams ↔ competitions ↔ seasons ↔ fixtures ↔ ladder entries.
+clubs ↔ teams ↔ competitions ↔ seasons ↔ fixtures ↔ table entries.
 
 ## Options
 
@@ -23,7 +23,7 @@ clubs ↔ teams ↔ competitions ↔ seasons ↔ fixtures ↔ ladder entries.
 
 ## Recommendation
 
-**Relational Postgres.** Model clubs, teams, competitions, seasons, fixtures, ladder entries,
+**Relational Postgres.** Model clubs, teams, competitions, seasons, fixtures, table entries,
 and an `external_ref` mapping (per 0005) as tables with foreign keys. A fixture is stored once
 and joined to both teams.
 

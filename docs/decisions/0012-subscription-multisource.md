@@ -24,9 +24,9 @@ and product thinking changed the strategy:
 3. **The crawl path exposes no stable club id, and Dribl models admin entities as "clubs".** A live
    API investigation (see the input doc) found: `ladders`/`fixtures` carry no club id and no
    team→club link; the only durable crawl-path ids are `team_hash_id` (teams) and `club_code`
-   (clubs, ladder-only, measured 1:1 with name/logo across 654 rows / 218 clubs); logo is mutable.
+   (clubs, table-only, measured 1:1 with name/logo across 654 rows / 218 clubs); logo is mutable.
    Dribl also lists administrative pseudo-"clubs" (9 regional referee bodies, "FV Registrations")
-   that share a placeholder logo and **never appear on any ladder**. So clubs must be **discovered
+   that share a placeholder logo and **never appear on any table**. So clubs must be **discovered
    from real competition data**, never enumerated as the primary ingest unit.
 
 ## Recommendation
@@ -59,11 +59,11 @@ actually appearing in the league — a separate concern (see Regrades).
   each league to enumerate teams. Populates onboarding dropdowns so any league can be selected with
   certainty. Runs on a schedule regardless of subscriptions.
 - **Deep crawl (subscription-driven).** A separate job crawls fixtures + tables **only** for
-  leagues with ≥1 subscription — the expensive per-round/ladder work.
+  leagues with ≥1 subscription — the expensive per-round/table work.
 
-Clubs and teams are **discovered** during these crawls (from ladder `club_code` / `team_hash_id`),
+Clubs and teams are **discovered** during these crawls (from table `club_code` / `team_hash_id`),
 never enumerated as the primary unit. Because admin pseudo-clubs never appear on a real league's
-ladder, they are **never created** — the filtering is structural, not a name-pattern hack. A
+table, they are **never created** — the filtering is structural, not a name-pattern hack. A
 separate **club-enrichment** job fetches richer club detail (grounds, colours, address, socials)
 and **writes to the same club rows** the crawl discovered: two jobs, one aggregated dataset.
 
@@ -92,8 +92,8 @@ Resolve entities by the stablest id each path exposes, via `external_ref (source
 | ----------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
 | competition | Dribl competition hash   | From `list/competitions`. Upserted by the catalog crawl.                                             |
 | league      | Dribl league hash        | Per (competition, season). Stable key → re-crawl reuses the `lea_` row, so subscriptions stay valid. |
-| team        | `team_hash_id`           | On every ladder/fixture row. Stable; never dupes.                                                    |
-| club        | `club_code` (per source) | Ladder-only, always present, unique, rebrand-safe.                                                   |
+| team        | `team_hash_id`           | On every table/fixture row. Stable; never dupes.                                                     |
+| club        | `club_code` (per source) | Table-only, always present, unique, rebrand-safe.                                                    |
 
 The subscription references our internal `lea_` id, and the catalog upserts leagues by
 `external_ref(dribl, <league hash>)` — so a re-crawl maps the same Dribl league back to the same

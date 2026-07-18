@@ -40,7 +40,7 @@ Project setup + standards. Mostly mirrors what williamstownsc already has; port 
 ## Phase 1 — Data model & schema (keystone)
 
 - [x] **0011 data-model ADR** — `docs/decisions/0011-data-model.md`: entities (club, team,
-      competition, season, fixture, ladder_entry, tracked_competition, external_ref), fields
+      competition, season, fixture, table_entry, tracked_competition, external_ref), fields
       from 0004, relationships, ID prefixes from 0005. Unblocks everything below. (→ 0004,0005,0006)
 - [x] **DB package + Drizzle** — `packages/db`: Drizzle schema modelling 0011, migrations,
       Neon connection (serverless driver / Hyperdrive). (→ 0006, 0009)
@@ -79,7 +79,7 @@ forward; the strategy below rewires how they're driven.
       REST-served onboarding dropdowns. Runs regardless of subscriptions. (→ 0011, 0012)
 - [ ] **Deep crawl job (subscription-driven)** — fixtures + tables for subscribed leagues only;
       discovers clubs/teams (team by `team_hash_id`, club by `club_code`), sets `team.clubId` from
-      the ladder row; raw staged to R2 then transformed/upserted by external_ref. (→ 0003, 0004, 0012)
+      the table row; raw staged to R2 then transformed/upserted by external_ref. (→ 0003, 0004, 0012)
 - [ ] **Club enrichment job** — fetch rich club detail (grounds/colours/address/socials) from the
       `clubs/{id}` endpoint; attach by logo to clubs the deep crawl discovered; never create. Needs a
       club-enrichment data-model decision (venue entity vs club columns). (→ 0004, 0012)

@@ -5,9 +5,9 @@
 
 ## Context
 
-The current pipeline captures enough to render fixtures, results, and ladders: fixture
+The current pipeline captures enough to render fixtures, results, and tables: fixture
 date/time/round/venue/coordinates, both teams, scores, status, plus club metadata (logo,
-name, socials, address) and full ladder rows. It does not capture player-level match stats.
+name, socials, address) and full table rows. It does not capture player-level match stats.
 For a shared service we want to be self-sufficient (not re-fetch Dribl to answer a query)
 without over-collecting data no one uses yet.
 
@@ -43,7 +43,7 @@ entity-id keyed object names to allow idempotent re-upload only on change.
 ### Raw response staging
 
 The current WSC crawler is two-stage: it writes each raw Dribl API response (fixtures/results
-paged per round, ladders) to local JSON chunk files, then a separate sync stage reads those
+paged per round, `api/ladders`) to local JSON chunk files, then a separate sync stage reads those
 chunks, transforms, dedupes, and writes final output. matchday keeps that two-stage shape, but
 since the target runtime (thanos/managed browser, per 0009) has no durable shared filesystem
 between the crawl and transform steps, the raw capture is persisted to **Cloudflare R2**

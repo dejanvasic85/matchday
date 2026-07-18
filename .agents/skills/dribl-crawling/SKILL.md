@@ -1,13 +1,13 @@
 ---
 name: dribl-crawling
-description: Reliable patterns for crawling dribl.com fixtures using playwright-core to establish Cloudflare clearance, then making direct mc-api.dribl.com API calls (via page.evaluate(fetch(...))) instead of driving the SPA. Covers hashed-ID resolution, round-based extraction, ladder extraction, and boundary validation.
+description: Reliable patterns for crawling dribl.com fixtures using playwright-core to establish Cloudflare clearance, then making direct mc-api.dribl.com API calls (via page.evaluate(fetch(...))) instead of driving the SPA. Covers hashed-ID resolution, round-based extraction, table extraction, and boundary validation.
 ---
 
 # Dribl Crawling
 
 ## Overview
 
-Extract clubs, fixtures, and ladders from Dribl (a Cloudflare-protected SPA, e.g.
+Extract clubs, fixtures, and tables from Dribl (a Cloudflare-protected SPA, e.g.
 `https://<tenant>.dribl.com/fixtures/`) by using a real browser **only** to obtain Cloudflare
 clearance, then making direct calls to the `mc-api.dribl.com` JSON API from within the browser
 context. This teaches the durable crawl technique; where and how the results are persisted is
@@ -154,16 +154,17 @@ async function crawlTeamByRounds(page, team, ids) {
 }
 ```
 
-## Ladder (table) extraction
+## Table extraction
 
-After the round crawl, hit `api/ladders` directly with the same IDs — no SPA navigation:
+After the round crawl, hit `api/ladders` (Dribl's table endpoint) directly with the same IDs — no
+SPA navigation:
 
 ```typescript
 async function crawlTeamTable(page, ids) {
   const url = buildApiUrl("ladders", ids);
   const json = await browserFetch(page, url);
   const validated = externalTableApiResponseSchema.parse(json);
-  if (validated.data.length === 0) return undefined; // e.g. MiniRoos have no ladder
+  if (validated.data.length === 0) return undefined; // e.g. MiniRoos have no table
   return validated;
 }
 ```
@@ -173,7 +174,7 @@ async function crawlTeamTable(page, ids) {
 | Endpoint       | Params                                               | Response                           |
 | -------------- | ---------------------------------------------------- | ---------------------------------- |
 | `api/fixtures` | season, competition, league, round, tenant, timezone | `{ data: fixture[], links, meta }` |
-| `api/ladders`  | season, competition, league, tenant, timezone        | `{ data: ladderEntry[] }`          |
+| `api/ladders`  | season, competition, league, tenant, timezone        | `{ data: tableEntry[] }`           |
 | `api/list/*`   | tenant (+ competition for leagues)                   | `{ data: item[] }`                 |
 | `api/tenants`  | mc_link, slug                                        | `{ data: object }` (single object) |
 
@@ -186,7 +187,7 @@ Always validate with Zod at both boundaries — API response → external schema
 internal/domain schema. Typical schemas:
 
 - `externalFixturesApiResponseSchema` — `{ data: fixture[], links?, meta? }`
-- `externalTableApiResponseSchema` — `{ data: ladderEntry[] }`
+- `externalTableApiResponseSchema` — `{ data: tableEntry[] }`
 
 ## Deduplication
 

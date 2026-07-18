@@ -1,6 +1,6 @@
 # matchday
 
-A multi-tenant sports competition data service — scrapes fixtures, results and ladder
+A multi-tenant sports competition data service — scrapes fixtures, results and
 tables, and serves them via an API so multiple clubs can consume the same data.
 
 This monorepo will contain the scraper, the API, and supporting infrastructure.
