@@ -8,10 +8,19 @@ export const driblTenantResponseSchema = z.object({
   data: z.object({ id: z.string() }),
 });
 
-const driblListItemSchema = z.object({
+// List endpoints (list/seasons, list/competitions, list/leagues) return items with `id`/`name`
+// as top-level fields, unlike the JSON:API-style `attributes.name` used by fixtures/ladders.
+// Normalized to `{ id, attributes: { name } }` here so downstream matching (resolveLeagueIds)
+// has one consistent shape across all raw Dribl endpoints.
+const rawDriblListItemSchema = z.object({
   id: z.string(),
-  attributes: z.object({ name: z.string() }),
+  name: z.string(),
 });
+
+const driblListItemSchema = rawDriblListItemSchema.transform(({ id, name }) => ({
+  id,
+  attributes: { name },
+}));
 
 export const driblListResponseSchema = z.object({
   data: z.array(driblListItemSchema),

@@ -3,18 +3,12 @@
 // cached by league name (dribl-crawling skill) so repeat crawls skip re-resolution; a regrade
 // changes the league name, misses the cache, and re-resolves automatically.
 
-import {
-  driblListResponseSchema,
-  driblTenantResponseSchema,
-  err,
-  ok,
-  type Logger,
-  type Result,
-} from "@matchday/domain";
+import { driblListResponseSchema, err, ok, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "./browserFetch.ts";
 import type { DriblLeagueIds } from "./buildDriblApiUrl.ts";
 import { crawlerConfigValue } from "./constants.ts";
 import type { IdCacheStore } from "./idCache.ts";
+import { resolveTenantId } from "./listDriblCatalog.ts";
 
 const removedLeaguePrefix = "(Removed)";
 
@@ -29,24 +23,6 @@ export type ResolveLeagueIdsInput = {
   competitionName: string;
   seasonYear: string;
 };
-
-async function resolveTenantId(
-  page: FetchPage,
-  tenantHost: string,
-  tenantSlug: string,
-): Promise<Result<string>> {
-  const url = `${crawlerConfigValue.driblApiBase}/tenants?mc_link=${encodeURIComponent(tenantHost)}&slug=${encodeURIComponent(tenantSlug)}`;
-  const fetched = await browserFetch(page, url);
-  if (!fetched.ok) {
-    return fetched;
-  }
-
-  const parsed = driblTenantResponseSchema.safeParse(fetched.value);
-  if (!parsed.success) {
-    return err({ message: "Failed to validate tenant response", cause: parsed.error });
-  }
-  return ok(parsed.data.data.id);
-}
 
 async function resolveListId(
   page: FetchPage,

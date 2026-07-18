@@ -13,6 +13,7 @@ function makeTableEntry() {
     attributes: {
       team_hash_id: "team-1",
       team_name: "Home",
+      club_code: "HFC",
       club_name: "Home FC",
       club_logo: "https://ocean.dribl.com/logo",
       season_name: "2026",

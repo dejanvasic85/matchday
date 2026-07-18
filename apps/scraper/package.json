@@ -7,7 +7,7 @@
   },
   "type": "module",
   "scripts": {
-    "mday": "node src/cli.ts",
+    "mday": "node --env-file-if-exists=.env.local src/cli.ts",
     "test": "vp test run",
     "check": "vp check"
   },

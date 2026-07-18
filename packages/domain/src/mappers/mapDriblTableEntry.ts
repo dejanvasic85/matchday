@@ -8,6 +8,7 @@ import type { DriblTableEntry } from "../external/driblTableEntry.ts";
 export type MappedTableEntry = {
   teamSourceId: string;
   teamName: string;
+  clubCode: string;
   clubName: string;
   clubLogoUrl: string | null;
   leagueName: string;
@@ -29,6 +30,7 @@ export function mapDriblTableEntry(entry: DriblTableEntry): MappedTableEntry {
   return {
     teamSourceId: attributes.team_hash_id,
     teamName: attributes.team_name,
+    clubCode: attributes.club_code,
     // Trimmed so downstream name-based club matching (resolveClub, when no logo match exists)
     // isn't defeated by incidental whitespace in Dribl's HTML-sourced club names.
     clubName: attributes.club_name.trim(),

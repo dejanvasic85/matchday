@@ -8,6 +8,7 @@ function makeMappedTableEntry(overrides: Partial<MappedTableEntry> = {}): Mapped
   return {
     teamSourceId: "team-source-1",
     teamName: "Altona North SC U08",
+    clubCode: "ANSC",
     clubName: "Altona North SC",
     clubLogoUrl: "https://ocean.dribl.com/logo",
     leagueName: "League",

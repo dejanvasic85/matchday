@@ -21,14 +21,14 @@ function makeFakePage(responses: Record<string, unknown>): FetchPage {
 
 const baseResponses = {
   tenants: { data: { id: "tenant-id" } },
-  "list/seasons": { data: [{ id: "season-id", attributes: { name: "2026" } }] },
+  "list/seasons": { data: [{ id: "season-id", name: "2026" }] },
   "list/competitions": {
-    data: [{ id: "competition-id", attributes: { name: "FFV" } }],
+    data: [{ id: "competition-id", name: "FFV" }],
   },
   "list/leagues": {
     data: [
-      { id: "removed-id", attributes: { name: "(Removed) Girls U12" } },
-      { id: "league-id", attributes: { name: "Girls U12" } },
+      { id: "removed-id", name: "(Removed) Girls U12" },
+      { id: "league-id", name: "Girls U12" },
     ],
   },
 };
