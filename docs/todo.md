@@ -69,13 +69,14 @@ forward; the strategy below rewires how they're driven.
       `external_ref.source` a real multi-value union (`dribl`, `dribl_club_code`, future sources) in
       `packages/domain` + `packages/db`; fix `driblListResponseSchema` (list items are top-level
       `name`/`id`); loosen `driblClubSocial.name` to a tolerant parse. (→ 0012)
-- [ ] **Subscription + catalog data model** — subscription entity
-      `(source, year, competition, league, sanityTeamRef)`; source-scoped catalog of
-      competitions/leagues/teams (subsumes `tracked_competition`). Resolve the open **stable
-      league-key** question first (0012). (→ 0011, 0012)
-- [ ] **Catalog crawl job** — cheap, source-wide: enumerate all competitions/leagues/teams for a
-      source + year (Dribl `list/*` + a light latest-round/table pass to list teams). Populates
-      onboarding dropdowns. Runs regardless of subscriptions. (→ 0012)
+- [ ] **Subscription data model** — subscription entity `(client, leagueId → league, sanityTeamRef)`,
+      keyed on our internal `lea_` id (not Dribl identifiers); subsumes `tracked_competition`.
+      Competition/league/team are already first-class 0011 entities; no team↔league join/history
+      table (membership is derived from `fixture`/`table_entry`). (→ 0011, 0012)
+- [ ] **Catalog crawl job** — cheap, source-wide: upsert all competitions/leagues/teams for a
+      source + year as first-class rows with internal ids + `external_ref` (league keyed on the Dribl
+      league hash). Dribl `list/*` + a light latest-round/table pass to list teams. Populates the
+      REST-served onboarding dropdowns. Runs regardless of subscriptions. (→ 0011, 0012)
 - [ ] **Deep crawl job (subscription-driven)** — fixtures + tables for subscribed leagues only;
       discovers clubs/teams (team by `team_hash_id`, club by `club_code`), sets `team.clubId` from
       the ladder row; raw staged to R2 then transformed/upserted by external_ref. (→ 0003, 0004, 0012)
@@ -92,7 +93,8 @@ forward; the strategy below rewires how they're driven.
 - [ ] **Hono app on Workers** — `apps/api`; wrangler config; Neon access from the isolate.
       (→ 0007, 0009)
 - [ ] **OpenAPI + routes** — `@hono/zod-openapi`; resources: clubs, teams, competitions,
-      seasons, fixtures, tables. Multi-tenant scoping. (→ 0007)
+      seasons, leagues, fixtures, tables. Catalog resources (competitions → leagues → teams) drive
+      Sanity's cascading onboarding dropdowns. Multi-tenant scoping. (→ 0007, 0012)
 - [ ] **Edge caching** — Cloudflare cache TTLs per resource, aligned to scrape cadence.
       (→ 0003, 0007)
 - [ ] **Generated client** — publish typed client from the OpenAPI spec. (→ 0007)
@@ -110,5 +112,6 @@ forward; the strategy below rewires how they're driven.
 - Final scraper host (thanos vs managed browser) — decide after a crawl-reliability check. (0009)
 - Per-job cron mechanism. (0003, 0009)
 - Auth/rate-limiting for the public API (tenant keys?) — no ADR yet.
-- Multi-source ingest beyond Dribl — external_ref is ready for it (0005), no plan yet.
+- Multi-source ingest beyond Dribl — strategy set by 0012 (source-abstracted crawler); a second
+  source adapter (e.g. Masters federation) is a later build.
 - Player-level match stats — deferred. (0004)

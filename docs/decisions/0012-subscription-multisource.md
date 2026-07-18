@@ -14,8 +14,8 @@ and product thinking changed the strategy:
 1. **The consumer (williamstownsc) is league-focused.** Content authors administer _teams_ in
    Sanity (name, photo, players, coaches — editorial content), and each team binds to an external
    results feed. Today that binding is **hand-typed** free text ("Junior Girls Sunday (U12 - U18)"
-   / "Girls' West 12B") — a human-error surface. The ideal onboarding: the author **selects**
-   competition/league/year from dropdowns backed by real scraped data, with certainty.
+   / "Girls' West 12B") — a human-error surface. The ideal onboarding: the author **selects** a
+   league (competition → league) from dropdowns backed by real scraped data, with certainty.
 
 2. **Sources are plural.** Dribl is the first source, not the only one — e.g. Williamstown Masters
    play in a different federation with its own site. `source` must be first-class in every external
@@ -33,14 +33,20 @@ and product thinking changed the strategy:
 
 ### The binding: a Sanity team subscribes to a league
 
-Each Sanity team declares a **subscription** — a hard, reliable link to an external results feed:
+Each Sanity team declares a **subscription** — a hard, reliable link to an external results feed.
+The subscription stores **our internal `lea_` id** (a foreign key), not Dribl names or hashes:
 
 ```
-(source, year, competition, league) → linked Sanity team
+(client, leagueId → league) → linked Sanity team
 ```
 
-e.g. `(dribl, 2026, "Junior Girls Sunday (U12 - U18)", "Girls' West 12B")` → _Williamstown U12C
-Girls_. Chosen from **catalog dropdowns**, never typed.
+The admin selects a league from **catalog dropdowns** (populated from our `league` rows), so the
+subscription is a referential link, never hand-typed text. The catalog crawl (below) creates the
+`league` rows first, so there is always something to select and to key against.
+
+Because a `league` already ties a competition to a **season** (0011: `league.seasonId`), the
+subscription is **inherently season-scoped through the league it points at** — no separate `year`
+field is needed on the subscription.
 
 **The subscription targets the league, not the team.** Results and table data flow from the
 subscribed league. Whether a specific team is _highlighted_ on the website depends on that team
@@ -61,14 +67,38 @@ ladder, they are **never created** — the filtering is structural, not a name-p
 separate **club-enrichment** job fetches richer club detail (grounds, colours, address, socials)
 and **writes to the same club rows** the crawl discovered: two jobs, one aggregated dataset.
 
+### Catalog entities are first-class relations
+
+Competition, league, and team are persisted as **real entity rows with our own internal ids**
+(`cmp_`/`lea_`/`tea_`, per 0011) and proper foreign keys (`league.competitionId`,
+`league.seasonId`), each with an `external_ref` back to its source id. The catalog crawl is what
+_populates_ them source-wide, ahead of any subscription. These become **REST resources** (Phase 4)
+so Sanity's onboarding UI drives cascading dropdowns (competitions → leagues → teams) and stores
+the selected internal `lea_` id.
+
+**Team↔league membership is derived, not a maintained relationship.** A team belongs to a league
+by virtue of having `fixture` / `table_entry` rows for it (both already carry `leagueId`, per 0011)
+— so "which teams are in this league" is a query, not a stored edge. On a regrade the team simply
+accrues rows under the new league (which starts from 0 points, like a fresh league); the old
+league's rows remain as historical results with no effect on any current table. **No temporal
+`team_league` join table and no membership-history model are needed** — the fixtures/table entries
+_are_ the history, and we neither surface it on the site nor expose it via the API.
+
 ### Identity keys (from the investigation)
 
 Resolve entities by the stablest id each path exposes, via `external_ref (source, source_id)`:
 
-| Entity | Source id                | Notes                                              |
-| ------ | ------------------------ | -------------------------------------------------- |
-| team   | `team_hash_id`           | On every ladder/fixture row. Stable; never dupes.  |
-| club   | `club_code` (per source) | Ladder-only, always present, unique, rebrand-safe. |
+| Entity      | Source id                | Notes                                                                                                |
+| ----------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| competition | Dribl competition hash   | From `list/competitions`. Upserted by the catalog crawl.                                             |
+| league      | Dribl league hash        | Per (competition, season). Stable key → re-crawl reuses the `lea_` row, so subscriptions stay valid. |
+| team        | `team_hash_id`           | On every ladder/fixture row. Stable; never dupes.                                                    |
+| club        | `club_code` (per source) | Ladder-only, always present, unique, rebrand-safe.                                                   |
+
+The subscription references our internal `lea_` id, and the catalog upserts leagues by
+`external_ref(dribl, <league hash>)` — so a re-crawl maps the same Dribl league back to the same
+`lea_` row and every subscription remains valid automatically, without storing any Dribl identifier
+in the subscription itself.
 
 Logo is an **enrichment-join hint, not identity** (mutable; and shared by admin pseudo-clubs — so
 matching on it over-collapses distinct entities). `team.clubId` is **nullable** (0011 had it
@@ -96,9 +126,12 @@ fail independently and gracefully.
 
 ## Consequences
 
-- **New entities/tables:** a **subscription** `(source, year, competition, league, sanityTeamRef)`
-  and a source-scoped **catalog** of competitions/leagues/teams. `tracked_competition` (0011) is
-  subsumed by the subscription concept.
+- **New entities/tables:** a **subscription** `(client, leagueId → league, sanityTeamRef)` — keyed
+  on our internal `lea_` id, not Dribl identifiers. Competition/league/team already exist as
+  first-class 0011 entities; the catalog crawl populates them source-wide and each gains an
+  `external_ref`. `tracked_competition` (0011) is subsumed by the subscription concept.
+- **No new membership tables:** team↔league is derived from `fixture`/`table_entry` (both already
+  carry `leagueId`); no temporal join or history model.
 - **Scheduling is subscription-driven** (0003 cadence still applies; the _set_ of what's crawled
   comes from subscriptions, not a hand-seeded registry).
 - **`team.clubId` becomes nullable** in the 0011 schema (migration); `external_ref.source` becomes
@@ -115,11 +148,20 @@ fail independently and gracefully.
   (`driblListResponseSchema` top-level-`name` fix, tolerant socials parse, nullable `team.clubId`,
   multi-value `source` union) are re-listed as todo items, not yet in the tree.
 
+## Resolved during review
+
+- **Subscription key = our internal `lea_` id.** The subscription stores a FK to our `league` row,
+  not any Dribl identifier. The catalog upserts leagues by `external_ref(dribl, <league hash>)`
+  (the stable per-(competition, season) source id), so a re-crawl maps the same Dribl league back to
+  the same `lea_` row and subscriptions stay valid automatically. Decided by reasoning; if the
+  league hash ever drifts, `external_ref` is the recovery seam. No separate `year` on the
+  subscription — the league's `seasonId` already scopes it.
+- **Team↔league membership is derived** from `fixture`/`table_entry`, not a maintained/temporal
+  relationship. Regrades work naturally (new league starts from 0; old results stay attached to the
+  old league, unsurfaced). No history model.
+
 ## Open questions
 
-- **Stable league key.** Is a Dribl league identified stably across seasons, or is
-  `(source, year, competition, league)` by _name_ the durable subscription key? Needs a crawl to
-  confirm before the subscription schema is finalised.
 - **Catalog team-enumeration cost.** "Latest round/table per league to list teams" across a whole
   tenant — measure before committing to its cadence.
 - **Source-adapter interface.** The exact abstraction a new source must implement (catalog +
