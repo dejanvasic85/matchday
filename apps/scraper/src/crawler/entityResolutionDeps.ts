@@ -10,8 +10,11 @@ import {
   findClubByName,
   findExternalRef,
   upsertClub,
+  upsertCompetition,
   upsertExternalRef,
   upsertFixture,
+  upsertLeague,
+  upsertSeason,
   upsertTableEntry,
   upsertTeam,
 } from "@matchday/db";
@@ -25,6 +28,9 @@ export type EntityResolutionDeps = {
   findClubByName: WithoutDb<typeof findClubByName>;
   upsertClub: WithoutDb<typeof upsertClub>;
   upsertTeam: WithoutDb<typeof upsertTeam>;
+  upsertCompetition: WithoutDb<typeof upsertCompetition>;
+  upsertSeason: WithoutDb<typeof upsertSeason>;
+  upsertLeague: WithoutDb<typeof upsertLeague>;
   upsertFixture: WithoutDb<typeof upsertFixture>;
   upsertTableEntry: WithoutDb<typeof upsertTableEntry>;
   findExternalRef: WithoutDb<typeof findExternalRef>;
@@ -40,6 +46,9 @@ export function createEntityResolutionDeps(
     findClubByName: (name) => findClubByName(db, name),
     upsertClub: (values) => upsertClub(db, values),
     upsertTeam: (values) => upsertTeam(db, values),
+    upsertCompetition: (values) => upsertCompetition(db, values),
+    upsertSeason: (values) => upsertSeason(db, values),
+    upsertLeague: (values) => upsertLeague(db, values),
     upsertFixture: (values) => upsertFixture(db, values),
     upsertTableEntry: (values) => upsertTableEntry(db, values),
     findExternalRef: (source, sourceId) => findExternalRef(db, source, sourceId),

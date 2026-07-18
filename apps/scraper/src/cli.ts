@@ -35,16 +35,19 @@ export function createCli(): Command {
       "crawl at most this many leagues per competition (default: all)",
       parsePositiveInt,
     )
-    .action(async (options: { season: string; maxLeagues?: number }) => {
+    .option("--dry-run", "crawl and log the catalog without writing to the database", false)
+    .action(async (options: { season: string; maxLeagues?: number; dryRun: boolean }) => {
       const config = getScraperConfig();
       const logger = createConsoleLogger();
       const result = await runCatalogJob({
         logger,
+        databaseUrl: config.DATABASE_URL,
         driblSiteUrl: config.DRIBL_SITE_URL,
         tenantHost: new URL(config.DRIBL_SITE_URL).host,
         tenantSlug: config.DRIBL_TENANT_SLUG,
         seasonYear: options.season,
         maxLeagues: options.maxLeagues,
+        dryRun: options.dryRun,
       });
       if (!result.ok) {
         logger.error("catalog.failed", result.error.message, { cause: result.error.cause });

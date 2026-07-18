@@ -29,8 +29,11 @@ export type CrawlCatalogInput = {
 };
 
 export type CrawlCatalogLeagueResult = {
+  competitionSourceId: string;
   competitionName: string;
+  leagueSourceId: string;
   leagueName: string;
+  seasonSourceId: string;
   seasonName: string;
   tableEntries: MappedTableEntry[];
 };
@@ -103,8 +106,11 @@ export async function crawlCatalog(
       });
 
       results.push({
+        competitionSourceId: competition.id,
         competitionName: competition.attributes.name,
+        leagueSourceId: league.id,
         leagueName: league.attributes.name,
+        seasonSourceId: season.id,
         seasonName: season.attributes.name,
         tableEntries,
       });
