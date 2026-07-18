@@ -2,8 +2,12 @@
   "name": "@matchday/scraper",
   "version": "0.0.0",
   "private": true,
+  "bin": {
+    "mday": "./src/cli.ts"
+  },
   "type": "module",
   "scripts": {
+    "mday": "node src/cli.ts",
     "test": "vp test run",
     "check": "vp check"
   },
@@ -11,6 +15,7 @@
     "@matchday/db": "workspace:*",
     "@matchday/domain": "workspace:*",
     "aws4fetch": "catalog:",
+    "commander": "catalog:",
     "playwright-core": "catalog:",
     "zod": "catalog:"
   },
