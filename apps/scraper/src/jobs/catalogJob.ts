@@ -2,13 +2,13 @@
 // clubs for a season, upserted as first-class rows with `external_ref`. Populates the onboarding
 // dropdowns; runs on a schedule regardless of subscriptions.
 //
-// Debug mode (current slice): walks only the first competition and its first league, printing
-// the resulting table (teams + clubs) to the console instead of persisting. The full
-// all-competitions/all-leagues crawl + DB upserts land in a later slice.
+// `maxLeagues` caps how many leagues are crawled per competition (see crawlCatalog) — useful for
+// keeping a run cheap while iterating on the pipeline. Persistence (DB upserts) is a later slice;
+// this job prints the crawled data to the console.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
-import { crawlCatalogDebug } from "../crawler/crawlCatalogDebug.ts";
 import { openBrowserSession } from "../crawler/browserSession.ts";
+import { crawlCatalog } from "../crawler/crawlCatalog.ts";
 
 export type RunCatalogJobInput = {
   logger: Logger;
@@ -16,10 +16,11 @@ export type RunCatalogJobInput = {
   tenantHost: string;
   tenantSlug: string;
   seasonYear: string;
+  maxLeagues?: number;
 };
 
 export async function runCatalogJob(input: RunCatalogJobInput): Promise<Result<void>> {
-  const { logger, driblSiteUrl, tenantHost, tenantSlug, seasonYear } = input;
+  const { logger, driblSiteUrl, tenantHost, tenantSlug, seasonYear, maxLeagues } = input;
 
   const sessionResult = await openBrowserSession({ driblSiteUrl });
   if (!sessionResult.ok) {
@@ -28,32 +29,31 @@ export async function runCatalogJob(input: RunCatalogJobInput): Promise<Result<v
   const { page, close } = sessionResult.value;
 
   try {
-    const debugResult = await crawlCatalogDebug({
+    const crawlResult = await crawlCatalog({
       page,
       logger,
       tenantHost,
       tenantSlug,
       seasonYear,
+      maxLeagues,
     });
-    if (!debugResult.ok) {
-      return debugResult;
+    if (!crawlResult.ok) {
+      return crawlResult;
     }
 
-    const { competitionName, leagueName, seasonName, tableEntries } = debugResult.value;
-    logger.info("catalog.debug.result", "catalog debug crawl complete", {
-      season: seasonName,
-      competition: competitionName,
-      league: leagueName,
-      teams: tableEntries.length,
-    });
+    logger.info("catalog.result", "catalog crawl complete", { leagues: crawlResult.value.length });
 
-    for (const entry of tableEntries) {
-      logger.info("catalog.debug.tableEntry", `${entry.position}. ${entry.teamName}`, {
-        clubName: entry.clubName,
-        clubCode: entry.clubCode,
-        played: entry.played,
-        points: entry.points,
-      });
+    for (const { competitionName, leagueName, tableEntries } of crawlResult.value) {
+      for (const entry of tableEntries) {
+        logger.info("catalog.tableEntry", `${entry.position}. ${entry.teamName}`, {
+          competitionName,
+          leagueName,
+          clubName: entry.clubName,
+          clubCode: entry.clubCode,
+          played: entry.played,
+          points: entry.points,
+        });
+      }
     }
 
     return ok(undefined);

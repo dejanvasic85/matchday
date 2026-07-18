@@ -3,11 +3,19 @@
 // dependencies (config, logger) and calls the matching job in src/jobs.
 
 import { createConsoleLogger } from "@matchday/domain";
-import { Command } from "commander";
+import { Command, InvalidArgumentError } from "commander";
 import { getScraperConfig } from "./config.ts";
 import { runCatalogJob } from "./jobs/catalogJob.ts";
 
 const currentYear = new Date().getFullYear().toString();
+
+function parsePositiveInt(value: string): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new InvalidArgumentError("must be a positive integer");
+  }
+  return parsed;
+}
 
 export function createCli(): Command {
   const program = new Command();
@@ -22,7 +30,12 @@ export function createCli(): Command {
         "or monthly.",
     )
     .option("--season <year>", "season year to catalog", currentYear)
-    .action(async (options: { season: string }) => {
+    .option(
+      "--max-leagues <count>",
+      "crawl at most this many leagues per competition (default: all)",
+      parsePositiveInt,
+    )
+    .action(async (options: { season: string; maxLeagues?: number }) => {
       const config = getScraperConfig();
       const logger = createConsoleLogger();
       const result = await runCatalogJob({
@@ -31,6 +44,7 @@ export function createCli(): Command {
         tenantHost: new URL(config.DRIBL_SITE_URL).host,
         tenantSlug: config.DRIBL_TENANT_SLUG,
         seasonYear: options.season,
+        maxLeagues: options.maxLeagues,
       });
       if (!result.ok) {
         logger.error("catalog.failed", result.error.message, { cause: result.error.cause });
