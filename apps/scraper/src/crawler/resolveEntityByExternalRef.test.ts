@@ -37,10 +37,11 @@ describe("resolveEntityByExternalRef", () => {
     expect(deps.upsertExternalRef).not.toHaveBeenCalled();
   });
 
-  it("generates a new id, upserts the entity, and writes external_ref on first sight", async () => {
+  it("generates a new id, writes external_ref, then upserts the entity on first sight", async () => {
+    const upsertExternalRef = vi.fn().mockResolvedValue(ok(makeExternalRefRow()));
     const deps = makeFakeEntityResolutionDeps({
       findExternalRef: vi.fn().mockResolvedValue(ok(null)),
-      upsertExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
+      upsertExternalRef,
     });
     const upsertEntity = vi.fn().mockResolvedValue(ok(undefined));
 
@@ -53,9 +54,14 @@ describe("resolveEntityByExternalRef", () => {
 
     assert(result.ok);
     expect(upsertEntity).toHaveBeenCalledTimes(1);
-    expect(deps.upsertExternalRef).toHaveBeenCalledWith(
+    expect(upsertExternalRef).toHaveBeenCalledWith(
       expect.objectContaining({ entityType: "team", sourceId: "team-source-2" }),
     );
+    // The ref must be written before the entity so a failure between the two writes self-heals
+    // on the next crawl rather than orphaning the entity.
+    const refOrder = upsertExternalRef.mock.invocationCallOrder[0];
+    const entityOrder = upsertEntity.mock.invocationCallOrder[0];
+    expect(refOrder).toBeLessThan(entityOrder);
   });
 
   it("returns err when the existing external_ref's internalId has an unexpected prefix", async () => {
@@ -77,9 +83,10 @@ describe("resolveEntityByExternalRef", () => {
     expect(upsertEntity).not.toHaveBeenCalled();
   });
 
-  it("propagates an upsertEntity failure without writing external_ref", async () => {
+  it("propagates an upsertEntity failure after the external_ref is written (self-heals next crawl)", async () => {
     const deps = makeFakeEntityResolutionDeps({
       findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      upsertExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
     });
     const upsertEntity = vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } });
 
@@ -91,6 +98,26 @@ describe("resolveEntityByExternalRef", () => {
     });
 
     assert(!result.ok);
-    expect(deps.upsertExternalRef).not.toHaveBeenCalled();
+    // The ref is written first, so a later entity failure leaves a ref (not an orphaned entity)
+    // that the next crawl resolves back to the same id and completes.
+    expect(deps.upsertExternalRef).toHaveBeenCalledTimes(1);
+  });
+
+  it("propagates an upsertExternalRef failure without upserting the entity", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      upsertExternalRef: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
+    });
+    const upsertEntity = vi.fn();
+
+    const result = await resolveEntityByExternalRef({
+      deps,
+      entityType: "team",
+      sourceId: "team-source-4",
+      upsertEntity,
+    });
+
+    assert(!result.ok);
+    expect(upsertEntity).not.toHaveBeenCalled();
   });
 });

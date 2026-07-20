@@ -2,8 +2,13 @@
 // up to `maxLeagues` of its leagues (all leagues when unset), fetching each league's table
 // (teams + club info). `maxLeagues` lets a caller keep the crawl cheap while iterating on the
 // pipeline — e.g. `mday catalog --max-leagues 1` crawls one league per competition instead of
-// the full source. Persisting the result (DB upserts) is a later slice; this returns the
-// crawled data for the caller to do with as it likes.
+// the full source.
+//
+// An optional `onLeague` callback is invoked with each league the moment it's crawled, so the job
+// can persist it immediately rather than buffering the whole catalog and writing at the end (a DB
+// failure then aborts early with the leagues so far already committed). If it returns `err`, the
+// crawl stops and surfaces that error. Every crawled league is also returned, so callers that just
+// want the data (dry runs, tests) can ignore `onLeague`.
 
 import {
   driblTableApiResponseSchema,
@@ -26,6 +31,8 @@ export type CrawlCatalogInput = {
   seasonYear: string;
   /** Crawl at most this many leagues per competition. Unset crawls every league. */
   maxLeagues?: number;
+  /** Invoked with each league as it's crawled; return `err` to abort the crawl. */
+  onLeague?: (league: CrawlCatalogLeagueResult) => Promise<Result<unknown>>;
 };
 
 export type CrawlCatalogLeagueResult = {
@@ -41,7 +48,7 @@ export type CrawlCatalogLeagueResult = {
 export async function crawlCatalog(
   input: CrawlCatalogInput,
 ): Promise<Result<CrawlCatalogLeagueResult[]>> {
-  const { page, logger, tenantHost, tenantSlug, seasonYear, maxLeagues } = input;
+  const { page, logger, tenantHost, tenantSlug, seasonYear, maxLeagues, onLeague } = input;
 
   const tenantResult = await resolveTenantId(page, tenantHost, tenantSlug);
   if (!tenantResult.ok) {
@@ -105,7 +112,7 @@ export async function crawlCatalog(
         entries: tableEntries.length,
       });
 
-      results.push({
+      const crawledLeague: CrawlCatalogLeagueResult = {
         competitionSourceId: competition.id,
         competitionName: competition.attributes.name,
         leagueSourceId: league.id,
@@ -113,7 +120,15 @@ export async function crawlCatalog(
         seasonSourceId: season.id,
         seasonName: season.attributes.name,
         tableEntries,
-      });
+      };
+      results.push(crawledLeague);
+
+      if (onLeague !== undefined) {
+        const persisted = await onLeague(crawledLeague);
+        if (!persisted.ok) {
+          return persisted;
+        }
+      }
     }
   }
 

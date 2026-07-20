@@ -15,7 +15,7 @@ import { openBrowserSession } from "../crawler/browserSession.ts";
 import { crawlCatalog } from "../crawler/crawlCatalog.ts";
 import { createEntityResolutionDeps } from "../crawler/entityResolutionDeps.ts";
 import { logCatalogDryRun } from "../crawler/logCatalogDryRun.ts";
-import { persistCatalog } from "../crawler/persistCatalog.ts";
+import { persistLeague } from "../crawler/persistCatalog.ts";
 
 export type RunCatalogJobInput = {
   logger: Logger;
@@ -39,6 +39,29 @@ export async function runCatalogJob(input: RunCatalogJobInput): Promise<Result<v
   const { page, close } = sessionResult.value;
 
   try {
+    // Dry run: crawl the whole catalog into memory and log it, no DB writes.
+    if (input.dryRun) {
+      const crawlResult = await crawlCatalog({
+        page,
+        logger,
+        tenantHost,
+        tenantSlug,
+        seasonYear,
+        maxLeagues,
+      });
+      if (!crawlResult.ok) {
+        return crawlResult;
+      }
+      logCatalogDryRun(logger, crawlResult.value);
+      return ok(undefined);
+    }
+
+    // Persist each league as it's crawled so a DB failure surfaces early and leagues crawled
+    // before it stay committed, rather than crawling everything up front and writing at the end.
+    const deps = createEntityResolutionDeps(createDbClient(databaseUrl));
+    let leagueCount = 0;
+    let tableEntryCount = 0;
+
     const crawlResult = await crawlCatalog({
       page,
       logger,
@@ -46,23 +69,23 @@ export async function runCatalogJob(input: RunCatalogJobInput): Promise<Result<v
       tenantSlug,
       seasonYear,
       maxLeagues,
+      onLeague: async (league) => {
+        const persisted = await persistLeague({ deps, logger, league });
+        if (persisted.ok) {
+          leagueCount += 1;
+          tableEntryCount += persisted.value.tableEntries;
+        }
+        return persisted;
+      },
     });
     if (!crawlResult.ok) {
       return crawlResult;
     }
 
-    if (input.dryRun) {
-      logCatalogDryRun(logger, crawlResult.value);
-      return ok(undefined);
-    }
-
-    const deps = createEntityResolutionDeps(createDbClient(databaseUrl));
-    const persistResult = await persistCatalog({ deps, logger, leagues: crawlResult.value });
-    if (!persistResult.ok) {
-      return persistResult;
-    }
-
-    logger.info("catalog.result", "catalog crawl persisted", persistResult.value);
+    logger.info("catalog.result", "catalog crawl persisted", {
+      leagues: leagueCount,
+      tableEntries: tableEntryCount,
+    });
     return ok(undefined);
   } finally {
     await close();

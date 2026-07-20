@@ -4,6 +4,13 @@
 // (a fixture's score/status, for instance), not just create-once-and-skip. No interactive
 // transactions available over neon-http (ADR 0011) — each step is itself idempotent (a lookup
 // or an upsert), so a partial failure is safe to retry on the next crawl.
+//
+// For a *new* entity the external_ref is written *before* the entity row. There's no transaction,
+// so if the second write fails we're left with a partial state either way — but with the ref
+// written first, the orphan is a ref pointing at a not-yet-existing entity, which the next crawl
+// self-heals: `findExternalRef` returns the same internal id and the entity upsert completes it.
+// The reverse order (entity first) would instead orphan the entity — the next crawl wouldn't find
+// its ref, would mint a *new* id, and would leave a duplicate row behind.
 
 import {
   err,
@@ -54,11 +61,8 @@ export async function resolveEntityByExternalRef<T extends EntityType & External
     isNew = true;
   }
 
-  const upserted = await upsertEntity(id);
-  if (!upserted.ok) {
-    return upserted;
-  }
-
+  // Write the ref first for a new entity so a failure between the two writes self-heals on the
+  // next crawl (see file header) rather than orphaning the entity into a duplicate.
   if (isNew) {
     const refUpserted = await deps.upsertExternalRef({
       id: generateId("externalRef"),
@@ -71,6 +75,11 @@ export async function resolveEntityByExternalRef<T extends EntityType & External
     if (!refUpserted.ok) {
       return refUpserted;
     }
+  }
+
+  const upserted = await upsertEntity(id);
+  if (!upserted.ok) {
+    return upserted;
   }
 
   return ok(id);
