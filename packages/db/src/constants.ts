@@ -35,3 +35,10 @@ export const externalRefEntityTypeValue = {
 
 export type ExternalRefEntityType =
   (typeof externalRefEntityTypeValue)[keyof typeof externalRefEntityTypeValue];
+
+/** Bounded retry for transient neon-http failures (see runQuery). Attempts include the first try;
+ * backoff is `baseDelayMs * 2 ** (attempt - 1)`, so 3 attempts wait ~100ms then ~200ms. */
+export const retryConfigValue = {
+  maxAttempts: 3,
+  baseDelayMs: 100,
+} as const;

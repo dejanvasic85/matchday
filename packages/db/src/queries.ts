@@ -5,6 +5,7 @@ import { err, ok, type Result } from "@matchday/domain";
 import { and, eq } from "drizzle-orm";
 import type { Db } from "./client.ts";
 import type { Source } from "./constants.ts";
+import { runQuery } from "./runQuery.ts";
 import {
   club,
   competition,
@@ -40,22 +41,33 @@ function toError(cause: unknown, message: string): Result<never> {
   return err({ message, cause });
 }
 
-export async function listClubs(db: Db): Promise<Result<Club[]>> {
-  try {
-    const rows = await db.select().from(club);
-    return ok(rows);
-  } catch (cause) {
-    return toError(cause, "Failed to list clubs");
+/** Run an upsert (with retry) and unwrap its single `returning()` row, failing if none came back. */
+async function runUpsert<T>(
+  fn: () => Promise<T[]>,
+  entityLabel: string,
+  values: unknown,
+): Promise<Result<T>> {
+  const result = await runQuery(fn, `Failed to upsert ${entityLabel}`);
+  if (!result.ok) {
+    return result;
   }
+  const row = result.value[0];
+  if (row === undefined) {
+    return toError(values, `Upsert of ${entityLabel} returned no row`);
+  }
+  return ok(row);
+}
+
+export async function listClubs(db: Db): Promise<Result<Club[]>> {
+  return runQuery(() => db.select().from(club), "Failed to list clubs");
 }
 
 export async function getClubById(db: Db, id: string): Promise<Result<Club | null>> {
-  try {
-    const rows = await db.select().from(club).where(eq(club.id, id)).limit(1);
-    return ok(rows[0] ?? null);
-  } catch (cause) {
-    return toError(cause, "Failed to get club by id");
-  }
+  const result = await runQuery(
+    () => db.select().from(club).where(eq(club.id, id)).limit(1),
+    "Failed to get club by id",
+  );
+  return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
 /**
@@ -64,12 +76,11 @@ export async function getClubById(db: Db, id: string): Promise<Result<Club | nul
  * table-entry data, which carries only a club name/logo (no stable Dribl club id).
  */
 export async function findClubByLogoUrl(db: Db, logoUrl: string): Promise<Result<Club | null>> {
-  try {
-    const rows = await db.select().from(club).where(eq(club.logoUrl, logoUrl)).limit(1);
-    return ok(rows[0] ?? null);
-  } catch (cause) {
-    return toError(cause, "Failed to find club by logo url");
-  }
+  const result = await runQuery(
+    () => db.select().from(club).where(eq(club.logoUrl, logoUrl)).limit(1),
+    "Failed to find club by logo url",
+  );
+  return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
 /**
@@ -78,12 +89,11 @@ export async function findClubByLogoUrl(db: Db, logoUrl: string): Promise<Result
  * attach its external_ref to whichever club row this created, rather than creating a duplicate.
  */
 export async function findClubByName(db: Db, name: string): Promise<Result<Club | null>> {
-  try {
-    const rows = await db.select().from(club).where(eq(club.name, name)).limit(1);
-    return ok(rows[0] ?? null);
-  } catch (cause) {
-    return toError(cause, "Failed to find club by name");
-  }
+  const result = await runQuery(
+    () => db.select().from(club).where(eq(club.name, name)).limit(1),
+    "Failed to find club by name",
+  );
+  return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
 /**
@@ -97,162 +107,138 @@ export async function findClubByName(db: Db, name: string): Promise<Result<Club 
  * own real values here, or this will null out previously-curated fields on a re-crawl.
  */
 export async function upsertClub(db: Db, values: ClubInsert): Promise<Result<Club>> {
-  try {
-    const rows = await db
-      .insert(club)
-      .values(values)
-      .onConflictDoUpdate({
-        target: club.id,
-        set: {
-          name: values.name,
-          displayName: values.displayName,
-          logoUrl: values.logoUrl ?? null,
-          email: values.email ?? null,
-          website: values.website ?? null,
-          address: values.address ?? null,
-          socials: values.socials ?? null,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    const row = rows[0];
-    if (row === undefined) {
-      return toError(values, "Upsert of club returned no row");
-    }
-    return ok(row);
-  } catch (cause) {
-    return toError(cause, "Failed to upsert club");
-  }
+  return runUpsert(
+    () =>
+      db
+        .insert(club)
+        .values(values)
+        .onConflictDoUpdate({
+          target: club.id,
+          set: {
+            name: values.name,
+            displayName: values.displayName,
+            logoUrl: values.logoUrl ?? null,
+            email: values.email ?? null,
+            website: values.website ?? null,
+            address: values.address ?? null,
+            socials: values.socials ?? null,
+            updatedAt: new Date(),
+          },
+        })
+        .returning(),
+    "club",
+    values,
+  );
 }
 
 export async function upsertTeam(db: Db, values: TeamInsert): Promise<Result<Team>> {
-  try {
-    const rows = await db
-      .insert(team)
-      .values(values)
-      .onConflictDoUpdate({
-        target: team.id,
-        set: {
-          clubId: values.clubId,
-          name: values.name,
-          ageGroup: values.ageGroup ?? null,
-          gender: values.gender ?? null,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    const row = rows[0];
-    if (row === undefined) {
-      return toError(values, "Upsert of team returned no row");
-    }
-    return ok(row);
-  } catch (cause) {
-    return toError(cause, "Failed to upsert team");
-  }
+  return runUpsert(
+    () =>
+      db
+        .insert(team)
+        .values(values)
+        .onConflictDoUpdate({
+          target: team.id,
+          set: {
+            clubId: values.clubId,
+            name: values.name,
+            ageGroup: values.ageGroup ?? null,
+            gender: values.gender ?? null,
+            updatedAt: new Date(),
+          },
+        })
+        .returning(),
+    "team",
+    values,
+  );
 }
 
 export async function upsertCompetition(
   db: Db,
   values: CompetitionInsert,
 ): Promise<Result<Competition>> {
-  try {
-    const rows = await db
-      .insert(competition)
-      .values(values)
-      .onConflictDoUpdate({
-        target: competition.id,
-        set: { name: values.name, updatedAt: new Date() },
-      })
-      .returning();
-    const row = rows[0];
-    if (row === undefined) {
-      return toError(values, "Upsert of competition returned no row");
-    }
-    return ok(row);
-  } catch (cause) {
-    return toError(cause, "Failed to upsert competition");
-  }
+  return runUpsert(
+    () =>
+      db
+        .insert(competition)
+        .values(values)
+        .onConflictDoUpdate({
+          target: competition.id,
+          set: { name: values.name, updatedAt: new Date() },
+        })
+        .returning(),
+    "competition",
+    values,
+  );
 }
 
 export async function upsertSeason(db: Db, values: SeasonInsert): Promise<Result<Season>> {
-  try {
-    const rows = await db
-      .insert(season)
-      .values(values)
-      .onConflictDoUpdate({
-        target: season.id,
-        set: { name: values.name, updatedAt: new Date() },
-      })
-      .returning();
-    const row = rows[0];
-    if (row === undefined) {
-      return toError(values, "Upsert of season returned no row");
-    }
-    return ok(row);
-  } catch (cause) {
-    return toError(cause, "Failed to upsert season");
-  }
+  return runUpsert(
+    () =>
+      db
+        .insert(season)
+        .values(values)
+        .onConflictDoUpdate({
+          target: season.id,
+          set: { name: values.name, updatedAt: new Date() },
+        })
+        .returning(),
+    "season",
+    values,
+  );
 }
 
 export async function upsertLeague(db: Db, values: LeagueInsert): Promise<Result<League>> {
-  try {
-    const rows = await db
-      .insert(league)
-      .values(values)
-      .onConflictDoUpdate({
-        target: league.id,
-        set: {
-          name: values.name,
-          competitionId: values.competitionId,
-          seasonId: values.seasonId,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    const row = rows[0];
-    if (row === undefined) {
-      return toError(values, "Upsert of league returned no row");
-    }
-    return ok(row);
-  } catch (cause) {
-    return toError(cause, "Failed to upsert league");
-  }
+  return runUpsert(
+    () =>
+      db
+        .insert(league)
+        .values(values)
+        .onConflictDoUpdate({
+          target: league.id,
+          set: {
+            name: values.name,
+            competitionId: values.competitionId,
+            seasonId: values.seasonId,
+            updatedAt: new Date(),
+          },
+        })
+        .returning(),
+    "league",
+    values,
+  );
 }
 
 export async function upsertFixture(db: Db, values: FixtureInsert): Promise<Result<Fixture>> {
-  try {
-    const rows = await db
-      .insert(fixture)
-      .values(values)
-      .onConflictDoUpdate({
-        target: fixture.id,
-        set: {
-          leagueId: values.leagueId,
-          competitionId: values.competitionId,
-          seasonId: values.seasonId,
-          round: values.round ?? null,
-          homeTeamId: values.homeTeamId ?? null,
-          awayTeamId: values.awayTeamId ?? null,
-          venue: values.venue ?? null,
-          latitude: values.latitude ?? null,
-          longitude: values.longitude ?? null,
-          kickoffAt: values.kickoffAt ?? null,
-          status: values.status,
-          homeScore: values.homeScore ?? null,
-          awayScore: values.awayScore ?? null,
-          isBye: values.isBye,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    const row = rows[0];
-    if (row === undefined) {
-      return toError(values, "Upsert of fixture returned no row");
-    }
-    return ok(row);
-  } catch (cause) {
-    return toError(cause, "Failed to upsert fixture");
-  }
+  return runUpsert(
+    () =>
+      db
+        .insert(fixture)
+        .values(values)
+        .onConflictDoUpdate({
+          target: fixture.id,
+          set: {
+            leagueId: values.leagueId,
+            competitionId: values.competitionId,
+            seasonId: values.seasonId,
+            round: values.round ?? null,
+            homeTeamId: values.homeTeamId ?? null,
+            awayTeamId: values.awayTeamId ?? null,
+            venue: values.venue ?? null,
+            latitude: values.latitude ?? null,
+            longitude: values.longitude ?? null,
+            kickoffAt: values.kickoffAt ?? null,
+            status: values.status,
+            homeScore: values.homeScore ?? null,
+            awayScore: values.awayScore ?? null,
+            isBye: values.isBye,
+            updatedAt: new Date(),
+          },
+        })
+        .returning(),
+    "fixture",
+    values,
+  );
 }
 
 /**
@@ -265,36 +251,32 @@ export async function upsertTableEntry(
   db: Db,
   values: TableEntryInsert,
 ): Promise<Result<TableEntry>> {
-  try {
-    const rows = await db
-      .insert(tableEntry)
-      .values(values)
-      .onConflictDoUpdate({
-        target: [tableEntry.leagueId, tableEntry.teamId],
-        set: {
-          competitionId: values.competitionId,
-          seasonId: values.seasonId,
-          position: values.position,
-          played: values.played,
-          won: values.won,
-          drawn: values.drawn,
-          lost: values.lost,
-          goalsFor: values.goalsFor,
-          goalsAgainst: values.goalsAgainst,
-          goalDifference: values.goalDifference,
-          points: values.points,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    const row = rows[0];
-    if (row === undefined) {
-      return toError(values, "Upsert of table entry returned no row");
-    }
-    return ok(row);
-  } catch (cause) {
-    return toError(cause, "Failed to upsert table entry");
-  }
+  return runUpsert(
+    () =>
+      db
+        .insert(tableEntry)
+        .values(values)
+        .onConflictDoUpdate({
+          target: [tableEntry.leagueId, tableEntry.teamId],
+          set: {
+            competitionId: values.competitionId,
+            seasonId: values.seasonId,
+            position: values.position,
+            played: values.played,
+            won: values.won,
+            drawn: values.drawn,
+            lost: values.lost,
+            goalsFor: values.goalsFor,
+            goalsAgainst: values.goalsAgainst,
+            goalDifference: values.goalDifference,
+            points: values.points,
+            updatedAt: new Date(),
+          },
+        })
+        .returning(),
+    "table entry",
+    values,
+  );
 }
 
 /**
@@ -306,28 +288,24 @@ export async function upsertExternalRef(
   db: Db,
   ref: ExternalRefInsert,
 ): Promise<Result<ExternalRef>> {
-  try {
-    const rows = await db
-      .insert(externalRef)
-      .values(ref)
-      .onConflictDoUpdate({
-        target: [externalRef.source, externalRef.sourceId],
-        set: {
-          entityType: ref.entityType,
-          internalId: ref.internalId,
-          sourceUrl: ref.sourceUrl ?? null,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    const row = rows[0];
-    if (row === undefined) {
-      return toError(ref, "Upsert of external ref returned no row");
-    }
-    return ok(row);
-  } catch (cause) {
-    return toError(cause, "Failed to upsert external ref");
-  }
+  return runUpsert(
+    () =>
+      db
+        .insert(externalRef)
+        .values(ref)
+        .onConflictDoUpdate({
+          target: [externalRef.source, externalRef.sourceId],
+          set: {
+            entityType: ref.entityType,
+            internalId: ref.internalId,
+            sourceUrl: ref.sourceUrl ?? null,
+            updatedAt: new Date(),
+          },
+        })
+        .returning(),
+    "external ref",
+    ref,
+  );
 }
 
 export async function findExternalRef(
@@ -335,25 +313,24 @@ export async function findExternalRef(
   source: Source,
   sourceId: string,
 ): Promise<Result<ExternalRef | null>> {
-  try {
-    const rows = await db
-      .select()
-      .from(externalRef)
-      .where(and(eq(externalRef.source, source), eq(externalRef.sourceId, sourceId)))
-      .limit(1);
-    return ok(rows[0] ?? null);
-  } catch (cause) {
-    return toError(cause, "Failed to find external ref");
-  }
+  const result = await runQuery(
+    () =>
+      db
+        .select()
+        .from(externalRef)
+        .where(and(eq(externalRef.source, source), eq(externalRef.sourceId, sourceId)))
+        .limit(1),
+    "Failed to find external ref",
+  );
+  return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
 export async function getLeagueById(db: Db, id: string): Promise<Result<League | null>> {
-  try {
-    const rows = await db.select().from(league).where(eq(league.id, id)).limit(1);
-    return ok(rows[0] ?? null);
-  } catch (cause) {
-    return toError(cause, "Failed to get league by id");
-  }
+  const result = await runQuery(
+    () => db.select().from(league).where(eq(league.id, id)).limit(1),
+    "Failed to get league by id",
+  );
+  return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
 /**
@@ -364,23 +341,19 @@ export async function upsertSubscription(
   db: Db,
   values: SubscriptionInsert,
 ): Promise<Result<Subscription>> {
-  try {
-    const rows = await db
-      .insert(subscription)
-      .values(values)
-      .onConflictDoUpdate({
-        target: [subscription.clientName, subscription.leagueId],
-        set: { updatedAt: new Date() },
-      })
-      .returning();
-    const row = rows[0];
-    if (row === undefined) {
-      return toError(values, "Upsert of subscription returned no row");
-    }
-    return ok(row);
-  } catch (cause) {
-    return toError(cause, "Failed to upsert subscription");
-  }
+  return runUpsert(
+    () =>
+      db
+        .insert(subscription)
+        .values(values)
+        .onConflictDoUpdate({
+          target: [subscription.clientName, subscription.leagueId],
+          set: { updatedAt: new Date() },
+        })
+        .returning(),
+    "subscription",
+    values,
+  );
 }
 
 /**
@@ -388,10 +361,9 @@ export async function upsertSubscription(
  * many subscribers is crawled once, so the result is deduplicated in SQL.
  */
 export async function listSubscribedLeagueIds(db: Db): Promise<Result<string[]>> {
-  try {
-    const rows = await db.selectDistinct({ leagueId: subscription.leagueId }).from(subscription);
-    return ok(rows.map((row) => row.leagueId));
-  } catch (cause) {
-    return toError(cause, "Failed to list subscribed league ids");
-  }
+  const result = await runQuery(
+    () => db.selectDistinct({ leagueId: subscription.leagueId }).from(subscription),
+    "Failed to list subscribed league ids",
+  );
+  return result.ok ? ok(result.value.map((row) => row.leagueId)) : result;
 }
