@@ -2,7 +2,14 @@
 // (dribl-crawling skill). Raw response staged to R2 before mapping, per 0004. Dribl's own
 // endpoint/wire format calls this a "ladder" — our side of the boundary calls it "table".
 
-import { driblTableApiResponseSchema, err, ok, type Logger, type Result } from "@matchday/domain";
+import {
+  driblTableApiResponseSchema,
+  err,
+  ok,
+  type DriblTableApiResponse,
+  type Logger,
+  type Result,
+} from "@matchday/domain";
 import { browserFetch, type FetchPage } from "./browserFetch.ts";
 import { buildDriblApiUrl, type DriblLeagueIds } from "./buildDriblApiUrl.ts";
 import type { RawStorage } from "./rawStorage.ts";
@@ -13,13 +20,15 @@ export type CrawlTableInput = {
   rawStorage: RawStorage;
   logger: Logger;
   ids: DriblLeagueIds;
-  trackedCompetitionId: string;
+  leagueId: string;
   crawlRunId: string;
 };
 
 /** `undefined` when the league has no table (e.g. MiniRoos) — not an error. */
-export async function crawlTable(input: CrawlTableInput): Promise<Result<unknown>> {
-  const { page, rawStorage, logger, ids, trackedCompetitionId, crawlRunId } = input;
+export async function crawlTable(
+  input: CrawlTableInput,
+): Promise<Result<DriblTableApiResponse | undefined>> {
+  const { page, rawStorage, logger, ids, leagueId, crawlRunId } = input;
 
   const url = buildDriblApiUrl("ladders", ids);
   const fetched = await browserFetch(page, url);
@@ -37,7 +46,7 @@ export async function crawlTable(input: CrawlTableInput): Promise<Result<unknown
     return ok(undefined);
   }
 
-  const key = buildRawTableKey(trackedCompetitionId, crawlRunId);
+  const key = buildRawTableKey(leagueId, crawlRunId);
   const staged = await rawStorage.putJson(key, parsed.data);
   if (!staged.ok) {
     return staged;

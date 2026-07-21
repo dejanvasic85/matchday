@@ -66,14 +66,17 @@ describe("resolveTeamForFixture", () => {
 });
 
 describe("resolveTeamForTableEntry", () => {
-  it("resolves the club, then creates the team on first sight", async () => {
+  it("resolves the club via club_code, then creates the team on first sight", async () => {
     const deps = makeFakeEntityResolutionDeps({
-      findClubByLogoUrl: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      // Both the club_code ref lookup (resolveClub) and the team ref lookup
+      // (resolveEntityByExternalRef) miss here, so a single blanket `null` covers both.
       findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      findClubByLogoUrl: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      upsertExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
+      upsertClub: vi.fn().mockResolvedValue(ok(makeClubRow())),
       upsertTeam: vi
         .fn()
         .mockResolvedValue(ok({ id: "tea_new00000001", clubId: "clb_existing0001" })),
-      upsertExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
     });
 
     const result = await resolveTeamForTableEntry({
@@ -82,6 +85,7 @@ describe("resolveTeamForTableEntry", () => {
       teamName: "Altona North SC U08",
       clubName: "Altona North SC",
       clubLogoUrl: "https://ocean.dribl.com/logo",
+      clubCode: "ANSC",
     });
 
     assert(result.ok);
@@ -92,7 +96,7 @@ describe("resolveTeamForTableEntry", () => {
 
   it("propagates a club resolution failure without attempting to resolve the team", async () => {
     const deps = makeFakeEntityResolutionDeps({
-      findClubByLogoUrl: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
+      findExternalRef: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
     });
 
     const result = await resolveTeamForTableEntry({
@@ -101,9 +105,10 @@ describe("resolveTeamForTableEntry", () => {
       teamName: "Altona North SC U08",
       clubName: "Altona North SC",
       clubLogoUrl: "https://ocean.dribl.com/logo",
+      clubCode: "ANSC",
     });
 
     assert(!result.ok);
-    expect(deps.findExternalRef).not.toHaveBeenCalled();
+    expect(deps.upsertTeam).not.toHaveBeenCalled();
   });
 });

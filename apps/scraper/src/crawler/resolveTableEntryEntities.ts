@@ -34,6 +34,7 @@ export async function resolveTableEntryEntities(
     teamName: mapped.teamName,
     clubName: mapped.clubName,
     clubLogoUrl: mapped.clubLogoUrl,
+    clubCode: mapped.clubCode,
   });
   if (!teamResult.ok) {
     return teamResult;

@@ -80,12 +80,16 @@ forward; the strategy below rewires how they're driven.
       league hash). Dribl `list/*` + a light latest-round/table pass to list teams. Populates the
       REST-served onboarding dropdowns. Runs regardless of subscriptions. `mday catalog`
       (`--max-leagues`, `--dry-run`). (→ 0011, 0012)
-- [ ] **Deep crawl job (subscription-driven)** — fixtures + tables for subscribed leagues only;
+- [x] **Deep crawl job (single-league unit)** — fixtures + table for **one league per invocation**;
       discovers clubs/teams (team by `team_hash_id`, club by `club_code`), sets `team.clubId` from
-      the table row; raw staged to R2 then transformed/upserted by external_ref. (→ 0003, 0004, 0012)
+      the table row; raw staged to R2 then transformed/upserted by external_ref. One invocation = one
+      league, so leagues can eventually run on independent, fixture-derived cadences (0003) and a
+      slow/failing league can't block others — deciding *what* invokes this per subscribed league
+      (cron matrix, queue, scheduler loop) is deferred to Scheduling below. (→ 0003, 0004, 0012)
   - [x] Subscription model: `subscription` table (client*name + `lea*`FK), replaces
         `tracked_competition`; `upsertSubscription`/`listSubscribedLeagueIds`/`getLeagueById`.
-  - [ ] Deep-crawl pipeline + `mday deep-crawl` (subscribed leagues ∪ `--league`, `--dry-run`).
+  - [x] Deep-crawl pipeline + `mday deep-crawl --league <lea_id> [--dry-run]` (single league,
+        required; not unioned with subscriptions — see above).
 - [ ] **Club enrichment job** — fetch rich club detail (grounds/colours/address/socials) from the
       `clubs/{id}` endpoint; attach by logo to clubs the deep crawl discovered; never create. Needs a
       club-enrichment data-model decision (venue entity vs club columns). (→ 0004, 0012)
