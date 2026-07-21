@@ -84,7 +84,7 @@ forward; the strategy below rewires how they're driven.
       discovers clubs/teams (team by `team_hash_id`, club by `club_code`), sets `team.clubId` from
       the table row; raw staged to R2 then transformed/upserted by external_ref. One invocation = one
       league, so leagues can eventually run on independent, fixture-derived cadences (0003) and a
-      slow/failing league can't block others — deciding *what* invokes this per subscribed league
+      slow/failing league can't block others — deciding _what_ invokes this per subscribed league
       (cron matrix, queue, scheduler loop) is deferred to Scheduling below. (→ 0003, 0004, 0012)
   - [x] Subscription model: `subscription` table (client*name + `lea*`FK), replaces
         `tracked_competition`; `upsertSubscription`/`listSubscribedLeagueIds`/`getLeagueById`.

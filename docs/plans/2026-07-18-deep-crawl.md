@@ -9,7 +9,7 @@ via the existing entity-resolution services. Never crawl every league in one pro
 subscribed league inside a single shared browser session (`--league` as a manual add-on). We
 changed this to **one invocation = one league** — leagues will eventually run on independent,
 fixture-derived cadences (0003: match-window timing differs per league), and a stuck/slow league
-shouldn't block others. Deciding *what* invokes this crawl per subscribed league (a cron matrix, a
+shouldn't block others. Deciding _what_ invokes this crawl per subscribed league (a cron matrix, a
 queue, a scheduler loop) is deferred to the still-open Scheduling backlog item — this doc covers
 only the single-league crawl unit itself.
 
