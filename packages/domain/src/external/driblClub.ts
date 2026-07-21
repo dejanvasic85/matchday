@@ -12,8 +12,10 @@ export const driblClubAddressSchema = z.object({
   postcode: z.string().nullable(),
 });
 
+// `name` is tolerant (any platform Dribl returns, not just the ones seen so far) so an
+// unfamiliar social platform doesn't fail validation and abort the crawl.
 export const driblClubSocialSchema = z.object({
-  name: z.enum(["facebook", "instagram", "twitter"]),
+  name: z.string(),
   value: z.url(),
 });
 
