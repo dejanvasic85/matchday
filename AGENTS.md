@@ -86,7 +86,10 @@ close the loop on each before starting the next:
 4. Fix the issues it surfaces (or explicitly note why a finding doesn't apply — don't silently
    drop one).
 5. Push and open a PR; wait for CI checks.
-6. If checks fail: fix, push, and repeat from step 5 until they pass.
+6. If checks fail: fix, **run `caveman-review` on the fix-up diff too** (a CI fix is still a code
+   change — don't push anything, including a one-line fix-up commit, without a review pass), push,
+   and repeat from step 5 until checks pass. Address what it surfaces, or push back with an
+   explanation if a finding doesn't apply — silently dropping one isn't acceptable either way.
 7. Merge the PR once green.
 8. Cut a **fresh branch off latest `main`** for the next slice — don't keep stacking unrelated
    slices on one branch.
