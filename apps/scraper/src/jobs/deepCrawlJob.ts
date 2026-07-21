@@ -17,6 +17,7 @@ export type RunDeepCrawlJobInput = {
   logger: Logger;
   databaseUrl: string;
   driblSiteUrl: string;
+  browserWsEndpoint?: string;
   tenantHost: string;
   tenantSlug: string;
   leagueId: LeagueId;
@@ -25,9 +26,18 @@ export type RunDeepCrawlJobInput = {
 };
 
 export async function runDeepCrawlJob(input: RunDeepCrawlJobInput): Promise<Result<void>> {
-  const { logger, databaseUrl, driblSiteUrl, tenantHost, tenantSlug, leagueId, dryRun } = input;
+  const {
+    logger,
+    databaseUrl,
+    driblSiteUrl,
+    browserWsEndpoint,
+    tenantHost,
+    tenantSlug,
+    leagueId,
+    dryRun,
+  } = input;
 
-  const sessionResult = await openBrowserSession({ driblSiteUrl });
+  const sessionResult = await openBrowserSession({ driblSiteUrl, browserWsEndpoint });
   if (!sessionResult.ok) {
     return sessionResult;
   }
