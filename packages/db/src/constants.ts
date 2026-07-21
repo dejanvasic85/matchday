@@ -2,9 +2,10 @@
 // against these unions at the mapper/Zod boundary (per ADR 0011) rather than as DB enums,
 // so values can evolve without a migration.
 
-/** External identity sources (ADR 0005). Dribl is the only source today. */
+/** External identity sources (ADR 0005, 0012). */
 export const sourceValue = {
   dribl: "dribl",
+  driblClubCode: "dribl_club_code",
 } as const;
 
 export type Source = (typeof sourceValue)[keyof typeof sourceValue];

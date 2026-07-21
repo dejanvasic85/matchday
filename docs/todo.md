@@ -65,10 +65,13 @@ Crawl building blocks (playwright-core session, browser fetch, `resolveLeagueIds
 `crawlFixturesByRound`, R2 raw staging, the `mday` CLI shell) exist from an earlier spike and carry
 forward; the strategy below rewires how they're driven.
 
-- [ ] **0012 schema follow-ups** — relax `team.clubId` to nullable (migration); make
-      `external_ref.source` a real multi-value union (`dribl`, `dribl_club_code`, future sources) in
-      `packages/domain` + `packages/db`; fix `driblListResponseSchema` (list items are top-level
-      `name`/`id`); loosen `driblClubSocial.name` to a tolerant parse. (→ 0012)
+- [~] **0012 schema follow-ups** (→ 0012)
+  - [ ] Relax `team.clubId` to nullable (migration).
+  - [ ] Make `external_ref.source` a real multi-value union (`dribl`, `dribl_club_code`, future
+        sources) in `packages/domain` + `packages/db` — currently `sourceValue` only has `dribl`.
+  - [x] Fix `driblListResponseSchema` (list items are top-level `name`/`id`).
+  - [ ] Loosen `driblClubSocial.name` to a tolerant parse — currently a strict
+        `enum(["facebook","instagram","twitter"])` that will reject other platforms.
 - [ ] **Subscription data model** — subscription entity `(client, leagueId → league, sanityTeamRef)`,
       keyed on our internal `lea_` id (not Dribl identifiers); subsumes `tracked_competition`.
       Competition/league/team are already first-class 0011 entities; no team↔league join/history

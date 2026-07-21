@@ -25,6 +25,12 @@ describe("teamSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts a null clubId (unlinked team)", () => {
+    const result = teamSchema.safeParse({ ...makeValidTeam(), clubId: null });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects a team missing clubId", () => {
     const { clubId: _clubId, ...withoutClubId } = makeValidTeam();
 

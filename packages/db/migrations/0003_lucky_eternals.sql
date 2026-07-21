@@ -1,0 +1,1 @@
+ALTER TABLE "team" ALTER COLUMN "club_id" DROP NOT NULL;

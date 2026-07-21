@@ -35,6 +35,15 @@ describe("externalRefSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts the dribl_club_code source", () => {
+    const result = externalRefSchema.safeParse({
+      ...makeValidExternalRef(),
+      source: "dribl_club_code",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects an unknown source", () => {
     const result = externalRefSchema.safeParse({ ...makeValidExternalRef(), source: "playhq" });
 
