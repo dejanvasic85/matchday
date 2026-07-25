@@ -20,51 +20,102 @@ function makeClubRow(overrides: Partial<{ id: string; name: string }> = {}) {
   };
 }
 
+function makeExternalRefRow(overrides: Partial<{ internalId: string }> = {}) {
+  return {
+    id: "ext_row0000001",
+    entityType: "club",
+    internalId: "clb_existing0001",
+    source: "dribl_club_code" as const,
+    sourceId: "club-code-1",
+    sourceUrl: null,
+    createdAt: epoch,
+    updatedAt: epoch,
+    ...overrides,
+  };
+}
+
+const baseInput = {
+  name: "Altona North SC",
+  logoUrl: "https://ocean.dribl.com/logo",
+  clubCode: "club-code-1",
+};
+
 describe("resolveClub", () => {
-  it("returns the existing club id when a logo match is found", async () => {
+  it("returns the club id via an existing club_code ref, skipping logo/name lookups", async () => {
     const deps = makeFakeEntityResolutionDeps({
-      findClubByLogoUrl: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      findExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
+      upsertClub: vi.fn().mockResolvedValue(ok(makeClubRow())),
     });
 
-    const result = await resolveClub({
-      deps,
-      name: "Altona North SC",
-      logoUrl: "https://ocean.dribl.com/logo",
+    const result = await resolveClub({ deps, ...baseInput });
+
+    expect(result).toEqual({ ok: true, value: "clb_existing0001" });
+    expect(deps.findClubByLogoUrl).not.toHaveBeenCalled();
+    expect(deps.findClubByName).not.toHaveBeenCalled();
+    expect(deps.upsertExternalRef).not.toHaveBeenCalled();
+  });
+
+  it("bridges via a logo match when no club_code ref exists yet, writing the ref", async () => {
+    const upsertExternalRef = vi.fn().mockResolvedValue(ok(makeExternalRefRow()));
+    const upsertClub = vi.fn().mockResolvedValue(ok(makeClubRow()));
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      findClubByLogoUrl: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      upsertExternalRef,
+      upsertClub,
     });
+
+    const result = await resolveClub({ deps, ...baseInput });
 
     expect(result).toEqual({ ok: true, value: "clb_existing0001" });
     expect(deps.findClubByName).not.toHaveBeenCalled();
+    expect(upsertExternalRef).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entityType: "club",
+        internalId: "clb_existing0001",
+        source: "dribl_club_code",
+        sourceId: "club-code-1",
+      }),
+    );
+    const refOrder = upsertExternalRef.mock.invocationCallOrder[0];
+    const clubOrder = upsertClub.mock.invocationCallOrder[0];
+    expect(refOrder).toBeLessThan(clubOrder);
   });
 
-  it("falls back to a name match when no logo match is found", async () => {
+  it("bridges via a name match when no logo match is found", async () => {
     const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
       findClubByLogoUrl: vi.fn().mockResolvedValue(ok(null)),
       findClubByName: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      upsertExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
+      upsertClub: vi.fn().mockResolvedValue(ok(makeClubRow())),
     });
 
-    const result = await resolveClub({
-      deps,
-      name: "Altona North SC",
-      logoUrl: "https://ocean.dribl.com/logo",
-    });
+    const result = await resolveClub({ deps, ...baseInput });
 
     expect(result).toEqual({ ok: true, value: "clb_existing0001" });
   });
 
   it("skips the logo lookup entirely when logoUrl is null", async () => {
     const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
       findClubByName: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      upsertExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
+      upsertClub: vi.fn().mockResolvedValue(ok(makeClubRow())),
     });
 
-    await resolveClub({ deps, name: "Altona North SC", logoUrl: null });
+    await resolveClub({ ...baseInput, deps, logoUrl: null });
 
     expect(deps.findClubByLogoUrl).not.toHaveBeenCalled();
   });
 
-  it("creates a new club when neither logo nor name matches", async () => {
+  it("creates a brand new club when no ref, logo, or name matches", async () => {
+    const upsertExternalRef = vi.fn().mockResolvedValue(ok(makeExternalRefRow()));
     const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
       findClubByLogoUrl: vi.fn().mockResolvedValue(ok(null)),
       findClubByName: vi.fn().mockResolvedValue(ok(null)),
+      upsertExternalRef,
       upsertClub: vi.fn().mockResolvedValue(ok(makeClubRow({ id: "clb_new00000001" }))),
     });
 
@@ -72,25 +123,89 @@ describe("resolveClub", () => {
       deps,
       name: "New Club FC",
       logoUrl: "https://ocean.dribl.com/new-logo",
+      clubCode: "club-code-new",
     });
 
     assert(result.ok);
+    expect(upsertExternalRef).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entityType: "club",
+        source: "dribl_club_code",
+        sourceId: "club-code-new",
+      }),
+    );
     expect(deps.upsertClub).toHaveBeenCalledWith(
       expect.objectContaining({ name: "New Club FC", displayName: "New Club FC" }),
     );
   });
 
-  it("propagates a lookup failure", async () => {
+  it("propagates a findExternalRef failure", async () => {
     const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
+    });
+
+    const result = await resolveClub({ deps, ...baseInput });
+
+    assert(!result.ok);
+  });
+
+  it("propagates a findClubByLogoUrl failure", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
       findClubByLogoUrl: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
     });
 
-    const result = await resolveClub({
-      deps,
-      name: "Altona North SC",
-      logoUrl: "https://ocean.dribl.com/logo",
-    });
+    const result = await resolveClub({ deps, ...baseInput });
 
     assert(!result.ok);
+  });
+
+  it("propagates a findClubByName failure", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      findClubByLogoUrl: vi.fn().mockResolvedValue(ok(null)),
+      findClubByName: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
+    });
+
+    const result = await resolveClub({ deps, ...baseInput });
+
+    assert(!result.ok);
+  });
+
+  it("propagates an upsertExternalRef failure during the bridge", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      findClubByLogoUrl: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      upsertExternalRef: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
+    });
+
+    const result = await resolveClub({ deps, ...baseInput });
+
+    assert(!result.ok);
+    expect(deps.upsertClub).not.toHaveBeenCalled();
+  });
+
+  it("propagates an upsertClub failure", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
+      upsertClub: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
+    });
+
+    const result = await resolveClub({ deps, ...baseInput });
+
+    assert(!result.ok);
+  });
+
+  it("returns err when the matched external_ref's internalId has an unexpected prefix", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi
+        .fn()
+        .mockResolvedValue(ok(makeExternalRefRow({ internalId: "tea_wrong_prefix" }))),
+    });
+
+    const result = await resolveClub({ deps, ...baseInput });
+
+    assert(!result.ok);
+    expect(deps.upsertClub).not.toHaveBeenCalled();
   });
 });

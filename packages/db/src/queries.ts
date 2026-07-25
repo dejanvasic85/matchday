@@ -4,7 +4,7 @@
 import { err, ok, type Result } from "@matchday/domain";
 import { and, eq } from "drizzle-orm";
 import type { Db } from "./client.ts";
-import type { Source } from "./constants.ts";
+import type { ExternalRefEntityType, Source } from "./constants.ts";
 import { runQuery } from "./runQuery.ts";
 import {
   club,
@@ -321,6 +321,34 @@ export async function findExternalRef(
         .where(and(eq(externalRef.source, source), eq(externalRef.sourceId, sourceId)))
         .limit(1),
     "Failed to find external ref",
+  );
+  return result.ok ? ok(result.value[0] ?? null) : result;
+}
+
+/**
+ * Reverse of {@link findExternalRef}: given an entity's internal id, find its ref for a given
+ * source (e.g. resolving a `lea_` id back to the Dribl league hash it was catalogued under).
+ */
+export async function findExternalRefByInternalId(
+  db: Db,
+  entityType: ExternalRefEntityType,
+  internalId: string,
+  source: Source,
+): Promise<Result<ExternalRef | null>> {
+  const result = await runQuery(
+    () =>
+      db
+        .select()
+        .from(externalRef)
+        .where(
+          and(
+            eq(externalRef.entityType, entityType),
+            eq(externalRef.internalId, internalId),
+            eq(externalRef.source, source),
+          ),
+        )
+        .limit(1),
+    "Failed to find external ref by internal id",
   );
   return result.ok ? ok(result.value[0] ?? null) : result;
 }

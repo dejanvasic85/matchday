@@ -45,14 +45,15 @@ export type ResolveTeamForTableEntryInput = {
   teamName: string;
   clubName: string;
   clubLogoUrl: string | null;
+  clubCode: string;
 };
 
 export async function resolveTeamForTableEntry(
   input: ResolveTeamForTableEntryInput,
 ): Promise<Result<TeamId>> {
-  const { deps, teamSourceId, teamName, clubName, clubLogoUrl } = input;
+  const { deps, teamSourceId, teamName, clubName, clubLogoUrl, clubCode } = input;
 
-  const clubResult = await resolveClub({ deps, name: clubName, logoUrl: clubLogoUrl });
+  const clubResult = await resolveClub({ deps, name: clubName, logoUrl: clubLogoUrl, clubCode });
   if (!clubResult.ok) {
     return clubResult;
   }

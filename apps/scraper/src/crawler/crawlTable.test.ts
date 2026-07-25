@@ -41,13 +41,13 @@ describe("crawlTable", () => {
       rawStorage,
       logger: makeFakeLogger(),
       ids,
-      trackedCompetitionId: "trk_abc",
+      leagueId: "lea_abc123",
       crawlRunId: "run_1",
     });
 
     assert(result.ok);
     expect(rawStorage.puts).toHaveLength(1);
-    expect(rawStorage.puts[0]?.key).toBe("raw/trk_abc/run_1/table.json");
+    expect(rawStorage.puts[0]?.key).toBe("deep/lea_abc123/run_1/table.json");
   });
 
   it("skips staging and returns undefined when there are no table entries", async () => {
@@ -59,7 +59,7 @@ describe("crawlTable", () => {
       rawStorage,
       logger: makeFakeLogger(),
       ids,
-      trackedCompetitionId: "trk_abc",
+      leagueId: "lea_abc123",
       crawlRunId: "run_1",
     });
 
@@ -76,7 +76,7 @@ describe("crawlTable", () => {
       rawStorage,
       logger: makeFakeLogger(),
       ids,
-      trackedCompetitionId: "trk_abc",
+      leagueId: "lea_abc123",
       crawlRunId: "run_1",
     });
 

@@ -27,6 +27,7 @@ export {
   upsertTableEntry,
   upsertExternalRef,
   findExternalRef,
+  findExternalRefByInternalId,
   getLeagueById,
   upsertSubscription,
   listSubscribedLeagueIds,

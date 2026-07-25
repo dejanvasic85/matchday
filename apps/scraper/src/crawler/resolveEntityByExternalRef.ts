@@ -22,12 +22,15 @@ import {
   type EntityType,
   type ExternalRefEntityType,
   type Result,
+  type Source,
 } from "@matchday/domain";
 import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
 
 export type ResolveEntityByExternalRefInput<T extends EntityType & ExternalRefEntityType> = {
   deps: Pick<EntityResolutionDeps, "findExternalRef" | "upsertExternalRef">;
   entityType: T;
+  /** Identity source for the ref (default `dribl`) — e.g. `dribl_club_code` for club identity. */
+  source?: Source;
   sourceId: string;
   sourceUrl?: string;
   /** Upsert the entity row with the given (found-or-generated) id. */
@@ -39,8 +42,9 @@ export async function resolveEntityByExternalRef<T extends EntityType & External
   input: ResolveEntityByExternalRefInput<T>,
 ): Promise<Result<EntityId<T>>> {
   const { deps, entityType, sourceId, sourceUrl, upsertEntity } = input;
+  const source = input.source ?? sourceValue.dribl;
 
-  const existing = await deps.findExternalRef(sourceValue.dribl, sourceId);
+  const existing = await deps.findExternalRef(source, sourceId);
   if (!existing.ok) {
     return existing;
   }
@@ -68,7 +72,7 @@ export async function resolveEntityByExternalRef<T extends EntityType & External
       id: generateId("externalRef"),
       entityType,
       internalId: id,
-      source: sourceValue.dribl,
+      source,
       sourceId,
       sourceUrl: sourceUrl ?? null,
     });

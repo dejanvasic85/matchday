@@ -64,6 +64,26 @@ describe("resolveEntityByExternalRef", () => {
     expect(refOrder).toBeLessThan(entityOrder);
   });
 
+  it("threads a custom source through both the lookup and the new external_ref", async () => {
+    const findExternalRef = vi.fn().mockResolvedValue(ok(null));
+    const upsertExternalRef = vi.fn().mockResolvedValue(ok(makeExternalRefRow()));
+    const deps = makeFakeEntityResolutionDeps({ findExternalRef, upsertExternalRef });
+    const upsertEntity = vi.fn().mockResolvedValue(ok(undefined));
+
+    await resolveEntityByExternalRef({
+      deps,
+      entityType: "club",
+      source: "dribl_club_code",
+      sourceId: "club-code-1",
+      upsertEntity,
+    });
+
+    expect(findExternalRef).toHaveBeenCalledWith("dribl_club_code", "club-code-1");
+    expect(upsertExternalRef).toHaveBeenCalledWith(
+      expect.objectContaining({ source: "dribl_club_code", sourceId: "club-code-1" }),
+    );
+  });
+
   it("returns err when the existing external_ref's internalId has an unexpected prefix", async () => {
     const deps = makeFakeEntityResolutionDeps({
       findExternalRef: vi

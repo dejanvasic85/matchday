@@ -7,6 +7,7 @@ import {
   driblFixturesApiResponseSchema,
   err,
   ok,
+  type DriblFixturesApiResponse,
   type Logger,
   type Result,
 } from "@matchday/domain";
@@ -23,17 +24,17 @@ export type CrawlFixturesByRoundInput = {
   rawStorage: RawStorage;
   logger: Logger;
   ids: DriblLeagueIds;
-  trackedCompetitionId: string;
+  leagueId: string;
   crawlRunId: string;
 };
 
 /** One raw response per non-empty round, in round order. */
 export async function crawlFixturesByRound(
   input: CrawlFixturesByRoundInput,
-): Promise<Result<unknown[]>> {
-  const { page, rawStorage, logger, ids, trackedCompetitionId, crawlRunId } = input;
+): Promise<Result<DriblFixturesApiResponse[]>> {
+  const { page, rawStorage, logger, ids, leagueId, crawlRunId } = input;
 
-  const rawResponses: unknown[] = [];
+  const rawResponses: DriblFixturesApiResponse[] = [];
   let emptyStreak = 0;
   let lastRound = 0;
 
@@ -64,7 +65,7 @@ export async function crawlFixturesByRound(
     }
 
     emptyStreak = 0;
-    const key = buildRawFixturesKey(trackedCompetitionId, crawlRunId, round);
+    const key = buildRawFixturesKey(leagueId, crawlRunId, round);
     const staged = await rawStorage.putJson(key, parsed.data);
     if (!staged.ok) {
       return staged;

@@ -21,6 +21,7 @@ export type RunCatalogJobInput = {
   logger: Logger;
   databaseUrl: string;
   driblSiteUrl: string;
+  browserWsEndpoint?: string;
   tenantHost: string;
   tenantSlug: string;
   seasonYear: string;
@@ -29,10 +30,18 @@ export type RunCatalogJobInput = {
 };
 
 export async function runCatalogJob(input: RunCatalogJobInput): Promise<Result<void>> {
-  const { logger, databaseUrl, driblSiteUrl, tenantHost, tenantSlug, seasonYear, maxLeagues } =
-    input;
+  const {
+    logger,
+    databaseUrl,
+    driblSiteUrl,
+    browserWsEndpoint,
+    tenantHost,
+    tenantSlug,
+    seasonYear,
+    maxLeagues,
+  } = input;
 
-  const sessionResult = await openBrowserSession({ driblSiteUrl });
+  const sessionResult = await openBrowserSession({ driblSiteUrl, browserWsEndpoint });
   if (!sessionResult.ok) {
     return sessionResult;
   }

@@ -15,7 +15,9 @@ export function makeFakeEntityResolutionDeps(
     upsertFixture: vi.fn(),
     upsertTableEntry: vi.fn(),
     findExternalRef: vi.fn(),
+    findExternalRefByInternalId: vi.fn(),
     upsertExternalRef: vi.fn(),
+    getLeagueById: vi.fn(),
     ...overrides,
   };
 }

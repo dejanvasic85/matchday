@@ -54,14 +54,14 @@ describe("crawlFixturesByRound", () => {
       rawStorage,
       logger: makeFakeLogger(),
       ids,
-      trackedCompetitionId: "trk_abc",
+      leagueId: "lea_abc123",
       crawlRunId: "run_1",
     });
 
     assert(result.ok);
     expect(rawStorage.puts).toHaveLength(2);
-    expect(rawStorage.puts[0]?.key).toBe("raw/trk_abc/run_1/fixtures-round-1.json");
-    expect(rawStorage.puts[1]?.key).toBe("raw/trk_abc/run_1/fixtures-round-2.json");
+    expect(rawStorage.puts[0]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-1.json");
+    expect(rawStorage.puts[1]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-2.json");
   });
 
   it("continues past a single empty round (scheduling gap, not season end)", async () => {
@@ -79,7 +79,7 @@ describe("crawlFixturesByRound", () => {
       rawStorage,
       logger: makeFakeLogger(),
       ids,
-      trackedCompetitionId: "trk_abc",
+      leagueId: "lea_abc123",
       crawlRunId: "run_1",
     });
 
@@ -96,7 +96,7 @@ describe("crawlFixturesByRound", () => {
       rawStorage,
       logger: makeFakeLogger(),
       ids,
-      trackedCompetitionId: "trk_abc",
+      leagueId: "lea_abc123",
       crawlRunId: "run_1",
     });
 
@@ -114,7 +114,7 @@ describe("crawlFixturesByRound", () => {
       rawStorage,
       logger,
       ids,
-      trackedCompetitionId: "trk_abc",
+      leagueId: "lea_abc123",
       crawlRunId: "run_1",
     });
 

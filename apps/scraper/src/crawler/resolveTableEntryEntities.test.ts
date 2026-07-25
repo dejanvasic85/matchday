@@ -61,10 +61,17 @@ const context = {
 };
 
 describe("resolveTableEntryEntities", () => {
-  it("resolves the team and upserts the table entry", async () => {
+  it("resolves the club (via club_code bridge) and team, then upserts the table entry", async () => {
     const deps = makeFakeEntityResolutionDeps({
+      // The club_code ref lookup misses (bridging via logo below); the team ref lookup hits.
+      findExternalRef: vi
+        .fn()
+        .mockImplementation((source: string) =>
+          Promise.resolve(ok(source === "dribl_club_code" ? null : makeExternalRefRow())),
+        ),
       findClubByLogoUrl: vi.fn().mockResolvedValue(ok(makeClubRow())),
-      findExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
+      upsertExternalRef: vi.fn().mockResolvedValue(ok({ id: "ext_new00000001" })),
+      upsertClub: vi.fn().mockResolvedValue(ok(makeClubRow())),
       upsertTeam: vi.fn().mockResolvedValue(ok({ id: "tea_existing001" })),
       upsertTableEntry: vi.fn().mockResolvedValue(ok({ id: "tab_new00000001" })),
     });
@@ -86,6 +93,7 @@ describe("resolveTableEntryEntities", () => {
 
   it("propagates a team resolution failure without upserting the table entry", async () => {
     const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
       findClubByLogoUrl: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
     });
 
