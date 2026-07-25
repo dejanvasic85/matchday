@@ -9,3 +9,7 @@ export function buildRawFixturesKey(leagueId: string, crawlRunId: string, round:
 export function buildRawTableKey(leagueId: string, crawlRunId: string): string {
   return `deep/${leagueId}/${crawlRunId}/table.json`;
 }
+
+export function buildRawClubEnrichmentKey(crawlRunId: string, clubSourceId: string): string {
+  return `club-enrichment/${crawlRunId}/club-${clubSourceId}.json`;
+}

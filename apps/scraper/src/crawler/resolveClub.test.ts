@@ -14,6 +14,10 @@ function makeClubRow(overrides: Partial<{ id: string; name: string }> = {}) {
     website: null,
     address: null,
     socials: null,
+    grounds: null,
+    color: null,
+    accent: null,
+    store: null,
     createdAt: epoch,
     updatedAt: epoch,
     ...overrides,
@@ -53,6 +57,17 @@ describe("resolveClub", () => {
     expect(deps.findClubByLogoUrl).not.toHaveBeenCalled();
     expect(deps.findClubByName).not.toHaveBeenCalled();
     expect(deps.upsertExternalRef).not.toHaveBeenCalled();
+  });
+
+  it("passes a null logoUrl once a club is identity-resolved, so upsertClub's COALESCE leaves an enrichment-set logo alone", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
+      upsertClub: vi.fn().mockResolvedValue(ok(makeClubRow())),
+    });
+
+    await resolveClub({ deps, ...baseInput });
+
+    expect(deps.upsertClub).toHaveBeenCalledWith(expect.objectContaining({ logoUrl: null }));
   });
 
   it("bridges via a logo match when no club_code ref exists yet, writing the ref", async () => {

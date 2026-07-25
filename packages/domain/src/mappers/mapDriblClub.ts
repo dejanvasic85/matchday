@@ -14,7 +14,7 @@ export type MappedClub = {
   socials: Socials | null;
 };
 
-function formatAddress(address: DriblClub["attributes"]["address"]): string | null {
+export function formatAddress(address: DriblClub["attributes"]["address"]): string | null {
   if (address === null) {
     return null;
   }
@@ -29,7 +29,7 @@ function formatAddress(address: DriblClub["attributes"]["address"]): string | nu
   return formatted.length > 0 ? formatted : null;
 }
 
-function formatSocials(socials: DriblClub["attributes"]["socials"]): Socials | null {
+export function formatSocials(socials: DriblClub["attributes"]["socials"]): Socials | null {
   if (socials === null || socials.length === 0) {
     return null;
   }

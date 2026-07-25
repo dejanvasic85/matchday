@@ -6,6 +6,7 @@ import { createConsoleLogger, parseId, type LeagueId } from "@matchday/domain";
 import { Command, InvalidArgumentError } from "commander";
 import { getScraperConfig } from "./config.ts";
 import { runCatalogJob } from "./jobs/catalogJob.ts";
+import { runClubEnrichmentJob } from "./jobs/clubEnrichmentJob.ts";
 import { runDeepCrawlJob } from "./jobs/deepCrawlJob.ts";
 
 const currentYear = new Date().getFullYear().toString();
@@ -98,6 +99,49 @@ export function createCli(): Command {
       });
       if (!result.ok) {
         logger.error("deepcrawl.failed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+      }
+    });
+
+  program
+    .command("club-enrichment")
+    .description(
+      "Fetch rich club detail (grounds/colours/store) from clubs/{id} and mirror logos to R2 " +
+        "for every club the deep crawl has already discovered. Attaches only, never creates; " +
+        "source-wide, not season/league-scoped. Run daily.",
+    )
+    .option(
+      "--dry-run",
+      "crawl and stage to R2, logging a summary, without writing to the database or uploading logos",
+      false,
+    )
+    .action(async (options: { dryRun: boolean }) => {
+      const config = getScraperConfig();
+      const logger = createConsoleLogger();
+      const result = await runClubEnrichmentJob({
+        logger,
+        databaseUrl: config.DATABASE_URL,
+        driblSiteUrl: config.DRIBL_SITE_URL,
+        browserWsEndpoint: config.BROWSER_WS_ENDPOINT,
+        tenantHost: new URL(config.DRIBL_SITE_URL).host,
+        tenantSlug: config.DRIBL_TENANT_SLUG,
+        dryRun: options.dryRun,
+        rawStorageConfig: {
+          accountId: config.R2_ACCOUNT_ID,
+          accessKeyId: config.R2_ACCESS_KEY_ID,
+          secretAccessKey: config.R2_SECRET_ACCESS_KEY,
+          bucketName: config.R2_RAW_BUCKET_NAME,
+        },
+        assetStorageConfig: {
+          accountId: config.R2_ACCOUNT_ID,
+          accessKeyId: config.R2_ACCESS_KEY_ID,
+          secretAccessKey: config.R2_SECRET_ACCESS_KEY,
+          bucketName: config.R2_BUCKET_NAME,
+        },
+        publicAssetsBaseUrl: config.R2_PUBLIC_ASSETS_URL,
+      });
+      if (!result.ok) {
+        logger.error("clubenrichment.failed", result.error.message, { cause: result.error.cause });
         process.exitCode = 1;
       }
     });

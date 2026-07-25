@@ -4,10 +4,12 @@
 // target name upfront — this module is for listing every item instead.
 
 import {
+  driblClubsApiResponseSchema,
   driblListResponseSchema,
   driblTenantResponseSchema,
   err,
   ok,
+  type DriblClub,
   type DriblListItem,
   type Result,
 } from "@matchday/domain";
@@ -65,4 +67,23 @@ export function listLeagues(
 ): Promise<Result<DriblListItem[]>> {
   const url = `${crawlerConfigValue.driblApiBase}/list/leagues?disable_paging=true&tenant=${tenantId}&competition=${competitionId}`;
   return listItems(page, url);
+}
+
+/** Source-wide club listing (club-enrichment job): includes admin pseudo-clubs, filtered out by
+ * the caller's bridge-match, not here — this module only lists everything Dribl returns. */
+export async function listClubs(page: FetchPage, tenantId: string): Promise<Result<DriblClub[]>> {
+  const url = `${crawlerConfigValue.driblApiBase}/list/clubs?disable_paging=true&tenant=${tenantId}`;
+  const fetched = await browserFetch(page, url);
+  if (!fetched.ok) {
+    return fetched;
+  }
+
+  const parsed = driblClubsApiResponseSchema.safeParse(fetched.value);
+  if (!parsed.success) {
+    return err({
+      message: `Failed to validate list/clubs response from ${url}`,
+      cause: parsed.error,
+    });
+  }
+  return ok(parsed.data.data);
 }

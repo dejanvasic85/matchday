@@ -37,7 +37,14 @@ export {
   type FixtureStatus,
   type Source,
 } from "./entities/constants.ts";
-export { clubSchema, socialsSchema, type Club, type Socials } from "./entities/club.ts";
+export {
+  clubSchema,
+  groundSchema,
+  socialsSchema,
+  type Club,
+  type Ground,
+  type Socials,
+} from "./entities/club.ts";
 export { teamSchema, type Team } from "./entities/team.ts";
 export { competitionSchema, type Competition } from "./entities/competition.ts";
 export { seasonSchema, type Season } from "./entities/season.ts";
@@ -49,11 +56,19 @@ export { subscriptionSchema, type Subscription } from "./entities/subscription.t
 export {
   driblClubAddressSchema,
   driblClubAttributesSchema,
+  driblClubDetailApiResponseSchema,
+  driblClubDetailAttributesSchema,
+  driblClubDetailSchema,
+  driblClubGroundSchema,
   driblClubSchema,
   driblClubSocialSchema,
   driblClubsApiResponseSchema,
   type DriblClub,
   type DriblClubAttributes,
+  type DriblClubDetail,
+  type DriblClubDetailApiResponse,
+  type DriblClubDetailAttributes,
+  type DriblClubGround,
   type DriblClubsApiResponse,
 } from "./external/driblClub.ts";
 export {
@@ -80,5 +95,6 @@ export {
   type DriblTenantResponse,
 } from "./external/driblListEndpoints.ts";
 export { mapDriblClub, type MappedClub } from "./mappers/mapDriblClub.ts";
+export { mapDriblClubDetail, type MappedClubDetail } from "./mappers/mapDriblClubDetail.ts";
 export { mapDriblFixture, type MappedFixture } from "./mappers/mapDriblFixture.ts";
 export { mapDriblTableEntry, type MappedTableEntry } from "./mappers/mapDriblTableEntry.ts";

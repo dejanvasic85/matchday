@@ -2,7 +2,7 @@
 // Data-access functions return `Result` from @matchday/domain; no business rules here.
 
 export * as schema from "./schema.ts";
-export { type Socials } from "./schema.ts";
+export { type Ground, type Socials } from "./schema.ts";
 export { createDbClient, type Db } from "./client.ts";
 export { getDbConfig, type DbConfig } from "./config.ts";
 export {
@@ -19,6 +19,8 @@ export {
   findClubByLogoUrl,
   findClubByName,
   upsertClub,
+  updateClubEnrichmentFields,
+  type ClubEnrichmentFields,
   upsertTeam,
   upsertCompetition,
   upsertSeason,

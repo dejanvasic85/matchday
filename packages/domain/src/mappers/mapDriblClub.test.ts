@@ -9,9 +9,13 @@ function makeDriblClub(overrides: Partial<DriblClub["attributes"]> = {}): DriblC
       name: "Altona North SC",
       image: "https://ocean.dribl.com/f87efaf54d9c4c2696c327078ccdc7e7",
       email: "info@altonanorth.com.au",
+      email_address: null,
       url: "https://altonanorth.com.au",
       address: null,
       socials: null,
+      color: null,
+      accent: null,
+      grounds: null,
       ...overrides,
     },
   };
