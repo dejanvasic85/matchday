@@ -1,9 +1,11 @@
 // Resolves a `list/clubs`/`clubs/{id}` source id to an *existing* club row for the club-enrichment
 // job — mirrors resolveClub's identity-then-bridge steps but deliberately omits its third step
 // ("brand new club"): enrichment attaches to clubs the deep crawl already discovered by
-// `club_code`, never creates its own (ADR 0012). A club with no match (the ~11 admin
-// pseudo-"clubs" that never appear on a table, per the Dribl identity investigation) resolves to
-// `null`, which the caller skips rather than treating as an error.
+// `club_code`, never creates its own (ADR 0012). Resolves to `null`, which the caller skips
+// rather than treating as an error, for two distinct reasons: no match anywhere (the ~11 admin
+// pseudo-"clubs" that never appear on a table, per the Dribl identity investigation), or a bridge
+// match onto a club row that's already claimed by a different `dribl` source id (a duplicate
+// club entry in Dribl's own catalog).
 
 import {
   err,
@@ -20,7 +22,11 @@ import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
 export type ResolveClubForEnrichmentInput = {
   deps: Pick<
     EntityResolutionDeps,
-    "findClubByLogoUrl" | "findClubByName" | "findExternalRef" | "upsertExternalRef"
+    | "findClubByLogoUrl"
+    | "findClubByName"
+    | "findExternalRef"
+    | "findExternalRefByInternalId"
+    | "upsertExternalRef"
   >;
   sourceId: string;
   name: string;
@@ -66,6 +72,23 @@ export async function resolveClubForEnrichment(
   const clubId = toClubId(bridgeMatch.value.id);
   if (!clubId.ok) {
     return clubId;
+  }
+
+  // A club row can hold at most one `dribl`-source ref (external_ref_entity_source_key). Dribl's
+  // own catalog occasionally carries two source ids for what's already one club row here (e.g. a
+  // legacy/duplicate club entry) — the first source id to bridge claims the ref; treat any later
+  // source id that bridges to the same row as unresolvable rather than racing the unique
+  // constraint or guessing which of the two source records is authoritative.
+  const existingBridge = await deps.findExternalRefByInternalId(
+    externalRefEntityTypeValue.club,
+    clubId.value,
+    sourceValue.dribl,
+  );
+  if (!existingBridge.ok) {
+    return existingBridge;
+  }
+  if (existingBridge.value !== null) {
+    return ok(null);
   }
 
   // Persist the bridge so future runs hit step 1 directly, and so ADR 0004's "original Dribl URL

@@ -37,6 +37,6 @@ export function mapDriblClubDetail(club: DriblClubDetail): MappedClubDetail {
     grounds: attributes.grounds,
     color: attributes.color,
     accent: attributes.accent,
-    store: attributes.store,
+    store: attributes.store ?? null,
   };
 }

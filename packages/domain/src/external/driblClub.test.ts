@@ -68,4 +68,15 @@ describe("driblClubDetailApiResponseSchema", () => {
 
     expect(result.success).toBe(true);
   });
+
+  it("accepts a club whose response omits the store key entirely", () => {
+    const attributes = makeDriblClubDetailAttributes();
+    const { store: _store, ...attributesWithoutStore } = attributes;
+
+    const result = driblClubDetailApiResponseSchema.safeParse({
+      data: { type: "clubs", id: "b8Nqgnnd9M", attributes: attributesWithoutStore },
+    });
+
+    expect(result.success).toBe(true);
+  });
 });

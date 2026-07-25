@@ -52,10 +52,11 @@ export const driblClubsApiResponseSchema = z.object({
   data: z.array(driblClubSchema),
 });
 
-// `store` is a relative path (e.g. `/club/9294`), not a full URL — only ever populated on
-// `clubs/{id}`, never on `list/clubs`.
+// `store` is a relative path (e.g. `/club/9294`), never present on `list/clubs`. On `clubs/{id}`
+// it's `null` for most clubs but the key is missing entirely for others (confirmed live) — so
+// it's optional as well as nullable, not just nullable.
 export const driblClubDetailAttributesSchema = driblClubAttributesSchema.extend({
-  store: z.string().nullable(),
+  store: z.string().nullable().optional(),
 });
 
 export const driblClubDetailSchema = z.object({

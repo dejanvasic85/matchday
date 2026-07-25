@@ -14,6 +14,7 @@ export type PersistClubEnrichmentInput = {
     | "findClubByLogoUrl"
     | "findClubByName"
     | "findExternalRef"
+    | "findExternalRefByInternalId"
     | "upsertExternalRef"
     | "getClubById"
     | "updateClubEnrichmentFields"

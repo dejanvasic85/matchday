@@ -63,6 +63,7 @@ describe("resolveClubForEnrichment", () => {
     const deps = makeFakeEntityResolutionDeps({
       findExternalRef: vi.fn().mockResolvedValue(ok(null)),
       findClubByLogoUrl: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      findExternalRefByInternalId: vi.fn().mockResolvedValue(ok(null)),
       upsertExternalRef,
     });
 
@@ -86,12 +87,31 @@ describe("resolveClubForEnrichment", () => {
       findExternalRef: vi.fn().mockResolvedValue(ok(null)),
       findClubByLogoUrl: vi.fn().mockResolvedValue(ok(null)),
       findClubByName: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      findExternalRefByInternalId: vi.fn().mockResolvedValue(ok(null)),
       upsertExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
     });
 
     const result = await resolveClubForEnrichment({ deps, ...baseInput });
 
     expect(result).toEqual({ ok: true, value: "clb_existing0001" });
+  });
+
+  it("resolves to null when the bridge match already has a dribl ref under a different source id (duplicate Dribl club entry), without racing the unique constraint", async () => {
+    const upsertExternalRef = vi.fn();
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      findClubByLogoUrl: vi.fn().mockResolvedValue(ok(null)),
+      findClubByName: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      findExternalRefByInternalId: vi
+        .fn()
+        .mockResolvedValue(ok(makeExternalRefRow({ internalId: "clb_existing0001" }))),
+      upsertExternalRef,
+    });
+
+    const result = await resolveClubForEnrichment({ deps, ...baseInput });
+
+    expect(result).toEqual({ ok: true, value: null });
+    expect(upsertExternalRef).not.toHaveBeenCalled();
   });
 
   it("resolves to null when no match anywhere, without writing anything (never creates)", async () => {
@@ -126,6 +146,20 @@ describe("resolveClubForEnrichment", () => {
   it("propagates a findExternalRef failure", async () => {
     const deps = makeFakeEntityResolutionDeps({
       findExternalRef: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
+    });
+
+    const result = await resolveClubForEnrichment({ deps, ...baseInput });
+
+    assert(!result.ok);
+  });
+
+  it("propagates a findExternalRefByInternalId failure", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      findClubByLogoUrl: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      findExternalRefByInternalId: vi
+        .fn()
+        .mockResolvedValue({ ok: false, error: { message: "db down" } }),
     });
 
     const result = await resolveClubForEnrichment({ deps, ...baseInput });

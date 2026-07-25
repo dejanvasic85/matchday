@@ -98,6 +98,11 @@ forward; the strategy below rewires how they're driven.
         implies), not a new venue entity. Also mirrors logos to R2 (ADR 0004, previously
         unimplemented), and fixes `upsertClub` to `COALESCE` curated fields instead of clobbering
         them with `null` on every subsequent deep crawl. `mday club-enrichment [--dry-run]`.
+  - [x] Live full-tenant run surfaced two edge cases fixed post-merge-review: `clubs/{id}`
+        sometimes omits `store` entirely rather than sending `null` (schema now `.optional()`
+        too); and two Dribl club records can share a logo/name and bridge-match onto the same
+        club row, which the DB's one-ref-per-source constraint rejects on the second — now
+        detected via `findExternalRefByInternalId` and skipped instead of erroring the run.
 - [ ] **Source-abstraction seam** — factor the crawler so a source is an adapter (catalog +
       deep-crawl + identity mapping). Dribl is the first adapter; designed for a second later. (→ 0012)
 - [ ] **Scheduling** — wire per-job triggers (thanos cron / GH Actions / CF Cron), driven by the

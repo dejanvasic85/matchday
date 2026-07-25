@@ -65,4 +65,12 @@ describe("mapDriblClubDetail", () => {
 
     expect(result.grounds).toBeNull();
   });
+
+  it("maps a missing store key to null", () => {
+    const club = makeDriblClubDetail({ store: undefined });
+
+    const result = mapDriblClubDetail(club);
+
+    expect(result.store).toBeNull();
+  });
 });
