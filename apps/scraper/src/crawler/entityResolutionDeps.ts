@@ -10,7 +10,9 @@ import {
   findClubByName,
   findExternalRef,
   findExternalRefByInternalId,
+  getClubById,
   getLeagueById,
+  updateClubEnrichmentFields,
   upsertClub,
   upsertCompetition,
   upsertExternalRef,
@@ -28,7 +30,9 @@ type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
 export type EntityResolutionDeps = {
   findClubByLogoUrl: WithoutDb<typeof findClubByLogoUrl>;
   findClubByName: WithoutDb<typeof findClubByName>;
+  getClubById: WithoutDb<typeof getClubById>;
   upsertClub: WithoutDb<typeof upsertClub>;
+  updateClubEnrichmentFields: WithoutDb<typeof updateClubEnrichmentFields>;
   upsertTeam: WithoutDb<typeof upsertTeam>;
   upsertCompetition: WithoutDb<typeof upsertCompetition>;
   upsertSeason: WithoutDb<typeof upsertSeason>;
@@ -48,7 +52,9 @@ export function createEntityResolutionDeps(
   return {
     findClubByLogoUrl: (logoUrl) => findClubByLogoUrl(db, logoUrl),
     findClubByName: (name) => findClubByName(db, name),
+    getClubById: (id) => getClubById(db, id),
     upsertClub: (values) => upsertClub(db, values),
+    updateClubEnrichmentFields: (id, fields) => updateClubEnrichmentFields(db, id, fields),
     upsertTeam: (values) => upsertTeam(db, values),
     upsertCompetition: (values) => upsertCompetition(db, values),
     upsertSeason: (values) => upsertSeason(db, values),

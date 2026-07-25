@@ -59,7 +59,10 @@ async function upsertClubRow(
 export async function resolveClub(input: ResolveClubInput): Promise<Result<ClubId>> {
   const { deps, name, logoUrl, clubCode } = input;
 
-  // 1. Primary identity: has this club_code been seen before?
+  // 1. Primary identity: has this club_code been seen before? Once a club is identity-resolved,
+  // logo curation belongs to the club-enrichment job — pass `null` so upsertClub's COALESCE
+  // leaves whatever it (or an earlier bridge/create) set alone, instead of reverting an
+  // R2-mirrored logo back to Dribl's CDN URL on every subsequent deep crawl.
   const existingRef = await deps.findExternalRef(sourceValue.driblClubCode, clubCode);
   if (!existingRef.ok) {
     return existingRef;
@@ -69,7 +72,7 @@ export async function resolveClub(input: ResolveClubInput): Promise<Result<ClubI
     if (!clubId.ok) {
       return clubId;
     }
-    return upsertClubRow(deps, clubId.value, name, logoUrl);
+    return upsertClubRow(deps, clubId.value, name, null);
   }
 
   // 2. Bridge: no ref yet — find a pre-existing row by logo, then name, and attach the ref so

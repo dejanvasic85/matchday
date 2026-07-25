@@ -1,5 +1,11 @@
 import { makeQueuedFakePage } from "@/test/fixtures/fakePage.ts";
-import { listCompetitions, listLeagues, listSeasons, resolveTenantId } from "./listDriblCatalog.ts";
+import {
+  listClubs,
+  listCompetitions,
+  listLeagues,
+  listSeasons,
+  resolveTenantId,
+} from "./listDriblCatalog.ts";
 
 describe("resolveTenantId", () => {
   it("resolves the tenant id from the tenants response", async () => {
@@ -65,5 +71,53 @@ describe("listLeagues", () => {
       ok: true,
       value: [{ id: "league-1", attributes: { name: "NPL VIC Men" } }],
     });
+  });
+});
+
+function makeClubListAttributes() {
+  return {
+    name: "Aintree SC",
+    image: "https://ocean.dribl.com/86f34bc0855a4f519dd696483def4a47",
+    email: "aintreesc@gmail.com",
+    email_address: null,
+    url: null,
+    color: null,
+    accent: null,
+    address: null,
+    socials: null,
+    grounds: null,
+  };
+}
+
+describe("listClubs", () => {
+  it("returns every club, including admin pseudo-clubs (unfiltered)", async () => {
+    const page = makeQueuedFakePage([
+      {
+        data: [
+          { type: "clubs", id: "3vmZv3YLmq", attributes: makeClubListAttributes() },
+          {
+            type: "clubs",
+            id: "RwNl35aZmj",
+            attributes: { ...makeClubListAttributes(), name: "FV Albury Wodonga Referees" },
+          },
+        ],
+      },
+    ]);
+
+    const result = await listClubs(page, "tenant-id");
+
+    assert(result.ok);
+    expect(result.value.map((club) => club.attributes.name)).toEqual([
+      "Aintree SC",
+      "FV Albury Wodonga Referees",
+    ]);
+  });
+
+  it("returns err on an invalid list/clubs response", async () => {
+    const page = makeQueuedFakePage([{ data: [{ type: "clubs" }] }]);
+
+    const result = await listClubs(page, "tenant-id");
+
+    assert(!result.ok);
   });
 });

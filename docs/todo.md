@@ -90,9 +90,19 @@ forward; the strategy below rewires how they're driven.
         `tracked_competition`; `upsertSubscription`/`listSubscribedLeagueIds`/`getLeagueById`.
   - [x] Deep-crawl pipeline + `mday deep-crawl --league <lea_id> [--dry-run]` (single league,
         required; not unioned with subscriptions — see above).
-- [ ] **Club enrichment job** — fetch rich club detail (grounds/colours/address/socials) from the
+- [x] **Club enrichment job** — fetch rich club detail (grounds/colours/address/socials) from the
       `clubs/{id}` endpoint; attach by logo to clubs the deep crawl discovered; never create. Needs a
       club-enrichment data-model decision (venue entity vs club columns). (→ 0004, 0012)
+  - [x] Data-model decision: `grounds`/`color`/`accent`/`store` as columns on `club` (JSONB for
+        `grounds`, a single `{name, address}` object per a live API check — not the array the name
+        implies), not a new venue entity. Also mirrors logos to R2 (ADR 0004, previously
+        unimplemented), and fixes `upsertClub` to `COALESCE` curated fields instead of clobbering
+        them with `null` on every subsequent deep crawl. `mday club-enrichment [--dry-run]`.
+  - [x] Live full-tenant run surfaced two edge cases fixed post-merge-review: `clubs/{id}`
+        sometimes omits `store` entirely rather than sending `null` (schema now `.optional()`
+        too); and two Dribl club records can share a logo/name and bridge-match onto the same
+        club row, which the DB's one-ref-per-source constraint rejects on the second — now
+        detected via `findExternalRefByInternalId` and skipped instead of erroring the run.
 - [ ] **Source-abstraction seam** — factor the crawler so a source is an adapter (catalog +
       deep-crawl + identity mapping). Dribl is the first adapter; designed for a second later. (→ 0012)
 - [ ] **Scheduling** — wire per-job triggers (thanos cron / GH Actions / CF Cron), driven by the

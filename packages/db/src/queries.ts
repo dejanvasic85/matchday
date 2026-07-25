@@ -2,7 +2,7 @@
 // (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { err, ok, type Result } from "@matchday/domain";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Db } from "./client.ts";
 import type { ExternalRefEntityType, Source } from "./constants.ts";
 import { runQuery } from "./runQuery.ts";
@@ -101,10 +101,12 @@ export async function findClubByName(db: Db, name: string): Promise<Result<Club 
  * id is already known. The entity-resolution service (Phase 3) generates the id up front so it
  * can also write the matching `external_ref` row in the same call.
  *
- * The update branch fully overwrites email/website/address/socials with `values` — today the
- * only caller (resolveClub, created from table-entry data) always passes those as null, so this
- * is a no-op in practice. A future clubs-sync job upserting curated club detail must pass its
- * own real values here, or this will null out previously-curated fields on a re-crawl.
+ * `name`/`displayName` are always overwritten (deep-crawl-owned). `logoUrl`/`email`/`website`/
+ * `address`/`socials` use SQL `COALESCE` on the update branch instead: a caller passes `null` to
+ * mean "I have nothing better, leave the existing value alone" rather than clobbering curated
+ * data. resolveClub (deep crawl) relies on exactly this — it passes `null` logoUrl once a club is
+ * already identity-resolved, so the club-enrichment job's R2-mirrored logo (and its
+ * email/website/address/socials) survive subsequent re-crawls instead of being wiped every time.
  */
 export async function upsertClub(db: Db, values: ClubInsert): Promise<Result<Club>> {
   return runUpsert(
@@ -117,11 +119,11 @@ export async function upsertClub(db: Db, values: ClubInsert): Promise<Result<Clu
           set: {
             name: values.name,
             displayName: values.displayName,
-            logoUrl: values.logoUrl ?? null,
-            email: values.email ?? null,
-            website: values.website ?? null,
-            address: values.address ?? null,
-            socials: values.socials ?? null,
+            logoUrl: sql`coalesce(${values.logoUrl ?? null}, ${club.logoUrl})`,
+            email: sql`coalesce(${values.email ?? null}, ${club.email})`,
+            website: sql`coalesce(${values.website ?? null}, ${club.website})`,
+            address: sql`coalesce(${values.address ?? null}, ${club.address})`,
+            socials: sql`coalesce(${values.socials ?? null}, ${club.socials})`,
             updatedAt: new Date(),
           },
         })
@@ -129,6 +131,35 @@ export async function upsertClub(db: Db, values: ClubInsert): Promise<Result<Clu
     "club",
     values,
   );
+}
+
+export type ClubEnrichmentFields = Pick<
+  ClubInsert,
+  "logoUrl" | "email" | "website" | "address" | "socials" | "grounds" | "color" | "accent" | "store"
+>;
+
+/**
+ * Update-only write for the club-enrichment job (never creates a row — "attach, never create" per
+ * ADR 0012): a plain `UPDATE ... WHERE id`, no insert branch, so the guarantee is structural
+ * rather than relying on every caller happening to pass an existing id. Zero rows updated (the
+ * club id vanished between resolution and this call) is a soft no-op (`ok(null)`), not an error —
+ * not worth failing the whole enrichment run over one club.
+ */
+export async function updateClubEnrichmentFields(
+  db: Db,
+  id: string,
+  fields: ClubEnrichmentFields,
+): Promise<Result<Club | null>> {
+  const result = await runQuery(
+    () =>
+      db
+        .update(club)
+        .set({ ...fields, updatedAt: new Date() })
+        .where(eq(club.id, id))
+        .returning(),
+    "Failed to update club enrichment fields",
+  );
+  return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
 export async function upsertTeam(db: Db, values: TeamInsert): Promise<Result<Team>> {

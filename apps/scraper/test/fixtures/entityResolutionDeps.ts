@@ -7,7 +7,9 @@ export function makeFakeEntityResolutionDeps(
   return {
     findClubByLogoUrl: vi.fn(),
     findClubByName: vi.fn(),
+    getClubById: vi.fn(),
     upsertClub: vi.fn(),
+    updateClubEnrichmentFields: vi.fn(),
     upsertTeam: vi.fn(),
     upsertCompetition: vi.fn(),
     upsertSeason: vi.fn(),

@@ -19,6 +19,9 @@ import type { FixtureStatus, Source } from "./constants.ts";
 /** Open-ended `platform -> url` map for a club's social links. */
 export type Socials = Record<string, string>;
 
+/** A club's home ground, as returned by Dribl's `clubs/{id}` (at most one, despite the name). */
+export type Ground = { name: string; address: string | null };
+
 /** Timestamp columns every entity carries. */
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -34,6 +37,10 @@ export const club = pgTable("club", {
   website: text("website"),
   address: text("address"),
   socials: jsonb("socials").$type<Socials>(),
+  grounds: jsonb("grounds").$type<Ground>(),
+  color: text("color"),
+  accent: text("accent"),
+  store: text("store"),
   ...timestamps,
 });
 
