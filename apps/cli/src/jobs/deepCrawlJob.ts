@@ -8,9 +8,9 @@
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";
 import { createDbClient } from "@matchday/db";
 import { openBrowserSession } from "../crawlers/dribl/browserSession.ts";
-import { deepCrawlLeague } from "../crawlers/dribl/deepCrawlLeague.ts";
+import { deepCrawlLeague } from "../crawlers/dribl/leagueDeepCrawler.ts";
 import { createEntityResolutionDeps } from "../crawlers/dribl/entityResolutionDeps.ts";
-import { resolveTenantId } from "../crawlers/dribl/listDriblCatalog.ts";
+import { resolveTenantId } from "../crawlers/dribl/driblCatalogApi.ts";
 import { createR2RawStorage, type RawStorageConfig } from "../crawlers/dribl/rawStorage.ts";
 
 export type RunDeepCrawlJobInput = {

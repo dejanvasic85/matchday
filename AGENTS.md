@@ -14,9 +14,10 @@ pnpm + Vite+ monorepo:
 
 - `apps/api` — REST API
 - `apps/cli` — `mday` CLI: crawler + scheduler, one subdirectory per source under
-  `src/crawlers/` (`dribl/` today)
-- `packages/domain` — Zod schemas, entity types, ID service, Dribl→domain mappers
-- `packages/db` — Drizzle schema, migrations, data access
+  `src/crawlers/` (`dribl/` today, including its Dribl-specific external schemas + mappers —
+  nothing source-specific lives outside its own `crawlers/<source>/` folder)
+- `packages/domain` — Zod schemas, entity types, ID service (source-agnostic; no Dribl knowledge)
+- `packages/db` — Drizzle schema, migrations, per-entity data access
 - `infra/` — deployment/infra config
 
 The **ADRs in `docs/decisions/` are the source of truth**; read the relevant one before a change.
@@ -106,17 +107,21 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
   returns `Result`; services map data-access errors to domain outcomes, also returning `Result`.
   Reserve throwing for genuine programmer errors and the outermost transport boundary.
 - **Separate data-access from business logic** so logic is unit-testable in isolation:
-  - **Data access** — Drizzle query functions in `packages/db`; build a query, execute, return a
-    `Result` of rows. No business rules here.
+  - **Data access** — Drizzle query functions in `packages/db`, one module per entity
+    (`clubDb.ts`, `leagueDb.ts`, ...); build a query, execute, return a `Result` of rows. No
+    business rules here.
   - **Services** — all business logic (mappers, decisions, orchestration); **pure**, receiving
     collaborators (data-access, logger, clock, notifiers) **by argument** so tests pass fakes. This
     is the unit-tested layer.
   - **Transport** — thin Hono handlers / CLI jobs that construct the real dependencies and call
     the service. Keep it glue-only.
-    This is a principle, not a rigid file-naming scheme — the DB layer is a Drizzle package, not
-    per-entity files.
-- **Mappers** are explicit named transform functions at the Dribl-raw→domain boundary, Zod-validated
-  on both sides, living in `packages/domain`.
+- **No verb-first file/module names.** A module is named after the thing it's about
+  (`clubDb.ts`, `clubResolver.ts`, `catalogCrawler.ts`); verbs belong to the functions inside
+  (`upsertClub`, `resolveClub`, `crawlCatalog`). Exported function/type names are unaffected by
+  this rule — only the file name changes.
+- **Mappers** are explicit named transform functions at the source-raw→domain boundary,
+  Zod-validated on both sides, living alongside their source's other code under
+  `apps/cli/src/crawlers/<source>/mappers/` (nothing source-specific lives in `packages/domain`).
 - **Structured logging:** an injected logger `{ debug, info, warn, error }` where each takes
   `(event, msg, fields?)`. Events are dotted namespaces (`"crawl.competition"`, `"api.club.get"`).
   Emit one JSON line in prod; route `warn`/`error` through `console.warn`/`console.error` so
