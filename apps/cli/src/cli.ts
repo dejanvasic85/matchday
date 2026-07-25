@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// `mday` — the scraper CLI (0012). Thin commander wiring: each command constructs real
+// `mday` — the crawler CLI (0012). Thin commander wiring: each command constructs real
 // dependencies (config, logger) and calls the matching job in src/jobs.
 
 import { createConsoleLogger, parseId, type LeagueId } from "@matchday/domain";
 import { Command, InvalidArgumentError } from "commander";
-import { getScraperConfig } from "./config.ts";
+import { getCliConfig } from "./config.ts";
 import { runCatalogJob } from "./jobs/catalogJob.ts";
 import { runClubEnrichmentJob } from "./jobs/clubEnrichmentJob.ts";
 import { runDeepCrawlJob } from "./jobs/deepCrawlJob.ts";
@@ -30,7 +30,7 @@ function parseLeagueId(value: string): LeagueId {
 export function createCli(): Command {
   const program = new Command();
 
-  program.name("mday").description("matchday scraper CLI").version("0.0.0");
+  program.name("mday").description("matchday crawler CLI").version("0.0.0");
 
   program
     .command("catalog")
@@ -47,7 +47,7 @@ export function createCli(): Command {
     )
     .option("--dry-run", "crawl and log the catalog without writing to the database", false)
     .action(async (options: { season: string; maxLeagues?: number; dryRun: boolean }) => {
-      const config = getScraperConfig();
+      const config = getCliConfig();
       const logger = createConsoleLogger();
       const result = await runCatalogJob({
         logger,
@@ -79,7 +79,7 @@ export function createCli(): Command {
       false,
     )
     .action(async (options: { league: LeagueId; dryRun: boolean }) => {
-      const config = getScraperConfig();
+      const config = getCliConfig();
       const logger = createConsoleLogger();
       const result = await runDeepCrawlJob({
         logger,
@@ -116,7 +116,7 @@ export function createCli(): Command {
       false,
     )
     .action(async (options: { dryRun: boolean }) => {
-      const config = getScraperConfig();
+      const config = getCliConfig();
       const logger = createConsoleLogger();
       const result = await runClubEnrichmentJob({
         logger,

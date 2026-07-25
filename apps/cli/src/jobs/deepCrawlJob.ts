@@ -7,11 +7,11 @@
 
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";
 import { createDbClient } from "@matchday/db";
-import { openBrowserSession } from "../crawler/browserSession.ts";
-import { deepCrawlLeague } from "../crawler/deepCrawlLeague.ts";
-import { createEntityResolutionDeps } from "../crawler/entityResolutionDeps.ts";
-import { resolveTenantId } from "../crawler/listDriblCatalog.ts";
-import { createR2RawStorage, type RawStorageConfig } from "../crawler/rawStorage.ts";
+import { openBrowserSession } from "../crawlers/dribl/browserSession.ts";
+import { deepCrawlLeague } from "../crawlers/dribl/deepCrawlLeague.ts";
+import { createEntityResolutionDeps } from "../crawlers/dribl/entityResolutionDeps.ts";
+import { resolveTenantId } from "../crawlers/dribl/listDriblCatalog.ts";
+import { createR2RawStorage, type RawStorageConfig } from "../crawlers/dribl/rawStorage.ts";
 
 export type RunDeepCrawlJobInput = {
   logger: Logger;

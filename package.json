@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "mday": "vp run --filter @matchday/scraper mday",
+    "mday": "vp run --filter @matchday/cli mday",
     "test": "vp run -r test",
     "ready": "vp check && vp run -r test && vp run -r build"
   },

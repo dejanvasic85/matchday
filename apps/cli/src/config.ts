@@ -2,11 +2,11 @@ import { parseEnv } from "@matchday/domain";
 import { z } from "zod";
 
 /**
- * Scraper environment (Node `process.env`). Vars are documented in
- * `apps/scraper/.env.example`. Call `getScraperConfig()` once at startup.
+ * CLI environment (Node `process.env`). Vars are documented in
+ * `apps/cli/.env.example`. Call `getCliConfig()` once at startup.
  */
-const scraperEnvSchema = z.object({
-  // Neon Postgres — the scraper upserts crawled data by external_ref.
+const cliEnvSchema = z.object({
+  // Neon Postgres — the crawler upserts crawled data by external_ref.
   DATABASE_URL: z.url(),
   // Dribl tenant the crawl targets (e.g. host prefix / slug).
   DRIBL_TENANT_SLUG: z.string().min(1),
@@ -30,8 +30,8 @@ const scraperEnvSchema = z.object({
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 
-export type ScraperConfig = z.infer<typeof scraperEnvSchema>;
+export type CliConfig = z.infer<typeof cliEnvSchema>;
 
-export function getScraperConfig(): ScraperConfig {
-  return parseEnv(scraperEnvSchema, process.env);
+export function getCliConfig(): CliConfig {
+  return parseEnv(cliEnvSchema, process.env);
 }

@@ -8,14 +8,14 @@
 
 import { err, ok, type Logger, type Result } from "@matchday/domain";
 import { createDbClient } from "@matchday/db";
-import { createR2AssetStorage, type AssetStorageConfig } from "../crawler/assetStorage.ts";
-import { openBrowserSession } from "../crawler/browserSession.ts";
-import { crawlClubEnrichment } from "../crawler/crawlClubEnrichment.ts";
-import { createEntityResolutionDeps } from "../crawler/entityResolutionDeps.ts";
-import { logClubEnrichmentDryRun } from "../crawler/logClubEnrichmentDryRun.ts";
-import type { DownloadedImage } from "../crawler/mirrorClubLogo.ts";
-import { persistClubEnrichment } from "../crawler/persistClubEnrichment.ts";
-import { createR2RawStorage, type RawStorageConfig } from "../crawler/rawStorage.ts";
+import { createR2AssetStorage, type AssetStorageConfig } from "../crawlers/dribl/assetStorage.ts";
+import { openBrowserSession } from "../crawlers/dribl/browserSession.ts";
+import { crawlClubEnrichment } from "../crawlers/dribl/crawlClubEnrichment.ts";
+import { createEntityResolutionDeps } from "../crawlers/dribl/entityResolutionDeps.ts";
+import { logClubEnrichmentDryRun } from "../crawlers/dribl/logClubEnrichmentDryRun.ts";
+import type { DownloadedImage } from "../crawlers/dribl/mirrorClubLogo.ts";
+import { persistClubEnrichment } from "../crawlers/dribl/persistClubEnrichment.ts";
+import { createR2RawStorage, type RawStorageConfig } from "../crawlers/dribl/rawStorage.ts";
 
 export type RunClubEnrichmentJobInput = {
   logger: Logger;

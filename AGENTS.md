@@ -8,12 +8,13 @@ just "it works".
 
 matchday is a **multi-tenant sports competition data service** — it scrapes Dribl fixtures,
 results and league tables and serves them via an API so multiple clubs consume one dataset. It is
-a **backend + scraper; there is no UI in this repo.**
+a **backend + CLI crawler; there is no UI in this repo.**
 
 pnpm + Vite+ monorepo:
 
 - `apps/api` — REST API
-- `apps/scraper` — Dribl crawler + scheduler
+- `apps/cli` — `mday` CLI: crawler + scheduler, one subdirectory per source under
+  `src/crawlers/` (`dribl/` today)
 - `packages/domain` — Zod schemas, entity types, ID service, Dribl→domain mappers
 - `packages/db` — Drizzle schema, migrations, data access
 - `infra/` — deployment/infra config
@@ -110,7 +111,7 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
   - **Services** — all business logic (mappers, decisions, orchestration); **pure**, receiving
     collaborators (data-access, logger, clock, notifiers) **by argument** so tests pass fakes. This
     is the unit-tested layer.
-  - **Transport** — thin Hono handlers / scraper jobs that construct the real dependencies and call
+  - **Transport** — thin Hono handlers / CLI jobs that construct the real dependencies and call
     the service. Keep it glue-only.
     This is a principle, not a rigid file-naming scheme — the DB layer is a Drizzle package, not
     per-entity files.

@@ -19,7 +19,7 @@ maintainability, not just "it works".
 
 Project setup + standards. Mostly mirrors what williamstownsc already has; port and adapt.
 
-- [x] **Monorepo scaffold** — pnpm workspaces + Vite+ (`vp`); `apps/{api,scraper}`,
+- [x] **Monorepo scaffold** — pnpm workspaces + Vite+ (`vp`); `apps/{api,cli}`,
       `packages/{domain,db}`. Root `pnpm-workspace.yaml`, `vite.config.ts`. (→ 0010)
 - [x] **Node/runtime + Mise** — Node pinned to 24.18.0 via `.mise.toml`, matching WSC.
 - [x] **TypeScript config** — per-package strict `tsconfig` (`nodenext`, `verbatimModuleSyntax`,

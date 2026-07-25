@@ -11,11 +11,11 @@
 
 import { ok, type Logger, type Result } from "@matchday/domain";
 import { createDbClient } from "@matchday/db";
-import { openBrowserSession } from "../crawler/browserSession.ts";
-import { crawlCatalog } from "../crawler/crawlCatalog.ts";
-import { createEntityResolutionDeps } from "../crawler/entityResolutionDeps.ts";
-import { logCatalogDryRun } from "../crawler/logCatalogDryRun.ts";
-import { persistLeague } from "../crawler/persistCatalog.ts";
+import { openBrowserSession } from "../crawlers/dribl/browserSession.ts";
+import { crawlCatalog } from "../crawlers/dribl/crawlCatalog.ts";
+import { createEntityResolutionDeps } from "../crawlers/dribl/entityResolutionDeps.ts";
+import { logCatalogDryRun } from "../crawlers/dribl/logCatalogDryRun.ts";
+import { persistLeague } from "../crawlers/dribl/persistCatalog.ts";
 
 export type RunCatalogJobInput = {
   logger: Logger;
