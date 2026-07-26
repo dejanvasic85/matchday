@@ -21,16 +21,16 @@ export {
   upsertClub,
   updateClubEnrichmentFields,
   type ClubEnrichmentFields,
-  upsertTeam,
-  upsertCompetition,
-  upsertSeason,
-  upsertLeague,
-  upsertFixture,
-  upsertTableEntry,
+} from "./clubDb.ts";
+export { upsertTeam } from "./teamDb.ts";
+export { upsertCompetition } from "./competitionDb.ts";
+export { upsertSeason } from "./seasonDb.ts";
+export { upsertLeague, getLeagueById } from "./leagueDb.ts";
+export { upsertFixture } from "./fixtureDb.ts";
+export { upsertTableEntry } from "./tableEntryDb.ts";
+export {
   upsertExternalRef,
   findExternalRef,
   findExternalRefByInternalId,
-  getLeagueById,
-  upsertSubscription,
-  listSubscribedLeagueIds,
-} from "./queries.ts";
+} from "./externalRefDb.ts";
+export { upsertSubscription, listSubscribedLeagueIds } from "./subscriptionDb.ts";

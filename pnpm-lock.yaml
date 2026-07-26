@@ -79,7 +79,7 @@ importers:
         specifier: 0.2.6
         version: 0.2.6(@types/node@26.1.1)(@vitest/coverage-v8@4.1.10)(@voidzero-dev/vite-plus-core@0.2.6(@types/node@26.1.1)(esbuild@0.28.1)(tsx@4.23.0)(typescript@7.0.2))(esbuild@0.28.1)(tsx@4.23.0)(typescript@7.0.2)
 
-  apps/scraper:
+  apps/cli:
     dependencies:
       '@matchday/db':
         specifier: workspace:*

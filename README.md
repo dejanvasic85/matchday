@@ -3,7 +3,7 @@
 A multi-tenant sports competition data service — scrapes fixtures, results and
 tables, and serves them via an API so multiple clubs can consume the same data.
 
-This monorepo will contain the scraper, the API, and supporting infrastructure.
+This monorepo will contain the CLI crawler, the API, and supporting infrastructure.
 
 ## Status
 
@@ -21,24 +21,24 @@ but doesn't scale to onboarding others — hence a standalone, API-served servic
 
 ## Local development
 
-### Running the `mday` scraper CLI
+### Running the `mday` CLI
 
-`mday` is the scraper CLI ([apps/scraper](apps/scraper/src/cli.ts)). It drives a real Chrome via
+`mday` is the crawler CLI ([apps/cli](apps/cli/src/cli.ts)). It drives a real Chrome via
 playwright-core to clear Dribl's Cloudflare, then makes direct `mc-api.dribl.com` calls. Where it
 runs in production is still outstanding — for now it's a local-only tool.
 
 > **Note:** deploying the crawler to production is not yet solved. These instructions cover local
 > runs only.
 
-**1. Configure the environment.** The CLI loads [apps/scraper/.env.local](apps/scraper/.env.example)
+**1. Configure the environment.** The CLI loads [apps/cli/.env.local](apps/cli/.env.example)
 automatically (gitignored). Copy the example and fill it in:
 
 ```sh
-cp apps/scraper/.env.example apps/scraper/.env.local
+cp apps/cli/.env.example apps/cli/.env.local
 ```
 
 Point `DATABASE_URL` at the Neon **`matchday-dev`** pooled host (`?sslmode=require`) — never prod.
-See [apps/scraper/.env.example](apps/scraper/.env.example) for every variable; R2 credentials are
+See [apps/cli/.env.example](apps/cli/.env.example) for every variable; R2 credentials are
 required (raw responses are staged there even on a dry run).
 
 **2. Run a command.** From the repo root, `pnpm mday <command>` forwards straight to the CLI (args

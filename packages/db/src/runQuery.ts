@@ -49,3 +49,25 @@ export async function runQuery<T>(fn: () => Promise<T>, message: string): Promis
 
   return err({ message, cause: lastCause });
 }
+
+export function toError(cause: unknown, message: string): Result<never> {
+  return err({ message, cause });
+}
+
+/** Run an upsert (with retry, via {@link runQuery}) and unwrap its single `returning()` row,
+ * failing if none came back. */
+export async function runUpsert<T>(
+  fn: () => Promise<T[]>,
+  entityLabel: string,
+  values: unknown,
+): Promise<Result<T>> {
+  const result = await runQuery(fn, `Failed to upsert ${entityLabel}`);
+  if (!result.ok) {
+    return result;
+  }
+  const row = result.value[0];
+  if (row === undefined) {
+    return toError(values, `Upsert of ${entityLabel} returned no row`);
+  }
+  return ok(row);
+}
