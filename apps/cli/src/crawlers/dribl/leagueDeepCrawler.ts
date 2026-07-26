@@ -10,7 +10,7 @@ import { crawlFixturesByRound } from "./fixturesByRoundCrawler.ts";
 import { crawlTable } from "./tableCrawler.ts";
 import { deepCrawlPersist } from "./deepCrawlPersistence.ts";
 import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
-import type { RawStorage } from "./rawStorage.ts";
+import type { RawStorage } from "../../storage/rawStorage.ts";
 import { resolveDriblLeagueIds } from "./driblLeagueIdResolver.ts";
 
 export type DeepCrawlLeagueInput = {

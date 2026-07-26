@@ -71,7 +71,7 @@ forward; the strategy below rewires how they're driven.
         sources) in `packages/domain` + `packages/db`.
   - [x] Fix `driblListResponseSchema` (list items are top-level `name`/`id`).
   - [x] Loosen `driblClubSocial.name` to a tolerant parse.
-- [ ] **Subscription data model** — subscription entity `(client, leagueId → league, sanityTeamRef)`,
+- [x] **Subscription data model** — subscription entity `(client, leagueId → league, sanityTeamRef)`,
       keyed on our internal `lea_` id (not Dribl identifiers); subsumes `tracked_competition`.
       Competition/league/team are already first-class 0011 entities; no team↔league join/history
       table (membership is derived from `fixture`/`table_entry`). (→ 0011, 0012)
@@ -103,7 +103,7 @@ forward; the strategy below rewires how they're driven.
         too); and two Dribl club records can share a logo/name and bridge-match onto the same
         club row, which the DB's one-ref-per-source constraint rejects on the second — now
         detected via `findExternalRefByInternalId` and skipped instead of erroring the run.
-- [ ] **Source-abstraction seam** — factor the crawler so a source is an adapter (catalog +
+- [x] **Source-abstraction seam** — factor the crawler so a source is an adapter (catalog +
       deep-crawl + identity mapping). Dribl is the first adapter; designed for a second later. (→ 0012)
 - [ ] **Scheduling** — wire per-job triggers (thanos cron / GH Actions / CF Cron), driven by the
       subscription set. (→ 0003, 0009, 0012)

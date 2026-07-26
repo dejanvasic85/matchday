@@ -1,37 +1,31 @@
-// Club enrichment job (0012): fetches rich club detail (grounds/colours/store) from Dribl's
-// clubs/{id} endpoint for every listed club, bridge-matches each to a club row the deep crawl
+// Club enrichment job (0012): fetches rich club detail (grounds/colours/store) from the source's
+// club-detail endpoint for every listed club, bridge-matches each to a club row the deep crawl
 // already discovered (never creates), mirrors its logo to R2, and writes the curated fields.
 //
-// This is transport glue (AGENTS.md): it constructs the real browser session, DB client, R2
-// clients and downloadImage implementation, then delegates crawling and persistence to
-// crawlClubEnrichment / persistClubEnrichment.
+// This is transport glue (AGENTS.md): it looks up the source's adapter, the real DB client, R2
+// clients and downloadImage implementation, then delegates crawling and persistence to the
+// adapter's session (source-abstraction seam, docs/todo.md Phase 3).
 
 import { err, ok, type Logger, type Result } from "@matchday/domain";
 import { createDbClient } from "@matchday/db";
-import { createR2AssetStorage, type AssetStorageConfig } from "../crawlers/dribl/assetStorage.ts";
-import { openBrowserSession } from "../crawlers/dribl/browserSession.ts";
-import { crawlClubEnrichment } from "../crawlers/dribl/clubEnrichmentCrawler.ts";
+import type { CliConfig } from "../config.ts";
+import type { CrawlSource } from "../crawlers/constants.ts";
 import { createEntityResolutionDeps } from "../crawlers/dribl/entityResolutionDeps.ts";
-import { logClubEnrichmentDryRun } from "../crawlers/dribl/clubEnrichmentDryRunLogger.ts";
-import type { DownloadedImage } from "../crawlers/dribl/clubLogoMirror.ts";
-import { persistClubEnrichment } from "../crawlers/dribl/clubEnrichmentPersistence.ts";
-import { createR2RawStorage, type RawStorageConfig } from "../crawlers/dribl/rawStorage.ts";
+import { getSourceAdapter } from "../crawlers/sourceRegistry.ts";
+import { createR2AssetStorage } from "../storage/assetStorage.ts";
+import type { DownloadedImage } from "../storage/clubLogoMirror.ts";
+import { createR2RawStorage } from "../storage/rawStorage.ts";
 
 export type RunClubEnrichmentJobInput = {
   logger: Logger;
-  databaseUrl: string;
-  driblSiteUrl: string;
-  browserWsEndpoint?: string;
-  tenantHost: string;
-  tenantSlug: string;
+  config: CliConfig;
+  source: CrawlSource;
   dryRun: boolean;
-  rawStorageConfig: RawStorageConfig;
-  assetStorageConfig: AssetStorageConfig;
-  publicAssetsBaseUrl: string;
 };
 
 /** Dribl's image CDN is reachable via a plain fetch — confirmed live, no Cloudflare-clearance
- * dance needed (unlike mc-api.dribl.com). */
+ * dance needed (unlike mc-api.dribl.com). A future source's adapter can inject a different
+ * downloadImage if its CDN needs one. */
 async function downloadImage(url: string): Promise<Result<DownloadedImage>> {
   try {
     const response = await fetch(url);
@@ -49,91 +43,52 @@ async function downloadImage(url: string): Promise<Result<DownloadedImage>> {
 export async function runClubEnrichmentJob(
   input: RunClubEnrichmentJobInput,
 ): Promise<Result<void>> {
-  const {
-    logger,
-    databaseUrl,
-    driblSiteUrl,
-    browserWsEndpoint,
-    tenantHost,
-    tenantSlug,
-    dryRun,
-    rawStorageConfig,
-    assetStorageConfig,
-    publicAssetsBaseUrl,
-  } = input;
+  const { logger, config, source, dryRun } = input;
 
-  const sessionResult = await openBrowserSession({ driblSiteUrl, browserWsEndpoint });
+  const adapter = getSourceAdapter(source);
+  const sessionResult = await adapter.openSession(config);
   if (!sessionResult.ok) {
     return sessionResult;
   }
-  const { page, close } = sessionResult.value;
+  const session = sessionResult.value;
 
   try {
-    const rawStorage = createR2RawStorage(rawStorageConfig);
-    const crawlRunId = crypto.randomUUID();
-
-    // Dry run: crawl (still stages raw responses to R2) and log, no DB writes or logo uploads.
-    if (dryRun) {
-      const crawlResult = await crawlClubEnrichment({
-        page,
-        rawStorage,
-        logger,
-        tenantHost,
-        tenantSlug,
-        crawlRunId,
-      });
-      if (!crawlResult.ok) {
-        return crawlResult;
-      }
-      logClubEnrichmentDryRun(logger, crawlResult.value);
-      return ok(undefined);
-    }
-
-    // Persist each club as it's crawled so a DB failure surfaces early and clubs persisted
-    // before it stay committed, rather than crawling everything up front and writing at the end.
-    const deps = createEntityResolutionDeps(createDbClient(databaseUrl));
-    const assetStorage = createR2AssetStorage(assetStorageConfig);
-
-    let updated = 0;
-    let skipped = 0;
-
-    const crawlResult = await crawlClubEnrichment({
-      page,
-      rawStorage,
-      logger,
-      tenantHost,
-      tenantSlug,
-      crawlRunId,
-      onClub: async (club) => {
-        const persisted = await persistClubEnrichment({
-          deps,
-          assetStorage,
-          downloadImage,
-          publicAssetsBaseUrl,
-          logger,
-          club,
-        });
-        if (persisted.ok) {
-          if (persisted.value === "updated") {
-            updated += 1;
-          } else {
-            skipped += 1;
-          }
-        }
-        return persisted;
-      },
+    const deps = createEntityResolutionDeps(createDbClient(config.DATABASE_URL));
+    const rawStorage = createR2RawStorage({
+      accountId: config.R2_ACCOUNT_ID,
+      accessKeyId: config.R2_ACCESS_KEY_ID,
+      secretAccessKey: config.R2_SECRET_ACCESS_KEY,
+      bucketName: config.R2_RAW_BUCKET_NAME,
     });
-    if (!crawlResult.ok) {
-      return crawlResult;
+    const assetStorage = createR2AssetStorage({
+      accountId: config.R2_ACCOUNT_ID,
+      accessKeyId: config.R2_ACCESS_KEY_ID,
+      secretAccessKey: config.R2_SECRET_ACCESS_KEY,
+      bucketName: config.R2_BUCKET_NAME,
+    });
+
+    const result = await session.crawlClubEnrichment({
+      deps,
+      rawStorage,
+      assetStorage,
+      downloadImage,
+      publicAssetsBaseUrl: config.R2_PUBLIC_ASSETS_URL,
+      logger,
+      dryRun,
+    });
+    if (!result.ok) {
+      return result;
     }
 
     logger.info("clubenrichment.result", "club enrichment complete", {
-      listed: crawlResult.value.length,
-      updated,
-      skipped,
+      source,
+      dryRun,
+      listed: result.value.listed,
+      updated: result.value.updated,
+      skipped: result.value.skipped,
     });
     return ok(undefined);
   } finally {
-    await close();
+    await session.close();
   }
 }

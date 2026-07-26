@@ -11,7 +11,7 @@ import type { FetchPage } from "./browserFetch.ts";
 import { fetchClubDetail } from "./clubDetailFetcher.ts";
 import { listClubs, resolveTenantId } from "./driblCatalogApi.ts";
 import { mapDriblClubDetail, type MappedClubDetail } from "./mappers/mapDriblClubDetail.ts";
-import type { RawStorage } from "./rawStorage.ts";
+import type { RawStorage } from "../../storage/rawStorage.ts";
 import { buildRawClubEnrichmentKey } from "./rawStorageKey.ts";
 
 export type CrawlClubEnrichmentInput = {

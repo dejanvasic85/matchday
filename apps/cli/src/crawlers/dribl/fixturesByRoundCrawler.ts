@@ -11,7 +11,7 @@ import {
   type DriblFixturesApiResponse,
 } from "./external/driblFixture.ts";
 import { buildRawFixturesKey } from "./rawStorageKey.ts";
-import type { RawStorage } from "./rawStorage.ts";
+import type { RawStorage } from "../../storage/rawStorage.ts";
 
 const maxConsecutiveEmptyRounds = 2;
 const maxRounds = 40;
