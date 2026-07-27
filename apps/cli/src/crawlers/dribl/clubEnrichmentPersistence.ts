@@ -3,10 +3,10 @@
 // with no match (admin pseudo-clubs) is skipped and logged at debug, not treated as a failure.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
-import type { AssetStorage } from "./assetStorage.ts";
+import type { AssetStorage } from "../../storage/assetStorage.ts";
 import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
 import type { MappedClubDetail } from "./mappers/mapDriblClubDetail.ts";
-import { mirrorClubLogo, type DownloadedImage } from "./clubLogoMirror.ts";
+import { mirrorClubLogo, type DownloadedImage } from "../../storage/clubLogoMirror.ts";
 import { resolveClubForEnrichment } from "./clubEnrichmentResolver.ts";
 
 export type PersistClubEnrichmentInput = {

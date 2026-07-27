@@ -9,7 +9,7 @@ import {
   driblTableApiResponseSchema,
   type DriblTableApiResponse,
 } from "./external/driblTableEntry.ts";
-import type { RawStorage } from "./rawStorage.ts";
+import type { RawStorage } from "../../storage/rawStorage.ts";
 import { buildRawTableKey } from "./rawStorageKey.ts";
 
 export type CrawlTableInput = {
