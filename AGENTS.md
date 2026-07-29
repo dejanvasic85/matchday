@@ -21,7 +21,8 @@ pnpm + Vite+ monorepo:
 - `infra/` — deployment/infra config
 
 The **ADRs in `docs/decisions/` are the source of truth**; read the relevant one before a change.
-`docs/todo.md` is the sequenced build backlog.
+The build backlog lives in **GitHub Issues** (`gh issue list`), grouped by phase milestones and
+tagged with `phase:N` / `adr:NNNN` labels. `docs/todo.md` is now just a pointer to it.
 
 ## Tech stack (from ADRs — target this stack)
 
@@ -76,14 +77,15 @@ Pre-commit runs via Vite+ staged checks; include any auto-fixes in the commit.
 
 ## Slice workflow (multi-slice / phased work)
 
-When picking up a phase or backlog item that's naturally built as a sequence of slices (e.g. a
-todo.md item broken into mapper → crawler → resolution → wiring), work one slice at a time and
-close the loop on each before starting the next:
+When picking up an issue that's naturally built as a sequence of slices (e.g. an issue broken into
+mapper → crawler → resolution → wiring), work one slice at a time and close the loop on each
+before starting the next:
 
 1. Implement the slice (code + tests), passing the quality gates above.
-2. Tick the slice's checkbox(es) `[x]` in `docs/todo.md` **in this same commit** — not as a
-   follow-up. A merged slice with a stale `[ ]`/`[~]` checkbox is the single most common way this
-   file drifts from reality and misleads the next planning pass.
+2. Keep the issue current **in the same PR that lands the slice** — tick the slice's checkbox in
+   the issue body (or comment on progress), and reference the issue from the PR (`Refs #N`, or
+   `Closes #N` on the last slice) so merging updates it. A merged slice with a stale issue is the
+   single most common way the backlog drifts from reality and misleads the next planning pass.
 3. Run the `caveman-review` skill against the slice's diff.
 4. Fix the issues it surfaces (or explicitly note why a finding doesn't apply — don't silently
    drop one).
@@ -180,7 +182,8 @@ With no UI, unit tests are the primary safety net — hold them to a high standa
 
 ## Plans
 
-- Store plans as `docs/plans/YYYY-MM-DD-description.md`; keep `docs/todo.md` current as work lands.
+- Store plans as `docs/plans/YYYY-MM-DD-description.md`; keep the tracking GitHub issue current as
+  work lands.
 - Keep plans concise: Purpose, Requirements, an ordered todo list, and any open questions at the end.
 
 <!--VITE PLUS START-->

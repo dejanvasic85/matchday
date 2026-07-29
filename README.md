@@ -11,7 +11,8 @@ Early planning. Direction is being locked through architecture decision records 
 service code is written.
 
 - Decisions: [docs/decisions](docs/decisions/README.md) — all 10 locked (0001–0010).
-- Build backlog: [docs/todo.md](docs/todo.md) — sequenced, dependency-ordered.
+- Build backlog: [GitHub Issues](https://github.com/dejanvasic85/matchday/issues) — grouped by
+  phase milestones, labelled with the ADR each item implements.
 
 ## Background
 
