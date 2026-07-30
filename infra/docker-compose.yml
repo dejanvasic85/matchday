@@ -1,0 +1,9 @@
+# Local/Unraid convenience compose for the `mday` crawler image (see ../Dockerfile,
+# ../.github/workflows/publish-cli-image.yml). Not wired to a scheduler yet — that's a
+# separate slice (cron mechanism, GitHub issue #43/#51). Invoke a one-shot command with:
+#   docker compose -f infra/docker-compose.yml run --rm mday catalog --dry-run
+services:
+  mday:
+    image: ghcr.io/dejanvasic85/matchday-cli:latest
+    env_file:
+      - ../apps/cli/.env.local
