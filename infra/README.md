@@ -22,8 +22,4 @@ If the GHCR package is private, the host's Docker daemon needs a registry login
 `docker compose -f infra/docker-compose.yml run --rm mday catalog --dry-run` (reads
 `apps/cli/.env.local`, gitignored).
 
-## Not yet decided
 
-Cron/scheduling mechanism — tracked in
-[#43](https://github.com/dejanvasic85/matchday/issues/43) /
-[#51](https://github.com/dejanvasic85/matchday/issues/51).
