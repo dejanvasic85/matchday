@@ -3,7 +3,7 @@
 # Builds the `mday` crawler CLI (apps/cli). Node runs the .ts sources directly (native TS
 # support, no build step — see apps/cli/package.json), so this image just needs the pinned
 # Node runtime, workspace deps, and a real Chrome for Cloudflare bypass (ADR 0009).
-FROM node:24.18.0-bookworm
+FROM node:26.5.1-bookworm
 
 # Real Chrome (channel: "chrome" in browserSession.ts) is required for Cloudflare bypass — the
 # Playwright-bundled Chromium is not enough. --with-deps installs the OS libraries Chrome needs
