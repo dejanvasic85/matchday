@@ -25,8 +25,8 @@ catalogs:
       specifier: 0.45.2
       version: 0.45.2
     nanoid:
-      specifier: 6.0.0
-      version: 6.0.0
+      specifier: 6.0.1
+      version: 6.0.1
     playwright-core:
       specifier: 1.62.1
       version: 1.62.1
@@ -145,7 +145,7 @@ importers:
     dependencies:
       nanoid:
         specifier: 'catalog:'
-        version: 6.0.0
+        version: 6.0.1
       zod:
         specifier: 'catalog:'
         version: 4.4.3
@@ -1687,8 +1687,8 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  nanoid@6.0.0:
-    resolution: {integrity: sha512-mkUH+rPkwU2qPadJ0oJZOjeZ5Mxn8Q1UhevwkTRWNuUZzyia3h4rhzK39hxaHTk0o2OxB8W2SQ6A8k23ZDi1pQ==}
+  nanoid@6.0.1:
+    resolution: {integrity: sha512-3wVS3i51pE2pi1k5FFL/95BGfVS0kSsvDVuGXHOtxox/TywUmtgq+3qiTOTbs9J7KfHaXPiN171k/A6dBnaXFw==}
     engines: {node: ^22 || ^24 || >=26}
     hasBin: true
 
@@ -2961,7 +2961,7 @@ snapshots:
 
   nanoid@3.3.15: {}
 
-  nanoid@6.0.0: {}
+  nanoid@6.0.1: {}
 
   node@runtime:24.18.0: {}
 
