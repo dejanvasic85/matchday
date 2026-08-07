@@ -37,11 +37,12 @@ secrets and exits.
   set in CI, so the runner launches local headless Chrome — simplest path, no `xvfb-run` needed.
   Validate this actually clears Dribl's Cloudflare on a hosted runner before locking it in; fall
   back to headed + `xvfb-run` (matching `williamstownsc`) only if headless gets blocked.
-- Secrets: `DATABASE_URL`, `DRIBL_TENANT_SLUG`, `DRIBL_SITE_URL`, `R2_ACCOUNT_ID`,
-  `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_ASSETS_URL`,
-  `R2_RAW_BUCKET_NAME` (full `CliConfig` per `apps/cli/src/config.ts`) as GitHub Actions
-  **environment** secrets (mirroring `deploy.yml`'s `environment: production` + `secrets.
-DATABASE_URL` pattern), not repo-wide — these are prod credentials the crawl writes with.
+- Secrets: `DATABASE_URL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+  `R2_BUCKET_NAME`, `R2_PUBLIC_ASSETS_URL`, `R2_RAW_BUCKET_NAME` as GitHub Actions **environment**
+  secrets (mirroring `deploy.yml`'s `environment: production` + `secrets.DATABASE_URL` pattern),
+  not repo-wide — these are prod credentials the crawl writes with. `DRIBL_TENANT_SLUG` /
+  `DRIBL_SITE_URL` (the rest of `CliConfig`, per `apps/cli/src/config.ts`) aren't secret — a public
+  tenant subdomain and site URL — so they're plain workflow `env:` values, not secrets.
 - Update ADR 0009's Scraper/Scheduling rows to record GitHub Actions as the decision, superseding
   thanos primary + managed-browser fallback.
 

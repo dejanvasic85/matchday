@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+env:
+  # Not secret — the Dribl tenant subdomain / public site URL a page load clears Cloudflare
+  # against (dribl-crawling skill). Only DB and R2 credentials are real secrets below.
+  DRIBL_TENANT_SLUG: fv
+  DRIBL_SITE_URL: https://fv.dribl.com/
+
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
@@ -45,8 +51,6 @@ jobs:
         run: vp run --filter @matchday/cli mday catalog
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DRIBL_TENANT_SLUG: ${{ secrets.DRIBL_TENANT_SLUG }}
-          DRIBL_SITE_URL: ${{ secrets.DRIBL_SITE_URL }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -85,8 +89,6 @@ jobs:
         run: vp run --filter @matchday/cli mday club-enrichment
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DRIBL_TENANT_SLUG: ${{ secrets.DRIBL_TENANT_SLUG }}
-          DRIBL_SITE_URL: ${{ secrets.DRIBL_SITE_URL }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
