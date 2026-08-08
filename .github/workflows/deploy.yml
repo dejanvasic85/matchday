@@ -46,6 +46,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # wrangler-action's `packageManager: pnpm` input needs a bare `pnpm` executable on PATH;
+      # Vite+'s own setup-vp action manages pnpm internally without exposing one.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.20.0
+
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
         with:
