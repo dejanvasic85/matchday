@@ -12,12 +12,21 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
 
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+  R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+  R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+  R2_PUBLIC_ASSETS_URL: ${{ secrets.R2_PUBLIC_ASSETS_URL }}
+  R2_RAW_BUCKET_NAME: ${{ secrets.R2_RAW_BUCKET_NAME }}
+
 jobs:
   catalog:
     name: Catalog
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -41,14 +50,6 @@ jobs:
 
       - name: Run catalog crawl
         run: vp run --filter @matchday/cli mday catalog
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-          R2_PUBLIC_ASSETS_URL: ${{ secrets.R2_PUBLIC_ASSETS_URL }}
-          R2_RAW_BUCKET_NAME: ${{ secrets.R2_RAW_BUCKET_NAME }}
 
   club-enrichment:
     name: Club enrichment
@@ -79,11 +80,3 @@ jobs:
 
       - name: Run club enrichment crawl
         run: vp run --filter @matchday/cli mday club-enrichment
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-          R2_PUBLIC_ASSETS_URL: ${{ secrets.R2_PUBLIC_ASSETS_URL }}
-          R2_RAW_BUCKET_NAME: ${{ secrets.R2_RAW_BUCKET_NAME }}
