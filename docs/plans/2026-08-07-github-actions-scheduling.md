@@ -44,8 +44,9 @@ secrets and exits.
   `R2_BUCKET_NAME`, `R2_PUBLIC_ASSETS_URL`, `R2_RAW_BUCKET_NAME` as GitHub Actions **environment**
   secrets (mirroring `deploy.yml`'s `environment: production` + `secrets.DATABASE_URL` pattern),
   not repo-wide — these are prod credentials the crawl writes with. `DRIBL_TENANT_SLUG` /
-  `DRIBL_SITE_URL` (the rest of `CliConfig`, per `apps/cli/src/config.ts`) aren't secret — a public
-  tenant subdomain and site URL — so they're plain workflow `env:` values, not secrets.
+  `DRIBL_SITE_URL` aren't secret — a public tenant subdomain and site URL — and aren't config at
+  all: moved out of `CliConfig` entirely into `crawlerConfigValue` (`apps/cli/src/crawlers/dribl/
+constants.ts`), since they're Dribl-specific, not something a caller/environment ever varies.
 - Update ADR 0009's Scraper/Scheduling rows to record GitHub Actions as the decision, superseding
   thanos primary + managed-browser fallback.
 

@@ -22,6 +22,7 @@ import { persistLeague } from "./catalogPersistence.ts";
 import { crawlClubEnrichment } from "./clubEnrichmentCrawler.ts";
 import { logClubEnrichmentDryRun } from "./clubEnrichmentDryRunLogger.ts";
 import { persistClubEnrichment } from "./clubEnrichmentPersistence.ts";
+import { crawlerConfigValue } from "./constants.ts";
 import { resolveTenantId } from "./driblCatalogApi.ts";
 import { deepCrawlLeague } from "./leagueDeepCrawler.ts";
 
@@ -175,15 +176,15 @@ export const driblAdapter: SourceAdapter = {
   source: crawlSourceValue.dribl,
   async openSession(config) {
     const sessionResult = await openBrowserSession({
-      driblSiteUrl: config.DRIBL_SITE_URL,
+      driblSiteUrl: crawlerConfigValue.tenantSiteUrl,
       browserWsEndpoint: config.BROWSER_WS_ENDPOINT,
     });
     if (!sessionResult.ok) {
       return sessionResult;
     }
     const { page, close } = sessionResult.value;
-    const tenantHost = new URL(config.DRIBL_SITE_URL).host;
-    const tenantSlug = config.DRIBL_TENANT_SLUG;
+    const tenantHost = new URL(crawlerConfigValue.tenantSiteUrl).host;
+    const tenantSlug = crawlerConfigValue.tenantSlug;
 
     return ok({
       close,

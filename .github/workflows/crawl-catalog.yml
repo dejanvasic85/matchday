@@ -8,12 +8,6 @@ on:
 permissions:
   contents: read
 
-env:
-  # Not secret — the Dribl tenant subdomain / public site URL a page load clears Cloudflare
-  # against (dribl-crawling skill). Only DB and R2 credentials are real secrets below.
-  DRIBL_TENANT_SLUG: fv
-  DRIBL_SITE_URL: https://fv.dribl.com/
-
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
