@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "mday": "node --env-file-if-exists=.env.local src/cli.ts",
+    "playwright:install": "playwright-core install --with-deps chrome",
     "test": "vp test run",
     "check": "vp check"
   },

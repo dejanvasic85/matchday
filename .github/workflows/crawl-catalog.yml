@@ -45,7 +45,7 @@ jobs:
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Chrome
-        run: pnpm --filter @matchday/cli exec playwright-core install --with-deps chrome
+        run: vp run --filter @matchday/cli playwright:install
 
       - name: Run catalog crawl
         run: vp run --filter @matchday/cli mday catalog
@@ -83,7 +83,7 @@ jobs:
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Chrome
-        run: pnpm --filter @matchday/cli exec playwright-core install --with-deps chrome
+        run: vp run --filter @matchday/cli playwright:install
 
       - name: Run club enrichment crawl
         run: vp run --filter @matchday/cli mday club-enrichment
