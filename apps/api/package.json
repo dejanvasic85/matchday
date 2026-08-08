@@ -10,11 +10,16 @@
   "dependencies": {
     "@matchday/db": "workspace:*",
     "@matchday/domain": "workspace:*",
+    "@sentry/cloudflare": "catalog:",
+    "@sentry/hono": "catalog:",
+    "hono": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
     "@types/node": "catalog:",
     "typescript": "catalog:",
-    "vite-plus": "0.2.8"
+    "vite-plus": "0.2.8",
+    "wrangler": "catalog:"
   }
 }

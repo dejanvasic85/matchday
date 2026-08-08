@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "matchday-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  // Required by @sentry/cloudflare, which uses node:async_hooks for context propagation.
+  "compatibility_flags": ["nodejs_compat"],
+  // Cloudflare Workers Logs — captures console.warn/console.error (AGENTS.md structured logging).
+  "observability": {
+    "enabled": true,
+  },
+  // Sentry source map upload on `wrangler deploy` (requires SENTRY_AUTH_TOKEN/ORG/PROJECT env).
+  "upload_source_maps": true,
+  // Non-secret config. DATABASE_URL and SENTRY_DSN are set as Worker secrets (deploy.yml), never
+  // committed here. Override locally in a gitignored .dev.vars (e.g. ENVIRONMENT=development) —
+  // wrangler dev reads these vars too.
+  "vars": {
+    "LOG_LEVEL": "info",
+    "ENVIRONMENT": "production",
+  },
+}

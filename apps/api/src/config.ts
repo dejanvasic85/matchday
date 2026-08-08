@@ -13,10 +13,19 @@ const apiEnvSchema = z.object({
   // Comma-separated list of allowed origins for CORS; empty means same-origin only.
   ALLOWED_ORIGINS: z.string().default(""),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  // Sentry DSN (optional — Sentry no-ops when unset, so local dev doesn't need an account).
+  SENTRY_DSN: z.string().optional(),
+  // Sentry environment tag. wrangler.jsonc commits "production"; override to "development" in a
+  // local .dev.vars so dev traffic doesn't get tagged as production in Sentry.
+  ENVIRONMENT: z.enum(["development", "production"]).default("development"),
 });
 
 export type ApiConfig = z.infer<typeof apiEnvSchema>;
 
-export function getApiConfig(source: Record<string, string | undefined>): ApiConfig {
+/** Raw Cloudflare Workers bindings (vars + secrets) as handed to the fetch handler, before Zod
+ * validation — Hono's `Bindings` generic. Pass to `getApiConfig` to get a validated `ApiConfig`. */
+export type ApiBindings = Record<string, string | undefined>;
+
+export function getApiConfig(source: ApiBindings): ApiConfig {
   return parseEnv(apiEnvSchema, source);
 }

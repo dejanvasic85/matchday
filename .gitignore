@@ -4,11 +4,14 @@ build/
 .next/
 .turbo/
 coverage/
+.wrangler/
 
 # env
 .env
 .env.*
 !.env.example
+.dev.vars
+.dev.vars.*
 
 # logs
 *.log
