@@ -24,22 +24,26 @@ driver / Hyperdrive.
 ## Decision: best-of-breed, decided per component
 
 No single-provider mandate. Each component is hosted wherever it fits best, and **mixing
-free / third-party services (including external cron) is explicitly fine**. Some components
-are settled now; only the scraper runtime carries a primary direction plus a fallback to be
-firmed up during build.
+free / third-party services (including external cron) is explicitly fine**. All components,
+including the scraper runtime and its scheduling, are settled.
 
-| Component    | Choice                                                                         | Status                   |
-| ------------ | ------------------------------------------------------------------------------ | ------------------------ |
-| Logos/assets | **Cloudflare R2** (per 0004)                                                   | settled                  |
-| Edge / CDN   | **Cloudflare** (cache, TLS)                                                    | settled                  |
-| API (REST)   | **Cloudflare Workers + Hono** (per 0007)                                       | settled                  |
-| Database     | **Neon** (existing free project); Postgres per 0006                            | settled                  |
-| Scraper      | **thanos (self-hosted Unraid)** primary; managed browser service fallback      | direction set, see below |
-| Scheduling   | Flexible — GitHub Actions / thanos cron / CF Cron Triggers; combine free tiers | open, per job            |
+| Component    | Choice                                                               | Status             |
+| ------------ | -------------------------------------------------------------------- | ------------------ |
+| Logos/assets | **Cloudflare R2** (per 0004)                                         | settled            |
+| Edge / CDN   | **Cloudflare** (cache, TLS)                                          | settled            |
+| API (REST)   | **Cloudflare Workers + Hono** (per 0007)                             | settled            |
+| Database     | **Neon** (existing free project); Postgres per 0006                  | settled            |
+| Scraper      | **GitHub Actions** (hosted runners, real Chrome via playwright-core) | settled, see below |
+| Scheduling   | **GitHub Actions** scheduled workflows, per job                      | settled, see below |
 
-## Scraper runtime (the awkward part)
+## Scraper runtime (the awkward part) — superseded
 
-The scraper's real-Chrome + Cloudflare-bypass requirement rules out pure serverless.
+The original direction below (thanos primary, managed-browser fallback) was **superseded by
+GitHub Actions** (issue #65): hosted runners install real Chrome
+(`playwright install --with-deps chrome`) and run the crawler directly, no residential-IP or
+home-internet-availability risk, and GitHub Actions minutes are free for this public repo. The
+`williamstownsc` repo already proved the same shape (scheduled + matrix workflow). Kept here for
+history:
 
 - **Primary: thanos (Unraid).** Run the crawler as a Docker container, scheduled via Unraid
   User Scripts or a scheduled container. Cheap, full control over the browser and
@@ -51,22 +55,27 @@ The scraper's real-Chrome + Cloudflare-bypass requirement rules out pure serverl
   so switching from local Chromium to a remote browser is a config/URL change, not a rewrite.
   Fall back (or overflow) to the managed service if the IP is blocked or thanos is down.
 
-Keep the crawler's browser connection abstracted behind one interface so primary↔fallback is
-a swap.
+The browser connection stayed abstracted behind one interface regardless, so this was a config
+change, not a rewrite, when GitHub Actions was adopted.
 
 ## Scheduling
 
-Per-job (0003 defines two jobs). Any cheap/free trigger is acceptable and they can differ per
-job: thanos cron, GitHub Actions scheduled workflow, or Cloudflare Cron Triggers. Decide per
-job when built; no lock-in.
+Per job (0003 defines the job shapes), all on **GitHub Actions scheduled workflows** (`on.schedule`
+cron): catalog and club-enrichment run weekly on one cron, sequenced within a single workflow
+(`crawl-catalog.yml`, club-enrichment `needs: catalog`); deep-crawl runs on its own workflow
+(`crawl-deep.yml`), hourly during plausible game windows — weekday evenings and weekend
+daytime/evening AEST. Fixture-derived cadence (skip a
+league entirely off game day, per 0003) was considered and **decided against for now** — the
+hourly game-window schedule plus per-league deep-crawl cost (~3-4 min) was judged a good enough
+compromise without the added complexity of querying fixture state to build the cron windows.
 
 ## Consequences
 
-- Mostly Cloudflare (Workers API + R2 + edge) with Neon for Postgres and thanos for scraping
-  — few bills, edge-native, no self-hosted DB exposure.
+- Mostly Cloudflare (Workers API + R2 + edge) with Neon for Postgres and GitHub Actions for
+  scraping — few bills, edge-native, no self-hosted DB exposure, no home-server dependency.
 - R2 + Cloudflare edge give edge-native asset and API caching aligned to scrape cadence (0003).
 - Worker → Neon via serverless driver / Hyperdrive (no raw TCP from a V8 isolate).
-- Scraper abstracts its browser endpoint → thanos primary, managed service as drop-in fallback.
-- Final scraper host left to confirm at build; direction + fallback recorded so no
-  rearchitecture is needed.
-- Secrets/env managed per environment; infra captured in the monorepo `infra/` (per 0010).
+- Scraper still abstracts its browser endpoint (playwright-core connects to an endpoint), so a
+  future move off GitHub Actions hosted runners remains a config change, not a rewrite.
+- Secrets/env managed per environment (GitHub Actions repo/environment secrets for the scraper);
+  infra captured in the monorepo `infra/` (per 0010).
