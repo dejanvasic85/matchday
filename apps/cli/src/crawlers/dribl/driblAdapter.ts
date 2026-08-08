@@ -16,12 +16,13 @@ import type {
 import { crawlSourceValue } from "../constants.ts";
 import type { FetchPage } from "./browserFetch.ts";
 import { openBrowserSession } from "./browserSession.ts";
-import { crawlCatalog } from "./catalogCrawler.ts";
+import { crawlCatalog, type CrawlCatalogLeagueResult } from "./catalogCrawler.ts";
 import { logCatalogDryRun } from "./catalogDryRunLogger.ts";
 import { persistLeague } from "./catalogPersistence.ts";
 import { crawlClubEnrichment } from "./clubEnrichmentCrawler.ts";
 import { logClubEnrichmentDryRun } from "./clubEnrichmentDryRunLogger.ts";
 import { persistClubEnrichment } from "./clubEnrichmentPersistence.ts";
+import { crawlerConfigValue } from "./constants.ts";
 import { resolveTenantId } from "./driblCatalogApi.ts";
 import { deepCrawlLeague } from "./leagueDeepCrawler.ts";
 
@@ -31,10 +32,52 @@ type TenantContext = {
   tenantSlug: string;
 };
 
+// Distinct competitions/clubs/teams touched by a catalog crawl, for the final summary log
+// (catalogJob.ts). Accumulated incrementally so the non-dry-run path never has to buffer the
+// whole catalog just to count it (see crawlCatalog's onLeague doc comment).
+type CatalogStats = {
+  competitionIds: Set<string>;
+  clubCodes: Set<string>;
+  teamIds: Set<string>;
+  leagues: number;
+  tableEntries: number;
+};
+
+function createCatalogStats(): CatalogStats {
+  return {
+    competitionIds: new Set(),
+    clubCodes: new Set(),
+    teamIds: new Set(),
+    leagues: 0,
+    tableEntries: 0,
+  };
+}
+
+function addLeagueToCatalogStats(stats: CatalogStats, league: CrawlCatalogLeagueResult): void {
+  stats.competitionIds.add(league.competitionSourceId);
+  stats.leagues += 1;
+  stats.tableEntries += league.tableEntries.length;
+  for (const entry of league.tableEntries) {
+    stats.clubCodes.add(entry.clubCode);
+    stats.teamIds.add(entry.teamSourceId);
+  }
+}
+
+function summarizeCatalogStats(stats: CatalogStats): CrawlCatalogSummary {
+  return {
+    competitions: stats.competitionIds.size,
+    leagues: stats.leagues,
+    clubs: stats.clubCodes.size,
+    teams: stats.teamIds.size,
+    tableEntries: stats.tableEntries,
+  };
+}
+
 export async function runCatalogCrawl(
   input: TenantContext & CrawlCatalogParams,
 ): Promise<Result<CrawlCatalogSummary>> {
   const { page, tenantHost, tenantSlug, seasonYear, maxLeagues, dryRun, deps, logger } = input;
+  const stats = createCatalogStats();
 
   if (dryRun) {
     const crawlResult = await crawlCatalog({
@@ -49,15 +92,12 @@ export async function runCatalogCrawl(
       return crawlResult;
     }
     logCatalogDryRun(logger, crawlResult.value);
-    const tableEntries = crawlResult.value.reduce(
-      (sum, league) => sum + league.tableEntries.length,
-      0,
-    );
-    return ok({ leagues: crawlResult.value.length, tableEntries });
+    for (const league of crawlResult.value) {
+      addLeagueToCatalogStats(stats, league);
+    }
+    return ok(summarizeCatalogStats(stats));
   }
 
-  let leagueCount = 0;
-  let tableEntryCount = 0;
   const crawlResult = await crawlCatalog({
     page,
     logger,
@@ -68,8 +108,7 @@ export async function runCatalogCrawl(
     onLeague: async (league) => {
       const persisted = await persistLeague({ deps, logger, league });
       if (persisted.ok) {
-        leagueCount += 1;
-        tableEntryCount += persisted.value.tableEntries;
+        addLeagueToCatalogStats(stats, league);
       }
       return persisted;
     },
@@ -78,7 +117,7 @@ export async function runCatalogCrawl(
     return crawlResult;
   }
 
-  return ok({ leagues: leagueCount, tableEntries: tableEntryCount });
+  return ok(summarizeCatalogStats(stats));
 }
 
 export async function runDeepCrawl(
@@ -175,15 +214,15 @@ export const driblAdapter: SourceAdapter = {
   source: crawlSourceValue.dribl,
   async openSession(config) {
     const sessionResult = await openBrowserSession({
-      driblSiteUrl: config.DRIBL_SITE_URL,
+      driblSiteUrl: crawlerConfigValue.tenantSiteUrl,
       browserWsEndpoint: config.BROWSER_WS_ENDPOINT,
     });
     if (!sessionResult.ok) {
       return sessionResult;
     }
     const { page, close } = sessionResult.value;
-    const tenantHost = new URL(config.DRIBL_SITE_URL).host;
-    const tenantSlug = config.DRIBL_TENANT_SLUG;
+    const tenantHost = new URL(crawlerConfigValue.tenantSiteUrl).host;
+    const tenantSlug = crawlerConfigValue.tenantSlug;
 
     return ok({
       close,

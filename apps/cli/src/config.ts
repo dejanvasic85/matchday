@@ -8,11 +8,6 @@ import { z } from "zod";
 const cliEnvSchema = z.object({
   // Neon Postgres — the crawler upserts crawled data by external_ref.
   DATABASE_URL: z.url(),
-  // Dribl tenant the crawl targets (e.g. host prefix / slug).
-  DRIBL_TENANT_SLUG: z.string().min(1),
-  // The tenant's public Dribl site; one page load establishes Cloudflare clearance for all
-  // subsequent mc-api.dribl.com calls (dribl-crawling skill).
-  DRIBL_SITE_URL: z.url(),
   // playwright-core browser endpoint. Unset -> launch local Chrome (thanos primary);
   // set to a ws:// URL -> connect to a managed browser (fallback).
   BROWSER_WS_ENDPOINT: z.url().optional(),

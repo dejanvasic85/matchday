@@ -24,6 +24,7 @@ export type RunCatalogJobInput = {
 
 export async function runCatalogJob(input: RunCatalogJobInput): Promise<Result<void>> {
   const { logger, config, source, seasonYear, maxLeagues, dryRun } = input;
+  const startedAt = Date.now();
 
   const adapter = getSourceAdapter(source);
   const sessionResult = await adapter.openSession(config);
@@ -42,8 +43,12 @@ export async function runCatalogJob(input: RunCatalogJobInput): Promise<Result<v
     logger.info("catalog.result", "catalog crawl complete", {
       source,
       dryRun,
+      competitions: result.value.competitions,
       leagues: result.value.leagues,
+      clubs: result.value.clubs,
+      teams: result.value.teams,
       tableEntries: result.value.tableEntries,
+      durationMs: Date.now() - startedAt,
     });
     return ok(undefined);
   } finally {

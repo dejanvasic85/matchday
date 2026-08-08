@@ -30,7 +30,10 @@ export type CrawlCatalogParams = {
 };
 
 export type CrawlCatalogSummary = {
+  competitions: number;
   leagues: number;
+  clubs: number;
+  teams: number;
   tableEntries: number;
 };
 
