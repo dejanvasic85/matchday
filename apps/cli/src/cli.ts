@@ -9,6 +9,7 @@ import { crawlSourceValue, type CrawlSource } from "./crawlers/constants.ts";
 import { runCatalogJob } from "./jobs/catalogJob.ts";
 import { runClubEnrichmentJob } from "./jobs/clubEnrichmentJob.ts";
 import { runDeepCrawlJob } from "./jobs/deepCrawlJob.ts";
+import { runSubscribedLeaguesJob } from "./jobs/subscribedLeaguesJob.ts";
 
 const currentYear = new Date().getFullYear().toString();
 const crawlSources = Object.values(crawlSourceValue);
@@ -85,6 +86,24 @@ export function createCli(): Command {
         }
       },
     );
+
+  program
+    .command("subscribed-leagues")
+    .description(
+      "List the distinct set of league ids with >=1 subscription, as JSON — the scope the " +
+        "deep-crawl GitHub Actions matrix crawls each run (0012).",
+    )
+    .action(async () => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runSubscribedLeaguesJob({ logger, config });
+      if (!result.ok) {
+        logger.error("subscribedleagues.failed", result.error.message, {
+          cause: result.error.cause,
+        });
+        process.exitCode = 1;
+      }
+    });
 
   program
     .command("deep-crawl")
