@@ -34,3 +34,4 @@ export {
   findExternalRefByInternalId,
 } from "./externalRefDb.ts";
 export { upsertSubscription, listSubscribedLeagueIds } from "./subscriptionDb.ts";
+export { pingDb } from "./healthDb.ts";
