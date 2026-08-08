@@ -59,9 +59,11 @@ constants.ts`), since they're Dribl-specific, not something a caller/environment
    sandboxes package.json **scripts** to a minimal env (`PATH`/`HOME`/`CI`/...) same as cached
    `vite.config.ts` tasks — `mday` had to move from a package.json script into a `vite.config.ts`
    task with `cache: false` (mirroring `packages/db`'s `db:migrate`) to get the full environment
-   (`DATABASE_URL`, R2 creds, `DRIBL_*`) through. Validates the whole real-Chrome-on-hosted-runner
-   path end to end before the harder matrix workflow. Confirm headless clears Cloudflare here
-   first.
+   (`DATABASE_URL`, R2 creds) through. Validates the whole real-Chrome-on-hosted-runner path end to
+   end before the harder matrix workflow. Confirm headless clears Cloudflare here first.
+   Follow-up: `DRIBL_TENANT_SLUG`/`DRIBL_SITE_URL` were removed from env/`CliConfig` entirely and
+   hardcoded as `crawlerConfigValue` constants instead (see Requirements) — no longer part of
+   "the full environment" a task needs.
 2. **deep-crawl matrix workflow, static cadence** — add a `list-subscribed-leagues` (or similar)
    `mday` command emitting a JSON array of league ids for `fromJson`; `.github/workflows/
 crawl-deep.yml` with a `setup` job (installs deps, runs the list command) → matrix job per
