@@ -8,6 +8,7 @@ import { getCliConfig } from "./config.ts";
 import { crawlSourceValue, type CrawlSource } from "./crawlers/constants.ts";
 import { runCatalogJob } from "./jobs/catalogJob.ts";
 import { runClubEnrichmentJob } from "./jobs/clubEnrichmentJob.ts";
+import { runCreateSubscriptionJob } from "./jobs/createSubscriptionJob.ts";
 import { runDeepCrawlJob } from "./jobs/deepCrawlJob.ts";
 
 const currentYear = new Date().getFullYear().toString();
@@ -152,6 +153,31 @@ export function createCli(): Command {
         logger.error("clubenrichment.failed", result.error.message, { cause: result.error.cause });
         process.exitCode = 1;
       }
+    });
+
+  program
+    .command("subscription-create")
+    .description(
+      "Subscribe a client to a league (0012): links a client name to our internal league id, " +
+        "driving the deep crawl's scope. Prints the created subscription id.",
+    )
+    .requiredOption("--client <name>", "the client name")
+    .requiredOption("--league <lea_id>", "the league id to subscribe to", parseLeagueId)
+    .action(async (options: { client: string; league: LeagueId }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runCreateSubscriptionJob({
+        logger,
+        config,
+        clientName: options.client,
+        leagueId: options.league,
+      });
+      if (!result.ok) {
+        logger.error("subscription.failed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(`${result.value}\n`);
     });
 
   return program;
