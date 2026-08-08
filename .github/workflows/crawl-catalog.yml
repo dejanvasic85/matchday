@@ -1,0 +1,97 @@
+name: Crawl catalog
+
+on:
+  schedule:
+    - cron: "0 17 * * *" # daily 03:00 AEST — club-enrichment
+    - cron: "0 17 * * 1" # weekly, Tue 03:00 AEST — catalog
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Not secret — the Dribl tenant subdomain / public site URL a page load clears Cloudflare
+  # against (dribl-crawling skill). Only DB and R2 credentials are real secrets below.
+  DRIBL_TENANT_SLUG: fv
+  DRIBL_SITE_URL: https://fv.dribl.com/
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  catalog:
+    name: Catalog
+    if: github.event.schedule == '0 17 * * 1' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          cache: true
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Chrome
+        run: pnpm --filter @matchday/cli exec playwright-core install --with-deps chrome
+
+      - name: Run catalog crawl
+        run: vp run --filter @matchday/cli mday catalog
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          R2_PUBLIC_ASSETS_URL: ${{ secrets.R2_PUBLIC_ASSETS_URL }}
+          R2_RAW_BUCKET_NAME: ${{ secrets.R2_RAW_BUCKET_NAME }}
+
+  club-enrichment:
+    name: Club enrichment
+    if: github.event.schedule == '0 17 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          cache: true
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Chrome
+        run: pnpm --filter @matchday/cli exec playwright-core install --with-deps chrome
+
+      - name: Run club enrichment crawl
+        run: vp run --filter @matchday/cli mday club-enrichment
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          R2_PUBLIC_ASSETS_URL: ${{ secrets.R2_PUBLIC_ASSETS_URL }}
+          R2_RAW_BUCKET_NAME: ${{ secrets.R2_RAW_BUCKET_NAME }}
