@@ -18,8 +18,11 @@ secrets and exits.
 
 ## Requirements
 
-- **catalog** + **club-enrichment**: one scheduled workflow, each as its own job (source-wide, no
-  matrix) — weekly/monthly and daily respectively (ADR 0003).
+- **catalog** + **club-enrichment**: one scheduled workflow, weekly, source-wide (no matrix).
+  `club-enrichment` **depends on `catalog`** (`needs: catalog`) — catalog's table pass discovers/
+  upserts clubs too (`catalogPersistence.ts` → `resolveTableEntryEntities`), so enrichment has
+  nothing to attach detail to until catalog has run. This revises ADR 0003/0012's "daily" cadence
+  for the clubs job down to weekly, sequenced after catalog rather than independent.
 - **deep-crawl**: a matrix workflow, one job per subscribed league id (source ids, not chunks —
   deep-crawl is already single-league per invocation), mirroring `crawl.yml`'s `setup` →
   `fromJson(needs.setup.outputs.*)` matrix pattern. The `setup` job needs a `list-subscribed-leagues
@@ -48,11 +51,16 @@ secrets and exits.
 
 ## Todo (sliced)
 
-1. **catalog + club-enrichment workflow** — `.github/workflows/crawl-catalog.yml`: two scheduled
-   jobs (no matrix), `voidzero-dev/setup-vp@v1` + `vp install`, Chrome install/cache, `mday
-catalog` (weekly cron) and `mday club-enrichment` (daily cron) each as their own job, prod
-   environment secrets wired. Validates the whole real-Chrome-on-hosted-runner path end to end
-   before the harder matrix workflow. Confirm headless clears Cloudflare here first.
+1. **catalog + club-enrichment workflow** — `.github/workflows/crawl-catalog.yml`: one weekly
+   cron, `voidzero-dev/setup-vp@v1` + `vp install`, Chrome install/cache, `mday catalog` then
+   `mday club-enrichment` (`needs: catalog`) as a sequential pair, prod environment secrets wired.
+   Also fixed a `vp run` env-stripping gotcha found while validating this slice live: `vp run`
+   sandboxes package.json **scripts** to a minimal env (`PATH`/`HOME`/`CI`/...) same as cached
+   `vite.config.ts` tasks — `mday` had to move from a package.json script into a `vite.config.ts`
+   task with `cache: false` (mirroring `packages/db`'s `db:migrate`) to get the full environment
+   (`DATABASE_URL`, R2 creds, `DRIBL_*`) through. Validates the whole real-Chrome-on-hosted-runner
+   path end to end before the harder matrix workflow. Confirm headless clears Cloudflare here
+   first.
 2. **deep-crawl matrix workflow, static cadence** — add a `list-subscribed-leagues` (or similar)
    `mday` command emitting a JSON array of league ids for `fromJson`; `.github/workflows/
 crawl-deep.yml` with a `setup` job (installs deps, runs the list command) → matrix job per
@@ -74,6 +82,8 @@ weekly` (unit tested, DI'd data-access + clock per AGENTS.md); wire into the `se
 - Exact cron expressions for the daily/weekly gate sharing one workflow with the 30-min
   match-window tick (time-of-day check in the `setup` job vs. separate `schedule:` entries like
   `williamstownsc`'s weekday/weekend split) — resolve during slice 3.
-- Whether `club-enrichment` and `catalog` should also move onto their own fixture-adjacent timing,
-  or stay flat weekly/daily per ADR 0003 as scoped here — current read is they stay flat (ADR 0003
-  only calls out competition crawl for fixture-derived cadence).
+- Whether `catalog`/`club-enrichment` should also move onto fixture-adjacent timing, or stay flat
+  weekly as scoped here — current read is they stay flat (ADR 0003 only calls out the competition
+  crawl for fixture-derived cadence). Resolved during slice 1: `club-enrichment`'s cadence drops
+  from ADR 0003/0012's "daily" to weekly, sequenced after `catalog` (see Requirements) — needs an
+  ADR 0003 update alongside the ADR 0009 update in slice 4.

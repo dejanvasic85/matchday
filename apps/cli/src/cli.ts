@@ -124,8 +124,9 @@ export function createCli(): Command {
     .command("club-enrichment")
     .description(
       "Fetch rich club detail (grounds/colours/store) from clubs/{id} and mirror logos to R2 " +
-        "for every club the deep crawl has already discovered. Attaches only, never creates; " +
-        "source-wide, not season/league-scoped. Run daily.",
+        "for every club the catalog/deep crawl has already discovered. Attaches only, never " +
+        "creates; source-wide, not season/league-scoped. Run weekly, right after the catalog " +
+        "crawl (it depends on the catalog's clubs).",
     )
     .option(
       "--source <name>",

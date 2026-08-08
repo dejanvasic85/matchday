@@ -2,8 +2,7 @@ name: Crawl catalog
 
 on:
   schedule:
-    - cron: "0 17 * * *" # daily 03:00 AEST — club-enrichment
-    - cron: "0 17 * * 1" # weekly, Tue 03:00 AEST — catalog
+    - cron: "0 17 * * 1" # weekly, Tue 03:00 AEST
   workflow_dispatch:
 
 permissions:
@@ -22,7 +21,6 @@ concurrency:
 jobs:
   catalog:
     name: Catalog
-    if: github.event.schedule == '0 17 * * 1' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 30
@@ -60,7 +58,7 @@ jobs:
 
   club-enrichment:
     name: Club enrichment
-    if: github.event.schedule == '0 17 * * *' || github.event_name == 'workflow_dispatch'
+    needs: catalog
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 30
