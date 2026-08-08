@@ -61,9 +61,10 @@ change, not a rewrite, when GitHub Actions was adopted.
 ## Scheduling
 
 Per job (0003 defines the job shapes), all on **GitHub Actions scheduled workflows** (`on.schedule`
-cron), one workflow per job group: catalog + club-enrichment (`crawl-catalog.yml`, weekly/on
-club-enrichment's own cadence) and deep-crawl (`crawl-deep.yml`, hourly during plausible game
-windows — weekday evenings and weekend daytime/evening AEST). Fixture-derived cadence (skip a
+cron): catalog and club-enrichment run weekly on one cron, sequenced within a single workflow
+(`crawl-catalog.yml`, club-enrichment `needs: catalog`); deep-crawl runs on its own workflow
+(`crawl-deep.yml`), hourly during plausible game windows — weekday evenings and weekend
+daytime/evening AEST. Fixture-derived cadence (skip a
 league entirely off game day, per 0003) was considered and **decided against for now** — the
 hourly game-window schedule plus per-league deep-crawl cost (~3-4 min) was judged a good enough
 compromise without the added complexity of querying fixture state to build the cron windows.
