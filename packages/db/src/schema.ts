@@ -178,7 +178,7 @@ export const client = pgTable(
 // ties competition + season (0011), so the subscription is season-scoped through it. Subsumes the
 // old tracked_competition.
 export const subscription = pgTable(
-  "subscription",
+  "client_subscription",
   {
     id: text("id").primaryKey(),
     clientId: text("client_id")
@@ -191,7 +191,7 @@ export const subscription = pgTable(
   },
   (table) => [
     // One subscription per (client, league) — a client subscribes to a given league at most once.
-    uniqueIndex("subscription_client_league_key").on(table.clientId, table.leagueId),
+    uniqueIndex("client_subscription_client_league_key").on(table.clientId, table.leagueId),
   ],
 );
 
@@ -199,7 +199,7 @@ export const subscription = pgTable(
 // token, only its hash, looked up on each request. A client can hold multiple active tokens at
 // once (like an AWS access key pair) so it can roll a new one in before revoking the old.
 export const apiToken = pgTable(
-  "api_token",
+  "client_api_token",
   {
     id: text("id").primaryKey(),
     clientId: text("client_id")
@@ -210,8 +210,8 @@ export const apiToken = pgTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("api_token_token_hash_key").on(table.tokenHash),
-    index("api_token_client_idx").on(table.clientId),
+    uniqueIndex("client_api_token_token_hash_key").on(table.tokenHash),
+    index("client_api_token_client_idx").on(table.clientId),
   ],
 );
 
