@@ -4,7 +4,7 @@
 // scoped resources) are a separate follow-up.
 
 import { mapResult, type League, type Result } from "@matchday/domain";
-import type { getLeagueById, ListLeaguesFilter, listLeagues } from "@matchday/db";
+import { getLeagueById, listLeagues, type Db, type ListLeaguesFilter } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
@@ -14,6 +14,15 @@ export type LeagueServiceDeps = {
   listLeagues: WithoutDb<typeof listLeagues>;
   getLeagueById: WithoutDb<typeof getLeagueById>;
 };
+
+/** Wires the real data-access functions to a live `db` — the only place this route's transport
+ * layer should reach into @matchday/db (AGENTS.md: routes are glue, services own the logic). */
+export function createLeagueServiceDeps(db: Db): LeagueServiceDeps {
+  return {
+    listLeagues: (filter) => listLeagues(db, filter),
+    getLeagueById: (id) => getLeagueById(db, id),
+  };
+}
 
 export type LeagueResponse = Omit<League, "createdAt" | "updatedAt"> & {
   createdAt: string;

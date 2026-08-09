@@ -3,12 +3,12 @@
 
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { createConsoleLogger, type Logger } from "@matchday/domain";
-import { createDbClient, getClubById, listClubs } from "@matchday/db";
+import { createDbClient } from "@matchday/db";
 import { getApiConfig, type ApiBindings } from "../config.ts";
 import { errorSchema } from "../schemas/errorSchema.ts";
 import { clubResponseSchema } from "../schemas/clubSchema.ts";
 import { idParamSchema } from "../schemas/idParamSchema.ts";
-import { getClub, listAllClubs } from "../services/clubService.ts";
+import { createClubServiceDeps, getClub, listAllClubs } from "../services/clubService.ts";
 
 export const clubRoute = new OpenAPIHono<{ Bindings: ApiBindings }>();
 
@@ -32,7 +32,7 @@ const listClubsRoute = createRoute({
 clubRoute.openapi(listClubsRoute, async (c) => {
   const config = getApiConfig(c.env);
   const db = createDbClient(config.DATABASE_URL);
-  const result = await listAllClubs({ listClubs: () => listClubs(db) });
+  const result = await listAllClubs(createClubServiceDeps(db));
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.club.list.failed", result.error.message, { cause: result.error.cause });
@@ -67,7 +67,7 @@ clubRoute.openapi(getClubRoute, async (c) => {
   const { id } = c.req.valid("param");
   const config = getApiConfig(c.env);
   const db = createDbClient(config.DATABASE_URL);
-  const result = await getClub({ getClubById: (clubId) => getClubById(db, clubId) }, id);
+  const result = await getClub(createClubServiceDeps(db), id);
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.club.get.failed", result.error.message, { cause: result.error.cause });

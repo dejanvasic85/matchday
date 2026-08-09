@@ -5,7 +5,7 @@
 // which case applied.
 
 import { err, hashApiToken, ok, parseId, type ClientId, type Result } from "@matchday/domain";
-import type { findApiTokenByHash } from "@matchday/db";
+import { findApiTokenByHash, type Db } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
@@ -14,6 +14,13 @@ type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
 export type ApiTokenAuthDeps = {
   findApiTokenByHash: WithoutDb<typeof findApiTokenByHash>;
 };
+
+/** Wires the real data-access function to a live `db` — the only place this middleware's
+ * transport layer should reach into @matchday/db (AGENTS.md: routes are glue, services own the
+ * logic). */
+export function createApiTokenAuthDeps(db: Db): ApiTokenAuthDeps {
+  return { findApiTokenByHash: (tokenHash) => findApiTokenByHash(db, tokenHash) };
+}
 
 const bearerPrefixValue = "Bearer ";
 const unauthorizedError = err({ message: "Invalid or missing API token" });

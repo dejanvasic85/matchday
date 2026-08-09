@@ -3,10 +3,10 @@
 // `next()` (with the resolved client id on the context) or a 401.
 
 import type { ClientId } from "@matchday/domain";
-import { createDbClient, findApiTokenByHash } from "@matchday/db";
+import { createDbClient } from "@matchday/db";
 import { createMiddleware } from "hono/factory";
 import { getApiConfig, type ApiBindings } from "../config.ts";
-import { authenticateApiToken } from "../services/apiTokenAuthService.ts";
+import { authenticateApiToken, createApiTokenAuthDeps } from "../services/apiTokenAuthService.ts";
 
 export type ApiTokenAuthVariables = { clientId: ClientId };
 
@@ -17,7 +17,7 @@ export const apiTokenAuthMiddleware = createMiddleware<{
   const config = getApiConfig(c.env);
   const db = createDbClient(config.DATABASE_URL);
   const result = await authenticateApiToken(
-    { findApiTokenByHash: (tokenHash) => findApiTokenByHash(db, tokenHash) },
+    createApiTokenAuthDeps(db),
     c.req.header("Authorization"),
   );
 

@@ -3,7 +3,7 @@
 // open to any authenticated client, no subscription scoping (ADR 0013).
 
 import { mapResult, type Competition, type Result } from "@matchday/domain";
-import type { getCompetitionById, listCompetitions } from "@matchday/db";
+import { getCompetitionById, listCompetitions, type Db } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
@@ -13,6 +13,15 @@ export type CompetitionServiceDeps = {
   listCompetitions: WithoutDb<typeof listCompetitions>;
   getCompetitionById: WithoutDb<typeof getCompetitionById>;
 };
+
+/** Wires the real data-access functions to a live `db` — the only place this route's transport
+ * layer should reach into @matchday/db (AGENTS.md: routes are glue, services own the logic). */
+export function createCompetitionServiceDeps(db: Db): CompetitionServiceDeps {
+  return {
+    listCompetitions: () => listCompetitions(db),
+    getCompetitionById: (id) => getCompetitionById(db, id),
+  };
+}
 
 export type CompetitionResponse = Omit<Competition, "createdAt" | "updatedAt"> & {
   createdAt: string;

@@ -3,12 +3,12 @@
 
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { createConsoleLogger, type Logger } from "@matchday/domain";
-import { createDbClient, getSeasonById, listSeasons } from "@matchday/db";
+import { createDbClient } from "@matchday/db";
 import { getApiConfig, type ApiBindings } from "../config.ts";
 import { errorSchema } from "../schemas/errorSchema.ts";
 import { idParamSchema } from "../schemas/idParamSchema.ts";
 import { seasonResponseSchema } from "../schemas/seasonSchema.ts";
-import { getSeason, listAllSeasons } from "../services/seasonService.ts";
+import { createSeasonServiceDeps, getSeason, listAllSeasons } from "../services/seasonService.ts";
 
 export const seasonRoute = new OpenAPIHono<{ Bindings: ApiBindings }>();
 
@@ -32,7 +32,7 @@ const listSeasonsRoute = createRoute({
 seasonRoute.openapi(listSeasonsRoute, async (c) => {
   const config = getApiConfig(c.env);
   const db = createDbClient(config.DATABASE_URL);
-  const result = await listAllSeasons({ listSeasons: () => listSeasons(db) });
+  const result = await listAllSeasons(createSeasonServiceDeps(db));
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.season.list.failed", result.error.message, { cause: result.error.cause });
@@ -67,7 +67,7 @@ seasonRoute.openapi(getSeasonRoute, async (c) => {
   const { id } = c.req.valid("param");
   const config = getApiConfig(c.env);
   const db = createDbClient(config.DATABASE_URL);
-  const result = await getSeason({ getSeasonById: (seasonId) => getSeasonById(db, seasonId) }, id);
+  const result = await getSeason(createSeasonServiceDeps(db), id);
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.season.get.failed", result.error.message, { cause: result.error.cause });
