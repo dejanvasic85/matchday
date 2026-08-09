@@ -1,0 +1,96 @@
+// League routes (0045): thin transport glue (AGENTS.md) — OpenAPI validates params, the service
+// maps data-access results to the wire shape, this just picks the HTTP status. Fixtures/tables
+// (subscription-scoped) are a separate follow-up nested under these routes.
+
+import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createConsoleLogger, type Logger } from "@matchday/domain";
+import { createDbClient, getLeagueById, listLeagues } from "@matchday/db";
+import { getApiConfig, type ApiBindings } from "../config.ts";
+import { errorSchema } from "../schemas/errorSchema.ts";
+import { idParamSchema } from "../schemas/idParamSchema.ts";
+import { leagueResponseSchema } from "../schemas/leagueSchema.ts";
+import { getLeague, listAllLeagues } from "../services/leagueService.ts";
+
+export const leagueRoute = new OpenAPIHono<{ Bindings: ApiBindings }>();
+
+const listLeaguesRoute = createRoute({
+  method: "get",
+  path: "/",
+  tags: ["Leagues"],
+  summary: "List leagues, optionally filtered by competition and/or season",
+  request: {
+    query: z.object({
+      competitionId: z
+        .string()
+        .regex(/^cmp_/)
+        .optional()
+        .openapi({ param: { name: "competitionId", in: "query" }, example: "cmp_V1StGXR8Z5" }),
+      seasonId: z
+        .string()
+        .regex(/^sea_/)
+        .optional()
+        .openapi({ param: { name: "seasonId", in: "query" }, example: "sea_V1StGXR8Z5" }),
+    }),
+  },
+  responses: {
+    200: {
+      description: "Leagues matching the filter",
+      content: { "application/json": { schema: leagueResponseSchema.array() } },
+    },
+    500: {
+      description: "Internal server error",
+      content: { "application/json": { schema: errorSchema } },
+    },
+  },
+});
+
+leagueRoute.openapi(listLeaguesRoute, async (c) => {
+  const filter = c.req.valid("query");
+  const config = getApiConfig(c.env);
+  const db = createDbClient(config.DATABASE_URL);
+  const result = await listAllLeagues({ listLeagues: (f) => listLeagues(db, f) }, filter);
+  if (!result.ok) {
+    const logger: Logger = createConsoleLogger();
+    logger.error("api.league.list.failed", result.error.message, { cause: result.error.cause });
+    return c.json({ error: "Internal server error" }, 500);
+  }
+  return c.json(result.value, 200);
+});
+
+const getLeagueRoute = createRoute({
+  method: "get",
+  path: "/{id}",
+  tags: ["Leagues"],
+  summary: "Get a league by id",
+  request: { params: idParamSchema("league", "lea_V1StGXR8Z5") },
+  responses: {
+    200: {
+      description: "The league",
+      content: { "application/json": { schema: leagueResponseSchema } },
+    },
+    404: {
+      description: "League not found",
+      content: { "application/json": { schema: errorSchema } },
+    },
+    500: {
+      description: "Internal server error",
+      content: { "application/json": { schema: errorSchema } },
+    },
+  },
+});
+
+leagueRoute.openapi(getLeagueRoute, async (c) => {
+  const { id } = c.req.valid("param");
+  const config = getApiConfig(c.env);
+  const db = createDbClient(config.DATABASE_URL);
+  const result = await getLeague({ getLeagueById: (leagueId) => getLeagueById(db, leagueId) }, id);
+  if (!result.ok) {
+    const logger: Logger = createConsoleLogger();
+    logger.error("api.league.get.failed", result.error.message, { cause: result.error.cause });
+    return c.json({ error: "Internal server error" }, 500);
+  }
+  if (result.value === null) {
+    return c.json({ error: "League not found" }, 404);
+  }
+  return c.json(result.value, 200);
+});
