@@ -2,14 +2,16 @@
 // `mday` — the crawler CLI (0012). Thin commander wiring: each command constructs real
 // dependencies (config, logger) and calls the matching job in src/jobs.
 
-import { createConsoleLogger, parseId, type LeagueId } from "@matchday/domain";
+import { createConsoleLogger, parseId, type ApiTokenId, type LeagueId } from "@matchday/domain";
 import { Command, InvalidArgumentError } from "commander";
 import { getCliConfig } from "./config.ts";
 import { crawlSourceValue, type CrawlSource } from "./crawlers/constants.ts";
 import { runCatalogJob } from "./jobs/catalogJob.ts";
 import { runClubEnrichmentJob } from "./jobs/clubEnrichmentJob.ts";
+import { runCreateApiTokenJob } from "./jobs/createApiTokenJob.ts";
 import { runCreateSubscriptionJob } from "./jobs/createSubscriptionJob.ts";
 import { runDeepCrawlJob } from "./jobs/deepCrawlJob.ts";
+import { runRevokeApiTokenJob } from "./jobs/revokeApiTokenJob.ts";
 import { runSubscribedLeaguesJob } from "./jobs/subscribedLeaguesJob.ts";
 
 const currentYear = new Date().getFullYear().toString();
@@ -29,6 +31,14 @@ function parseLeagueId(value: string): LeagueId {
     throw new InvalidArgumentError('must be a "lea_"-prefixed league id');
   }
   return leagueId;
+}
+
+function parseApiTokenId(value: string): ApiTokenId {
+  const id = parseId(value, "apiToken");
+  if (id === undefined) {
+    throw new InvalidArgumentError('must be a "tok_"-prefixed api token id');
+  }
+  return id;
 }
 
 function parseCrawlSource(value: string): CrawlSource {
@@ -197,6 +207,45 @@ export function createCli(): Command {
         return;
       }
       process.stdout.write(`${result.value}\n`);
+    });
+
+  program
+    .command("api-token-create")
+    .description(
+      "Issue a new bearer API token for a client (0013). Prints the token id and the plaintext " +
+        "token — the token is shown once here and never recoverable again, only rotatable.",
+    )
+    .requiredOption("--client <name>", "the client name")
+    .action(async (options: { client: string }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runCreateApiTokenJob({ logger, config, clientName: options.client });
+      if (!result.ok) {
+        logger.error("apitoken.failed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(`Token id: ${result.value.id}\n`);
+      process.stdout.write(`Token: ${result.value.token}\n`);
+      process.stdout.write("Store this token now — it will not be shown again.\n");
+    });
+
+  program
+    .command("api-token-revoke")
+    .description("Revoke a bearer API token (0013) so it can no longer authenticate requests.")
+    .requiredOption("--id <tok_id>", "the api token id to revoke", parseApiTokenId)
+    .action(async (options: { id: ApiTokenId }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runRevokeApiTokenJob({ logger, config, id: options.id });
+      if (!result.ok) {
+        logger.error("apitoken.revokefailed", result.error.message, {
+          cause: result.error.cause,
+        });
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(`Revoked token: ${options.id}\n`);
     });
 
   return program;
