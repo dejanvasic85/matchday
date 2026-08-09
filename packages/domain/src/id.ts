@@ -14,6 +14,8 @@ export const idPrefixValue = {
   tableEntry: "tab",
   externalRef: "ext",
   subscription: "sub",
+  client: "cli",
+  apiToken: "tok",
 } as const;
 
 export type EntityType = keyof typeof idPrefixValue;
@@ -34,6 +36,8 @@ export type FixtureId = EntityId<"fixture">;
 export type TableEntryId = EntityId<"tableEntry">;
 export type ExternalRefId = EntityId<"externalRef">;
 export type SubscriptionId = EntityId<"subscription">;
+export type ClientId = EntityId<"client">;
+export type ApiTokenId = EntityId<"apiToken">;
 
 const nanoidAlphabetValue = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const nanoidLengthValue = 12;

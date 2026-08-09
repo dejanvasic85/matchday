@@ -36,6 +36,20 @@
       "when": 1784963697019,
       "tag": "0004_amusing_captain_universe",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786259195771,
+      "tag": "0005_motionless_gravity",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786259208714,
+      "tag": "0006_common_talos",
+      "breakpoints": true
     }
   ]
 }

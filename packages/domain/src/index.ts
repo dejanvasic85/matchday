@@ -16,6 +16,8 @@ export {
   idPrefixValue,
   isIdOfType,
   parseId,
+  type ApiTokenId,
+  type ClientId,
   type ClubId,
   type CompetitionId,
   type EntityId,
@@ -53,3 +55,5 @@ export { fixtureSchema, type Fixture } from "./entities/fixture.ts";
 export { tableEntrySchema, type TableEntry } from "./entities/tableEntry.ts";
 export { externalRefSchema, type ExternalRef } from "./entities/externalRef.ts";
 export { subscriptionSchema, type Subscription } from "./entities/subscription.ts";
+export { clientSchema, type Client } from "./entities/client.ts";
+export { apiTokenSchema, type ApiToken } from "./entities/apiToken.ts";

@@ -10,7 +10,7 @@ type Subscription = typeof subscription.$inferSelect;
 type SubscriptionInsert = typeof subscription.$inferInsert;
 
 /**
- * Upsert a subscription by its `(client_name, league_id)` key: a client subscribes to a given
+ * Upsert a subscription by its `(client_id, league_id)` key: a client subscribes to a given
  * league at most once, so re-adding the same pair is idempotent rather than a duplicate.
  */
 export async function upsertSubscription(
@@ -23,7 +23,7 @@ export async function upsertSubscription(
         .insert(subscription)
         .values(values)
         .onConflictDoUpdate({
-          target: [subscription.clientName, subscription.leagueId],
+          target: [subscription.clientId, subscription.leagueId],
           set: { updatedAt: new Date() },
         })
         .returning(),

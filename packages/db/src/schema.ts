@@ -162,15 +162,28 @@ export const externalRef = pgTable(
   ],
 );
 
+// A client of the API (ADR 0013): the entity both subscriptions and API tokens belong to.
+export const client = pgTable(
+  "client",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("client_name_key").on(table.name)],
+);
+
 // A client subscribes to one of our leagues (ADR 0012): drives the deep crawl (fixtures + tables
 // are crawled only for subscribed leagues). Keyed on our internal `league.id` — the league already
-// ties competition + season (0011), so the subscription is season-scoped through it. `clientName`
-// is plain text for now; a real client entity is future work. Subsumes the old tracked_competition.
+// ties competition + season (0011), so the subscription is season-scoped through it. Subsumes the
+// old tracked_competition.
 export const subscription = pgTable(
   "subscription",
   {
     id: text("id").primaryKey(),
-    clientName: text("client_name").notNull(),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => client.id),
     leagueId: text("league_id")
       .notNull()
       .references(() => league.id),
@@ -178,7 +191,27 @@ export const subscription = pgTable(
   },
   (table) => [
     // One subscription per (client, league) — a client subscribes to a given league at most once.
-    uniqueIndex("subscription_client_league_key").on(table.clientName, table.leagueId),
+    uniqueIndex("subscription_client_league_key").on(table.clientId, table.leagueId),
+  ],
+);
+
+// A client's API bearer token (ADR 0013), hashed at rest — the row never holds the plaintext
+// token, only its hash, looked up on each request. A client can hold multiple active tokens at
+// once (like an AWS access key pair) so it can roll a new one in before revoking the old.
+export const apiToken = pgTable(
+  "api_token",
+  {
+    id: text("id").primaryKey(),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => client.id),
+    tokenHash: text("token_hash").notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("api_token_token_hash_key").on(table.tokenHash),
+    index("api_token_client_idx").on(table.clientId),
   ],
 );
 
@@ -224,4 +257,14 @@ export const tableEntryRelations = relations(tableEntry, ({ one }) => ({
 
 export const subscriptionRelations = relations(subscription, ({ one }) => ({
   league: one(league, { fields: [subscription.leagueId], references: [league.id] }),
+  client: one(client, { fields: [subscription.clientId], references: [client.id] }),
+}));
+
+export const clientRelations = relations(client, ({ many }) => ({
+  subscriptions: many(subscription),
+  apiTokens: many(apiToken),
+}));
+
+export const apiTokenRelations = relations(apiToken, ({ one }) => ({
+  client: one(client, { fields: [apiToken.clientId], references: [client.id] }),
 }));

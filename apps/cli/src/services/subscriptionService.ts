@@ -11,12 +11,13 @@ import {
   type SubscriptionId,
 } from "@matchday/domain";
 import type { getLeagueById, upsertSubscription } from "@matchday/db";
+import { resolveClient, type ClientResolverDeps } from "./clientResolver.ts";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
   : never;
 
-export type SubscriptionServiceDeps = {
+export type SubscriptionServiceDeps = ClientResolverDeps & {
   getLeagueById: WithoutDb<typeof getLeagueById>;
   upsertSubscription: WithoutDb<typeof upsertSubscription>;
 };
@@ -40,8 +41,13 @@ export async function createSubscription(
     return err({ message: `League not found: ${leagueId}` });
   }
 
+  const clientResult = await resolveClient(deps, clientName);
+  if (!clientResult.ok) {
+    return clientResult;
+  }
+
   const id = generateId("subscription");
-  const upserted = await deps.upsertSubscription({ id, clientName, leagueId });
+  const upserted = await deps.upsertSubscription({ id, clientId: clientResult.value, leagueId });
   if (!upserted.ok) {
     return upserted;
   }
