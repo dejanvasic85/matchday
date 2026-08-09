@@ -3,7 +3,7 @@ import { subscriptionSchema } from "./subscription.ts";
 function makeValidSubscription() {
   return {
     id: "sub_abc123",
-    clientName: "Williamstown SC",
+    clientId: "cli_abc123",
     leagueId: "lea_abc123",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -25,10 +25,10 @@ describe("subscriptionSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects a subscription missing clientName", () => {
-    const { clientName: _clientName, ...withoutClientName } = makeValidSubscription();
+  it("rejects a subscription missing clientId", () => {
+    const { clientId: _clientId, ...withoutClientId } = makeValidSubscription();
 
-    const result = subscriptionSchema.safeParse(withoutClientName);
+    const result = subscriptionSchema.safeParse(withoutClientId);
 
     expect(result.success).toBe(false);
   });

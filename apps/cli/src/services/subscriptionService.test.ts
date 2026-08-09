@@ -5,6 +5,9 @@ function makeDeps(overrides: Partial<SubscriptionServiceDeps> = {}): Subscriptio
   return {
     getLeagueById: vi.fn().mockResolvedValue(ok({ id: "lea_abc123" })),
     upsertSubscription: vi.fn().mockResolvedValue(ok({ id: "sub_generated" })),
+    upsertClientByName: vi
+      .fn()
+      .mockResolvedValue(ok({ id: "cli_existing000", name: "Williamstown SC" })),
     ...overrides,
   };
 }
@@ -21,7 +24,7 @@ describe("createSubscription", () => {
 
     expect(result.ok).toBe(true);
     expect(deps.upsertSubscription).toHaveBeenCalledWith(
-      expect.objectContaining({ clientName: "Williamstown SC", leagueId: "lea_abc123" }),
+      expect.objectContaining({ clientId: "cli_existing000", leagueId: "lea_abc123" }),
     );
   });
 
@@ -49,6 +52,20 @@ describe("createSubscription", () => {
     });
 
     expect(result).toEqual(lookupError);
+    expect(deps.upsertSubscription).not.toHaveBeenCalled();
+  });
+
+  it("propagates a client resolution failure without upserting", async () => {
+    const clientError = err({ message: "Failed to upsert client" });
+    const deps = makeDeps({ upsertClientByName: vi.fn().mockResolvedValue(clientError) });
+
+    const result = await createSubscription({
+      deps,
+      clientName: "Williamstown SC",
+      leagueId: "lea_abc123",
+    });
+
+    expect(result).toEqual(clientError);
     expect(deps.upsertSubscription).not.toHaveBeenCalled();
   });
 

@@ -5,6 +5,8 @@
 - Reshaped by: [0012](0012-subscription-multisource.md) — league-focused subscriptions + multi-source
   ingest; `tracked_competition` subsumed by a subscription entity; `team.clubId` nullable; clubs/teams
   discovered from the crawl (team by `team_hash_id`, club by `club_code`), not enumerated.
+- Reshaped by: [0013](0013-api-auth.md) — adds `client` (the tenant entity) and `api_token`;
+  `subscription.clientName` becomes `subscription.clientId` → `client.id`.
 
 ## Context
 
