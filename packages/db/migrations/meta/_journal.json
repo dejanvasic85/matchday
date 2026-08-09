@@ -50,6 +50,13 @@
       "when": 1786259208714,
       "tag": "0006_common_talos",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786274351429,
+      "tag": "0007_rename_client_tables",
+      "breakpoints": true
     }
   ]
 }
