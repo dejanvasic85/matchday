@@ -18,6 +18,7 @@ then `decided`.
 | 0010 | [Monorepo tooling](0010-monorepo-tooling.md)                     | decided            | pnpm workspaces + Vite+ (`vp`); apps/ + packages/ layout                                                                                                                                              |
 | 0011 | [Data model & schema](0011-data-model.md)                        | decided            | 9 tables (Drizzle/Neon neon-http); prefixed-nanoid PKs; polymorphic `external_ref`; league first-class (reshaped by 0012)                                                                             |
 | 0012 | [Subscriptions & multi-source](0012-subscription-multisource.md) | decided            | League-focused subscriptions `(source, year, competition, league)`; catalog vs deep crawl; multi-source; clubs/teams discovered (team by `team_hash_id`, club by `club_code`); `team.clubId` nullable |
+| 0013 | [API auth](0013-api-auth.md)                                     | proposed           | Per-tenant bearer API tokens, hashed at rest; multiple active tokens per tenant for rotation                                                                                                          |
 
 ## Format
 
