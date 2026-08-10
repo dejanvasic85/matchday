@@ -2,9 +2,9 @@
 // maps data-access results to the wire shape, this just picks the HTTP status.
 
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { createConsoleLogger, type Logger } from "@matchday/domain";
 import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
+import { jsonResult, jsonResultOrNotFound } from "@/resultResponse.ts";
 import { errorSchema } from "@/schemas/errorSchema.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
 import { teamResponseSchema } from "@/schemas/teamSchema.ts";
@@ -41,12 +41,7 @@ const listTeamsRoute = createRoute({
 teamRoute.openapi(listTeamsRoute, async (c) => {
   const { clubId } = c.req.valid("query");
   const result = await listAllTeams(createTeamServiceDeps(c.get("db")), clubId);
-  if (!result.ok) {
-    const logger: Logger = createConsoleLogger();
-    logger.error("api.team.list.failed", result.error.message, { cause: result.error.cause });
-    return c.json({ error: "Internal server error" }, 500);
-  }
-  return c.json(result.value, 200);
+  return jsonResult(c, result, "api.team.list.failed");
 });
 
 const getTeamRoute = createRoute({
@@ -74,13 +69,5 @@ const getTeamRoute = createRoute({
 teamRoute.openapi(getTeamRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getTeam(createTeamServiceDeps(c.get("db")), id);
-  if (!result.ok) {
-    const logger: Logger = createConsoleLogger();
-    logger.error("api.team.get.failed", result.error.message, { cause: result.error.cause });
-    return c.json({ error: "Internal server error" }, 500);
-  }
-  if (result.value === null) {
-    return c.json({ error: "Team not found" }, 404);
-  }
-  return c.json(result.value, 200);
+  return jsonResultOrNotFound(c, result, "api.team.get.failed", "Team not found");
 });

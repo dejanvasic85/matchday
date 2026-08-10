@@ -2,9 +2,9 @@
 // service maps data-access results to the wire shape, this just picks the HTTP status.
 
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
-import { createConsoleLogger, type Logger } from "@matchday/domain";
 import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
+import { jsonResult, jsonResultOrNotFound } from "@/resultResponse.ts";
 import { clubResponseSchema } from "@/schemas/clubSchema.ts";
 import { errorSchema } from "@/schemas/errorSchema.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
@@ -31,12 +31,7 @@ const listClubsRoute = createRoute({
 
 clubRoute.openapi(listClubsRoute, async (c) => {
   const result = await listAllClubs(createClubServiceDeps(c.get("db")));
-  if (!result.ok) {
-    const logger: Logger = createConsoleLogger();
-    logger.error("api.club.list.failed", result.error.message, { cause: result.error.cause });
-    return c.json({ error: "Internal server error" }, 500);
-  }
-  return c.json(result.value, 200);
+  return jsonResult(c, result, "api.club.list.failed");
 });
 
 const getClubRoute = createRoute({
@@ -64,13 +59,5 @@ const getClubRoute = createRoute({
 clubRoute.openapi(getClubRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getClub(createClubServiceDeps(c.get("db")), id);
-  if (!result.ok) {
-    const logger: Logger = createConsoleLogger();
-    logger.error("api.club.get.failed", result.error.message, { cause: result.error.cause });
-    return c.json({ error: "Internal server error" }, 500);
-  }
-  if (result.value === null) {
-    return c.json({ error: "Club not found" }, 404);
-  }
-  return c.json(result.value, 200);
+  return jsonResultOrNotFound(c, result, "api.club.get.failed", "Club not found");
 });

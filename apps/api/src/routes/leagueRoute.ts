@@ -3,9 +3,9 @@
 // (subscription-scoped) are a separate follow-up nested under these routes.
 
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { createConsoleLogger, type Logger } from "@matchday/domain";
 import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
+import { jsonResult, jsonResultOrNotFound } from "@/resultResponse.ts";
 import { errorSchema } from "@/schemas/errorSchema.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
 import { leagueResponseSchema } from "@/schemas/leagueSchema.ts";
@@ -47,12 +47,7 @@ const listLeaguesRoute = createRoute({
 leagueRoute.openapi(listLeaguesRoute, async (c) => {
   const filter = c.req.valid("query");
   const result = await listAllLeagues(createLeagueServiceDeps(c.get("db")), filter);
-  if (!result.ok) {
-    const logger: Logger = createConsoleLogger();
-    logger.error("api.league.list.failed", result.error.message, { cause: result.error.cause });
-    return c.json({ error: "Internal server error" }, 500);
-  }
-  return c.json(result.value, 200);
+  return jsonResult(c, result, "api.league.list.failed");
 });
 
 const getLeagueRoute = createRoute({
@@ -80,13 +75,5 @@ const getLeagueRoute = createRoute({
 leagueRoute.openapi(getLeagueRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getLeague(createLeagueServiceDeps(c.get("db")), id);
-  if (!result.ok) {
-    const logger: Logger = createConsoleLogger();
-    logger.error("api.league.get.failed", result.error.message, { cause: result.error.cause });
-    return c.json({ error: "Internal server error" }, 500);
-  }
-  if (result.value === null) {
-    return c.json({ error: "League not found" }, 404);
-  }
-  return c.json(result.value, 200);
+  return jsonResultOrNotFound(c, result, "api.league.get.failed", "League not found");
 });

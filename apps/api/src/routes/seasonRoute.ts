@@ -2,9 +2,9 @@
 // service maps data-access results to the wire shape, this just picks the HTTP status.
 
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
-import { createConsoleLogger, type Logger } from "@matchday/domain";
 import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
+import { jsonResult, jsonResultOrNotFound } from "@/resultResponse.ts";
 import { errorSchema } from "@/schemas/errorSchema.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
 import { seasonResponseSchema } from "@/schemas/seasonSchema.ts";
@@ -31,12 +31,7 @@ const listSeasonsRoute = createRoute({
 
 seasonRoute.openapi(listSeasonsRoute, async (c) => {
   const result = await listAllSeasons(createSeasonServiceDeps(c.get("db")));
-  if (!result.ok) {
-    const logger: Logger = createConsoleLogger();
-    logger.error("api.season.list.failed", result.error.message, { cause: result.error.cause });
-    return c.json({ error: "Internal server error" }, 500);
-  }
-  return c.json(result.value, 200);
+  return jsonResult(c, result, "api.season.list.failed");
 });
 
 const getSeasonRoute = createRoute({
@@ -64,13 +59,5 @@ const getSeasonRoute = createRoute({
 seasonRoute.openapi(getSeasonRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getSeason(createSeasonServiceDeps(c.get("db")), id);
-  if (!result.ok) {
-    const logger: Logger = createConsoleLogger();
-    logger.error("api.season.get.failed", result.error.message, { cause: result.error.cause });
-    return c.json({ error: "Internal server error" }, 500);
-  }
-  if (result.value === null) {
-    return c.json({ error: "Season not found" }, 404);
-  }
-  return c.json(result.value, 200);
+  return jsonResultOrNotFound(c, result, "api.season.get.failed", "Season not found");
 });

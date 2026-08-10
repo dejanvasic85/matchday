@@ -2,9 +2,9 @@
 // the service maps data-access results to the wire shape, this just picks the HTTP status.
 
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
-import { createConsoleLogger, type Logger } from "@matchday/domain";
 import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
+import { jsonResult, jsonResultOrNotFound } from "@/resultResponse.ts";
 import { competitionResponseSchema } from "@/schemas/competitionSchema.ts";
 import { errorSchema } from "@/schemas/errorSchema.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
@@ -38,14 +38,7 @@ const listCompetitionsRoute = createRoute({
 
 competitionRoute.openapi(listCompetitionsRoute, async (c) => {
   const result = await listAllCompetitions(createCompetitionServiceDeps(c.get("db")));
-  if (!result.ok) {
-    const logger: Logger = createConsoleLogger();
-    logger.error("api.competition.list.failed", result.error.message, {
-      cause: result.error.cause,
-    });
-    return c.json({ error: "Internal server error" }, 500);
-  }
-  return c.json(result.value, 200);
+  return jsonResult(c, result, "api.competition.list.failed");
 });
 
 const getCompetitionRoute = createRoute({
@@ -73,15 +66,5 @@ const getCompetitionRoute = createRoute({
 competitionRoute.openapi(getCompetitionRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getCompetition(createCompetitionServiceDeps(c.get("db")), id);
-  if (!result.ok) {
-    const logger: Logger = createConsoleLogger();
-    logger.error("api.competition.get.failed", result.error.message, {
-      cause: result.error.cause,
-    });
-    return c.json({ error: "Internal server error" }, 500);
-  }
-  if (result.value === null) {
-    return c.json({ error: "Competition not found" }, 404);
-  }
-  return c.json(result.value, 200);
+  return jsonResultOrNotFound(c, result, "api.competition.get.failed", "Competition not found");
 });
