@@ -33,11 +33,18 @@ export {
   findExternalRef,
   findExternalRefByInternalId,
 } from "./externalRefDb.ts";
-export { upsertSubscription, listSubscribedLeagueIds } from "./subscriptionDb.ts";
-export { upsertClientByName } from "./clientDb.ts";
+export {
+  upsertSubscription,
+  listSubscribedLeagueIds,
+  listSubscriptionsWithLeague,
+  deleteSubscription,
+  type SubscriptionWithLeague,
+} from "./subscriptionDb.ts";
+export { upsertClientByName, listClients, findClientByName } from "./clientDb.ts";
 export {
   insertApiToken,
   findApiTokenByHash,
+  listApiTokens,
   listApiTokensByClientId,
   revokeApiToken,
 } from "./apiTokenDb.ts";

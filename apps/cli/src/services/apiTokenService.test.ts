@@ -3,7 +3,7 @@ import { createApiToken, revokeApiTokenById, type ApiTokenServiceDeps } from "./
 
 function makeDeps(overrides: Partial<ApiTokenServiceDeps> = {}): ApiTokenServiceDeps {
   return {
-    upsertClientByName: vi
+    findClientByName: vi
       .fn()
       .mockResolvedValue(ok({ id: "cli_existing000", name: "Williamstown SC" })),
     insertApiToken: vi
@@ -43,12 +43,21 @@ describe("createApiToken", () => {
   });
 
   it("propagates a client resolution failure without inserting a token", async () => {
-    const clientError = serverError("Failed to upsert client");
-    const deps = makeDeps({ upsertClientByName: vi.fn().mockResolvedValue(clientError) });
+    const clientError = serverError("Failed to find client by name");
+    const deps = makeDeps({ findClientByName: vi.fn().mockResolvedValue(clientError) });
 
     const result = await createApiToken(deps, "Williamstown SC");
 
     expect(result).toEqual(clientError);
+    expect(deps.insertApiToken).not.toHaveBeenCalled();
+  });
+
+  it("errors without inserting a token when the client name is unknown", async () => {
+    const deps = makeDeps({ findClientByName: vi.fn().mockResolvedValue(ok(null)) });
+
+    const result = await createApiToken(deps, "Typo FC");
+
+    expect(result.ok).toBe(false);
     expect(deps.insertApiToken).not.toHaveBeenCalled();
   });
 

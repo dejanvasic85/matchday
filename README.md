@@ -38,9 +38,15 @@ automatically (gitignored). Copy the example and fill it in:
 cp apps/cli/.env.example apps/cli/.env.local
 ```
 
-Point `DATABASE_URL` at the Neon **`matchday-dev`** pooled host (`?sslmode=require`) — never prod.
+Point `DATABASE_URL` at the Neon **`matchday`** pooled host (`?sslmode=require`).
 See [apps/cli/.env.example](apps/cli/.env.example) for every variable; R2 credentials are
 required (raw responses are staged there even on a dry run).
+
+> ⚠️ **That is the production database.** There is no separate dev database — keeping a second
+> crawled copy in sync cost more than it was worth. Every local command that writes is writing to
+> live data, so prefer `--dry-run` while iterating, and treat `client add`, `add-subscription` and
+> `create-token` as production changes. Neon branching (a copy-on-write branch of `matchday`, no
+> re-crawl) is the intended way to get isolation back; it isn't set up yet.
 
 **2. Run a command.** From the repo root, `pnpm mday <command>` forwards straight to the CLI (args
 pass through unchanged):
@@ -79,8 +85,46 @@ pnpm mday deep-crawl --league lea_xxxxxxxxxxxx --dry-run
 ```
 
 To find a `lea_` id, run `catalog` (above) to populate the leagues, then look one up by name in the
-dev database, e.g.:
+database, e.g.:
 
 ```sql
 select id, name from league order by name;
 ```
+
+### `client` — onboarding an API consumer
+
+A client is an API consumer. Its **subscriptions** decide what the deep crawl bothers to crawl, and
+its **tokens** authenticate its requests. Onboarding one is four commands:
+
+```sh
+# 1. Create the client (idempotent — prints its cli_ id)
+pnpm mday client add "Williamstown SC"
+
+# 2. Subscribe it to a league, putting that league in the deep crawl's scope
+pnpm mday client add-subscription --client "Williamstown SC" --league lea_xxxxxxxxxxxx
+
+# 3. Issue a bearer token — shown once, never recoverable, only rotatable
+pnpm mday client create-token "Williamstown SC"
+
+# 4. Check the result
+pnpm mday client list
+```
+
+`client list` prints the roster, one line per subscription (`--json` for scripting):
+
+```
+CLIENT ID         NAME             TOKENS  SUBSCRIPTION ID   LEAGUE
+cli_xxxxxxxxxxxx  Williamstown SC  1       sub_xxxxxxxxxxxx  Div 1 North
+                                           sub_yyyyyyyyyyyy  Div 2 South
+```
+
+Unwinding either uses the id from that table:
+
+```sh
+pnpm mday client remove-subscription sub_xxxxxxxxxxxx
+pnpm mday client revoke-token tok_xxxxxxxxxxxx
+```
+
+`add-subscription` and `create-token` require an **existing** client and fail on an unknown name —
+the client name is a free-text key, so an implicit create would turn a typo into a second silent
+tenant holding its own tokens. `client add` is the one command that creates one.

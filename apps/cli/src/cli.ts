@@ -2,17 +2,27 @@
 // `mday` — the crawler CLI (0012). Thin commander wiring: each command constructs real
 // dependencies (config, logger) and calls the matching job in src/jobs.
 
-import { createConsoleLogger, parseId, type ApiTokenId, type LeagueId } from "@matchday/domain";
+import {
+  createConsoleLogger,
+  parseId,
+  type ApiTokenId,
+  type LeagueId,
+  type SubscriptionId,
+} from "@matchday/domain";
 import { Command, InvalidArgumentError } from "commander";
+import { renderClientTable } from "./clientTable.ts";
 import { getCliConfig } from "./config.ts";
 import { crawlSourceValue, type CrawlSource } from "./crawlers/constants.ts";
-import { runCatalogJob } from "./jobs/catalogJob.ts";
-import { runClubEnrichmentJob } from "./jobs/clubEnrichmentJob.ts";
-import { runCreateApiTokenJob } from "./jobs/createApiTokenJob.ts";
-import { runCreateSubscriptionJob } from "./jobs/createSubscriptionJob.ts";
-import { runDeepCrawlJob } from "./jobs/deepCrawlJob.ts";
-import { runRevokeApiTokenJob } from "./jobs/revokeApiTokenJob.ts";
-import { runSubscribedLeaguesJob } from "./jobs/subscribedLeaguesJob.ts";
+import { runCatalogJob } from "./jobs/crawls/catalog.ts";
+import { runClubEnrichmentJob } from "./jobs/clubs/enrichClubs.ts";
+import { runCreateApiTokenJob } from "./jobs/clients/createApiToken.ts";
+import { runCreateClientJob } from "./jobs/clients/createClient.ts";
+import { runCreateSubscriptionJob } from "./jobs/clients/createSubscription.ts";
+import { runDeepCrawlJob } from "./jobs/crawls/deepCrawl.ts";
+import { runListClientsJob } from "./jobs/clients/listClients.ts";
+import { runRemoveSubscriptionJob } from "./jobs/clients/removeSubscription.ts";
+import { runRevokeApiTokenJob } from "./jobs/clients/revokeApiToken.ts";
+import { runSubscribedLeaguesJob } from "./jobs/crawls/subscribedLeagues.ts";
 
 const currentYear = new Date().getFullYear().toString();
 const crawlSources = Object.values(crawlSourceValue);
@@ -37,6 +47,14 @@ function parseApiTokenId(value: string): ApiTokenId {
   const id = parseId(value, "apiToken");
   if (id === undefined) {
     throw new InvalidArgumentError('must be a "tok_"-prefixed api token id');
+  }
+  return id;
+}
+
+function parseSubscriptionId(value: string): SubscriptionId {
+  const id = parseId(value, "subscription");
+  if (id === undefined) {
+    throw new InvalidArgumentError('must be a "sub_"-prefixed subscription id');
   }
   return id;
 }
@@ -184,11 +202,99 @@ export function createCli(): Command {
       }
     });
 
-  program
-    .command("subscription-create")
+  const client = program
+    .command("client")
     .description(
-      "Subscribe a client to a league (0012): links a client name to our internal league id, " +
-        "driving the deep crawl's scope. Prints the created subscription id.",
+      "Manage API consumers (0012/0013): the clients themselves, their league subscriptions " +
+        "(which drive the deep crawl's scope) and their bearer tokens.",
+    );
+
+  client
+    .command("list")
+    .description(
+      "List every client with its active token count and league subscriptions. Use it to find " +
+        "the sub_ id that remove-subscription takes.",
+    )
+    .option("--json", "print the roster as JSON instead of a table", false)
+    .action(async (options: { json: boolean }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runListClientsJob({ config });
+      if (!result.ok) {
+        logger.error("client.listfailed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+        return;
+      }
+      const output = options.json
+        ? JSON.stringify(result.value, null, 2)
+        : renderClientTable(result.value);
+      process.stdout.write(`${output}\n`);
+    });
+
+  client
+    .command("add")
+    .description(
+      "Create a client by name, printing its cli_ id. Idempotent — re-adding an existing name " +
+        "returns that client rather than failing.",
+    )
+    .argument("<name>", "the client name")
+    .action(async (name: string) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runCreateClientJob({ logger, config, name });
+      if (!result.ok) {
+        logger.error("client.addfailed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(`${result.value}\n`);
+    });
+
+  client
+    .command("create-token")
+    .description(
+      "Issue a new bearer API token for an existing client (0013). Prints the token id and the " +
+        "plaintext token — the token is shown once here and never recoverable again, only " +
+        "rotatable.",
+    )
+    .argument("<name>", "the client name")
+    .action(async (name: string) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runCreateApiTokenJob({ logger, config, clientName: name });
+      if (!result.ok) {
+        logger.error("apitoken.failed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(`Token id: ${result.value.id}\n`);
+      process.stdout.write(`Token: ${result.value.token}\n`);
+      process.stdout.write("Store this token now — it will not be shown again.\n");
+    });
+
+  client
+    .command("revoke-token")
+    .description("Revoke a bearer API token (0013) so it can no longer authenticate requests.")
+    .argument("<tok_id>", "the api token id to revoke", parseApiTokenId)
+    .action(async (id: ApiTokenId) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runRevokeApiTokenJob({ logger, config, id });
+      if (!result.ok) {
+        logger.error("apitoken.revokefailed", result.error.message, {
+          cause: result.error.cause,
+        });
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(`Revoked token: ${id}\n`);
+    });
+
+  client
+    .command("add-subscription")
+    .description(
+      "Subscribe an existing client to a league (0012): links the client to our internal league " +
+        "id, putting that league in the deep crawl's scope. Prints the subscription id.",
     )
     .requiredOption("--client <name>", "the client name")
     .requiredOption("--league <lea_id>", "the league id to subscribe to", parseLeagueId)
@@ -209,43 +315,25 @@ export function createCli(): Command {
       process.stdout.write(`${result.value}\n`);
     });
 
-  program
-    .command("api-token-create")
+  client
+    .command("remove-subscription")
     .description(
-      "Issue a new bearer API token for a client (0013). Prints the token id and the plaintext " +
-        "token — the token is shown once here and never recoverable again, only rotatable.",
+      "Unsubscribe a client from a league by subscription id (find it via `client list`). The " +
+        "league leaves the deep crawl's scope once no client subscribes to it.",
     )
-    .requiredOption("--client <name>", "the client name")
-    .action(async (options: { client: string }) => {
+    .argument("<sub_id>", "the subscription id to remove", parseSubscriptionId)
+    .action(async (id: SubscriptionId) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
-      const result = await runCreateApiTokenJob({ logger, config, clientName: options.client });
+      const result = await runRemoveSubscriptionJob({ logger, config, id });
       if (!result.ok) {
-        logger.error("apitoken.failed", result.error.message, { cause: result.error.cause });
-        process.exitCode = 1;
-        return;
-      }
-      process.stdout.write(`Token id: ${result.value.id}\n`);
-      process.stdout.write(`Token: ${result.value.token}\n`);
-      process.stdout.write("Store this token now — it will not be shown again.\n");
-    });
-
-  program
-    .command("api-token-revoke")
-    .description("Revoke a bearer API token (0013) so it can no longer authenticate requests.")
-    .requiredOption("--id <tok_id>", "the api token id to revoke", parseApiTokenId)
-    .action(async (options: { id: ApiTokenId }) => {
-      const config = getCliConfig();
-      const logger = createConsoleLogger();
-      const result = await runRevokeApiTokenJob({ logger, config, id: options.id });
-      if (!result.ok) {
-        logger.error("apitoken.revokefailed", result.error.message, {
+        logger.error("subscription.removefailed", result.error.message, {
           cause: result.error.cause,
         });
         process.exitCode = 1;
         return;
       }
-      process.stdout.write(`Revoked token: ${options.id}\n`);
+      process.stdout.write(`Removed subscription: ${id}\n`);
     });
 
   return program;
