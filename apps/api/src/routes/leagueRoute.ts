@@ -4,14 +4,14 @@
 
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { createConsoleLogger, type Logger } from "@matchday/domain";
-import { createDbClient } from "@matchday/db";
-import { getApiConfig, type ApiBindings } from "../config.ts";
-import { errorSchema } from "../schemas/errorSchema.ts";
-import { idParamSchema } from "../schemas/idParamSchema.ts";
-import { leagueResponseSchema } from "../schemas/leagueSchema.ts";
-import { createLeagueServiceDeps, getLeague, listAllLeagues } from "../services/leagueService.ts";
+import type { ApiBindings } from "@/config.ts";
+import type { DbVariables } from "@/middleware/dbClient.ts";
+import { errorSchema } from "@/schemas/errorSchema.ts";
+import { idParamSchema } from "@/schemas/idParamSchema.ts";
+import { leagueResponseSchema } from "@/schemas/leagueSchema.ts";
+import { createLeagueServiceDeps, getLeague, listAllLeagues } from "@/services/leagueService.ts";
 
-export const leagueRoute = new OpenAPIHono<{ Bindings: ApiBindings }>();
+export const leagueRoute = new OpenAPIHono<{ Bindings: ApiBindings; Variables: DbVariables }>();
 
 const listLeaguesRoute = createRoute({
   method: "get",
@@ -46,9 +46,7 @@ const listLeaguesRoute = createRoute({
 
 leagueRoute.openapi(listLeaguesRoute, async (c) => {
   const filter = c.req.valid("query");
-  const config = getApiConfig(c.env);
-  const db = createDbClient(config.DATABASE_URL);
-  const result = await listAllLeagues(createLeagueServiceDeps(db), filter);
+  const result = await listAllLeagues(createLeagueServiceDeps(c.get("db")), filter);
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.league.list.failed", result.error.message, { cause: result.error.cause });
@@ -81,9 +79,7 @@ const getLeagueRoute = createRoute({
 
 leagueRoute.openapi(getLeagueRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const config = getApiConfig(c.env);
-  const db = createDbClient(config.DATABASE_URL);
-  const result = await getLeague(createLeagueServiceDeps(db), id);
+  const result = await getLeague(createLeagueServiceDeps(c.get("db")), id);
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.league.get.failed", result.error.message, { cause: result.error.cause });

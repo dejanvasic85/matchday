@@ -3,14 +3,14 @@
 
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { createConsoleLogger, type Logger } from "@matchday/domain";
-import { createDbClient } from "@matchday/db";
-import { getApiConfig, type ApiBindings } from "../config.ts";
-import { errorSchema } from "../schemas/errorSchema.ts";
-import { idParamSchema } from "../schemas/idParamSchema.ts";
-import { teamResponseSchema } from "../schemas/teamSchema.ts";
-import { createTeamServiceDeps, getTeam, listAllTeams } from "../services/teamService.ts";
+import type { ApiBindings } from "@/config.ts";
+import type { DbVariables } from "@/middleware/dbClient.ts";
+import { errorSchema } from "@/schemas/errorSchema.ts";
+import { idParamSchema } from "@/schemas/idParamSchema.ts";
+import { teamResponseSchema } from "@/schemas/teamSchema.ts";
+import { createTeamServiceDeps, getTeam, listAllTeams } from "@/services/teamService.ts";
 
-export const teamRoute = new OpenAPIHono<{ Bindings: ApiBindings }>();
+export const teamRoute = new OpenAPIHono<{ Bindings: ApiBindings; Variables: DbVariables }>();
 
 const listTeamsRoute = createRoute({
   method: "get",
@@ -40,9 +40,7 @@ const listTeamsRoute = createRoute({
 
 teamRoute.openapi(listTeamsRoute, async (c) => {
   const { clubId } = c.req.valid("query");
-  const config = getApiConfig(c.env);
-  const db = createDbClient(config.DATABASE_URL);
-  const result = await listAllTeams(createTeamServiceDeps(db), clubId);
+  const result = await listAllTeams(createTeamServiceDeps(c.get("db")), clubId);
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.team.list.failed", result.error.message, { cause: result.error.cause });
@@ -75,9 +73,7 @@ const getTeamRoute = createRoute({
 
 teamRoute.openapi(getTeamRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const config = getApiConfig(c.env);
-  const db = createDbClient(config.DATABASE_URL);
-  const result = await getTeam(createTeamServiceDeps(db), id);
+  const result = await getTeam(createTeamServiceDeps(c.get("db")), id);
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.team.get.failed", result.error.message, { cause: result.error.cause });

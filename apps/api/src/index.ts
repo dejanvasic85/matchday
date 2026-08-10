@@ -5,16 +5,19 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { sentry } from "@sentry/hono/cloudflare";
-import type { ApiBindings } from "./config.ts";
-import { apiTokenAuthMiddleware, type ApiTokenAuthVariables } from "./middleware/apiTokenAuth.ts";
-import { clubRoute } from "./routes/clubRoute.ts";
-import { competitionRoute } from "./routes/competitionRoute.ts";
-import { healthRoute } from "./routes/healthRoute.ts";
-import { leagueRoute } from "./routes/leagueRoute.ts";
-import { seasonRoute } from "./routes/seasonRoute.ts";
-import { teamRoute } from "./routes/teamRoute.ts";
+import type { ApiBindings } from "@/config.ts";
+import { apiTokenAuthMiddleware, type ApiTokenAuthVariables } from "@/middleware/apiTokenAuth.ts";
+import { dbClientMiddleware, type DbVariables } from "@/middleware/dbClient.ts";
+import { clubRoute } from "@/routes/clubRoute.ts";
+import { competitionRoute } from "@/routes/competitionRoute.ts";
+import { healthRoute } from "@/routes/healthRoute.ts";
+import { leagueRoute } from "@/routes/leagueRoute.ts";
+import { seasonRoute } from "@/routes/seasonRoute.ts";
+import { teamRoute } from "@/routes/teamRoute.ts";
 
-const app = new OpenAPIHono<{ Bindings: ApiBindings; Variables: ApiTokenAuthVariables }>();
+type AppEnv = { Bindings: ApiBindings; Variables: DbVariables & ApiTokenAuthVariables };
+
+const app = new OpenAPIHono<AppEnv>();
 
 app.use(
   sentry(app, (env) => ({
@@ -23,6 +26,12 @@ app.use(
     tracesSampleRate: 0.1,
   })),
 );
+
+// Builds the request's `Db` once, so every route/middleware downstream reads `c.get("db")`
+// instead of each repeating `getApiConfig` + `createDbClient`. Runs before /health (which needs
+// it for the readiness ping) and before the auth middleware (which needs it for the token
+// lookup), so it must be the first thing registered after Sentry.
+app.use("*", dbClientMiddleware);
 
 app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
   type: "http",

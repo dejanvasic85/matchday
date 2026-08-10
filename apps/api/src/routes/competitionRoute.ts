@@ -3,18 +3,21 @@
 
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { createConsoleLogger, type Logger } from "@matchday/domain";
-import { createDbClient } from "@matchday/db";
-import { getApiConfig, type ApiBindings } from "../config.ts";
-import { competitionResponseSchema } from "../schemas/competitionSchema.ts";
-import { errorSchema } from "../schemas/errorSchema.ts";
-import { idParamSchema } from "../schemas/idParamSchema.ts";
+import type { ApiBindings } from "@/config.ts";
+import type { DbVariables } from "@/middleware/dbClient.ts";
+import { competitionResponseSchema } from "@/schemas/competitionSchema.ts";
+import { errorSchema } from "@/schemas/errorSchema.ts";
+import { idParamSchema } from "@/schemas/idParamSchema.ts";
 import {
   createCompetitionServiceDeps,
   getCompetition,
   listAllCompetitions,
-} from "../services/competitionService.ts";
+} from "@/services/competitionService.ts";
 
-export const competitionRoute = new OpenAPIHono<{ Bindings: ApiBindings }>();
+export const competitionRoute = new OpenAPIHono<{
+  Bindings: ApiBindings;
+  Variables: DbVariables;
+}>();
 
 const listCompetitionsRoute = createRoute({
   method: "get",
@@ -34,9 +37,7 @@ const listCompetitionsRoute = createRoute({
 });
 
 competitionRoute.openapi(listCompetitionsRoute, async (c) => {
-  const config = getApiConfig(c.env);
-  const db = createDbClient(config.DATABASE_URL);
-  const result = await listAllCompetitions(createCompetitionServiceDeps(db));
+  const result = await listAllCompetitions(createCompetitionServiceDeps(c.get("db")));
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.competition.list.failed", result.error.message, {
@@ -71,9 +72,7 @@ const getCompetitionRoute = createRoute({
 
 competitionRoute.openapi(getCompetitionRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const config = getApiConfig(c.env);
-  const db = createDbClient(config.DATABASE_URL);
-  const result = await getCompetition(createCompetitionServiceDeps(db), id);
+  const result = await getCompetition(createCompetitionServiceDeps(c.get("db")), id);
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.competition.get.failed", result.error.message, {

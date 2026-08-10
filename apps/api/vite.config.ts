@@ -1,6 +1,10 @@
+import { join } from "node:path";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
+  resolve: {
+    alias: [{ find: "@", replacement: join(import.meta.dirname, "src") }],
+  },
   run: {
     tasks: {
       // Cloudflare Workers apps are bundled by Wrangler itself (esbuild), not the Vite build.

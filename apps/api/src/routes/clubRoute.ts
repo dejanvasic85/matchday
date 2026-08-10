@@ -3,14 +3,14 @@
 
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { createConsoleLogger, type Logger } from "@matchday/domain";
-import { createDbClient } from "@matchday/db";
-import { getApiConfig, type ApiBindings } from "../config.ts";
-import { errorSchema } from "../schemas/errorSchema.ts";
-import { clubResponseSchema } from "../schemas/clubSchema.ts";
-import { idParamSchema } from "../schemas/idParamSchema.ts";
-import { createClubServiceDeps, getClub, listAllClubs } from "../services/clubService.ts";
+import type { ApiBindings } from "@/config.ts";
+import type { DbVariables } from "@/middleware/dbClient.ts";
+import { clubResponseSchema } from "@/schemas/clubSchema.ts";
+import { errorSchema } from "@/schemas/errorSchema.ts";
+import { idParamSchema } from "@/schemas/idParamSchema.ts";
+import { createClubServiceDeps, getClub, listAllClubs } from "@/services/clubService.ts";
 
-export const clubRoute = new OpenAPIHono<{ Bindings: ApiBindings }>();
+export const clubRoute = new OpenAPIHono<{ Bindings: ApiBindings; Variables: DbVariables }>();
 
 const listClubsRoute = createRoute({
   method: "get",
@@ -30,9 +30,7 @@ const listClubsRoute = createRoute({
 });
 
 clubRoute.openapi(listClubsRoute, async (c) => {
-  const config = getApiConfig(c.env);
-  const db = createDbClient(config.DATABASE_URL);
-  const result = await listAllClubs(createClubServiceDeps(db));
+  const result = await listAllClubs(createClubServiceDeps(c.get("db")));
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.club.list.failed", result.error.message, { cause: result.error.cause });
@@ -65,9 +63,7 @@ const getClubRoute = createRoute({
 
 clubRoute.openapi(getClubRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const config = getApiConfig(c.env);
-  const db = createDbClient(config.DATABASE_URL);
-  const result = await getClub(createClubServiceDeps(db), id);
+  const result = await getClub(createClubServiceDeps(c.get("db")), id);
   if (!result.ok) {
     const logger: Logger = createConsoleLogger();
     logger.error("api.club.get.failed", result.error.message, { cause: result.error.cause });
