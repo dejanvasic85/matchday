@@ -4,8 +4,8 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
-import { jsonResult, jsonResultOrNotFound } from "@/resultResponse.ts";
-import { errorSchema } from "@/schemas/errorSchema.ts";
+import { jsonResult } from "@/resultResponse.ts";
+import { errorResponsesValue } from "@/schemas/errorSchema.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
 import { teamResponseSchema } from "@/schemas/teamSchema.ts";
 import { createTeamServiceDeps, getTeam, listAllTeams } from "@/services/teamService.ts";
@@ -31,10 +31,7 @@ const listTeamsRoute = createRoute({
       description: "Teams matching the filter",
       content: { "application/json": { schema: teamResponseSchema.array() } },
     },
-    500: {
-      description: "Internal server error",
-      content: { "application/json": { schema: errorSchema } },
-    },
+    ...errorResponsesValue,
   },
 });
 
@@ -55,19 +52,12 @@ const getTeamRoute = createRoute({
       description: "The team",
       content: { "application/json": { schema: teamResponseSchema } },
     },
-    404: {
-      description: "Team not found",
-      content: { "application/json": { schema: errorSchema } },
-    },
-    500: {
-      description: "Internal server error",
-      content: { "application/json": { schema: errorSchema } },
-    },
+    ...errorResponsesValue,
   },
 });
 
 teamRoute.openapi(getTeamRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getTeam(createTeamServiceDeps(c.get("db")), id);
-  return jsonResultOrNotFound(c, result, "api.team.get.failed", "Team not found");
+  return jsonResult(c, result, "api.team.get.failed");
 });

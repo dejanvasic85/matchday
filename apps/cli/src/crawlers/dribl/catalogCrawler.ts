@@ -10,7 +10,7 @@
 // crawl stops and surfaces that error. Every crawled league is also returned, so callers that just
 // want the data (dry runs, tests) can ignore `onLeague`.
 
-import { err, ok, type Logger, type Result } from "@matchday/domain";
+import { notFound, ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "./browserFetch.ts";
 import { buildDriblApiUrl } from "./driblApiUrl.ts";
 import { driblTableApiResponseSchema } from "./external/driblTableEntry.ts";
@@ -57,7 +57,7 @@ export async function crawlCatalog(
   }
   const season = seasonsResult.value.find((item) => item.attributes.name === seasonYear);
   if (season === undefined) {
-    return err({ message: `No season found matching "${seasonYear}"` });
+    return notFound(`No season found matching "${seasonYear}"`);
   }
 
   const competitionsResult = await listCompetitions(page, tenantId);
@@ -96,7 +96,7 @@ export async function crawlCatalog(
 
       const tableParsed = driblTableApiResponseSchema.safeParse(tableFetched.value);
       if (!tableParsed.success) {
-        return err({ message: "Failed to validate table response", cause: tableParsed.error });
+        return serverError("Failed to validate table response", tableParsed.error);
       }
 
       const tableEntries = tableParsed.data.data.map(mapDriblTableEntry);

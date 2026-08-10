@@ -1,4 +1,4 @@
-import { err, ok } from "@matchday/domain";
+import { ok, serverError } from "@matchday/domain";
 import { makeFakeLogger } from "@/test/fixtures/logger.ts";
 import { makeQueuedFakePage } from "@/test/fixtures/fakePage.ts";
 import { makeFakeRawStorage } from "@/test/fixtures/rawStorage.ts";
@@ -99,7 +99,7 @@ describe("crawlClubEnrichment", () => {
       { data: [{ type: "clubs", id: "club-1", attributes: makeClubListAttributes() }] },
       makeClubDetailResponse("club-1", "Club A"),
     ]);
-    const onClub = vi.fn().mockResolvedValue(err({ message: "persist failed" }));
+    const onClub = vi.fn().mockResolvedValue(serverError("persist failed"));
 
     const result = await crawlClubEnrichment({
       page,

@@ -1,10 +1,18 @@
 export {
+  badRequest,
+  conflict,
   err,
+  errorKindValue,
   isErr,
   isOk,
   mapResult,
+  notFound,
   ok,
+  requireFound,
+  serverError,
+  unauthorized,
   unwrapOr,
+  type ErrorKind,
   type Result,
   type ResultError,
 } from "./result.ts";

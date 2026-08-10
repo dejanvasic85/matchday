@@ -4,9 +4,9 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
-import { jsonResult, jsonResultOrNotFound } from "@/resultResponse.ts";
+import { jsonResult } from "@/resultResponse.ts";
 import { competitionResponseSchema } from "@/schemas/competitionSchema.ts";
-import { errorSchema } from "@/schemas/errorSchema.ts";
+import { errorResponsesValue } from "@/schemas/errorSchema.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
 import {
   createCompetitionServiceDeps,
@@ -29,10 +29,7 @@ const listCompetitionsRoute = createRoute({
       description: "The full competition catalog",
       content: { "application/json": { schema: competitionResponseSchema.array() } },
     },
-    500: {
-      description: "Internal server error",
-      content: { "application/json": { schema: errorSchema } },
-    },
+    ...errorResponsesValue,
   },
 });
 
@@ -52,19 +49,12 @@ const getCompetitionRoute = createRoute({
       description: "The competition",
       content: { "application/json": { schema: competitionResponseSchema } },
     },
-    404: {
-      description: "Competition not found",
-      content: { "application/json": { schema: errorSchema } },
-    },
-    500: {
-      description: "Internal server error",
-      content: { "application/json": { schema: errorSchema } },
-    },
+    ...errorResponsesValue,
   },
 });
 
 competitionRoute.openapi(getCompetitionRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getCompetition(createCompetitionServiceDeps(c.get("db")), id);
-  return jsonResultOrNotFound(c, result, "api.competition.get.failed", "Competition not found");
+  return jsonResult(c, result, "api.competition.get.failed");
 });

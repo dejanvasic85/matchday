@@ -1,4 +1,11 @@
-import { err, hashApiToken, ok } from "@matchday/domain";
+import {
+  errorKindValue,
+  hashApiToken,
+  isErr,
+  ok,
+  serverError,
+  unauthorized,
+} from "@matchday/domain";
 import { authenticateApiToken, type ApiTokenAuthDeps } from "./apiTokenAuthService.ts";
 
 function makeDeps(overrides: Partial<ApiTokenAuthDeps> = {}): ApiTokenAuthDeps {
@@ -31,7 +38,7 @@ describe("authenticateApiToken", () => {
 
     const result = await authenticateApiToken(deps, undefined);
 
-    expect(result).toEqual(err({ message: "Invalid or missing API token" }));
+    expect(result).toEqual(unauthorized("Invalid or missing API token"));
     expect(deps.findApiTokenByHash).not.toHaveBeenCalled();
   });
 
@@ -40,7 +47,7 @@ describe("authenticateApiToken", () => {
 
     const result = await authenticateApiToken(deps, "mday_sometoken");
 
-    expect(result).toEqual(err({ message: "Invalid or missing API token" }));
+    expect(result).toEqual(unauthorized("Invalid or missing API token"));
     expect(deps.findApiTokenByHash).not.toHaveBeenCalled();
   });
 
@@ -49,7 +56,7 @@ describe("authenticateApiToken", () => {
 
     const result = await authenticateApiToken(deps, "Bearer mday_sometoken");
 
-    expect(result).toEqual(err({ message: "Invalid or missing API token" }));
+    expect(result).toEqual(unauthorized("Invalid or missing API token"));
   });
 
   it("rejects a revoked token", async () => {
@@ -61,16 +68,19 @@ describe("authenticateApiToken", () => {
 
     const result = await authenticateApiToken(deps, "Bearer mday_sometoken");
 
-    expect(result).toEqual(err({ message: "Invalid or missing API token" }));
+    expect(result).toEqual(unauthorized("Invalid or missing API token"));
   });
 
-  it("propagates a lookup failure", async () => {
-    const lookupError = err({ message: "Failed to find api token by hash" });
+  // An unreachable token store must not masquerade as a rejected credential: the caller's token
+  // may be perfectly valid, so this has to stay a ServerError (a logged 500), never a 401.
+  it("propagates a lookup failure as a ServerError rather than an Unauthorized", async () => {
+    const lookupError = serverError("Failed to find api token by hash");
     const deps = makeDeps({ findApiTokenByHash: vi.fn().mockResolvedValue(lookupError) });
 
     const result = await authenticateApiToken(deps, "Bearer mday_sometoken");
 
     expect(result).toEqual(lookupError);
+    expect(isErr(result) && result.error.kind).toBe(errorKindValue.serverError);
   });
 
   it("errors when the token row's client id doesn't have the client prefix", async () => {
@@ -82,6 +92,7 @@ describe("authenticateApiToken", () => {
 
     const result = await authenticateApiToken(deps, "Bearer mday_sometoken");
 
-    expect(result.ok).toBe(false);
+    // A corrupt stored row is our bug, not a bad credential — it must not surface as a 401.
+    expect(isErr(result) && result.error.kind).toBe(errorKindValue.serverError);
   });
 });

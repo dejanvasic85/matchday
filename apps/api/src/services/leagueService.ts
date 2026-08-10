@@ -3,7 +3,7 @@
 // any authenticated client, no subscription scoping (ADR 0013). Fixtures/tables (the subscription
 // scoped resources) are a separate follow-up.
 
-import { mapResult, type League, type Result } from "@matchday/domain";
+import { mapResult, requireFound, type League, type Result } from "@matchday/domain";
 import { getLeagueById, listLeagues, type Db, type ListLeaguesFilter } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -48,7 +48,7 @@ export async function listAllLeagues(
 export async function getLeague(
   deps: Pick<LeagueServiceDeps, "getLeagueById">,
   id: string,
-): Promise<Result<LeagueResponse | null>> {
+): Promise<Result<LeagueResponse>> {
   const result = await deps.getLeagueById(id);
-  return mapResult(result, (league) => (league === null ? null : mapToLeagueResponse(league)));
+  return requireFound(result, mapToLeagueResponse, "League not found");
 }

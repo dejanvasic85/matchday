@@ -1,7 +1,7 @@
 // Health service: decides overall readiness from a DB ping. Pure business logic — receives
 // `pingDb` by argument so tests pass a fake instead of a real Db (AGENTS.md).
 
-import { err, ok, type Result } from "@matchday/domain";
+import { ok, serverError, type Result } from "@matchday/domain";
 import { pingDb, type Db } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -23,7 +23,7 @@ export function createCheckHealthDeps(db: Db): CheckHealthDeps {
 export async function checkHealth(deps: CheckHealthDeps): Promise<Result<HealthStatus>> {
   const pingResult = await deps.pingDb();
   if (!pingResult.ok) {
-    return err({ message: "Database unreachable", cause: pingResult.error.cause });
+    return serverError("Database unreachable", pingResult.error.cause);
   }
   return ok({ status: "ok" });
 }

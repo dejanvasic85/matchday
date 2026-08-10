@@ -3,7 +3,7 @@
 // Reuses the same list/* endpoints as resolveLeagueIds, but that resolver requires knowing the
 // target name upfront — this module is for listing every item instead.
 
-import { err, ok, type Result } from "@matchday/domain";
+import { ok, serverError, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "./browserFetch.ts";
 import { crawlerConfigValue } from "./constants.ts";
 import { driblClubsApiResponseSchema, type DriblClub } from "./external/driblClub.ts";
@@ -26,7 +26,7 @@ export async function resolveTenantId(
 
   const parsed = driblTenantResponseSchema.safeParse(fetched.value);
   if (!parsed.success) {
-    return err({ message: "Failed to validate tenant response", cause: parsed.error });
+    return serverError("Failed to validate tenant response", parsed.error);
   }
   return ok(parsed.data.data.id);
 }
@@ -39,7 +39,7 @@ async function listItems(page: FetchPage, url: string): Promise<Result<DriblList
 
   const parsed = driblListResponseSchema.safeParse(fetched.value);
   if (!parsed.success) {
-    return err({ message: `Failed to validate list response from ${url}`, cause: parsed.error });
+    return serverError(`Failed to validate list response from ${url}`, parsed.error);
   }
   return ok(parsed.data.data);
 }
@@ -77,10 +77,7 @@ export async function listClubs(page: FetchPage, tenantId: string): Promise<Resu
 
   const parsed = driblClubsApiResponseSchema.safeParse(fetched.value);
   if (!parsed.success) {
-    return err({
-      message: `Failed to validate list/clubs response from ${url}`,
-      cause: parsed.error,
-    });
+    return serverError(`Failed to validate list/clubs response from ${url}`, parsed.error);
   }
   return ok(parsed.data.data);
 }

@@ -5,8 +5,8 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
-import { jsonResult, jsonResultOrNotFound } from "@/resultResponse.ts";
-import { errorSchema } from "@/schemas/errorSchema.ts";
+import { jsonResult } from "@/resultResponse.ts";
+import { errorResponsesValue } from "@/schemas/errorSchema.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
 import { leagueResponseSchema } from "@/schemas/leagueSchema.ts";
 import { createLeagueServiceDeps, getLeague, listAllLeagues } from "@/services/leagueService.ts";
@@ -37,10 +37,7 @@ const listLeaguesRoute = createRoute({
       description: "Leagues matching the filter",
       content: { "application/json": { schema: leagueResponseSchema.array() } },
     },
-    500: {
-      description: "Internal server error",
-      content: { "application/json": { schema: errorSchema } },
-    },
+    ...errorResponsesValue,
   },
 });
 
@@ -61,19 +58,12 @@ const getLeagueRoute = createRoute({
       description: "The league",
       content: { "application/json": { schema: leagueResponseSchema } },
     },
-    404: {
-      description: "League not found",
-      content: { "application/json": { schema: errorSchema } },
-    },
-    500: {
-      description: "Internal server error",
-      content: { "application/json": { schema: errorSchema } },
-    },
+    ...errorResponsesValue,
   },
 });
 
 leagueRoute.openapi(getLeagueRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getLeague(createLeagueServiceDeps(c.get("db")), id);
-  return jsonResultOrNotFound(c, result, "api.league.get.failed", "League not found");
+  return jsonResult(c, result, "api.league.get.failed");
 });

@@ -2,10 +2,10 @@
 // here (ADR / AGENTS.md) — token generation/hashing is a service concern. Driver errors are
 // captured into `err` rather than thrown.
 
-import { ok, type Result } from "@matchday/domain";
+import { ok, serverError, type Result } from "@matchday/domain";
 import { eq } from "drizzle-orm";
 import type { Db } from "./client.ts";
-import { runQuery, toError } from "./runQuery.ts";
+import { runQuery } from "./runQuery.ts";
 import { apiToken } from "./schema.ts";
 
 type ApiToken = typeof apiToken.$inferSelect;
@@ -21,7 +21,7 @@ export async function insertApiToken(db: Db, values: ApiTokenInsert): Promise<Re
   }
   const row = result.value[0];
   if (row === undefined) {
-    return toError(values, "Insert of api token returned no row");
+    return serverError("Insert of api token returned no row", values);
   }
   return ok(row);
 }

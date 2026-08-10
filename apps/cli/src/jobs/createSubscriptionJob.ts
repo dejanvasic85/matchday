@@ -1,7 +1,7 @@
 // Create-subscription job (0012): transport glue (AGENTS.md) — builds the real DB client and
 // delegates id generation + validation to the subscription service.
 
-import { type Logger, type LeagueId, type Result, type SubscriptionId } from "@matchday/domain";
+import { type LeagueId, type Logger, type Result, type SubscriptionId } from "@matchday/domain";
 import {
   createDbClient,
   getLeagueById,

@@ -1,7 +1,7 @@
 // Client resolution (ADR 0013): resolve a client by name, creating it on first sight. Business
 // logic lives here (AGENTS.md) so it's unit-testable with fakes.
 
-import { err, generateId, ok, parseId, type ClientId, type Result } from "@matchday/domain";
+import { generateId, ok, parseId, serverError, type ClientId, type Result } from "@matchday/domain";
 import type { upsertClientByName } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -15,7 +15,7 @@ export type ClientResolverDeps = {
 function toClientId(id: string): Result<ClientId> {
   const clientId = parseId(id, "client");
   if (clientId === undefined) {
-    return err({ message: `Client row id "${id}" doesn't have the expected "cli_" prefix` });
+    return serverError(`Client row id "${id}" doesn't have the expected "cli_" prefix`);
   }
   return ok(clientId);
 }

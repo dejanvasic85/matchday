@@ -2,7 +2,7 @@
 // the wire shape (timestamps as ISO strings) and lists/fetches seasons. Catalog data — open to
 // any authenticated client, no subscription scoping (ADR 0013).
 
-import { mapResult, type Result, type Season } from "@matchday/domain";
+import { mapResult, requireFound, type Result, type Season } from "@matchday/domain";
 import { getSeasonById, listSeasons, type Db } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -46,7 +46,7 @@ export async function listAllSeasons(
 export async function getSeason(
   deps: Pick<SeasonServiceDeps, "getSeasonById">,
   id: string,
-): Promise<Result<SeasonResponse | null>> {
+): Promise<Result<SeasonResponse>> {
   const result = await deps.getSeasonById(id);
-  return mapResult(result, (season) => (season === null ? null : mapToSeasonResponse(season)));
+  return requireFound(result, mapToSeasonResponse, "Season not found");
 }

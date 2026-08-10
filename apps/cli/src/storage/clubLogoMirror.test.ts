@@ -1,4 +1,4 @@
-import { ok, type ClubId, type Result } from "@matchday/domain";
+import { ok, serverError, type ClubId, type Result } from "@matchday/domain";
 import { mirrorClubLogo, type DownloadedImage } from "./clubLogoMirror.ts";
 
 const clubId = "clb_existing0001" as ClubId;
@@ -82,9 +82,7 @@ describe("mirrorClubLogo", () => {
 
   it("propagates a download failure", async () => {
     const assetStorage = makeFakeAssetStorage();
-    const downloadImage = vi
-      .fn()
-      .mockResolvedValue({ ok: false, error: { message: "network down" } });
+    const downloadImage = vi.fn().mockResolvedValue(serverError("network down"));
 
     const result = await mirrorClubLogo({
       assetStorage,
@@ -101,7 +99,7 @@ describe("mirrorClubLogo", () => {
 
   it("propagates an upload failure", async () => {
     const assetStorage = makeFakeAssetStorage();
-    assetStorage.putObject.mockResolvedValue({ ok: false, error: { message: "r2 down" } });
+    assetStorage.putObject.mockResolvedValue(serverError("r2 down"));
     const downloadImage = makeDownloadImage({ bytes: pngBytes, contentType: "image/png" });
 
     const result = await mirrorClubLogo({

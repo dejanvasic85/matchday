@@ -1,4 +1,4 @@
-import { err, ok } from "@matchday/domain";
+import { ok, serverError } from "@matchday/domain";
 import { resolveClient, type ClientResolverDeps } from "./clientResolver.ts";
 
 function makeDeps(overrides: Partial<ClientResolverDeps> = {}): ClientResolverDeps {
@@ -27,7 +27,7 @@ describe("resolveClient", () => {
   });
 
   it("propagates an upsert failure", async () => {
-    const upsertError = err({ message: "Failed to upsert client" });
+    const upsertError = serverError("Failed to upsert client");
     const deps = makeDeps({ upsertClientByName: vi.fn().mockResolvedValue(upsertError) });
 
     const result = await resolveClient(deps, "Williamstown SC");

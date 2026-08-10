@@ -5,10 +5,10 @@
 // teams, resolving/creating the club alongside.
 
 import {
-  err,
   externalRefEntityTypeValue,
   ok,
   parseId,
+  serverError,
   sourceValue,
   type Result,
   type TeamId,
@@ -32,9 +32,9 @@ export async function resolveTeamForFixture(
 
   const teamId = parseId(existing.value.internalId, "team");
   if (teamId === undefined) {
-    return err({
-      message: `external_ref internalId "${existing.value.internalId}" doesn't match expected prefix for "team"`,
-    });
+    return serverError(
+      `external_ref internalId "${existing.value.internalId}" doesn't match expected prefix for "team"`,
+    );
   }
   return ok(teamId);
 }

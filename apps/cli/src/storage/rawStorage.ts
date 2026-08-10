@@ -3,7 +3,7 @@
 // whether the scraper runs on thanos (Node) or is ever split onto a Worker-compatible runtime.
 // Source-agnostic: any adapter's crawl functions can stage responses through this.
 
-import { err, ok, type Result } from "@matchday/domain";
+import { ok, serverError, type Result } from "@matchday/domain";
 import { AwsClient } from "aws4fetch";
 
 export type RawStorageConfig = {
@@ -35,11 +35,11 @@ export function createR2RawStorage(config: RawStorageConfig): RawStorage {
           headers: { "content-type": "application/json" },
         });
         if (!response.ok) {
-          return err({ message: `R2 PUT failed for ${key}: HTTP ${response.status}` });
+          return serverError(`R2 PUT failed for ${key}: HTTP ${response.status}`);
         }
         return ok(undefined);
       } catch (cause) {
-        return err({ message: `R2 PUT failed for ${key}`, cause });
+        return serverError(`R2 PUT failed for ${key}`, cause);
       }
     },
   };
