@@ -33,8 +33,8 @@ type TenantContext = {
 };
 
 // Distinct competitions/clubs/teams touched by a catalog crawl, for the final summary log
-// (catalogJob.ts). Accumulated incrementally so the non-dry-run path never has to buffer the
-// whole catalog just to count it (see crawlCatalog's onLeague doc comment).
+// (jobs/crawls/catalog.ts). Accumulated incrementally so the non-dry-run path never has to buffer
+// the whole catalog just to count it (see crawlCatalog's onLeague doc comment).
 type CatalogStats = {
   competitionIds: Set<string>;
   clubCodes: Set<string>;

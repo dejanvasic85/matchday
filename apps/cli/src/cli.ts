@@ -13,16 +13,16 @@ import { Command, InvalidArgumentError } from "commander";
 import { renderClientTable } from "./clientTable.ts";
 import { getCliConfig } from "./config.ts";
 import { crawlSourceValue, type CrawlSource } from "./crawlers/constants.ts";
-import { runCatalogJob } from "./jobs/catalogJob.ts";
-import { runClubEnrichmentJob } from "./jobs/clubEnrichmentJob.ts";
-import { runCreateApiTokenJob } from "./jobs/createApiTokenJob.ts";
-import { runCreateClientJob } from "./jobs/createClientJob.ts";
-import { runCreateSubscriptionJob } from "./jobs/createSubscriptionJob.ts";
-import { runDeepCrawlJob } from "./jobs/deepCrawlJob.ts";
-import { runListClientsJob } from "./jobs/listClientsJob.ts";
-import { runRemoveSubscriptionJob } from "./jobs/removeSubscriptionJob.ts";
-import { runRevokeApiTokenJob } from "./jobs/revokeApiTokenJob.ts";
-import { runSubscribedLeaguesJob } from "./jobs/subscribedLeaguesJob.ts";
+import { runCatalogJob } from "./jobs/crawls/catalog.ts";
+import { runClubEnrichmentJob } from "./jobs/clubs/enrichClubs.ts";
+import { runCreateApiTokenJob } from "./jobs/clients/createApiToken.ts";
+import { runCreateClientJob } from "./jobs/clients/createClient.ts";
+import { runCreateSubscriptionJob } from "./jobs/clients/createSubscription.ts";
+import { runDeepCrawlJob } from "./jobs/crawls/deepCrawl.ts";
+import { runListClientsJob } from "./jobs/clients/listClients.ts";
+import { runRemoveSubscriptionJob } from "./jobs/clients/removeSubscription.ts";
+import { runRevokeApiTokenJob } from "./jobs/clients/revokeApiToken.ts";
+import { runSubscribedLeaguesJob } from "./jobs/crawls/subscribedLeagues.ts";
 
 const currentYear = new Date().getFullYear().toString();
 const crawlSources = Object.values(crawlSourceValue);
@@ -219,7 +219,7 @@ export function createCli(): Command {
     .action(async (options: { json: boolean }) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
-      const result = await runListClientsJob({ logger, config });
+      const result = await runListClientsJob({ config });
       if (!result.ok) {
         logger.error("client.listfailed", result.error.message, { cause: result.error.cause });
         process.exitCode = 1;

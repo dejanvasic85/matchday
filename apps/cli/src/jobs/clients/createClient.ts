@@ -3,8 +3,8 @@
 
 import { type ClientId, type Logger, type Result } from "@matchday/domain";
 import { createDbClient, upsertClientByName } from "@matchday/db";
-import type { CliConfig } from "../config.ts";
-import { createClient } from "../services/clientResolver.ts";
+import type { CliConfig } from "../../config.ts";
+import { createClient } from "../../services/clientResolver.ts";
 
 export type RunCreateClientJobInput = {
   logger: Logger;
