@@ -140,8 +140,8 @@ export async function createSubscriptionsForClub(
   return ok({ club, leagues, subscriptionIds });
 }
 
-/** Hard-delete a subscription, narrowing an unknown id to a `notFound` outcome so the CLI reports
- * a bad id rather than exiting 0 on a no-op. */
+/** Soft-delete a subscription, narrowing an unknown (or already-removed) id to a `notFound`
+ * outcome so the CLI reports a bad id rather than exiting 0 on a no-op. */
 export async function removeSubscription(
   deps: Pick<SubscriptionServiceDeps, "deleteSubscription">,
   id: SubscriptionId,

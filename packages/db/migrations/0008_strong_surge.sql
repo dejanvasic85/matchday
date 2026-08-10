@@ -1,0 +1,1 @@
+ALTER TABLE "client_subscription" ADD COLUMN "deleted_at" timestamp with time zone;

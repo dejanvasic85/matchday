@@ -187,10 +187,17 @@ export const subscription = pgTable(
     leagueId: text("league_id")
       .notNull()
       .references(() => league.id),
+    // Soft delete: `client remove-subscription` sets this instead of deleting the row, so the
+    // (client, league) history survives and re-subscribing (the upsert's conflict branch) can
+    // revive the same row by clearing it, rather than colliding with the still-unique
+    // (client_id, league_id) index below.
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => [
-    // One subscription per (client, league) — a client subscribes to a given league at most once.
+    // One *active* subscription per (client, league) — enforced in application code (the upsert
+    // revives a soft-deleted row instead of inserting a second one), since a partial unique index
+    // scoped to `deleted_at is null` isn't expressible through Drizzle's `uniqueIndex` builder.
     uniqueIndex("client_subscription_client_league_key").on(table.clientId, table.leagueId),
   ],
 );
