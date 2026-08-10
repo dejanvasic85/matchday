@@ -1,7 +1,7 @@
 import { ok } from "@matchday/domain";
 import type { MappedTableEntry } from "./mappers/mapDriblTableEntry.ts";
-import { makeFakeEntityResolutionDeps } from "@test/fixtures/entityResolutionDeps.ts";
-import { makeFakeLogger } from "@test/fixtures/logger.ts";
+import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
+import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import type { CrawlCatalogLeagueResult } from "./catalogCrawler.ts";
 import { persistCatalog } from "./catalogPersistence.ts";
 

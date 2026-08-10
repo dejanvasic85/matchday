@@ -6,6 +6,10 @@
     "mday": "./src/cli.ts"
   },
   "type": "module",
+  "imports": {
+    "#*": "./src/*",
+    "#test/*": "./test/*"
+  },
   "scripts": {
     "playwright:install": "playwright-core install --with-deps chrome",
     "test": "vp test run",

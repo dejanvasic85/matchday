@@ -1,4 +1,4 @@
-import { makeQueuedFakePage } from "@test/fixtures/fakePage.ts";
+import { makeQueuedFakePage } from "#test/fixtures/fakePage.ts";
 import {
   listClubs,
   listCompetitions,
