@@ -1,6 +1,6 @@
 import { fixtureStatusValue, ok } from "@matchday/domain";
 import type { MappedFixture } from "./mappers/mapDriblFixture.ts";
-import { makeFakeEntityResolutionDeps } from "@/test/fixtures/entityResolutionDeps.ts";
+import { makeFakeEntityResolutionDeps } from "@test/fixtures/entityResolutionDeps.ts";
 import { resolveFixtureEntities } from "./fixtureEntityResolver.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");

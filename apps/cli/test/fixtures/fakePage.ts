@@ -1,4 +1,4 @@
-import type { FetchPage } from "@/src/crawlers/dribl/browserFetch.ts";
+import type { FetchPage } from "@/crawlers/dribl/browserFetch.ts";
 
 /** A `FetchPage` fake that returns a queued response per call, in order. */
 export function makeQueuedFakePage(responses: unknown[]): FetchPage {

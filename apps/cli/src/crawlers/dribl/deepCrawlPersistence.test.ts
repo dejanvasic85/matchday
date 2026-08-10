@@ -1,8 +1,8 @@
 import { ok } from "@matchday/domain";
 import type { DriblFixturesApiResponse } from "./external/driblFixture.ts";
 import type { DriblTableApiResponse } from "./external/driblTableEntry.ts";
-import { makeFakeEntityResolutionDeps } from "@/test/fixtures/entityResolutionDeps.ts";
-import { makeFakeLogger } from "@/test/fixtures/logger.ts";
+import { makeFakeEntityResolutionDeps } from "@test/fixtures/entityResolutionDeps.ts";
+import { makeFakeLogger } from "@test/fixtures/logger.ts";
 import { deepCrawlPersist } from "./deepCrawlPersistence.ts";
 import type { DeepCrawlLeagueContext } from "./driblLeagueIdResolver.ts";
 

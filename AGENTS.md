@@ -171,10 +171,12 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
 - TypeScript module filenames are **camelCase** (`fixtureTransformService.ts`).
 - **Alias imports, never relative**, in any package with a `@` alias configured (currently
   `apps/api`, `apps/cli`) — including same-directory `./foo.ts` imports, not just deep `../../`
-  ones. In `apps/cli` the alias resolves to the app root, so source files reference each other as
-  `@/src/...` (see `apps/cli/vite.config.ts`); in `apps/api` it resolves straight to `src`, so it's
-  `@/...` (see `apps/api/vite.config.ts`). Packages without a configured alias (`packages/db`,
-  `packages/domain`) keep same-directory `./foo.ts` imports — there's no alias to use instead.
+  ones. `@/*` resolves to that app's `src/*`; a package-root `test/fixtures/` module (see Unit
+  testing below) is reached via the separate `@test/*` alias, so a source file never needs a `src`
+  segment (`@/crawlers/constants.ts`, not `@/src/crawlers/constants.ts`) — see
+  `apps/cli/vite.config.ts` / `tsconfig.json` for the two `resolve.alias` entries. Packages without
+  a configured alias (`packages/db`, `packages/domain`) keep same-directory `./foo.ts` imports —
+  there's no alias to use instead.
 - Avoid magic numbers/strings — name them. Comments only for non-obvious intent; never commented-out
   code.
 - **Zod** for validation schemas and for **env/config**: a Zod-validated config module per app. Env

@@ -3,7 +3,7 @@ import {
   createApiToken,
   revokeApiTokenById,
   type ApiTokenServiceDeps,
-} from "@/src/services/apiTokenService.ts";
+} from "@/services/apiTokenService.ts";
 
 function makeDeps(overrides: Partial<ApiTokenServiceDeps> = {}): ApiTokenServiceDeps {
   return {

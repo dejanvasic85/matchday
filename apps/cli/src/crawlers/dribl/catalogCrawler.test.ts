@@ -1,5 +1,5 @@
-import { makeFakeLogger } from "@/test/fixtures/logger.ts";
-import { makeQueuedFakePage } from "@/test/fixtures/fakePage.ts";
+import { makeFakeLogger } from "@test/fixtures/logger.ts";
+import { makeQueuedFakePage } from "@test/fixtures/fakePage.ts";
 import { crawlCatalog } from "./catalogCrawler.ts";
 
 const tenantResponse = { data: { id: "tenant-id" } };

@@ -3,7 +3,12 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   resolve: {
-    alias: [{ find: "@", replacement: fileURLToPath(new URL(".", import.meta.url)) }],
+    // Regex finds with an explicit trailing slash so "@test/..." can't be swallowed by the "@/..."
+    // entry (a plain-string "@" find matches any "@..."-prefixed specifier, "@test" included).
+    alias: [
+      { find: /^@test\//, replacement: `${fileURLToPath(new URL("./test", import.meta.url))}/` },
+      { find: /^@\//, replacement: `${fileURLToPath(new URL("./src", import.meta.url))}/` },
+    ],
   },
   run: {
     tasks: {
