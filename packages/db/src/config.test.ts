@@ -1,4 +1,4 @@
-import { getDbConfig } from "./config.ts";
+import { getDbConfig } from "#config.ts";
 
 describe("getDbConfig", () => {
   it("returns the parsed config for a valid DATABASE_URL", () => {

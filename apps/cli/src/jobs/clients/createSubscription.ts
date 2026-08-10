@@ -3,8 +3,8 @@
 
 import { type LeagueId, type Logger, type Result, type SubscriptionId } from "@matchday/domain";
 import { createDbClient, findClientByName, getLeagueById, upsertSubscription } from "@matchday/db";
-import type { CliConfig } from "../../config.ts";
-import { createSubscription } from "../../services/subscriptionService.ts";
+import type { CliConfig } from "#config.ts";
+import { createSubscription } from "#services/subscriptionService.ts";
 
 export type RunCreateSubscriptionJobInput = {
   logger: Logger;

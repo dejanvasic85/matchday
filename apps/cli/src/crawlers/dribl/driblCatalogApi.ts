@@ -4,14 +4,14 @@
 // target name upfront — this module is for listing every item instead.
 
 import { ok, serverError, type Result } from "@matchday/domain";
-import { browserFetch, type FetchPage } from "./browserFetch.ts";
-import { crawlerConfigValue } from "./constants.ts";
-import { driblClubsApiResponseSchema, type DriblClub } from "./external/driblClub.ts";
+import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
+import { crawlerConfigValue } from "#crawlers/dribl/constants.ts";
+import { driblClubsApiResponseSchema, type DriblClub } from "#crawlers/dribl/external/driblClub.ts";
 import {
   driblListResponseSchema,
   driblTenantResponseSchema,
   type DriblListItem,
-} from "./external/driblListEndpoints.ts";
+} from "#crawlers/dribl/external/driblListEndpoints.ts";
 
 export async function resolveTenantId(
   page: FetchPage,

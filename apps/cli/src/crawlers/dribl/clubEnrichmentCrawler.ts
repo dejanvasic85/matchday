@@ -7,12 +7,15 @@
 // crawlCatalog's `onLeague` — lets the job persist as it goes rather than buffering everything.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
-import type { FetchPage } from "./browserFetch.ts";
-import { fetchClubDetail } from "./clubDetailFetcher.ts";
-import { listClubs, resolveTenantId } from "./driblCatalogApi.ts";
-import { mapDriblClubDetail, type MappedClubDetail } from "./mappers/mapDriblClubDetail.ts";
-import type { RawStorage } from "../../storage/rawStorage.ts";
-import { buildRawClubEnrichmentKey } from "./rawStorageKey.ts";
+import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";
+import { fetchClubDetail } from "#crawlers/dribl/clubDetailFetcher.ts";
+import { listClubs, resolveTenantId } from "#crawlers/dribl/driblCatalogApi.ts";
+import {
+  mapDriblClubDetail,
+  type MappedClubDetail,
+} from "#crawlers/dribl/mappers/mapDriblClubDetail.ts";
+import type { RawStorage } from "#storage/rawStorage.ts";
+import { buildRawClubEnrichmentKey } from "#crawlers/dribl/rawStorageKey.ts";
 
 export type CrawlClubEnrichmentInput = {
   page: FetchPage;

@@ -1,5 +1,5 @@
 import { notFound, ok, serverError } from "@matchday/domain";
-import { getSeason, listAllSeasons, type SeasonServiceDeps } from "./seasonService.ts";
+import { getSeason, listAllSeasons, type SeasonServiceDeps } from "#services/seasonService.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 

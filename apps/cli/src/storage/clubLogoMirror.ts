@@ -4,7 +4,7 @@
 
 import { createHash } from "node:crypto";
 import { ok, type ClubId, type Result } from "@matchday/domain";
-import type { AssetStorage } from "./assetStorage.ts";
+import type { AssetStorage } from "#storage/assetStorage.ts";
 
 export type DownloadedImage = {
   bytes: Uint8Array;

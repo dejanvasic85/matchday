@@ -13,9 +13,9 @@ import {
   type Result,
   type TeamId,
 } from "@matchday/domain";
-import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
-import { resolveClub } from "./clubResolver.ts";
-import { resolveEntityByExternalRef } from "./externalRefEntityResolver.ts";
+import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import { resolveClub } from "#crawlers/dribl/clubResolver.ts";
+import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
 
 /** `null` when no team with this Dribl id has been seen yet (not an error). */
 export async function resolveTeamForFixture(

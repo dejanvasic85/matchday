@@ -3,9 +3,9 @@
 
 import { ok, type Result } from "@matchday/domain";
 import { eq } from "drizzle-orm";
-import type { Db } from "./client.ts";
-import { runQuery, runUpsert } from "./runQuery.ts";
-import { team } from "./schema.ts";
+import type { Db } from "#client.ts";
+import { runQuery, runUpsert } from "#runQuery.ts";
+import { team } from "#schema.ts";
 
 type Team = typeof team.$inferSelect;
 type TeamInsert = typeof team.$inferInsert;

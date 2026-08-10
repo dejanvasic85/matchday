@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import * as schema from "./schema.ts";
+import * as schema from "#schema.ts";
 
 /**
  * Build a Drizzle client over the Neon serverless (neon-http) driver — safe inside a V8 isolate,

@@ -1,4 +1,4 @@
-import { fixtureSchema } from "./fixture.ts";
+import { fixtureSchema } from "#entities/fixture.ts";
 
 function makeValidFixture() {
   return {

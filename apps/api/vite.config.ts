@@ -1,15 +1,6 @@
-import { join } from "node:path";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  resolve: {
-    // Regex finds with an explicit trailing slash so "@test/..." can't be swallowed by the "@/..."
-    // entry (a plain-string "@" find matches any "@..."-prefixed specifier, "@test" included).
-    alias: [
-      { find: /^@test\//, replacement: `${join(import.meta.dirname, "test")}/` },
-      { find: /^@\//, replacement: `${join(import.meta.dirname, "src")}/` },
-    ],
-  },
   run: {
     tasks: {
       // Cloudflare Workers apps are bundled by Wrangler itself (esbuild), not the Vite build.

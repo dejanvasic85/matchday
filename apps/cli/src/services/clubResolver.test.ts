@@ -1,5 +1,5 @@
 import { badRequest, notFound, ok, serverError } from "@matchday/domain";
-import { resolveClub, type ClubResolverDeps } from "./clubResolver.ts";
+import { resolveClub, type ClubResolverDeps } from "#services/clubResolver.ts";
 
 function makeDeps(overrides: Partial<ClubResolverDeps> = {}): ClubResolverDeps {
   return {

@@ -12,7 +12,7 @@ import {
   serverError,
   unauthorized,
   unwrapOr,
-} from "./result.ts";
+} from "#result.ts";
 
 describe("Result", () => {
   it("ok wraps a success value", () => {

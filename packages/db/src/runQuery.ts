@@ -6,7 +6,7 @@
 // statement (a lookup or an upsert), so replaying one on a transient failure is always safe.
 
 import { ok, serverError, type Result } from "@matchday/domain";
-import { retryConfigValue } from "./constants.ts";
+import { retryConfigValue } from "#constants.ts";
 
 /** A neon-http error is transient when it carries no `sourceError` — i.e. the SQL never executed
  * (connection/HTTP-level failure) rather than a database rejecting a well-formed statement. A real

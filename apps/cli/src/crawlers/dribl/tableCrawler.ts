@@ -3,14 +3,14 @@
 // endpoint/wire format calls this a "ladder" — our side of the boundary calls it "table".
 
 import { ok, serverError, type Logger, type Result } from "@matchday/domain";
-import { browserFetch, type FetchPage } from "./browserFetch.ts";
-import { buildDriblApiUrl, type DriblLeagueIds } from "./driblApiUrl.ts";
+import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
+import { buildDriblApiUrl, type DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
 import {
   driblTableApiResponseSchema,
   type DriblTableApiResponse,
-} from "./external/driblTableEntry.ts";
-import type { RawStorage } from "../../storage/rawStorage.ts";
-import { buildRawTableKey } from "./rawStorageKey.ts";
+} from "#crawlers/dribl/external/driblTableEntry.ts";
+import type { RawStorage } from "#storage/rawStorage.ts";
+import { buildRawTableKey } from "#crawlers/dribl/rawStorageKey.ts";
 
 export type CrawlTableInput = {
   page: FetchPage;

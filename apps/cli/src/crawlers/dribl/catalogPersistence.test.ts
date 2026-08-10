@@ -1,9 +1,9 @@
 import { ok } from "@matchday/domain";
-import type { MappedTableEntry } from "./mappers/mapDriblTableEntry.ts";
+import type { MappedTableEntry } from "#crawlers/dribl/mappers/mapDriblTableEntry.ts";
 import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
 import { makeFakeLogger } from "#test/fixtures/logger.ts";
-import type { CrawlCatalogLeagueResult } from "./catalogCrawler.ts";
-import { persistCatalog } from "./catalogPersistence.ts";
+import type { CrawlCatalogLeagueResult } from "#crawlers/dribl/catalogCrawler.ts";
+import { persistCatalog } from "#crawlers/dribl/catalogPersistence.ts";
 
 function makeTableEntry(overrides: Partial<MappedTableEntry> = {}): MappedTableEntry {
   return {

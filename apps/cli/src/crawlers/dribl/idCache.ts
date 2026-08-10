@@ -4,7 +4,7 @@
 
 import { promises as fs } from "node:fs";
 import { z } from "zod";
-import type { DriblLeagueIds } from "./driblApiUrl.ts";
+import type { DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
 
 const driblLeagueIdsSchema = z.object({
   season: z.string(),

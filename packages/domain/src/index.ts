@@ -15,11 +15,11 @@ export {
   type ErrorKind,
   type Result,
   type ResultError,
-} from "./result.ts";
-export { parseEnv } from "./config.ts";
-export { generateApiToken, hashApiToken } from "./apiTokenHash.ts";
-export type { LogFields, Logger } from "./logger.ts";
-export { createConsoleLogger } from "./consoleLogger.ts";
+} from "#result.ts";
+export { parseEnv } from "#config.ts";
+export { generateApiToken, hashApiToken } from "#apiTokenHash.ts";
+export type { LogFields, Logger } from "#logger.ts";
+export { createConsoleLogger } from "#consoleLogger.ts";
 export {
   generateId,
   idPrefixValue,
@@ -39,7 +39,7 @@ export {
   type SubscriptionId,
   type TableEntryId,
   type TeamId,
-} from "./id.ts";
+} from "#id.ts";
 export {
   externalRefEntityTypeValue,
   fixtureStatusValue,
@@ -47,7 +47,7 @@ export {
   type ExternalRefEntityType,
   type FixtureStatus,
   type Source,
-} from "./entities/constants.ts";
+} from "#entities/constants.ts";
 export {
   clubSchema,
   groundSchema,
@@ -55,14 +55,14 @@ export {
   type Club,
   type Ground,
   type Socials,
-} from "./entities/club.ts";
-export { teamSchema, type Team } from "./entities/team.ts";
-export { competitionSchema, type Competition } from "./entities/competition.ts";
-export { seasonSchema, type Season } from "./entities/season.ts";
-export { leagueSchema, type League } from "./entities/league.ts";
-export { fixtureSchema, type Fixture } from "./entities/fixture.ts";
-export { tableEntrySchema, type TableEntry } from "./entities/tableEntry.ts";
-export { externalRefSchema, type ExternalRef } from "./entities/externalRef.ts";
-export { subscriptionSchema, type Subscription } from "./entities/subscription.ts";
-export { clientSchema, type Client } from "./entities/client.ts";
-export { apiTokenSchema, type ApiToken } from "./entities/apiToken.ts";
+} from "#entities/club.ts";
+export { teamSchema, type Team } from "#entities/team.ts";
+export { competitionSchema, type Competition } from "#entities/competition.ts";
+export { seasonSchema, type Season } from "#entities/season.ts";
+export { leagueSchema, type League } from "#entities/league.ts";
+export { fixtureSchema, type Fixture } from "#entities/fixture.ts";
+export { tableEntrySchema, type TableEntry } from "#entities/tableEntry.ts";
+export { externalRefSchema, type ExternalRef } from "#entities/externalRef.ts";
+export { subscriptionSchema, type Subscription } from "#entities/subscription.ts";
+export { clientSchema, type Client } from "#entities/client.ts";
+export { apiTokenSchema, type ApiToken } from "#entities/apiToken.ts";

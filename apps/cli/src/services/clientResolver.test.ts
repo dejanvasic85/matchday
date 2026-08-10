@@ -4,7 +4,7 @@ import {
   resolveClient,
   type ClientCreatorDeps,
   type ClientResolverDeps,
-} from "./clientResolver.ts";
+} from "#services/clientResolver.ts";
 
 function makeResolverDeps(overrides: Partial<ClientResolverDeps> = {}): ClientResolverDeps {
   return {

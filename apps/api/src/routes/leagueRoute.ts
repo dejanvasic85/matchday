@@ -3,13 +3,13 @@
 // (subscription-scoped) are a separate follow-up nested under these routes.
 
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import type { ApiBindings } from "@/config.ts";
-import type { DbVariables } from "@/middleware/dbClient.ts";
-import { jsonResult } from "@/resultResponse.ts";
-import { errorResponsesValue } from "@/schemas/errorResponses.ts";
-import { idParamSchema } from "@/schemas/idParamSchema.ts";
-import { leagueResponseSchema } from "@/schemas/leagueSchema.ts";
-import { createLeagueServiceDeps, getLeague, listAllLeagues } from "@/services/leagueService.ts";
+import type { ApiBindings } from "#config.ts";
+import type { DbVariables } from "#middleware/dbClient.ts";
+import { jsonResult } from "#resultResponse.ts";
+import { errorResponsesValue } from "#schemas/errorResponses.ts";
+import { idParamSchema } from "#schemas/idParamSchema.ts";
+import { leagueResponseSchema } from "#schemas/leagueSchema.ts";
+import { createLeagueServiceDeps, getLeague, listAllLeagues } from "#services/leagueService.ts";
 
 export const leagueRoute = new OpenAPIHono<{ Bindings: ApiBindings; Variables: DbVariables }>();
 

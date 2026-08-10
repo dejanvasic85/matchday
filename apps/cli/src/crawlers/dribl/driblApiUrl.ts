@@ -1,4 +1,4 @@
-import { crawlerConfigValue } from "./constants.ts";
+import { crawlerConfigValue } from "#crawlers/dribl/constants.ts";
 
 export type DriblLeagueIds = {
   season: string;

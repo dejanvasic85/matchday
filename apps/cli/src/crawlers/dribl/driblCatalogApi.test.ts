@@ -5,7 +5,7 @@ import {
   listLeagues,
   listSeasons,
   resolveTenantId,
-} from "./driblCatalogApi.ts";
+} from "#crawlers/dribl/driblCatalogApi.ts";
 
 describe("resolveTenantId", () => {
   it("resolves the tenant id from the tenants response", async () => {

@@ -1,7 +1,7 @@
 // Dribl-raw -> domain mapper (0004: explicit named transform at the crawl boundary).
 
 import type { Socials } from "@matchday/domain";
-import type { DriblClub } from "../external/driblClub.ts";
+import type { DriblClub } from "#crawlers/dribl/external/driblClub.ts";
 
 export type MappedClub = {
   sourceId: string;

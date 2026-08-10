@@ -1,4 +1,4 @@
-import { subscriptionSchema } from "./subscription.ts";
+import { subscriptionSchema } from "#entities/subscription.ts";
 
 function makeValidSubscription() {
   return {

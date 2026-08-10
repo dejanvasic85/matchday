@@ -1,8 +1,8 @@
 import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import { makeQueuedFakePage } from "#test/fixtures/fakePage.ts";
 import { makeFakeRawStorage } from "#test/fixtures/rawStorage.ts";
-import type { DriblLeagueIds } from "./driblApiUrl.ts";
-import { crawlTable } from "./tableCrawler.ts";
+import type { DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
+import { crawlTable } from "#crawlers/dribl/tableCrawler.ts";
 
 const ids: DriblLeagueIds = { season: "s", competition: "c", league: "l", tenant: "t" };
 

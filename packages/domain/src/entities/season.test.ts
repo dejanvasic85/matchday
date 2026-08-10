@@ -1,4 +1,4 @@
-import { seasonSchema } from "./season.ts";
+import { seasonSchema } from "#entities/season.ts";
 
 function makeValidSeason() {
   return {

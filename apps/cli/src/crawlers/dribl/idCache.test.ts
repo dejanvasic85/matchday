@@ -1,4 +1,4 @@
-import { createInMemoryIdCacheStore } from "./idCache.ts";
+import { createInMemoryIdCacheStore } from "#crawlers/dribl/idCache.ts";
 
 describe("createInMemoryIdCacheStore", () => {
   it("starts with an empty cache when no initial value is given", async () => {

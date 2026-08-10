@@ -6,14 +6,14 @@
 // half-mapped league silently.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
-import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
-import type { DriblFixturesApiResponse } from "./external/driblFixture.ts";
-import type { DriblTableApiResponse } from "./external/driblTableEntry.ts";
-import { mapDriblFixture } from "./mappers/mapDriblFixture.ts";
-import { mapDriblTableEntry } from "./mappers/mapDriblTableEntry.ts";
-import type { DeepCrawlLeagueContext } from "./driblLeagueIdResolver.ts";
-import { resolveFixtureEntities } from "./fixtureEntityResolver.ts";
-import { resolveTableEntryEntities } from "./tableEntryEntityResolver.ts";
+import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import type { DriblFixturesApiResponse } from "#crawlers/dribl/external/driblFixture.ts";
+import type { DriblTableApiResponse } from "#crawlers/dribl/external/driblTableEntry.ts";
+import { mapDriblFixture } from "#crawlers/dribl/mappers/mapDriblFixture.ts";
+import { mapDriblTableEntry } from "#crawlers/dribl/mappers/mapDriblTableEntry.ts";
+import type { DeepCrawlLeagueContext } from "#crawlers/dribl/driblLeagueIdResolver.ts";
+import { resolveFixtureEntities } from "#crawlers/dribl/fixtureEntityResolver.ts";
+import { resolveTableEntryEntities } from "#crawlers/dribl/tableEntryEntityResolver.ts";
 
 export type DeepCrawlPersistInput = {
   deps: EntityResolutionDeps;

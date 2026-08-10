@@ -3,12 +3,12 @@
 // not an array (confirmed against a live response).
 
 import { ok, serverError, type Result } from "@matchday/domain";
-import { browserFetch, type FetchPage } from "./browserFetch.ts";
-import { crawlerConfigValue } from "./constants.ts";
+import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
+import { crawlerConfigValue } from "#crawlers/dribl/constants.ts";
 import {
   driblClubDetailApiResponseSchema,
   type DriblClubDetailApiResponse,
-} from "./external/driblClub.ts";
+} from "#crawlers/dribl/external/driblClub.ts";
 
 export async function fetchClubDetail(
   page: FetchPage,

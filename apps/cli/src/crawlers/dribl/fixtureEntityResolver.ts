@@ -11,10 +11,10 @@ import {
   type Result,
   type SeasonId,
 } from "@matchday/domain";
-import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
-import type { MappedFixture } from "./mappers/mapDriblFixture.ts";
-import { resolveEntityByExternalRef } from "./externalRefEntityResolver.ts";
-import { resolveTeamForFixture } from "./teamResolver.ts";
+import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import type { MappedFixture } from "#crawlers/dribl/mappers/mapDriblFixture.ts";
+import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
+import { resolveTeamForFixture } from "#crawlers/dribl/teamResolver.ts";
 
 export type FixtureContext = {
   competitionId: CompetitionId;

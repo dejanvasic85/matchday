@@ -1,5 +1,5 @@
 import { ok, serverError } from "@matchday/domain";
-import { checkHealth, type CheckHealthDeps } from "./healthService.ts";
+import { checkHealth, type CheckHealthDeps } from "#services/healthService.ts";
 
 function makeDeps(overrides: Partial<CheckHealthDeps> = {}): CheckHealthDeps {
   return {

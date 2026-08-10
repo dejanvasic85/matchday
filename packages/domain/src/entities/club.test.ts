@@ -1,4 +1,4 @@
-import { clubSchema, groundSchema } from "./club.ts";
+import { clubSchema, groundSchema } from "#entities/club.ts";
 
 function makeValidClub() {
   return {

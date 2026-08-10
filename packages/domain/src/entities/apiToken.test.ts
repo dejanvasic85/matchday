@@ -1,4 +1,4 @@
-import { apiTokenSchema } from "./apiToken.ts";
+import { apiTokenSchema } from "#entities/apiToken.ts";
 
 function makeValidApiToken() {
   return {

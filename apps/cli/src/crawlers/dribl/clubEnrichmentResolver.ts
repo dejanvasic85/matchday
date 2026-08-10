@@ -17,7 +17,7 @@ import {
   type ClubId,
   type Result,
 } from "@matchday/domain";
-import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 
 export type ResolveClubForEnrichmentInput = {
   deps: Pick<

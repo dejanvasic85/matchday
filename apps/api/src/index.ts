@@ -5,15 +5,15 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { sentry } from "@sentry/hono/cloudflare";
-import type { ApiBindings } from "@/config.ts";
-import { apiTokenAuthMiddleware, type ApiTokenAuthVariables } from "@/middleware/apiTokenAuth.ts";
-import { dbClientMiddleware, type DbVariables } from "@/middleware/dbClient.ts";
-import { clubRoute } from "@/routes/clubRoute.ts";
-import { competitionRoute } from "@/routes/competitionRoute.ts";
-import { healthRoute } from "@/routes/healthRoute.ts";
-import { leagueRoute } from "@/routes/leagueRoute.ts";
-import { seasonRoute } from "@/routes/seasonRoute.ts";
-import { teamRoute } from "@/routes/teamRoute.ts";
+import type { ApiBindings } from "#config.ts";
+import { apiTokenAuthMiddleware, type ApiTokenAuthVariables } from "#middleware/apiTokenAuth.ts";
+import { dbClientMiddleware, type DbVariables } from "#middleware/dbClient.ts";
+import { clubRoute } from "#routes/clubRoute.ts";
+import { competitionRoute } from "#routes/competitionRoute.ts";
+import { healthRoute } from "#routes/healthRoute.ts";
+import { leagueRoute } from "#routes/leagueRoute.ts";
+import { seasonRoute } from "#routes/seasonRoute.ts";
+import { teamRoute } from "#routes/teamRoute.ts";
 
 type AppEnv = { Bindings: ApiBindings; Variables: DbVariables & ApiTokenAuthVariables };
 

@@ -3,9 +3,9 @@
 
 import { ok, type Result } from "@matchday/domain";
 import { and, asc, eq, isNull } from "drizzle-orm";
-import type { Db } from "./client.ts";
-import { runQuery, runUpsert } from "./runQuery.ts";
-import { league, subscription } from "./schema.ts";
+import type { Db } from "#client.ts";
+import { runQuery, runUpsert } from "#runQuery.ts";
+import { league, subscription } from "#schema.ts";
 
 type Subscription = typeof subscription.$inferSelect;
 type SubscriptionInsert = typeof subscription.$inferInsert;

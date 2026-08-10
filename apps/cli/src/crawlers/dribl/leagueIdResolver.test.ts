@@ -1,7 +1,7 @@
 import type { Logger } from "@matchday/domain";
-import type { FetchPage } from "./browserFetch.ts";
-import { createInMemoryIdCacheStore } from "./idCache.ts";
-import { resolveLeagueIds } from "./leagueIdResolver.ts";
+import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";
+import { createInMemoryIdCacheStore } from "#crawlers/dribl/idCache.ts";
+import { resolveLeagueIds } from "#crawlers/dribl/leagueIdResolver.ts";
 
 function makeLogger(): Logger {
   return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };

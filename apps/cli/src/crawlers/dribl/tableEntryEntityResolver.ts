@@ -11,9 +11,9 @@ import {
   type Result,
   type SeasonId,
 } from "@matchday/domain";
-import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
-import type { MappedTableEntry } from "./mappers/mapDriblTableEntry.ts";
-import { resolveTeamForTableEntry } from "./teamResolver.ts";
+import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import type { MappedTableEntry } from "#crawlers/dribl/mappers/mapDriblTableEntry.ts";
+import { resolveTeamForTableEntry } from "#crawlers/dribl/teamResolver.ts";
 
 export type TableEntryContext = {
   competitionId: CompetitionId;

@@ -1,4 +1,4 @@
-import { tableEntrySchema } from "./tableEntry.ts";
+import { tableEntrySchema } from "#entities/tableEntry.ts";
 
 function makeValidTableEntry() {
   return {

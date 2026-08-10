@@ -1,5 +1,5 @@
-import type { DriblTableEntry } from "../external/driblTableEntry.ts";
-import { mapDriblTableEntry } from "./mapDriblTableEntry.ts";
+import type { DriblTableEntry } from "#crawlers/dribl/external/driblTableEntry.ts";
+import { mapDriblTableEntry } from "#crawlers/dribl/mappers/mapDriblTableEntry.ts";
 
 function makeDriblTableEntry(
   overrides: Partial<DriblTableEntry["attributes"]> = {},

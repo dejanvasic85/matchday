@@ -169,27 +169,24 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
   known-safe union after a guard, or working around a wrong external-library type — with an inline
   `oxlint-disable` comment explaining why.
 - TypeScript module filenames are **camelCase** (`fixtureTransformService.ts`).
-- **Alias imports, never relative — but check which alias mechanism the package actually needs
-  before converting anything; they are not interchangeable.**
-  - **`apps/api`** is always bundled by wrangler before it runs, locally and in prod — that
-    bundling step is what resolves its `@/*` `resolve.alias` (`vite.config.ts`/`tsconfig.json`).
-    Use `@/...` everywhere in `apps/api/src`, including same-directory `./foo.ts`.
-  - **`apps/cli`'s `mday` binary is never bundled** — its `bin`/`mday` task is a raw
-    `node src/cli.ts` invocation, in CI (`.github/workflows/crawl-*.yml`) and everywhere else, so a
-    `resolve.alias` (only understood by tooling that reads `vite.config.ts`) doesn't help it. It
-    instead uses Node's **native package.json `imports` field** (`"#*": "./src/*"`,
-    `"#test/*": "./test/*"` in `apps/cli/package.json`) — plain `#`-prefixed subpath imports that
-    Node itself resolves with no bundler, which TypeScript (`moduleResolution: "nodenext"`) and
-    Vite/Vitest also resolve natively, so the same `#foo.ts` import works unmodified whether it
-    runs raw or under test. Use `#...`/`#test/...` everywhere in `apps/cli`, both `src` and
-    `*.test.ts`, including same-directory imports — never relative, never `@/...`.
-  - Don't mix the two mechanisms up: an earlier "alias imports everywhere" pass put `apps/api`'s
-    `@/*` convention on `apps/cli` too, and every scheduled crawl workflow immediately started
-    failing with `ERR_MODULE_NOT_FOUND` (#92) — nothing in that raw-Node runtime path resolves a
-    `resolve.alias`. If a package's production entrypoint isn't bundled before it runs, reach for
-    the native `imports` field, not `resolve.alias`.
-  - Packages without either mechanism configured (`packages/db`, `packages/domain`) keep
-    same-directory `./foo.ts` imports — there's no alias to use instead.
+- **Alias imports, never relative, everywhere in the monorepo — including same-directory
+  `./foo.ts` imports.** Every package's `package.json` declares a native subpath-imports mapping:
+  ```json
+  "imports": { "#*": "./src/*" }
+  ```
+  (`apps/api` and `apps/cli` additionally map `"#test/*": "./test/*"` for their package-root
+  `test/fixtures/` dir — see Unit testing below.) `#foo.ts` is resolved by **Node itself** — no
+  bundler, no loader — because it's a standard `package.json` field (Node's own "subpath imports"),
+  and the same mapping is understood natively by TypeScript (`moduleResolution: "nodenext"`, no
+  `tsconfig.json` "paths" needed) and by Vite/Vitest/esbuild. That universality is exactly why this
+  replaced an earlier per-app `vite.config.ts` `resolve.alias` (`@/...`): that alias only worked for
+  tooling that reads `vite.config.ts`, and silently didn't exist for `apps/cli`'s `mday` binary,
+  which runs via a raw `node src/cli.ts` invocation in CI (`.github/workflows/crawl-*.yml`) with no
+  bundler in front of it — an "alias imports everywhere" pass that used `resolve.alias` broke every
+  scheduled crawl workflow with `ERR_MODULE_NOT_FOUND` (#92) because nothing in that runtime path
+  understood `@/`. The subpath-imports form has no such blind spot: whether a package's production
+  entrypoint is bundled (`apps/api`, via wrangler/esbuild) or run raw (`apps/cli`), the exact same
+  `#foo.ts` import resolves correctly, so there's one convention, not one per package shape.
 - Avoid magic numbers/strings — name them. Comments only for non-obvious intent; never commented-out
   code.
 - **Zod** for validation schemas and for **env/config**: a Zod-validated config module per app. Env

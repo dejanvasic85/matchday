@@ -2,9 +2,9 @@
 // rules here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import type { Result } from "@matchday/domain";
-import type { Db } from "./client.ts";
-import { runUpsert } from "./runQuery.ts";
-import { tableEntry } from "./schema.ts";
+import type { Db } from "#client.ts";
+import { runUpsert } from "#runQuery.ts";
+import { tableEntry } from "#schema.ts";
 
 type TableEntry = typeof tableEntry.$inferSelect;
 type TableEntryInsert = typeof tableEntry.$inferInsert;

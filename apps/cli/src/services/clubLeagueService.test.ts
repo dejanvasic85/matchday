@@ -1,5 +1,5 @@
 import { badRequest, notFound, ok, serverError } from "@matchday/domain";
-import { listLeaguesForClub, type ClubLeagueServiceDeps } from "./clubLeagueService.ts";
+import { listLeaguesForClub, type ClubLeagueServiceDeps } from "#services/clubLeagueService.ts";
 
 function makeDeps(overrides: Partial<ClubLeagueServiceDeps> = {}): ClubLeagueServiceDeps {
   return {

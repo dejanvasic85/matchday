@@ -3,10 +3,10 @@
 
 import { ok, type Result } from "@matchday/domain";
 import { and, eq } from "drizzle-orm";
-import type { Db } from "./client.ts";
-import type { ExternalRefEntityType, Source } from "./constants.ts";
-import { runQuery, runUpsert } from "./runQuery.ts";
-import { externalRef } from "./schema.ts";
+import type { Db } from "#client.ts";
+import type { ExternalRefEntityType, Source } from "#constants.ts";
+import { runQuery, runUpsert } from "#runQuery.ts";
+import { externalRef } from "#schema.ts";
 
 type ExternalRef = typeof externalRef.$inferSelect;
 type ExternalRefInsert = typeof externalRef.$inferInsert;

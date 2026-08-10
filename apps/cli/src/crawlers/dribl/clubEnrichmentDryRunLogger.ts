@@ -3,7 +3,7 @@
 // or uploading logos to R2.
 
 import type { Logger } from "@matchday/domain";
-import type { MappedClubDetail } from "./mappers/mapDriblClubDetail.ts";
+import type { MappedClubDetail } from "#crawlers/dribl/mappers/mapDriblClubDetail.ts";
 
 export function logClubEnrichmentDryRun(logger: Logger, clubs: MappedClubDetail[]): void {
   logger.info("clubenrichment.dryRun", "club enrichment crawl complete (dry run, not persisted)", {

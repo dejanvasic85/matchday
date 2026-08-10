@@ -4,14 +4,14 @@
 // re-crawling.
 
 import { ok, serverError, type Logger, type Result } from "@matchday/domain";
-import { browserFetch, type FetchPage } from "./browserFetch.ts";
-import { buildDriblApiUrl, type DriblLeagueIds } from "./driblApiUrl.ts";
+import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
+import { buildDriblApiUrl, type DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
 import {
   driblFixturesApiResponseSchema,
   type DriblFixturesApiResponse,
-} from "./external/driblFixture.ts";
-import { buildRawFixturesKey } from "./rawStorageKey.ts";
-import type { RawStorage } from "../../storage/rawStorage.ts";
+} from "#crawlers/dribl/external/driblFixture.ts";
+import { buildRawFixturesKey } from "#crawlers/dribl/rawStorageKey.ts";
+import type { RawStorage } from "#storage/rawStorage.ts";
 
 const maxConsecutiveEmptyRounds = 2;
 const maxRounds = 40;

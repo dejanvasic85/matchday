@@ -13,10 +13,10 @@
 // a loud failure the scheduler can retry (every step is idempotent, so a retry is safe).
 
 import { externalRefEntityTypeValue, ok, type Logger, type Result } from "@matchday/domain";
-import type { CrawlCatalogLeagueResult } from "./catalogCrawler.ts";
-import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
-import { resolveEntityByExternalRef } from "./externalRefEntityResolver.ts";
-import { resolveTableEntryEntities } from "./tableEntryEntityResolver.ts";
+import type { CrawlCatalogLeagueResult } from "#crawlers/dribl/catalogCrawler.ts";
+import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
+import { resolveTableEntryEntities } from "#crawlers/dribl/tableEntryEntityResolver.ts";
 
 export type PersistLeagueInput = {
   deps: EntityResolutionDeps;
