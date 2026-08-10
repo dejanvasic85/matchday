@@ -1,5 +1,9 @@
 import { notFound, ok, serverError } from "@matchday/domain";
-import { createApiToken, revokeApiTokenById, type ApiTokenServiceDeps } from "./apiTokenService.ts";
+import {
+  createApiToken,
+  revokeApiTokenById,
+  type ApiTokenServiceDeps,
+} from "@/src/services/apiTokenService.ts";
 
 function makeDeps(overrides: Partial<ApiTokenServiceDeps> = {}): ApiTokenServiceDeps {
   return {

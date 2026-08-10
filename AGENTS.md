@@ -156,7 +156,12 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
   known-safe union after a guard, or working around a wrong external-library type — with an inline
   `oxlint-disable` comment explaining why.
 - TypeScript module filenames are **camelCase** (`fixtureTransformService.ts`).
-- Prefer **alias imports** over deep relative paths.
+- **Alias imports, never relative**, in any package with a `@` alias configured (currently
+  `apps/api`, `apps/cli`) — including same-directory `./foo.ts` imports, not just deep `../../`
+  ones. In `apps/cli` the alias resolves to the app root, so source files reference each other as
+  `@/src/...` (see `apps/cli/vite.config.ts`); in `apps/api` it resolves straight to `src`, so it's
+  `@/...` (see `apps/api/vite.config.ts`). Packages without a configured alias (`packages/db`,
+  `packages/domain`) keep same-directory `./foo.ts` imports — there's no alias to use instead.
 - Avoid magic numbers/strings — name them. Comments only for non-obvious intent; never commented-out
   code.
 - **Zod** for validation schemas and for **env/config**: a Zod-validated config module per app. Env

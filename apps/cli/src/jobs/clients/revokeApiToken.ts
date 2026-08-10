@@ -3,8 +3,8 @@
 
 import { type ApiTokenId, type Logger, type Result } from "@matchday/domain";
 import { createDbClient, revokeApiToken } from "@matchday/db";
-import type { CliConfig } from "../../config.ts";
-import { revokeApiTokenById } from "../../services/apiTokenService.ts";
+import type { CliConfig } from "@/src/config.ts";
+import { revokeApiTokenById } from "@/src/services/apiTokenService.ts";
 
 export type RunRevokeApiTokenJobInput = {
   logger: Logger;
