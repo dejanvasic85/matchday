@@ -13,7 +13,7 @@ import {
   type SubscriptionId,
 } from "@matchday/domain";
 import type { deleteSubscription, getLeagueById, upsertSubscription } from "@matchday/db";
-import { resolveClient, type ClientResolverDeps } from "./clientResolver.ts";
+import { resolveClient, type ClientResolverDeps } from "@/src/services/clientResolver.ts";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return

@@ -4,7 +4,7 @@
 
 import { ok, type Logger, type Result } from "@matchday/domain";
 import { createDbClient, listSubscribedLeagueIds } from "@matchday/db";
-import type { CliConfig } from "../../config.ts";
+import type { CliConfig } from "@/src/config.ts";
 
 export type RunSubscribedLeaguesJobInput = {
   logger: Logger;

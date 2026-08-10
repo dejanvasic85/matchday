@@ -1,5 +1,5 @@
 import { ok, serverError } from "@matchday/domain";
-import { listClientSummaries, type ClientServiceDeps } from "./clientService.ts";
+import { listClientSummaries, type ClientServiceDeps } from "@/src/services/clientService.ts";
 
 function makeDeps(overrides: Partial<ClientServiceDeps> = {}): ClientServiceDeps {
   return {
