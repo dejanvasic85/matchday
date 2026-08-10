@@ -5,6 +5,10 @@
   "compatibility_date": "2026-08-01",
   // Required by @sentry/cloudflare, which uses node:async_hooks for context propagation.
   "compatibility_flags": ["nodejs_compat"],
+  // Pinned instead of wrangler dev's own default (8787).
+  "dev": {
+    "port": 3366,
+  },
   // Cloudflare Workers Logs — captures console.warn/console.error (AGENTS.md structured logging).
   "observability": {
     "enabled": true,

@@ -22,10 +22,10 @@ export {
   updateClubEnrichmentFields,
   type ClubEnrichmentFields,
 } from "./clubDb.ts";
-export { upsertTeam } from "./teamDb.ts";
-export { upsertCompetition } from "./competitionDb.ts";
-export { upsertSeason } from "./seasonDb.ts";
-export { upsertLeague, getLeagueById } from "./leagueDb.ts";
+export { listTeams, getTeamById, upsertTeam } from "./teamDb.ts";
+export { listCompetitions, getCompetitionById, upsertCompetition } from "./competitionDb.ts";
+export { listSeasons, getSeasonById, upsertSeason } from "./seasonDb.ts";
+export { listLeagues, upsertLeague, getLeagueById, type ListLeaguesFilter } from "./leagueDb.ts";
 export { upsertFixture } from "./fixtureDb.ts";
 export { upsertTableEntry } from "./tableEntryDb.ts";
 export {

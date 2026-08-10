@@ -8,6 +8,7 @@
     "check": "vp check"
   },
   "dependencies": {
+    "@hono/zod-openapi": "catalog:",
     "@matchday/db": "workspace:*",
     "@matchday/domain": "workspace:*",
     "@sentry/cloudflare": "catalog:",
