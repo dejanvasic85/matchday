@@ -10,11 +10,11 @@ import {
   listLeaguesByClubId,
   upsertSubscription,
 } from "@matchday/db";
-import type { CliConfig } from "@/config.ts";
+import type { CliConfig } from "../../config.ts";
 import {
   createSubscriptionsForClub,
   type ClubSubscriptionResult,
-} from "@/services/subscriptionService.ts";
+} from "../../services/subscriptionService.ts";
 
 export type RunCreateSubscriptionsForClubJobInput = {
   logger: Logger;

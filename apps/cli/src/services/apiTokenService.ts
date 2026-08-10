@@ -12,7 +12,7 @@ import {
   type Result,
 } from "@matchday/domain";
 import type { insertApiToken, revokeApiToken } from "@matchday/db";
-import { resolveClient, type ClientResolverDeps } from "@/services/clientResolver.ts";
+import { resolveClient, type ClientResolverDeps } from "./clientResolver.ts";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return

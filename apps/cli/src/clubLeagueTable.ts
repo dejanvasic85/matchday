@@ -1,7 +1,7 @@
 // Terminal rendering for `mday club leagues` — presentation only, kept out of the service so the
 // shape stays independent of how it's displayed (and `--json` prints it untouched).
 
-import type { ClubLeagues } from "@/services/clubLeagueService.ts";
+import type { ClubLeagues } from "./services/clubLeagueService.ts";
 
 const columnGap = "  ";
 

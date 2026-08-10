@@ -169,14 +169,23 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
   known-safe union after a guard, or working around a wrong external-library type — with an inline
   `oxlint-disable` comment explaining why.
 - TypeScript module filenames are **camelCase** (`fixtureTransformService.ts`).
-- **Alias imports, never relative**, in any package with a `@` alias configured (currently
-  `apps/api`, `apps/cli`) — including same-directory `./foo.ts` imports, not just deep `../../`
-  ones. `@/*` resolves to that app's `src/*`; a package-root `test/fixtures/` module (see Unit
-  testing below) is reached via the separate `@test/*` alias, so a source file never needs a `src`
-  segment (`@/crawlers/constants.ts`, not `@/src/crawlers/constants.ts`) — see
-  `apps/cli/vite.config.ts` / `tsconfig.json` for the two `resolve.alias` entries. Packages without
-  a configured alias (`packages/db`, `packages/domain`) keep same-directory `./foo.ts` imports —
-  there's no alias to use instead.
+- **Alias imports depend on whether the package is bundled before it runs — check that before
+  converting anything.** `@/*` (and `apps/cli`'s `@test/*`) are configured as `resolve.alias` in
+  both `apps/api` and `apps/cli`'s `vite.config.ts`/`tsconfig.json`, but that alias only exists for
+  tooling that reads those configs (Vite/Vitest, wrangler's esbuild bundle). **`apps/api`** is
+  always bundled by wrangler before it runs (locally and in prod), so `@/...` is safe everywhere in
+  `apps/api/src` — use it, never relative, including same-directory `./foo.ts`. **`apps/cli`'s
+  `mday` binary is never bundled — its `bin`/`mday` task is a raw `node src/cli.ts` invocation, in
+  CI (`.github/workflows/crawl-*.yml`) and everywhere else.** Plain Node has no idea what `@/`
+  means, so every non-test file `cli.ts` can reach — which in practice is nearly all of
+  `apps/cli/src` — **must use relative imports**, not `@/...`. This has broken production before
+  (#92): an "alias imports everywhere" pass converted `apps/cli/src`'s production files and every
+  scheduled crawl workflow immediately started failing with `ERR_MODULE_NOT_FOUND`, because nothing
+  in that runtime path resolves `@/`. `apps/cli/src/**/*.test.ts` is the one exception within
+  `apps/cli` — those run under Vitest, not raw Node, so `@/...`/`@test/...` work there and are
+  preferred (never relative for test files). Packages without a configured alias (`packages/db`,
+  `packages/domain`) keep same-directory `./foo.ts` imports regardless — there's no alias to use
+  instead, bundled or not.
 - Avoid magic numbers/strings — name them. Comments only for non-obvious intent; never commented-out
   code.
 - **Zod** for validation schemas and for **env/config**: a Zod-validated config module per app. Env
