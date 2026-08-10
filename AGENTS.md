@@ -62,14 +62,22 @@ install/link layer underneath.
 
 ## Local development / database
 
-- **There is no local Docker Postgres.** Local dev uses a **Neon `matchday-dev`** database
-  (`matchday` is prod). Both are reached through the **neon-http/serverless driver**, which speaks
-  Neon's HTTP/WebSocket protocol — it **cannot** connect to a raw-TCP local Postgres, so don't
-  introduce one or add a `pg` driver for it.
+- ⚠️ **Local points at PRODUCTION.** There is no separate dev database: maintaining a second
+  crawled copy cost more than it was worth, so `.env.local` in every app holds the **prod**
+  `DATABASE_URL` (Neon `matchday`). Everything below follows from that.
+- **Treat every local write as a production write.** Reads are free; anything that inserts,
+  updates or deletes is hitting live data. Before running a write command or an ad-hoc script,
+  say so and get the go-ahead. Never write test/scratch rows to "try something out" — and if you
+  do create any, delete them in the same session.
+- **There is no local Docker Postgres.** The **neon-http/serverless driver** speaks Neon's
+  HTTP/WebSocket protocol and **cannot** connect to a raw-TCP local Postgres, so don't introduce
+  one or add a `pg` driver for it.
 - **Migrations** run via drizzle-kit: `cd packages/db && vp run db:migrate`. `drizzle.config.ts`
-  auto-loads `packages/db/.env.local` (gitignored) — put the **dev** `DATABASE_URL` there (Neon
-  **pooled** host, `?sslmode=require`). Never run migrations against prod locally: prod migrations
-  run only in CI (`.github/workflows/deploy.yml`, on push to `main`) from the `DATABASE_URL` secret.
+  auto-loads `packages/db/.env.local` (gitignored; Neon **direct** host, `?sslmode=require`).
+  **Don't run migrations locally** — that is now a prod DDL change. They run in CI
+  (`.github/workflows/deploy.yml`, on push to `main`) from the `DATABASE_URL` secret.
+- **Want isolation?** Neon branching is the intended fix (a copy-on-write branch of `matchday`,
+  no re-crawl) — not yet set up. Until it is, the above stands.
 
 ## Quality gates (before every PR/push)
 

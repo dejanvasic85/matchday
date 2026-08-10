@@ -38,9 +38,15 @@ automatically (gitignored). Copy the example and fill it in:
 cp apps/cli/.env.example apps/cli/.env.local
 ```
 
-Point `DATABASE_URL` at the Neon **`matchday-dev`** pooled host (`?sslmode=require`) — never prod.
+Point `DATABASE_URL` at the Neon **`matchday`** pooled host (`?sslmode=require`).
 See [apps/cli/.env.example](apps/cli/.env.example) for every variable; R2 credentials are
 required (raw responses are staged there even on a dry run).
+
+> ⚠️ **That is the production database.** There is no separate dev database — keeping a second
+> crawled copy in sync cost more than it was worth. Every local command that writes is writing to
+> live data, so prefer `--dry-run` while iterating, and treat `client add`, `add-subscription` and
+> `create-token` as production changes. Neon branching (a copy-on-write branch of `matchday`, no
+> re-crawl) is the intended way to get isolation back; it isn't set up yet.
 
 **2. Run a command.** From the repo root, `pnpm mday <command>` forwards straight to the CLI (args
 pass through unchanged):
@@ -79,7 +85,7 @@ pnpm mday deep-crawl --league lea_xxxxxxxxxxxx --dry-run
 ```
 
 To find a `lea_` id, run `catalog` (above) to populate the leagues, then look one up by name in the
-dev database, e.g.:
+database, e.g.:
 
 ```sql
 select id, name from league order by name;
