@@ -19,9 +19,11 @@ a **backend + CLI crawler; there is no UI in this repo.**
 pnpm + Vite+ monorepo:
 
 - `apps/api` — REST API
-- `apps/cli` — `mday` CLI: crawler + scheduler, one subdirectory per source under
-  `src/crawlers/` (`dribl/` today, including its Dribl-specific external schemas + mappers —
-  nothing source-specific lives outside its own `crawlers/<source>/` folder)
+- `apps/cli` — `mday` CLI: the **administration surface** (0014) as well as the crawler. Crawl
+  code lives one subdirectory per source under `src/crawlers/` (`dribl/` today, including its
+  Dribl-specific external schemas + mappers — nothing source-specific lives outside its own
+  `crawlers/<source>/` folder); admin/crawl entry points are grouped under `src/jobs/<area>/`.
+  New administration features land here by default rather than in an admin MCP server.
 - `packages/domain` — Zod schemas, entity types, ID service (source-agnostic; no Dribl knowledge)
 - `packages/db` — Drizzle schema, migrations, per-entity data access
 - `infra/` — deployment/infra config
@@ -130,11 +132,22 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
     collaborators (data-access, logger, clock, notifiers) **by argument** so tests pass fakes. This
     is the unit-tested layer.
   - **Transport** — thin Hono handlers / CLI jobs that construct the real dependencies and call
-    the service. Keep it glue-only.
+    the service. Keep it glue-only. A future consumer-facing MCP server (0014) is one more
+    transport over these same services, so nothing a transport needs belongs in a service.
 - **No verb-first file/module names.** A module is named after the thing it's about
   (`clubDb.ts`, `clubResolver.ts`, `catalogCrawler.ts`); verbs belong to the functions inside
   (`upsertClub`, `resolveClub`, `crawlCatalog`). Exported function/type names are unaffected by
   this rule — only the file name changes.
+- **CLI commands are consumed by agents as well as humans** (0014 — `mday` is the admin surface,
+  so there's no admin MCP server to be "the machine interface"). Therefore:
+  - Group commands by noun, subcommand by verb: `mday client add`, `mday client list`.
+  - Every read command that prints a table also offers `--json`; keep stdout to the payload alone
+    and send logs to stderr, so `| jq` works.
+  - Filter and limit **server-side** — never expect the caller to grep a full dump. Accept
+    human-typed keys (a club/league name), not just ids the caller would have to already know.
+  - `--help` text is the discovery mechanism: state what a command writes and any ordering
+    dependency on other commands.
+  - Ambiguous input fails listing the candidates; it never silently picks one.
 - **Mappers** are explicit named transform functions at the source-raw→domain boundary,
   Zod-validated on both sides, living alongside their source's other code under
   `apps/cli/src/crawlers/<source>/mappers/` (nothing source-specific lives in `packages/domain`).
