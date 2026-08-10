@@ -2,7 +2,7 @@
 // (dribl-crawling skill). Raw response staged to R2 before mapping, per 0004. Dribl's own
 // endpoint/wire format calls this a "ladder" — our side of the boundary calls it "table".
 
-import { err, ok, type Logger, type Result } from "@matchday/domain";
+import { ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "./browserFetch.ts";
 import { buildDriblApiUrl, type DriblLeagueIds } from "./driblApiUrl.ts";
 import {
@@ -35,7 +35,7 @@ export async function crawlTable(
 
   const parsed = driblTableApiResponseSchema.safeParse(fetched.value);
   if (!parsed.success) {
-    return err({ message: "Failed to validate table response", cause: parsed.error });
+    return serverError("Failed to validate table response", parsed.error);
   }
 
   if (parsed.data.data.length === 0) {

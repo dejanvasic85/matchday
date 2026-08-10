@@ -4,8 +4,8 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
-import { jsonResult, jsonResultOrNotFound } from "@/resultResponse.ts";
-import { errorSchema } from "@/schemas/errorSchema.ts";
+import { jsonResult } from "@/resultResponse.ts";
+import { errorResponsesValue } from "@/schemas/errorResponses.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
 import { seasonResponseSchema } from "@/schemas/seasonSchema.ts";
 import { createSeasonServiceDeps, getSeason, listAllSeasons } from "@/services/seasonService.ts";
@@ -22,10 +22,7 @@ const listSeasonsRoute = createRoute({
       description: "The full season catalog",
       content: { "application/json": { schema: seasonResponseSchema.array() } },
     },
-    500: {
-      description: "Internal server error",
-      content: { "application/json": { schema: errorSchema } },
-    },
+    ...errorResponsesValue,
   },
 });
 
@@ -45,19 +42,12 @@ const getSeasonRoute = createRoute({
       description: "The season",
       content: { "application/json": { schema: seasonResponseSchema } },
     },
-    404: {
-      description: "Season not found",
-      content: { "application/json": { schema: errorSchema } },
-    },
-    500: {
-      description: "Internal server error",
-      content: { "application/json": { schema: errorSchema } },
-    },
+    ...errorResponsesValue,
   },
 });
 
 seasonRoute.openapi(getSeasonRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getSeason(createSeasonServiceDeps(c.get("db")), id);
-  return jsonResultOrNotFound(c, result, "api.season.get.failed", "Season not found");
+  return jsonResult(c, result, "api.season.get.failed");
 });

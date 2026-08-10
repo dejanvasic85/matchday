@@ -3,7 +3,7 @@
 // cached by league name (dribl-crawling skill) so repeat crawls skip re-resolution; a regrade
 // changes the league name, misses the cache, and re-resolves automatically.
 
-import { err, ok, type Logger, type Result } from "@matchday/domain";
+import { notFound, ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "./browserFetch.ts";
 import type { DriblLeagueIds } from "./driblApiUrl.ts";
 import { crawlerConfigValue } from "./constants.ts";
@@ -38,7 +38,7 @@ async function resolveListId(
 
   const parsed = driblListResponseSchema.safeParse(fetched.value);
   if (!parsed.success) {
-    return err({ message: `Failed to validate list response from ${url}`, cause: parsed.error });
+    return serverError(`Failed to validate list response from ${url}`, parsed.error);
   }
 
   const match = parsed.data.data.find((item) => {
@@ -49,7 +49,7 @@ async function resolveListId(
   });
 
   if (match === undefined) {
-    return err({ message: `No match for "${matchName}" at ${url}` });
+    return notFound(`No match for "${matchName}" at ${url}`);
   }
   return ok(match.id);
 }

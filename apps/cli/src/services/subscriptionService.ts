@@ -3,8 +3,8 @@
 // data-access, so it's unit-testable with fakes instead of a real DB (DI over mocking Drizzle).
 
 import {
-  err,
   generateId,
+  notFound,
   ok,
   type LeagueId,
   type Result,
@@ -38,7 +38,7 @@ export async function createSubscription(
     return leagueResult;
   }
   if (leagueResult.value === null) {
-    return err({ message: `League not found: ${leagueId}` });
+    return notFound(`League not found: ${leagueId}`);
   }
 
   const clientResult = await resolveClient(deps, clientName);

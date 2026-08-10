@@ -3,7 +3,7 @@
 // is staged to R2 before mapping, per 0004, so a bad transform can be reprocessed without
 // re-crawling.
 
-import { err, ok, type Logger, type Result } from "@matchday/domain";
+import { ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "./browserFetch.ts";
 import { buildDriblApiUrl, type DriblLeagueIds } from "./driblApiUrl.ts";
 import {
@@ -45,10 +45,7 @@ export async function crawlFixturesByRound(
 
     const parsed = driblFixturesApiResponseSchema.safeParse(fetched.value);
     if (!parsed.success) {
-      return err({
-        message: `Failed to validate fixtures response for round ${round}`,
-        cause: parsed.error,
-      });
+      return serverError(`Failed to validate fixtures response for round ${round}`, parsed.error);
     }
 
     if (parsed.data.data.length === 0) {

@@ -4,9 +4,9 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
-import { jsonResult, jsonResultOrNotFound } from "@/resultResponse.ts";
+import { jsonResult } from "@/resultResponse.ts";
 import { clubResponseSchema } from "@/schemas/clubSchema.ts";
-import { errorSchema } from "@/schemas/errorSchema.ts";
+import { errorResponsesValue } from "@/schemas/errorResponses.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
 import { createClubServiceDeps, getClub, listAllClubs } from "@/services/clubService.ts";
 
@@ -22,10 +22,7 @@ const listClubsRoute = createRoute({
       description: "The full club catalog",
       content: { "application/json": { schema: clubResponseSchema.array() } },
     },
-    500: {
-      description: "Internal server error",
-      content: { "application/json": { schema: errorSchema } },
-    },
+    ...errorResponsesValue,
   },
 });
 
@@ -45,19 +42,12 @@ const getClubRoute = createRoute({
       description: "The club",
       content: { "application/json": { schema: clubResponseSchema } },
     },
-    404: {
-      description: "Club not found",
-      content: { "application/json": { schema: errorSchema } },
-    },
-    500: {
-      description: "Internal server error",
-      content: { "application/json": { schema: errorSchema } },
-    },
+    ...errorResponsesValue,
   },
 });
 
 clubRoute.openapi(getClubRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getClub(createClubServiceDeps(c.get("db")), id);
-  return jsonResultOrNotFound(c, result, "api.club.get.failed", "Club not found");
+  return jsonResult(c, result, "api.club.get.failed");
 });

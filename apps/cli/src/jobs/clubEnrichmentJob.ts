@@ -6,7 +6,7 @@
 // clients and downloadImage implementation, then delegates crawling and persistence to the
 // adapter's session (source-abstraction seam, docs/todo.md Phase 3).
 
-import { err, ok, type Logger, type Result } from "@matchday/domain";
+import { ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { createDbClient } from "@matchday/db";
 import type { CliConfig } from "../config.ts";
 import type { CrawlSource } from "../crawlers/constants.ts";
@@ -30,13 +30,13 @@ async function downloadImage(url: string): Promise<Result<DownloadedImage>> {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      return err({ message: `Failed to download image ${url}: HTTP ${response.status}` });
+      return serverError(`Failed to download image ${url}: HTTP ${response.status}`);
     }
     const contentType = response.headers.get("content-type") ?? "image/png";
     const bytes = new Uint8Array(await response.arrayBuffer());
     return ok({ bytes, contentType });
   } catch (cause) {
-    return err({ message: `Failed to download image ${url}`, cause });
+    return serverError(`Failed to download image ${url}`, cause);
   }
 }
 

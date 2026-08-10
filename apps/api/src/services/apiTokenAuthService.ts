@@ -1,10 +1,19 @@
 // API token authentication (ADR 0013): resolves the client behind a request's `Authorization`
 // header. Pure business logic (AGENTS.md) — the header is hashed and looked up, never compared
-// as plaintext. Every failure mode (missing header, unknown token, revoked token) maps to the
-// same generic error; the transport layer turns any failure into a single 401, so as not to leak
-// which case applied.
+// as plaintext. Every *credential* failure (missing header, unknown token, revoked token) maps to
+// the same `Unauthorized` error so the transport layer cannot leak which case applied. A failing
+// token lookup is a `ServerError` instead: an unreachable database must surface as a logged 500,
+// never as "your token is bad".
 
-import { err, hashApiToken, ok, parseId, type ClientId, type Result } from "@matchday/domain";
+import {
+  hashApiToken,
+  ok,
+  parseId,
+  serverError,
+  unauthorized,
+  type ClientId,
+  type Result,
+} from "@matchday/domain";
 import { findApiTokenByHash, type Db } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -23,7 +32,7 @@ export function createApiTokenAuthDeps(db: Db): ApiTokenAuthDeps {
 }
 
 const bearerPrefixValue = "Bearer ";
-const unauthorizedError = err({ message: "Invalid or missing API token" });
+const unauthorizedMessageValue = "Invalid or missing API token";
 
 function parseBearerToken(authorizationHeader: string | undefined): string | undefined {
   if (authorizationHeader === undefined || !authorizationHeader.startsWith(bearerPrefixValue)) {
@@ -39,7 +48,7 @@ export async function authenticateApiToken(
 ): Promise<Result<ClientId>> {
   const token = parseBearerToken(authorizationHeader);
   if (token === undefined) {
-    return unauthorizedError;
+    return unauthorized(unauthorizedMessageValue);
   }
 
   const tokenHash = await hashApiToken(token);
@@ -48,14 +57,14 @@ export async function authenticateApiToken(
     return found;
   }
   if (found.value === null || found.value.revokedAt !== null) {
-    return unauthorizedError;
+    return unauthorized(unauthorizedMessageValue);
   }
 
   const clientId = parseId(found.value.clientId, "client");
   if (clientId === undefined) {
-    return err({
-      message: `Api token row's client id "${found.value.clientId}" doesn't have the expected "cli_" prefix`,
-    });
+    return serverError(
+      `Api token row's client id "${found.value.clientId}" doesn't have the expected "cli_" prefix`,
+    );
   }
   return ok(clientId);
 }

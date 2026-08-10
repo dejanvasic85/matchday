@@ -7,11 +7,11 @@
 // so it must never be the primary key.
 
 import {
-  err,
   externalRefEntityTypeValue,
   generateId,
   ok,
   parseId,
+  serverError,
   sourceValue,
   type ClubId,
   type Result,
@@ -32,7 +32,7 @@ export type ResolveClubInput = {
 function toClubId(id: string): Result<ClubId> {
   const clubId = parseId(id, "club");
   if (clubId === undefined) {
-    return err({ message: `Club row id "${id}" doesn't have the expected "clb_" prefix` });
+    return serverError(`Club row id "${id}" doesn't have the expected "clb_" prefix`);
   }
   return ok(clubId);
 }

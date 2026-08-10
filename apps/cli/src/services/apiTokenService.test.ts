@@ -1,4 +1,4 @@
-import { err, ok } from "@matchday/domain";
+import { notFound, ok, serverError } from "@matchday/domain";
 import { createApiToken, revokeApiTokenById, type ApiTokenServiceDeps } from "./apiTokenService.ts";
 
 function makeDeps(overrides: Partial<ApiTokenServiceDeps> = {}): ApiTokenServiceDeps {
@@ -43,7 +43,7 @@ describe("createApiToken", () => {
   });
 
   it("propagates a client resolution failure without inserting a token", async () => {
-    const clientError = err({ message: "Failed to upsert client" });
+    const clientError = serverError("Failed to upsert client");
     const deps = makeDeps({ upsertClientByName: vi.fn().mockResolvedValue(clientError) });
 
     const result = await createApiToken(deps, "Williamstown SC");
@@ -53,7 +53,7 @@ describe("createApiToken", () => {
   });
 
   it("propagates an insert failure", async () => {
-    const insertError = err({ message: "Failed to insert api token" });
+    const insertError = serverError("Failed to insert api token");
     const deps = makeDeps({ insertApiToken: vi.fn().mockResolvedValue(insertError) });
 
     const result = await createApiToken(deps, "Williamstown SC");
@@ -77,11 +77,11 @@ describe("revokeApiTokenById", () => {
 
     const result = await revokeApiTokenById(deps, "tok_missing0000");
 
-    expect(result).toEqual(err({ message: "Api token not found: tok_missing0000" }));
+    expect(result).toEqual(notFound("Api token not found: tok_missing0000"));
   });
 
   it("propagates a revoke failure", async () => {
-    const revokeError = err({ message: "Failed to revoke api token" });
+    const revokeError = serverError("Failed to revoke api token");
     const deps = makeDeps({ revokeApiToken: vi.fn().mockResolvedValue(revokeError) });
 
     const result = await revokeApiTokenById(deps, "tok_existing000");

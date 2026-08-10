@@ -1,4 +1,4 @@
-import { err, ok } from "@matchday/domain";
+import { notFound, ok, serverError } from "@matchday/domain";
 import { getClub, listAllClubs, type ClubServiceDeps } from "./clubService.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
@@ -43,7 +43,7 @@ describe("listAllClubs", () => {
   });
 
   it("propagates a list failure", async () => {
-    const listError = err({ message: "Failed to list clubs" });
+    const listError = serverError("Failed to list clubs");
     const deps = makeDeps({ listClubs: vi.fn().mockResolvedValue(listError) });
 
     const result = await listAllClubs(deps);
@@ -63,16 +63,16 @@ describe("getClub", () => {
     );
   });
 
-  it("returns null when the club doesn't exist", async () => {
+  it("returns a NotFound failure when the club doesn't exist", async () => {
     const deps = makeDeps({ getClubById: vi.fn().mockResolvedValue(ok(null)) });
 
     const result = await getClub(deps, "clb_missing0000");
 
-    expect(result).toEqual(ok(null));
+    expect(result).toEqual(notFound("Club not found"));
   });
 
   it("propagates a lookup failure", async () => {
-    const lookupError = err({ message: "Failed to get club by id" });
+    const lookupError = serverError("Failed to get club by id");
     const deps = makeDeps({ getClubById: vi.fn().mockResolvedValue(lookupError) });
 
     const result = await getClub(deps, "clb_abc123");

@@ -13,10 +13,10 @@
 // its ref, would mint a *new* id, and would leave a duplicate row behind.
 
 import {
-  err,
   generateId,
   ok,
   parseId,
+  serverError,
   sourceValue,
   type EntityId,
   type EntityType,
@@ -54,9 +54,9 @@ export async function resolveEntityByExternalRef<T extends EntityType & External
   if (existing.value !== null) {
     const internalId = parseId(existing.value.internalId, entityType);
     if (internalId === undefined) {
-      return err({
-        message: `external_ref internalId "${existing.value.internalId}" doesn't match expected prefix for "${entityType}"`,
-      });
+      return serverError(
+        `external_ref internalId "${existing.value.internalId}" doesn't match expected prefix for "${entityType}"`,
+      );
     }
     id = internalId;
     isNew = false;

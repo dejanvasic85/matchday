@@ -1,4 +1,4 @@
-import { err, ok } from "@matchday/domain";
+import { notFound, ok, serverError } from "@matchday/domain";
 import {
   getCompetition,
   listAllCompetitions,
@@ -37,7 +37,7 @@ describe("listAllCompetitions", () => {
   });
 
   it("propagates a list failure", async () => {
-    const listError = err({ message: "Failed to list competitions" });
+    const listError = serverError("Failed to list competitions");
     const deps = makeDeps({ listCompetitions: vi.fn().mockResolvedValue(listError) });
 
     const result = await listAllCompetitions(deps);
@@ -57,16 +57,16 @@ describe("getCompetition", () => {
     );
   });
 
-  it("returns null when the competition doesn't exist", async () => {
+  it("returns a NotFound failure when the competition doesn't exist", async () => {
     const deps = makeDeps({ getCompetitionById: vi.fn().mockResolvedValue(ok(null)) });
 
     const result = await getCompetition(deps, "cmp_missing0000");
 
-    expect(result).toEqual(ok(null));
+    expect(result).toEqual(notFound("Competition not found"));
   });
 
   it("propagates a lookup failure", async () => {
-    const lookupError = err({ message: "Failed to get competition by id" });
+    const lookupError = serverError("Failed to get competition by id");
     const deps = makeDeps({ getCompetitionById: vi.fn().mockResolvedValue(lookupError) });
 
     const result = await getCompetition(deps, "cmp_abc123");

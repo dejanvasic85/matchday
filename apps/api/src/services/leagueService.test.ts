@@ -1,4 +1,4 @@
-import { err, ok } from "@matchday/domain";
+import { notFound, ok, serverError } from "@matchday/domain";
 import { getLeague, listAllLeagues, type LeagueServiceDeps } from "./leagueService.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
@@ -44,7 +44,7 @@ describe("listAllLeagues", () => {
   });
 
   it("propagates a list failure", async () => {
-    const listError = err({ message: "Failed to list leagues" });
+    const listError = serverError("Failed to list leagues");
     const deps = makeDeps({ listLeagues: vi.fn().mockResolvedValue(listError) });
 
     const result = await listAllLeagues(deps);
@@ -64,16 +64,16 @@ describe("getLeague", () => {
     );
   });
 
-  it("returns null when the league doesn't exist", async () => {
+  it("returns a NotFound failure when the league doesn't exist", async () => {
     const deps = makeDeps({ getLeagueById: vi.fn().mockResolvedValue(ok(null)) });
 
     const result = await getLeague(deps, "lea_missing0000");
 
-    expect(result).toEqual(ok(null));
+    expect(result).toEqual(notFound("League not found"));
   });
 
   it("propagates a lookup failure", async () => {
-    const lookupError = err({ message: "Failed to get league by id" });
+    const lookupError = serverError("Failed to get league by id");
     const deps = makeDeps({ getLeagueById: vi.fn().mockResolvedValue(lookupError) });
 
     const result = await getLeague(deps, "lea_abc123");

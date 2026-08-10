@@ -5,7 +5,7 @@
 // neon-http has no interactive transactions (ADR 0011); every caller is a single idempotent
 // statement (a lookup or an upsert), so replaying one on a transient failure is always safe.
 
-import { err, ok, type Result } from "@matchday/domain";
+import { ok, serverError, type Result } from "@matchday/domain";
 import { retryConfigValue } from "./constants.ts";
 
 /** A neon-http error is transient when it carries no `sourceError` — i.e. the SQL never executed
@@ -47,11 +47,7 @@ export async function runQuery<T>(fn: () => Promise<T>, message: string): Promis
     }
   }
 
-  return err({ message, cause: lastCause });
-}
-
-export function toError(cause: unknown, message: string): Result<never> {
-  return err({ message, cause });
+  return serverError(message, lastCause);
 }
 
 /** Run an upsert (with retry, via {@link runQuery}) and unwrap its single `returning()` row,
@@ -67,7 +63,7 @@ export async function runUpsert<T>(
   }
   const row = result.value[0];
   if (row === undefined) {
-    return toError(values, `Upsert of ${entityLabel} returned no row`);
+    return serverError(`Upsert of ${entityLabel} returned no row`, values);
   }
   return ok(row);
 }

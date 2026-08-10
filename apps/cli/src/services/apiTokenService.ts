@@ -3,10 +3,10 @@
 // the caller once and never stored, so it can't be recovered later, only rotated.
 
 import {
-  err,
   generateApiToken,
   generateId,
   hashApiToken,
+  notFound,
   ok,
   type ApiTokenId,
   type Result,
@@ -58,7 +58,7 @@ export async function revokeApiTokenById(
     return revoked;
   }
   if (revoked.value === null) {
-    return err({ message: `Api token not found: ${id}` });
+    return notFound(`Api token not found: ${id}`);
   }
   return ok(undefined);
 }

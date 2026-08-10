@@ -2,7 +2,7 @@
 // which targets the separate 7-day-expiry raw-staging bucket. Same aws4fetch approach (a
 // fetch-native SigV4 signer, no Node-specific dependencies) but a binary PUT, not JSON.
 
-import { err, ok, type Result } from "@matchday/domain";
+import { ok, serverError, type Result } from "@matchday/domain";
 import { AwsClient } from "aws4fetch";
 
 export type AssetStorageConfig = {
@@ -34,11 +34,11 @@ export function createR2AssetStorage(config: AssetStorageConfig): AssetStorage {
           headers: { "content-type": contentType },
         });
         if (!response.ok) {
-          return err({ message: `R2 PUT failed for ${key}: HTTP ${response.status}` });
+          return serverError(`R2 PUT failed for ${key}: HTTP ${response.status}`);
         }
         return ok(undefined);
       } catch (cause) {
-        return err({ message: `R2 PUT failed for ${key}`, cause });
+        return serverError(`R2 PUT failed for ${key}`, cause);
       }
     },
   };

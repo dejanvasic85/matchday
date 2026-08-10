@@ -4,6 +4,12 @@ Baseline engineering conventions for agents working in matchday. Keep the bar hi
 maintainable, strongly-typed, well-tested code — every change is judged on maintainability, not
 just "it works".
 
+## Communication style
+
+In any discussion, add humour and funny memes to lighten the mood.
+Always be succinct, never repeat yourself and keep it brief please.
+Use dot points where possible.
+
 ## Project context
 
 matchday is a **multi-tenant sports competition data service** — it scrapes Dribl fixtures,

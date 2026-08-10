@@ -2,7 +2,7 @@
 // to the wire shape (timestamps as ISO strings) and lists/fetches competitions. Catalog data —
 // open to any authenticated client, no subscription scoping (ADR 0013).
 
-import { mapResult, type Competition, type Result } from "@matchday/domain";
+import { mapResult, requireFound, type Competition, type Result } from "@matchday/domain";
 import { getCompetitionById, listCompetitions, type Db } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -46,9 +46,7 @@ export async function listAllCompetitions(
 export async function getCompetition(
   deps: Pick<CompetitionServiceDeps, "getCompetitionById">,
   id: string,
-): Promise<Result<CompetitionResponse | null>> {
+): Promise<Result<CompetitionResponse>> {
   const result = await deps.getCompetitionById(id);
-  return mapResult(result, (competition) =>
-    competition === null ? null : mapToCompetitionResponse(competition),
-  );
+  return requireFound(result, mapToCompetitionResponse, "Competition not found");
 }

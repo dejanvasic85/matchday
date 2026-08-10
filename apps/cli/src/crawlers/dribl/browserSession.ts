@@ -3,7 +3,7 @@
 // API calls via browserFetch. Browser endpoint is abstracted so thanos <-> managed is a config
 // change (0009): connect over BROWSER_WS_ENDPOINT when set, else launch local Chrome.
 
-import { err, ok, type Result } from "@matchday/domain";
+import { ok, serverError, type Result } from "@matchday/domain";
 import { type Browser, chromium, type Page } from "playwright-core";
 import { crawlerConfigValue } from "./constants.ts";
 
@@ -32,7 +32,7 @@ export async function openBrowserSession(
   try {
     browser = await launchBrowser(options);
   } catch (cause) {
-    return err({ message: "Failed to launch browser", cause });
+    return serverError("Failed to launch browser", cause);
   }
 
   try {
@@ -51,6 +51,6 @@ export async function openBrowserSession(
     });
   } catch (cause) {
     await browser.close();
-    return err({ message: "Failed to establish Cloudflare clearance", cause });
+    return serverError("Failed to establish Cloudflare clearance", cause);
   }
 }

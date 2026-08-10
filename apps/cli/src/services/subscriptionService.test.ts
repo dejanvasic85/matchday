@@ -1,4 +1,4 @@
-import { err, ok } from "@matchday/domain";
+import { notFound, ok, serverError } from "@matchday/domain";
 import { createSubscription, type SubscriptionServiceDeps } from "./subscriptionService.ts";
 
 function makeDeps(overrides: Partial<SubscriptionServiceDeps> = {}): SubscriptionServiceDeps {
@@ -37,12 +37,12 @@ describe("createSubscription", () => {
       leagueId: "lea_missing",
     });
 
-    expect(result).toEqual(err({ message: "League not found: lea_missing" }));
+    expect(result).toEqual(notFound("League not found: lea_missing"));
     expect(deps.upsertSubscription).not.toHaveBeenCalled();
   });
 
   it("propagates a league lookup failure", async () => {
-    const lookupError = err({ message: "Failed to get league by id" });
+    const lookupError = serverError("Failed to get league by id");
     const deps = makeDeps({ getLeagueById: vi.fn().mockResolvedValue(lookupError) });
 
     const result = await createSubscription({
@@ -56,7 +56,7 @@ describe("createSubscription", () => {
   });
 
   it("propagates a client resolution failure without upserting", async () => {
-    const clientError = err({ message: "Failed to upsert client" });
+    const clientError = serverError("Failed to upsert client");
     const deps = makeDeps({ upsertClientByName: vi.fn().mockResolvedValue(clientError) });
 
     const result = await createSubscription({
@@ -70,7 +70,7 @@ describe("createSubscription", () => {
   });
 
   it("propagates an upsert failure", async () => {
-    const upsertError = err({ message: "Failed to upsert subscription" });
+    const upsertError = serverError("Failed to upsert subscription");
     const deps = makeDeps({ upsertSubscription: vi.fn().mockResolvedValue(upsertError) });
 
     const result = await createSubscription({

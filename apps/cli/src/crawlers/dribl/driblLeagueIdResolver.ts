@@ -5,10 +5,11 @@
 // live network call rather than a DB lookup.
 
 import {
-  err,
   externalRefEntityTypeValue,
+  notFound,
   ok,
   parseId,
+  serverError,
   sourceValue,
   type CompetitionId,
   type LeagueId,
@@ -49,7 +50,7 @@ async function resolveHash(
     return ref;
   }
   if (ref.value === null) {
-    return err({ message: `No dribl external_ref found for ${entityType} "${internalId}"` });
+    return notFound(`No dribl external_ref found for ${entityType} "${internalId}"`);
   }
   return ok(ref.value.sourceId);
 }
@@ -64,15 +65,13 @@ export async function resolveDriblLeagueIds(
     return leagueRow;
   }
   if (leagueRow.value === null) {
-    return err({ message: `League "${leagueId}" not found` });
+    return notFound(`League "${leagueId}" not found`);
   }
 
   const competitionId = parseId(leagueRow.value.competitionId, "competition");
   const seasonId = parseId(leagueRow.value.seasonId, "season");
   if (competitionId === undefined || seasonId === undefined) {
-    return err({
-      message: `League "${leagueId}" has malformed competition/season ids`,
-    });
+    return serverError(`League "${leagueId}" has malformed competition/season ids`);
   }
 
   const leagueHash = await resolveHash(deps, externalRefEntityTypeValue.league, leagueId);

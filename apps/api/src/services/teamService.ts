@@ -2,7 +2,7 @@
 // wire shape (timestamps as ISO strings) and lists/fetches teams. Catalog data — open to any
 // authenticated client, no subscription scoping (ADR 0013).
 
-import { mapResult, type Result, type Team } from "@matchday/domain";
+import { mapResult, requireFound, type Result, type Team } from "@matchday/domain";
 import { getTeamById, listTeams, type Db } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -47,7 +47,7 @@ export async function listAllTeams(
 export async function getTeam(
   deps: Pick<TeamServiceDeps, "getTeamById">,
   id: string,
-): Promise<Result<TeamResponse | null>> {
+): Promise<Result<TeamResponse>> {
   const result = await deps.getTeamById(id);
-  return mapResult(result, (team) => (team === null ? null : mapToTeamResponse(team)));
+  return requireFound(result, mapToTeamResponse, "Team not found");
 }

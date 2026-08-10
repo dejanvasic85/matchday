@@ -1,4 +1,4 @@
-import { err, ok } from "@matchday/domain";
+import { ok, serverError } from "@matchday/domain";
 import { retryConfigValue } from "./constants.ts";
 import { runQuery } from "./runQuery.ts";
 
@@ -40,7 +40,7 @@ describe("runQuery", () => {
 
     const result = await runQuery(fn, "always transient");
 
-    expect(result).toEqual(err({ message: "always transient", cause }));
+    expect(result).toEqual(serverError("always transient", cause));
     expect(fn).toHaveBeenCalledTimes(retryConfigValue.maxAttempts);
   });
 
@@ -50,7 +50,7 @@ describe("runQuery", () => {
 
     const result = await runQuery(fn, "sql error");
 
-    expect(result).toEqual(err({ message: "sql error", cause }));
+    expect(result).toEqual(serverError("sql error", cause));
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
@@ -60,7 +60,7 @@ describe("runQuery", () => {
 
     const result = await runQuery(fn, "generic error");
 
-    expect(result).toEqual(err({ message: "generic error", cause }));
+    expect(result).toEqual(serverError("generic error", cause));
     expect(fn).toHaveBeenCalledTimes(1);
   });
 });

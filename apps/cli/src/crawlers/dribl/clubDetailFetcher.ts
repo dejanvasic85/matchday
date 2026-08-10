@@ -2,7 +2,7 @@
 // Dribl's `clubs/{id}` endpoint. Unlike `list/clubs`, this returns a single object under `data`,
 // not an array (confirmed against a live response).
 
-import { err, ok, type Result } from "@matchday/domain";
+import { ok, serverError, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "./browserFetch.ts";
 import { crawlerConfigValue } from "./constants.ts";
 import {
@@ -23,10 +23,7 @@ export async function fetchClubDetail(
 
   const parsed = driblClubDetailApiResponseSchema.safeParse(fetched.value);
   if (!parsed.success) {
-    return err({
-      message: `Failed to validate clubs/${clubSourceId} response`,
-      cause: parsed.error,
-    });
+    return serverError(`Failed to validate clubs/${clubSourceId} response`, parsed.error);
   }
   return ok(parsed.data);
 }
