@@ -1,7 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
 /** Shared error response shape for every non-2xx response across every route. */
-export const errorSchema = z.object({ error: z.string() }).openapi("Error");
+const errorSchema = z.object({ error: z.string() }).openapi("Error");
 
 const errorContentValue = { "application/json": { schema: errorSchema } };
 
@@ -12,6 +12,10 @@ const errorContentValue = { "application/json": { schema: errorSchema } };
  * every one of these — and `openapi()` type-checks that against the route's `responses` keys.
  * Declaring the full set in one place is what lets a single response helper serve every route;
  * the cost is that an endpoint's spec lists statuses it may never actually emit.
+ *
+ * Deliberately not `as const`, despite the repo's `Value` convention: it widens what the spread
+ * contributes to `createRoute`, collapsing each route's inferred response union to
+ * `TypedResponse<any, 200>` and breaking every handler's type-check.
  */
 export const errorResponsesValue = {
   400: { description: "Bad request", content: errorContentValue },

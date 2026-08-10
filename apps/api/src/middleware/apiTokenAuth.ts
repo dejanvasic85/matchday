@@ -21,6 +21,8 @@ export const apiTokenAuthMiddleware = createMiddleware<{
     c.req.header("Authorization"),
   );
 
+  // Mirrors the Unauthorized/ServerError arms of `jsonResult` (resultResponse.ts) — middleware
+  // runs outside a `createRoute`, so it can't share that helper. Keep the two in sync.
   if (!result.ok) {
     if (result.error.kind === errorKindValue.unauthorized) {
       return c.json({ error: "Unauthorized" }, 401);

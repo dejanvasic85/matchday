@@ -30,8 +30,9 @@ function logFailure(event: string, error: ResultError): void {
  * Every route must spread `errorResponsesValue` into its `responses`, since this can emit any of
  * those statuses and `openapi()` rejects a handler returning one the route didn't declare.
  *
- * The `switch` is exhaustive with no `default`, so adding an `ErrorKind` becomes a type error
- * here rather than silently falling through to a 500.
+ * The trailing `never` assignment makes the `switch` exhaustive: adding an `ErrorKind` without a
+ * case here is a type error on that line, rather than a fallthrough that returns `undefined` and
+ * surfaces as an unreadable error at every `.openapi()` call site.
  */
 export function jsonResult<E extends Env, T>(c: Context<E>, result: Result<T>, event: string) {
   if (result.ok) {
@@ -51,5 +52,9 @@ export function jsonResult<E extends Env, T>(c: Context<E>, result: Result<T>, e
     case errorKindValue.serverError:
       logFailure(event, result.error);
       return c.json({ error: "Internal server error" }, 500);
+    default: {
+      const unhandled: never = kind;
+      return unhandled;
+    }
   }
 }

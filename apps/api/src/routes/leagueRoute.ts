@@ -6,7 +6,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
 import { jsonResult } from "@/resultResponse.ts";
-import { errorResponsesValue } from "@/schemas/errorSchema.ts";
+import { errorResponsesValue } from "@/schemas/errorResponses.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
 import { leagueResponseSchema } from "@/schemas/leagueSchema.ts";
 import { createLeagueServiceDeps, getLeague, listAllLeagues } from "@/services/leagueService.ts";

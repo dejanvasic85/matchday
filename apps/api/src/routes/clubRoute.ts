@@ -6,7 +6,7 @@ import type { ApiBindings } from "@/config.ts";
 import type { DbVariables } from "@/middleware/dbClient.ts";
 import { jsonResult } from "@/resultResponse.ts";
 import { clubResponseSchema } from "@/schemas/clubSchema.ts";
-import { errorResponsesValue } from "@/schemas/errorSchema.ts";
+import { errorResponsesValue } from "@/schemas/errorResponses.ts";
 import { idParamSchema } from "@/schemas/idParamSchema.ts";
 import { createClubServiceDeps, getClub, listAllClubs } from "@/services/clubService.ts";
 
