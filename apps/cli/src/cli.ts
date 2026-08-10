@@ -10,19 +10,19 @@ import {
   type SubscriptionId,
 } from "@matchday/domain";
 import { Command, InvalidArgumentError } from "commander";
-import { renderClientTable } from "@/src/clientTable.ts";
-import { getCliConfig } from "@/src/config.ts";
-import { crawlSourceValue, type CrawlSource } from "@/src/crawlers/constants.ts";
-import { runCatalogJob } from "@/src/jobs/crawls/catalog.ts";
-import { runClubEnrichmentJob } from "@/src/jobs/clubs/enrichClubs.ts";
-import { runCreateApiTokenJob } from "@/src/jobs/clients/createApiToken.ts";
-import { runCreateClientJob } from "@/src/jobs/clients/createClient.ts";
-import { runCreateSubscriptionJob } from "@/src/jobs/clients/createSubscription.ts";
-import { runDeepCrawlJob } from "@/src/jobs/crawls/deepCrawl.ts";
-import { runListClientsJob } from "@/src/jobs/clients/listClients.ts";
-import { runRemoveSubscriptionJob } from "@/src/jobs/clients/removeSubscription.ts";
-import { runRevokeApiTokenJob } from "@/src/jobs/clients/revokeApiToken.ts";
-import { runSubscribedLeaguesJob } from "@/src/jobs/crawls/subscribedLeagues.ts";
+import { renderClientTable } from "@/clientTable.ts";
+import { getCliConfig } from "@/config.ts";
+import { crawlSourceValue, type CrawlSource } from "@/crawlers/constants.ts";
+import { runCatalogJob } from "@/jobs/crawls/catalog.ts";
+import { runClubEnrichmentJob } from "@/jobs/clubs/enrichClubs.ts";
+import { runCreateApiTokenJob } from "@/jobs/clients/createApiToken.ts";
+import { runCreateClientJob } from "@/jobs/clients/createClient.ts";
+import { runCreateSubscriptionJob } from "@/jobs/clients/createSubscription.ts";
+import { runDeepCrawlJob } from "@/jobs/crawls/deepCrawl.ts";
+import { runListClientsJob } from "@/jobs/clients/listClients.ts";
+import { runRemoveSubscriptionJob } from "@/jobs/clients/removeSubscription.ts";
+import { runRevokeApiTokenJob } from "@/jobs/clients/revokeApiToken.ts";
+import { runSubscribedLeaguesJob } from "@/jobs/crawls/subscribedLeagues.ts";
 
 const currentYear = new Date().getFullYear().toString();
 const crawlSources = Object.values(crawlSourceValue);

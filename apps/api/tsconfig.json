@@ -18,6 +18,7 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "paths": {
+      "@test/*": ["./test/*"],
       "@/*": ["./src/*"]
     }
   }

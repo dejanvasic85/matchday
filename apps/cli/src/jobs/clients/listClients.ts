@@ -8,8 +8,8 @@ import {
   listClients,
   listSubscriptionsWithLeague,
 } from "@matchday/db";
-import type { CliConfig } from "@/src/config.ts";
-import { listClientSummaries, type ClientSummary } from "@/src/services/clientService.ts";
+import type { CliConfig } from "@/config.ts";
+import { listClientSummaries, type ClientSummary } from "@/services/clientService.ts";
 
 export type RunListClientsJobInput = {
   config: CliConfig;

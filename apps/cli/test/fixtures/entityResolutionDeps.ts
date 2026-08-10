@@ -1,4 +1,4 @@
-import type { EntityResolutionDeps } from "@/src/crawlers/dribl/entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "@/crawlers/dribl/entityResolutionDeps.ts";
 
 /** All methods default to a `vi.fn()` returning `undefined` — override per test as needed. */
 export function makeFakeEntityResolutionDeps(

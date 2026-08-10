@@ -1,7 +1,7 @@
 // Terminal rendering for `mday client list` — presentation only, kept out of the service so the
 // roster shape stays independent of how it's displayed (and `--json` prints it untouched).
 
-import type { ClientSummary } from "@/src/services/clientService.ts";
+import type { ClientSummary } from "@/services/clientService.ts";
 
 const columnGap = "  ";
 const emptyCell = "-";

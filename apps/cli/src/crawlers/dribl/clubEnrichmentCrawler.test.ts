@@ -1,7 +1,7 @@
 import { ok, serverError } from "@matchday/domain";
-import { makeFakeLogger } from "@/test/fixtures/logger.ts";
-import { makeQueuedFakePage } from "@/test/fixtures/fakePage.ts";
-import { makeFakeRawStorage } from "@/test/fixtures/rawStorage.ts";
+import { makeFakeLogger } from "@test/fixtures/logger.ts";
+import { makeQueuedFakePage } from "@test/fixtures/fakePage.ts";
+import { makeFakeRawStorage } from "@test/fixtures/rawStorage.ts";
 import { crawlClubEnrichment } from "./clubEnrichmentCrawler.ts";
 
 const tenantResponse = { data: { id: "tenant-id" } };
