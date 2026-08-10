@@ -13,17 +13,23 @@ import {
   type SubscriptionId,
 } from "@matchday/domain";
 import type { deleteSubscription, getLeagueById, upsertSubscription } from "@matchday/db";
+import {
+  listLeaguesForClub,
+  type ClubLeagueServiceDeps,
+  type ClubLeagues,
+} from "@/services/clubLeagueService.ts";
 import { resolveClient, type ClientResolverDeps } from "@/services/clientResolver.ts";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
   : never;
 
-export type SubscriptionServiceDeps = ClientResolverDeps & {
-  getLeagueById: WithoutDb<typeof getLeagueById>;
-  upsertSubscription: WithoutDb<typeof upsertSubscription>;
-  deleteSubscription: WithoutDb<typeof deleteSubscription>;
-};
+export type SubscriptionServiceDeps = ClientResolverDeps &
+  ClubLeagueServiceDeps & {
+    getLeagueById: WithoutDb<typeof getLeagueById>;
+    upsertSubscription: WithoutDb<typeof upsertSubscription>;
+    deleteSubscription: WithoutDb<typeof deleteSubscription>;
+  };
 
 function toSubscriptionId(id: string): Result<SubscriptionId> {
   const subscriptionId = parseId(id, "subscription");
@@ -67,6 +73,71 @@ export async function createSubscription(
   }
 
   return toSubscriptionId(upserted.value.id);
+}
+
+export type CreateSubscriptionsForClubInput = {
+  deps: Pick<
+    SubscriptionServiceDeps,
+    "findClientByName" | "findClubsByName" | "listLeaguesByClubId" | "upsertSubscription"
+  >;
+  clientName: string;
+  clubName: string;
+  /** Resolve the club and its leagues without writing any subscriptions — the safe-by-default
+   * habit for a fuzzy club match (#85): a typo'd `--club` is a prod-data event otherwise. */
+  dryRun: boolean;
+};
+
+export type ClubSubscriptionResult = ClubLeagues & {
+  /** Empty on a dry run — nothing was written. */
+  subscriptionIds: SubscriptionId[];
+};
+
+/** Subscribe a client to every league resolved for a club (#85) — onboarding a real club is one
+ * call instead of one `add-subscription` per league. Resolves the club/leagues before the client
+ * so an ambiguous or typo'd `--club` fails before any subscription write is attempted, dry run
+ * or not. */
+export async function createSubscriptionsForClub(
+  input: CreateSubscriptionsForClubInput,
+): Promise<Result<ClubSubscriptionResult>> {
+  const { deps, clientName, clubName, dryRun } = input;
+
+  const clubLeaguesResult = await listLeaguesForClub(deps, clubName);
+  if (!clubLeaguesResult.ok) {
+    return clubLeaguesResult;
+  }
+  const { club, leagues } = clubLeaguesResult.value;
+
+  const clientResult = await resolveClient(deps, clientName);
+  if (!clientResult.ok) {
+    return clientResult;
+  }
+
+  if (dryRun) {
+    return ok({ club, leagues, subscriptionIds: [] });
+  }
+
+  const subscriptionIds: SubscriptionId[] = [];
+  for (const league of leagues) {
+    const id = generateId("subscription");
+    // Sequential, not Promise.all: each failure should stop the run where it is rather than
+    // firing every remaining upsert concurrently against a client that just failed to resolve
+    // or a league that turned out invalid.
+    const upserted = await deps.upsertSubscription({
+      id,
+      clientId: clientResult.value,
+      leagueId: league.id,
+    });
+    if (!upserted.ok) {
+      return upserted;
+    }
+    const subscriptionId = toSubscriptionId(upserted.value.id);
+    if (!subscriptionId.ok) {
+      return subscriptionId;
+    }
+    subscriptionIds.push(subscriptionId.value);
+  }
+
+  return ok({ club, leagues, subscriptionIds });
 }
 
 /** Hard-delete a subscription, narrowing an unknown id to a `notFound` outcome so the CLI reports

@@ -18,6 +18,7 @@ export {
   getClubById,
   findClubByLogoUrl,
   findClubByName,
+  findClubsByName,
   upsertClub,
   updateClubEnrichmentFields,
   type ClubEnrichmentFields,
@@ -25,7 +26,13 @@ export {
 export { listTeams, getTeamById, upsertTeam } from "./teamDb.ts";
 export { listCompetitions, getCompetitionById, upsertCompetition } from "./competitionDb.ts";
 export { listSeasons, getSeasonById, upsertSeason } from "./seasonDb.ts";
-export { listLeagues, upsertLeague, getLeagueById, type ListLeaguesFilter } from "./leagueDb.ts";
+export {
+  listLeagues,
+  upsertLeague,
+  getLeagueById,
+  listLeaguesByClubId,
+  type ListLeaguesFilter,
+} from "./leagueDb.ts";
 export { upsertFixture } from "./fixtureDb.ts";
 export { upsertTableEntry } from "./tableEntryDb.ts";
 export {

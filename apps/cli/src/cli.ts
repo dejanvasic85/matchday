@@ -9,15 +9,18 @@ import {
   type LeagueId,
   type SubscriptionId,
 } from "@matchday/domain";
-import { Command, InvalidArgumentError } from "commander";
+import { Command, InvalidArgumentError, Option } from "commander";
 import { renderClientTable } from "@/clientTable.ts";
+import { renderClubLeagueTable } from "@/clubLeagueTable.ts";
 import { getCliConfig } from "@/config.ts";
 import { crawlSourceValue, type CrawlSource } from "@/crawlers/constants.ts";
 import { runCatalogJob } from "@/jobs/crawls/catalog.ts";
 import { runClubEnrichmentJob } from "@/jobs/clubs/enrichClubs.ts";
+import { runListClubLeaguesJob } from "@/jobs/clubs/listClubLeagues.ts";
 import { runCreateApiTokenJob } from "@/jobs/clients/createApiToken.ts";
 import { runCreateClientJob } from "@/jobs/clients/createClient.ts";
 import { runCreateSubscriptionJob } from "@/jobs/clients/createSubscription.ts";
+import { runCreateSubscriptionsForClubJob } from "@/jobs/clients/createSubscriptionsForClub.ts";
 import { runDeepCrawlJob } from "@/jobs/crawls/deepCrawl.ts";
 import { runListClientsJob } from "@/jobs/clients/listClients.ts";
 import { runRemoveSubscriptionJob } from "@/jobs/clients/removeSubscription.ts";
@@ -202,6 +205,35 @@ export function createCli(): Command {
       }
     });
 
+  const club = program
+    .command("club")
+    .description("Look up clubs and the leagues their teams play in (#85).");
+
+  club
+    .command("leagues")
+    .description(
+      "List the distinct leagues a club's teams play in, resolved via table_entry — a league " +
+        "is only discoverable here once the deep crawl has run for it at least once (fine for " +
+        "onboarding a club into an existing dataset, circular for a brand-new league). A name " +
+        "matching more than one club fails listing every candidate rather than guessing.",
+    )
+    .argument("<name>", "a club name, or a fragment of one")
+    .option("--json", "print the result as JSON instead of a table", false)
+    .action(async (name: string, options: { json: boolean }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runListClubLeaguesJob({ config, clubName: name });
+      if (!result.ok) {
+        logger.error("club.leaguesfailed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+        return;
+      }
+      const output = options.json
+        ? JSON.stringify(result.value, null, 2)
+        : renderClubLeagueTable(result.value);
+      process.stdout.write(`${output}\n`);
+    });
+
   const client = program
     .command("client")
     .description(
@@ -293,27 +325,110 @@ export function createCli(): Command {
   client
     .command("add-subscription")
     .description(
-      "Subscribe an existing client to a league (0012): links the client to our internal league " +
-        "id, putting that league in the deep crawl's scope. Prints the subscription id.",
+      "Subscribe an existing client to a league (0012), or to every league a club's teams play " +
+        "in (#85) — exactly one of --league/--club. --club resolves via table_entry, only " +
+        "discoverable once the deep crawl has run for a league at least once; run `club " +
+        "leagues <name>` or pass --dry-run first to preview before writing N subscription rows " +
+        "off a single fuzzy name match.",
     )
     .requiredOption("--client <name>", "the client name")
-    .requiredOption("--league <lea_id>", "the league id to subscribe to", parseLeagueId)
-    .action(async (options: { client: string; league: LeagueId }) => {
-      const config = getCliConfig();
-      const logger = createConsoleLogger();
-      const result = await runCreateSubscriptionJob({
-        logger,
-        config,
-        clientName: options.client,
-        leagueId: options.league,
-      });
-      if (!result.ok) {
-        logger.error("subscription.failed", result.error.message, { cause: result.error.cause });
-        process.exitCode = 1;
-        return;
-      }
-      process.stdout.write(`${result.value}\n`);
-    });
+    .addOption(
+      new Option("--league <lea_id>", "subscribe to a single league by id")
+        .argParser(parseLeagueId)
+        .conflicts("club"),
+    )
+    .addOption(
+      new Option(
+        "--club <name>",
+        "subscribe to every league this club's teams play in (a name fragment is enough, as " +
+          "long as it's unambiguous)",
+      ).conflicts("league"),
+    )
+    .option(
+      "--dry-run",
+      "with --club, resolve and print the club + leagues without subscribing to anything",
+      false,
+    )
+    .action(
+      async (options: { client: string; league?: LeagueId; club?: string; dryRun: boolean }) => {
+        const logger = createConsoleLogger();
+
+        if (options.league === undefined && options.club === undefined) {
+          logger.error("subscription.failed", "one of --league or --club is required");
+          process.exitCode = 1;
+          return;
+        }
+
+        if (options.dryRun && options.league !== undefined) {
+          logger.error("subscription.failed", "--dry-run only applies to --club, not --league");
+          process.exitCode = 1;
+          return;
+        }
+
+        const config = getCliConfig();
+
+        if (options.league !== undefined) {
+          const result = await runCreateSubscriptionJob({
+            logger,
+            config,
+            clientName: options.client,
+            leagueId: options.league,
+          });
+          if (!result.ok) {
+            logger.error("subscription.failed", result.error.message, {
+              cause: result.error.cause,
+            });
+            process.exitCode = 1;
+            return;
+          }
+          process.stdout.write(`${result.value}\n`);
+          return;
+        }
+
+        const clubName = options.club;
+        if (clubName === undefined) {
+          // Unreachable: the check above already ruled out both being undefined, and
+          // Option.conflicts rules out both being set. Kept so `clubName` narrows to `string`
+          // without a cast.
+          logger.error("subscription.failed", "one of --league or --club is required");
+          process.exitCode = 1;
+          return;
+        }
+
+        const result = await runCreateSubscriptionsForClubJob({
+          logger,
+          config,
+          clientName: options.client,
+          clubName,
+          dryRun: options.dryRun,
+        });
+        if (!result.ok) {
+          logger.error("subscription.clubfailed", result.error.message, {
+            cause: result.error.cause,
+          });
+          process.exitCode = 1;
+          return;
+        }
+
+        const { club: matchedClub, leagues, subscriptionIds } = result.value;
+        process.stdout.write(`Club: ${matchedClub.name} (${matchedClub.id})\n`);
+        if (options.dryRun) {
+          process.stdout.write(
+            `Dry run — would subscribe "${options.client}" to ${leagues.length} league(s):\n`,
+          );
+          for (const league of leagues) {
+            process.stdout.write(`  ${league.id}  ${league.name}\n`);
+          }
+          return;
+        }
+        process.stdout.write(
+          `Subscribed "${options.client}" to ${subscriptionIds.length} league(s):\n`,
+        );
+        for (const id of subscriptionIds) {
+          process.stdout.write(`${id}\n`);
+        }
+      },
+    );
 
   client
     .command("remove-subscription")
