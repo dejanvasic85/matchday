@@ -57,6 +57,13 @@
       "when": 1786274351429,
       "tag": "0007_rename_client_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786401510676,
+      "tag": "0008_strong_surge",
+      "breakpoints": true
     }
   ]
 }

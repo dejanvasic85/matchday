@@ -2,7 +2,7 @@
 // rules here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import type { Db } from "./client.ts";
 import { runQuery, runUpsert } from "./runQuery.ts";
 import { league, subscription } from "./schema.ts";
@@ -21,7 +21,10 @@ export type SubscriptionWithLeague = {
 
 /**
  * Upsert a subscription by its `(client_id, league_id)` key: a client subscribes to a given
- * league at most once, so re-adding the same pair is idempotent rather than a duplicate.
+ * league at most once, so re-adding the same pair is idempotent rather than a duplicate. Also
+ * revives a soft-deleted row (clears `deletedAt`) instead of leaving it removed — the unique index
+ * is on `(client_id, league_id)` regardless of `deleted_at`, so re-subscribing after `client
+ * remove-subscription` hits this conflict branch, not a fresh insert.
  */
 export async function upsertSubscription(
   db: Db,
@@ -34,7 +37,7 @@ export async function upsertSubscription(
         .values(values)
         .onConflictDoUpdate({
           target: [subscription.clientId, subscription.leagueId],
-          set: { updatedAt: new Date() },
+          set: { deletedAt: null, updatedAt: new Date() },
         })
         .returning(),
     "subscription",
@@ -43,19 +46,25 @@ export async function upsertSubscription(
 }
 
 /**
- * The distinct set of league ids that have ≥1 subscription — the deep crawl's scope. A league with
- * many subscribers is crawled once, so the result is deduplicated in SQL.
+ * The distinct set of league ids with ≥1 *active* subscription — the deep crawl's scope. A league
+ * with many subscribers is crawled once, so the result is deduplicated in SQL. Soft-deleted
+ * subscriptions are excluded: a removed subscription must take its league out of scope as soon as
+ * no other client actively subscribes to it.
  */
 export async function listSubscribedLeagueIds(db: Db): Promise<Result<string[]>> {
   const result = await runQuery(
-    () => db.selectDistinct({ leagueId: subscription.leagueId }).from(subscription),
+    () =>
+      db
+        .selectDistinct({ leagueId: subscription.leagueId })
+        .from(subscription)
+        .where(isNull(subscription.deletedAt)),
     "Failed to list subscribed league ids",
   );
   return result.ok ? ok(result.value.map((row) => row.leagueId)) : result;
 }
 
-/** Every subscription with its league's name, league-ordered. Not client-scoped: `client list`
- * renders the whole roster in one pass, so it groups these by `clientId` itself rather than
+/** Every *active* subscription with its league's name, league-ordered. Not client-scoped: `client
+ * list` renders the whole roster in one pass, so it groups these by `clientId` itself rather than
  * issuing a query per client. */
 export async function listSubscriptionsWithLeague(
   db: Db,
@@ -71,17 +80,24 @@ export async function listSubscriptionsWithLeague(
         })
         .from(subscription)
         .innerJoin(league, eq(subscription.leagueId, league.id))
+        .where(isNull(subscription.deletedAt))
         .orderBy(asc(league.name)),
     "Failed to list subscriptions with league",
   );
 }
 
-/** Hard-delete a subscription by id, returning the deleted row (or `null` when no such id existed,
- * so the caller can report "not found" rather than a silent no-op). Dropping the row takes its
- * league out of the deep crawl's scope as soon as no other client subscribes to it. */
+/** Soft-delete a subscription by id (sets `deletedAt`), returning the updated row — or `null` when
+ * no such *active* subscription id existed, so the caller can report "not found" rather than a
+ * silent no-op (this also covers re-removing an already-removed subscription). Removing the row
+ * from the deep crawl's active scope takes its league out as soon as no other client subscribes. */
 export async function deleteSubscription(db: Db, id: string): Promise<Result<Subscription | null>> {
   const result = await runQuery(
-    () => db.delete(subscription).where(eq(subscription.id, id)).returning(),
+    () =>
+      db
+        .update(subscription)
+        .set({ deletedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(subscription.id, id), isNull(subscription.deletedAt)))
+        .returning(),
     "Failed to delete subscription",
   );
   return result.ok ? ok(result.value[0] ?? null) : result;
