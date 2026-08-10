@@ -2,10 +2,10 @@
 // here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import type { Db } from "./client.ts";
 import { runQuery, runUpsert } from "./runQuery.ts";
-import { league } from "./schema.ts";
+import { league, tableEntry, team } from "./schema.ts";
 
 type League = typeof league.$inferSelect;
 type LeagueInsert = typeof league.$inferInsert;
@@ -33,6 +33,38 @@ export async function listLeagues(
             .from(league)
             .where(and(...conditions)),
     "Failed to list leagues",
+  );
+}
+
+/**
+ * Every league a club's teams play in, via `table_entry` rather than `fixture` (#85: prod has
+ * table entries for every team, but the deep crawl's fixture backlog only covers a couple of
+ * leagues, so the fixture path silently under-subscribes). One row per (team, league) pair — a
+ * club with two teams in the same league returns that league twice, deliberately undeduplicated
+ * so the caller (clubLeagueService, business logic) does the dedup and stays unit-testable rather
+ * than hiding that rule in SQL.
+ *
+ * Depends on the deep crawl having already run for a league before it's discoverable here: fine
+ * for onboarding a club into an existing dataset, circular for a brand-new league.
+ */
+export async function listLeaguesByClubId(db: Db, clubId: string): Promise<Result<League[]>> {
+  return runQuery(
+    () =>
+      db
+        .select({
+          id: league.id,
+          name: league.name,
+          competitionId: league.competitionId,
+          seasonId: league.seasonId,
+          createdAt: league.createdAt,
+          updatedAt: league.updatedAt,
+        })
+        .from(league)
+        .innerJoin(tableEntry, eq(tableEntry.leagueId, league.id))
+        .innerJoin(team, eq(team.id, tableEntry.teamId))
+        .where(eq(team.clubId, clubId))
+        .orderBy(asc(league.name)),
+    "Failed to list leagues by club id",
   );
 }
 

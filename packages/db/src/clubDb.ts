@@ -2,7 +2,7 @@
 // (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
-import { eq, sql } from "drizzle-orm";
+import { asc, eq, ilike, sql } from "drizzle-orm";
 import type { Db } from "./client.ts";
 import { runQuery, runUpsert } from "./runQuery.ts";
 import { club } from "./schema.ts";
@@ -46,6 +46,24 @@ export async function findClubByName(db: Db, name: string): Promise<Result<Club 
     "Failed to find club by name",
   );
   return result.ok ? ok(result.value[0] ?? null) : result;
+}
+
+/**
+ * Find clubs by a case-insensitive partial name match — the operator lookup behind
+ * `mday club leagues` and `client add-subscription --club` (#85), where the operator types a
+ * human-recognisable fragment ("Williamstown") rather than the exact stored name. Returns every
+ * match so the caller (clubResolver) can fail on ambiguity instead of guessing.
+ */
+export async function findClubsByName(db: Db, query: string): Promise<Result<Club[]>> {
+  return runQuery(
+    () =>
+      db
+        .select()
+        .from(club)
+        .where(ilike(club.name, `%${query}%`))
+        .orderBy(asc(club.name)),
+    "Failed to find clubs by name",
+  );
 }
 
 /**
