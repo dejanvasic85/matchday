@@ -30,7 +30,7 @@ export type CreatedApiToken = {
 };
 
 export async function createApiToken(
-  deps: Pick<ApiTokenServiceDeps, "upsertClientByName" | "insertApiToken">,
+  deps: Pick<ApiTokenServiceDeps, "findClientByName" | "insertApiToken">,
   clientName: string,
 ): Promise<Result<CreatedApiToken>> {
   const clientResult = await resolveClient(deps, clientName);

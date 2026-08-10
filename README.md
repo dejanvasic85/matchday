@@ -84,3 +84,41 @@ dev database, e.g.:
 ```sql
 select id, name from league order by name;
 ```
+
+### `client` — onboarding an API consumer
+
+A client is an API consumer. Its **subscriptions** decide what the deep crawl bothers to crawl, and
+its **tokens** authenticate its requests. Onboarding one is four commands:
+
+```sh
+# 1. Create the client (idempotent — prints its cli_ id)
+pnpm mday client add "Williamstown SC"
+
+# 2. Subscribe it to a league, putting that league in the deep crawl's scope
+pnpm mday client add-subscription --client "Williamstown SC" --league lea_xxxxxxxxxxxx
+
+# 3. Issue a bearer token — shown once, never recoverable, only rotatable
+pnpm mday client create-token "Williamstown SC"
+
+# 4. Check the result
+pnpm mday client list
+```
+
+`client list` prints the roster, one line per subscription (`--json` for scripting):
+
+```
+CLIENT ID         NAME             TOKENS  SUBSCRIPTION ID   LEAGUE
+cli_xxxxxxxxxxxx  Williamstown SC  1       sub_xxxxxxxxxxxx  Div 1 North
+                                           sub_yyyyyyyyyyyy  Div 2 South
+```
+
+Unwinding either uses the id from that table:
+
+```sh
+pnpm mday client remove-subscription sub_xxxxxxxxxxxx
+pnpm mday client revoke-token tok_xxxxxxxxxxxx
+```
+
+`add-subscription` and `create-token` require an **existing** client and fail on an unknown name —
+the client name is a free-text key, so an implicit create would turn a typo into a second silent
+tenant holding its own tokens. `client add` is the one command that creates one.

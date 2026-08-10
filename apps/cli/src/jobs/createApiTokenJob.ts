@@ -2,7 +2,7 @@
 // delegates client resolution + token minting to the service.
 
 import { type Logger, type Result } from "@matchday/domain";
-import { createDbClient, insertApiToken, upsertClientByName } from "@matchday/db";
+import { createDbClient, findClientByName, insertApiToken } from "@matchday/db";
 import type { CliConfig } from "../config.ts";
 import { createApiToken, type CreatedApiToken } from "../services/apiTokenService.ts";
 
@@ -20,7 +20,7 @@ export async function runCreateApiTokenJob(
   const db = createDbClient(config.DATABASE_URL);
   const result = await createApiToken(
     {
-      upsertClientByName: (values) => upsertClientByName(db, values),
+      findClientByName: (name) => findClientByName(db, name),
       insertApiToken: (values) => insertApiToken(db, values),
     },
     clientName,

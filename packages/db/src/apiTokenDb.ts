@@ -48,6 +48,21 @@ export async function listApiTokensByClientId(
   );
 }
 
+/** Every token across all clients. Not client-scoped: `client list` renders the whole roster in
+ * one pass, so it counts these by `clientId` itself rather than issuing a query per client. The
+ * `token_hash` is deliberately not selected — nothing outside request-time auth needs it. */
+export async function listApiTokens(
+  db: Db,
+): Promise<Result<{ id: string; clientId: string; revokedAt: Date | null }[]>> {
+  return runQuery(
+    () =>
+      db
+        .select({ id: apiToken.id, clientId: apiToken.clientId, revokedAt: apiToken.revokedAt })
+        .from(apiToken),
+    "Failed to list api tokens",
+  );
+}
+
 export async function revokeApiToken(db: Db, id: string): Promise<Result<ApiToken | null>> {
   const result = await runQuery(
     () =>

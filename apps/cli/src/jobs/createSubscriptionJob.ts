@@ -2,12 +2,7 @@
 // delegates id generation + validation to the subscription service.
 
 import { type LeagueId, type Logger, type Result, type SubscriptionId } from "@matchday/domain";
-import {
-  createDbClient,
-  getLeagueById,
-  upsertClientByName,
-  upsertSubscription,
-} from "@matchday/db";
+import { createDbClient, findClientByName, getLeagueById, upsertSubscription } from "@matchday/db";
 import type { CliConfig } from "../config.ts";
 import { createSubscription } from "../services/subscriptionService.ts";
 
@@ -28,7 +23,7 @@ export async function runCreateSubscriptionJob(
     deps: {
       getLeagueById: (id) => getLeagueById(db, id),
       upsertSubscription: (values) => upsertSubscription(db, values),
-      upsertClientByName: (values) => upsertClientByName(db, values),
+      findClientByName: (name) => findClientByName(db, name),
     },
     clientName,
     leagueId,
