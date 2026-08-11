@@ -17,6 +17,8 @@ export type SubscriptionWithLeague = {
   clientId: string;
   leagueId: string;
   leagueName: string;
+  /** `mday client list` shows whether a webhook is configured (never the secret). */
+  webhookUrl: string | null;
 };
 
 /**
@@ -77,6 +79,7 @@ export async function listSubscriptionsWithLeague(
           clientId: subscription.clientId,
           leagueId: subscription.leagueId,
           leagueName: league.name,
+          webhookUrl: subscription.webhookUrl,
         })
         .from(subscription)
         .innerJoin(league, eq(subscription.leagueId, league.id))

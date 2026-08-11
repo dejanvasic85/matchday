@@ -19,6 +19,7 @@ export type ClientSubscriptionSummary = {
   id: string;
   leagueId: string;
   leagueName: string;
+  hasWebhook: boolean;
 };
 
 export type ClientSummary = {
@@ -74,6 +75,7 @@ export async function listClientSummaries(
         id: subscription.id,
         leagueId: subscription.leagueId,
         leagueName: subscription.leagueName,
+        hasWebhook: subscription.webhookUrl !== null,
       })),
     })),
   );
