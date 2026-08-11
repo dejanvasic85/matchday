@@ -86,32 +86,6 @@ export async function listSubscriptionsWithLeague(
   );
 }
 
-/** Whether `clientId` has an *active* subscription to `leagueId` — the gate fixtures/table reads
- * are checked against (0045, ADR 0012): a client only sees the deep-crawl data for leagues it
- * actually subscribes to. */
-export async function hasActiveSubscription(
-  db: Db,
-  clientId: string,
-  leagueId: string,
-): Promise<Result<boolean>> {
-  const result = await runQuery(
-    () =>
-      db
-        .select({ id: subscription.id })
-        .from(subscription)
-        .where(
-          and(
-            eq(subscription.clientId, clientId),
-            eq(subscription.leagueId, leagueId),
-            isNull(subscription.deletedAt),
-          ),
-        )
-        .limit(1),
-    "Failed to check subscription",
-  );
-  return result.ok ? ok(result.value.length > 0) : result;
-}
-
 /** Soft-delete a subscription by id (sets `deletedAt`), returning the updated row — or `null` when
  * no such *active* subscription id existed, so the caller can report "not found" rather than a
  * silent no-op (this also covers re-removing an already-removed subscription). Removing the row

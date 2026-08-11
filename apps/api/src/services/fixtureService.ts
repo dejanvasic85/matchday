@@ -1,11 +1,12 @@
 // Fixture service (0045): thin business logic over data access (AGENTS.md) — maps the DB row to
 // the wire shape (timestamps as ISO strings, numeric lat/long as numbers) and lists a league's
-// fixtures. Subscription-scoped (ADR 0012): only a client with an active subscription to the
-// league sees its fixtures, so this is the one catalog-adjacent resource that isn't open to every
-// authenticated client (contrast leagueService).
+// fixtures. Catalog data — open to any authenticated client, no subscription scoping. Subscriptions
+// only drive *which* leagues get deep-crawled (ADR 0012); once a league's fixtures exist, any
+// client can read them, same as clubs/leagues/etc (contrast an earlier draft of this file, which
+// wrongly gated reads on the requester's own subscription).
 
-import { forbidden, mapResult, type ClientId, type Result } from "@matchday/domain";
-import { hasActiveSubscription, listFixturesByLeagueId, type Db, type schema } from "@matchday/db";
+import { mapResult, type Result } from "@matchday/domain";
+import { listFixturesByLeagueId, type Db, type schema } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
@@ -13,7 +14,6 @@ type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
 
 export type FixtureServiceDeps = {
   listFixturesByLeagueId: WithoutDb<typeof listFixturesByLeagueId>;
-  hasActiveSubscription: WithoutDb<typeof hasActiveSubscription>;
 };
 
 /** Wires the real data-access functions to a live `db` — the only place this route's transport
@@ -21,7 +21,6 @@ export type FixtureServiceDeps = {
 export function createFixtureServiceDeps(db: Db): FixtureServiceDeps {
   return {
     listFixturesByLeagueId: (leagueId) => listFixturesByLeagueId(db, leagueId),
-    hasActiveSubscription: (clientId, leagueId) => hasActiveSubscription(db, clientId, leagueId),
   };
 }
 
@@ -49,26 +48,10 @@ function mapToFixtureResponse(row: FixtureRow): FixtureResponse {
   };
 }
 
-/**
- * A league's fixtures, gated on `clientId` holding an *active* subscription to `leagueId`
- * (ADR 0012) — a `Forbidden` failure otherwise. A nonexistent league id also comes back
- * `Forbidden` rather than `NotFound`: nothing can be actively subscribed to a league that doesn't
- * exist, so the two cases are indistinguishable from the caller's side and there's no separate
- * existence check to run.
- */
 export async function listLeagueFixtures(
   deps: FixtureServiceDeps,
-  clientId: ClientId,
   leagueId: string,
 ): Promise<Result<FixtureResponse[]>> {
-  const subscribed = await deps.hasActiveSubscription(clientId, leagueId);
-  if (!subscribed.ok) {
-    return subscribed;
-  }
-  if (!subscribed.value) {
-    return forbidden("No active subscription to this league");
-  }
-
   const result = await deps.listFixturesByLeagueId(leagueId);
   return mapResult(result, (fixtures) => fixtures.map(mapToFixtureResponse));
 }

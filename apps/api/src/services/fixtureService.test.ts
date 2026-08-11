@@ -1,9 +1,8 @@
-import { forbidden, ok, serverError, type ClientId } from "@matchday/domain";
+import { ok, serverError } from "@matchday/domain";
 import { listLeagueFixtures, type FixtureServiceDeps } from "#services/fixtureService.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 const kickoffAt = new Date("2026-03-14T10:00:00.000Z");
-const clientId = "cli_abc123" as ClientId;
 
 function makeFixtureRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -30,7 +29,6 @@ function makeFixtureRow(overrides: Record<string, unknown> = {}) {
 
 function makeDeps(overrides: Partial<FixtureServiceDeps> = {}): FixtureServiceDeps {
   return {
-    hasActiveSubscription: vi.fn().mockResolvedValue(ok(true)),
     listFixturesByLeagueId: vi.fn().mockResolvedValue(ok([makeFixtureRow()])),
     ...overrides,
   };
@@ -40,7 +38,7 @@ describe("listLeagueFixtures", () => {
   it("maps timestamps to ISO strings and numeric lat/long to numbers", async () => {
     const deps = makeDeps();
 
-    const result = await listLeagueFixtures(deps, clientId, "lea_abc123");
+    const result = await listLeagueFixtures(deps, "lea_abc123");
 
     expect(result).toEqual(
       ok([
@@ -64,44 +62,26 @@ describe("listLeagueFixtures", () => {
         ),
     });
 
-    const result = await listLeagueFixtures(deps, clientId, "lea_abc123");
+    const result = await listLeagueFixtures(deps, "lea_abc123");
 
     expect(result).toEqual(
       ok([expect.objectContaining({ kickoffAt: null, latitude: null, longitude: null })]),
     );
   });
 
-  it("checks the subscription for the given client and league", async () => {
+  it("passes the leagueId through to data access", async () => {
     const deps = makeDeps();
 
-    await listLeagueFixtures(deps, clientId, "lea_abc123");
+    await listLeagueFixtures(deps, "lea_abc123");
 
-    expect(deps.hasActiveSubscription).toHaveBeenCalledWith(clientId, "lea_abc123");
-  });
-
-  it("returns a Forbidden failure when the client has no active subscription", async () => {
-    const deps = makeDeps({ hasActiveSubscription: vi.fn().mockResolvedValue(ok(false)) });
-
-    const result = await listLeagueFixtures(deps, clientId, "lea_abc123");
-
-    expect(result).toEqual(forbidden("No active subscription to this league"));
-    expect(deps.listFixturesByLeagueId).not.toHaveBeenCalled();
-  });
-
-  it("propagates a subscription lookup failure", async () => {
-    const lookupError = serverError("Failed to check subscription");
-    const deps = makeDeps({ hasActiveSubscription: vi.fn().mockResolvedValue(lookupError) });
-
-    const result = await listLeagueFixtures(deps, clientId, "lea_abc123");
-
-    expect(result).toEqual(lookupError);
+    expect(deps.listFixturesByLeagueId).toHaveBeenCalledWith("lea_abc123");
   });
 
   it("propagates a fixture list failure", async () => {
     const listError = serverError("Failed to list fixtures by league id");
     const deps = makeDeps({ listFixturesByLeagueId: vi.fn().mockResolvedValue(listError) });
 
-    const result = await listLeagueFixtures(deps, clientId, "lea_abc123");
+    const result = await listLeagueFixtures(deps, "lea_abc123");
 
     expect(result).toEqual(listError);
   });

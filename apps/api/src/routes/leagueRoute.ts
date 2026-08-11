@@ -1,10 +1,10 @@
 // League routes (0045): thin transport glue (AGENTS.md) — OpenAPI validates params, the service
 // maps data-access results to the wire shape, this just picks the HTTP status. Fixtures/table are
-// nested under a league (subscription-scoped, ADR 0012) rather than the catalog list/get above.
+// nested under a league, same open-catalog access as the list/get routes above (ADR 0012:
+// subscriptions only pick which leagues get deep-crawled, not who can read the result).
 
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { ApiBindings } from "#config.ts";
-import type { ApiTokenAuthVariables } from "#middleware/apiTokenAuth.ts";
 import type { DbVariables } from "#middleware/dbClient.ts";
 import { jsonResult } from "#resultResponse.ts";
 import { errorResponsesValue } from "#schemas/errorResponses.ts";
@@ -16,10 +16,7 @@ import { createFixtureServiceDeps, listLeagueFixtures } from "#services/fixtureS
 import { createLeagueServiceDeps, getLeague, listAllLeagues } from "#services/leagueService.ts";
 import { createTableEntryServiceDeps, listLeagueTable } from "#services/tableEntryService.ts";
 
-export const leagueRoute = new OpenAPIHono<{
-  Bindings: ApiBindings;
-  Variables: DbVariables & ApiTokenAuthVariables;
-}>();
+export const leagueRoute = new OpenAPIHono<{ Bindings: ApiBindings; Variables: DbVariables }>();
 
 const listLeaguesRoute = createRoute({
   method: "get",
@@ -81,7 +78,6 @@ const listLeagueFixturesRoute = createRoute({
   path: "/{id}/fixtures",
   tags: ["Leagues"],
   summary: "List a league's fixtures",
-  description: "Requires the caller to hold an active subscription to this league (ADR 0012).",
   request: { params: idParamSchema("league", "lea_V1StGXR8Z5") },
   responses: {
     200: {
@@ -94,11 +90,7 @@ const listLeagueFixturesRoute = createRoute({
 
 leagueRoute.openapi(listLeagueFixturesRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const result = await listLeagueFixtures(
-    createFixtureServiceDeps(c.get("db")),
-    c.get("clientId"),
-    id,
-  );
+  const result = await listLeagueFixtures(createFixtureServiceDeps(c.get("db")), id);
   return jsonResult(c, result, "api.league.fixtures.failed");
 });
 
@@ -107,7 +99,6 @@ const listLeagueTableRoute = createRoute({
   path: "/{id}/table",
   tags: ["Leagues"],
   summary: "Get a league's table",
-  description: "Requires the caller to hold an active subscription to this league (ADR 0012).",
   request: { params: idParamSchema("league", "lea_V1StGXR8Z5") },
   responses: {
     200: {
@@ -120,10 +111,6 @@ const listLeagueTableRoute = createRoute({
 
 leagueRoute.openapi(listLeagueTableRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const result = await listLeagueTable(
-    createTableEntryServiceDeps(c.get("db")),
-    c.get("clientId"),
-    id,
-  );
+  const result = await listLeagueTable(createTableEntryServiceDeps(c.get("db")), id);
   return jsonResult(c, result, "api.league.table.failed");
 });

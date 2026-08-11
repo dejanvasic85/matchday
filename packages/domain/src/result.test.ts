@@ -3,7 +3,6 @@ import {
   conflict,
   err,
   errorKindValue,
-  forbidden,
   isErr,
   isOk,
   mapResult,
@@ -75,7 +74,6 @@ describe("error kind constructors", () => {
     { construct: notFound, kind: errorKindValue.notFound },
     { construct: badRequest, kind: errorKindValue.badRequest },
     { construct: unauthorized, kind: errorKindValue.unauthorized },
-    { construct: forbidden, kind: errorKindValue.forbidden },
     { construct: conflict, kind: errorKindValue.conflict },
   ])("$kind tags its failure with the matching kind", ({ construct, kind }) => {
     const result = construct("nope");

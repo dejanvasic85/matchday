@@ -1,12 +1,4 @@
-import {
-  badRequest,
-  conflict,
-  forbidden,
-  notFound,
-  ok,
-  serverError,
-  unauthorized,
-} from "@matchday/domain";
+import { badRequest, conflict, notFound, ok, serverError, unauthorized } from "@matchday/domain";
 import type { Context, Env } from "hono";
 import { jsonResult } from "#resultResponse.ts";
 
@@ -32,7 +24,6 @@ describe("jsonResult", () => {
     { kind: "NotFound", failure: notFound("Club not found"), status: 404 },
     { kind: "BadRequest", failure: badRequest("Malformed id"), status: 400 },
     { kind: "Unauthorized", failure: unauthorized("Invalid token"), status: 401 },
-    { kind: "Forbidden", failure: forbidden("Not subscribed to this league"), status: 403 },
     { kind: "Conflict", failure: conflict("Club already exists"), status: 409 },
   ])("maps a $kind failure to $status, returning its message", ({ failure, status }) => {
     const c = makeContext();

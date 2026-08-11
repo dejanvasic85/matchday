@@ -41,7 +41,6 @@ export {
   listSubscribedLeagueIds,
   listSubscriptionsWithLeague,
   deleteSubscription,
-  hasActiveSubscription,
   type SubscriptionWithLeague,
 } from "#subscriptionDb.ts";
 export { upsertClientByName, listClients, findClientByName } from "#clientDb.ts";
