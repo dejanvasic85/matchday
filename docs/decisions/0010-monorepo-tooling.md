@@ -68,6 +68,7 @@ matchday/
   Vitest is the test runner.
 - Shared code lives in `packages/*`, deployables in `apps/*`.
 - Consistent with williamstownsc's pnpm familiarity.
-- Node version pinned (Mise, matching WSC) in a later setup step.
+- Node version pinned via `engines.node` / `devEngines.runtime` in `package.json`, resolved by
+  pnpm/Vite+ — no separate runtime manager (superseded an initial Mise pin, #74).
 - Vite+ is beta: pin its version and revisit this ADR if breaking changes or gaps in
   backend/CF-Workers workflows surface.
