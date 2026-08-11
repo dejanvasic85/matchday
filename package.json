@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "mday": "vp run --filter @matchday/cli mday",
+    "changeset": "changeset",
     "test": "vp run -r test",
     "ready": "vp check && vp run -r test && vp run -r build"
   },
   "devDependencies": {
+    "@changesets/cli": "2.31.1",
     "@vitest/coverage-v8": "4.1.10",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.8",
     "vite-plus": "0.2.8",

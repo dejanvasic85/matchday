@@ -38,3 +38,16 @@ const { data, error } = await client.GET("/clubs");
 
 `data`/`error` and every request/response shape are typed from the spec — see
 [openapi-fetch](https://openapi-ts.dev/openapi-fetch/) for the full calling convention.
+
+## Releasing
+
+Versioning/publishing is handled by [changesets](https://github.com/changesets/changesets). Any
+PR that changes this package should include a changeset describing the bump:
+
+```sh
+pnpm changeset
+```
+
+On merge to `main`, CI (`release-sdk.yml`) either opens/updates a "Version Packages" PR (bumping
+`package.json` + `CHANGELOG.md`) or, once that PR is merged, publishes the new version straight to
+GitHub Packages. No manual version bumps or `npm publish`.

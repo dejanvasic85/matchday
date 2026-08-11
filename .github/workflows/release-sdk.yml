@@ -1,0 +1,62 @@
+name: Release SDK
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "packages/sdk/**"
+      - ".changeset/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Version or publish @dejanvasic85/matchday-sdk
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          cache: true
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      # `changeset publish` shells out to `npm publish` per package, which reads the registry from
+      # packages/sdk/package.json's own `publishConfig` — this just supplies the auth token for
+      # that registry (GitHub Packages requires it even for a public repo).
+      - name: Configure GitHub Packages auth
+        run: |
+          echo "@dejanvasic85:registry=https://npm.pkg.github.com" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
+
+      # No pending changesets in .changeset/ → publish directly (this is how the very first
+      # release goes out, since a first version has nothing to "bump" from). Pending changesets →
+      # opens/updates a bot "Version Packages" PR instead of publishing; merging that PR is what
+      # triggers the actual publish, once no changesets remain.
+      - name: Create release PR or publish
+        uses: changesets/action@v1
+        with:
+          version: pnpm changeset version
+          # `changeset publish` (not a raw `pnpm publish`) — it skips packages whose version is
+          # already on the registry instead of hard-failing, so this step stays a no-op on a
+          # docs-only commit to packages/sdk that didn't bump the version.
+          publish: pnpm --filter @dejanvasic85/matchday-sdk run build && pnpm changeset publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
