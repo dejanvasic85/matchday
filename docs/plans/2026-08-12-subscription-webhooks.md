@@ -25,47 +25,50 @@ revalidate its cache on demand instead of polling.
   and moves on, it doesn't block other subscribers or the crawl's own success/failure.
 - CLI-managed, per ADR 0014 (`mday` is the admin surface, not a new interface).
 
+Decided without a formal ADR (small enough surface, one operator):
+
+- **Signing: yes, HMAC-SHA256.** Each subscription gets a `webhook_secret`, generated like an API
+  token (0013 pattern) and shown once on `set-webhook`. Every delivery carries
+  `X-Matchday-Signature: sha256=<hex hmac of the raw body>` so a receiver can verify it actually
+  came from us. Cheap to add (a few lines, mirrors `apiTokenHash.ts`) and avoids an obvious spoof
+  vector for anyone who guesses a client's webhook URL.
+- **Retries: none for v1.** Single attempt, short timeout (5s), log and move on. Matches this
+  repo's "keep it simple until proven otherwise" bias — add a queue/backoff only if delivery
+  reliability turns out to matter in practice.
+- **Per-subscription, not per-client.** Keeps a client free to point different leagues at
+  different endpoints; a client that only needs one just sets the same URL on each subscription.
+
 ## Todo
 
-1. **ADR 0015 — subscription webhooks.** Pin down signing (HMAC over the body with a
-   per-subscription secret vs. none for v1) and retry semantics (single attempt + short timeout
-   vs. any backoff) before building — this repo writes an ADR for every subscription-shaped
-   decision (0012/0013/0014) and this is a new outbound-delivery concept, not a variation on an
-   existing one. Blocks slices 2–4 on the signing question specifically.
-2. **Schema + domain.** Migration: `client_subscription.webhook_url` (nullable text), plus
-   `webhook_secret` if 0015 chooses signing. Extend `subscriptionSchema` (domain) and
-   `subscriptionDb.ts`: `upsertSubscription` accepts the new fields, add
-   `listActiveSubscriptionsForLeagueWithWebhook(leagueId)`.
-3. **Change-detection service.** Pure comparison function (before/after fixture + table arrays →
+1. **Schema + domain.** Migration: `client_subscription.webhook_url` + `webhook_secret` (both
+   nullable text). Extend `subscriptionSchema` (domain). Add a domain webhook-signing helper
+   (`generateWebhookSecret` / `signWebhookPayload`, mirroring `apiTokenHash.ts`'s Web Crypto
+   style). Extend `subscriptionDb.ts` with `setSubscriptionWebhook` (by subscription id) and
+   `listActiveSubscriptionsForLeagueWithWebhook(leagueId)` — kept separate from
+   `upsertSubscription` so re-subscribing (`add-subscription`) never silently wipes an
+   already-configured webhook.
+2. **Change-detection service.** Pure comparison function (before/after fixture + table arrays →
    `{ hasChanges, fixturesChanged, tableChanged }`). No DB/network — unit tests only, covering:
    no change, a score/status change, a table position change, a new fixture appearing.
-4. **Webhook notification service.** Builds the payload (+ signature per 0015), sends via an
-   injected `sendWebhook` collaborator (DI, per AGENTS.md — services stay pure and testable with
-   a fake sender). Each subscription's send is isolated: one failure is logged and doesn't stop
-   the rest.
-5. **CLI: webhook management.** `--webhook-url` on `mday client add-subscription`; a
-   `set-webhook` / `remove-webhook` (or equivalent unset) path for existing subscriptions. Follows
-   existing CLI conventions: `--json`, server-side resolution by client/league name, `--help`
-   documents what it writes.
-6. **Wire into `deepCrawl` job.** Snapshot fixtures+table for the league before crawling, run the
+3. **Webhook notification service.** Builds the signed payload, sends via an injected
+   `sendWebhook` collaborator (DI, per AGENTS.md — services stay pure and testable with a fake
+   sender). Each subscription's send is isolated: one failure is logged and doesn't stop the rest.
+4. **CLI: webhook management.** `mday client set-webhook <sub_id> --url <url>` (mints + prints the
+   secret once, like `create-token`) and `mday client clear-webhook <sub_id>`. `client list` grows
+   a webhook-configured indicator (never prints the secret again).
+5. **Wire into `deepCrawl` job.** Snapshot fixtures+table for the league before crawling, run the
    existing crawl unchanged, snapshot again after, diff, look up that league's
    webhook-subscriptions, notify. Transport glue only (AGENTS.md) — orchestration stays in the
-   services from slices 3–4.
+   services from slices 2–3.
 
 Each slice: implement + tests, `caveman-review` on the diff, PR referencing #105 (`Closes #105` on
 the last slice), ticking off this list as slices land — per AGENTS.md's slice workflow.
 
 ## Open questions
 
-- **Signing.** Resolve in ADR 0015 before slice 2. Leaning toward HMAC-SHA256 with a
-  per-subscription secret (`X-Matchday-Signature` header) for consistency with 0013's per-client
-  secret pattern — but that's a recommendation, not yet decided.
-- **Retries.** Leaning toward none for v1 (single attempt + short timeout, matching 0013's "keep
-  it simple until proven otherwise" for scopes/roles) — confirm in 0015.
-- **Per-subscription vs per-client webhook.** The issue and this plan assume per-subscription (a
-  client could theoretically want different endpoints per league). If in practice one URL per
-  client is all that's ever needed, the field could move to `client` instead — worth a sanity
-  check with whoever integrates first (williamstownsc).
+- **Per-subscription vs per-client webhook.** Assuming per-subscription (see decision above). If
+  in practice one URL per client is all that's ever needed, the field could move to `client`
+  instead — worth a sanity check with whoever integrates first (williamstownsc).
 - **Payload richness.** Starting minimal (`leagueId`, `hasChanges`, `crawledAt`). A `summary`
   (e.g. `fixturesChanged` count) was considered but dropped from v1 scope — add only if a real
   consumer asks, per AGENTS.md's no-speculative-abstraction guidance.
