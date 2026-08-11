@@ -1,0 +1,37 @@
+{
+  "name": "@dejanvasic85/matchday-sdk",
+  "version": "0.0.0",
+  "private": false,
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "imports": {
+    "#*": "./src/*"
+  },
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "scripts": {
+    "generate": "node scripts/generateClient.ts",
+    "build": "node scripts/generateClient.ts && vp pack",
+    "test": "node scripts/generateClient.ts && vp test run",
+    "check": "node scripts/generateClient.ts && vp check"
+  },
+  "dependencies": {
+    "openapi-fetch": "0.17.0"
+  },
+  "devDependencies": {
+    "@matchday/api": "workspace:*",
+    "@types/node": "catalog:",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "vite-plus": "0.2.8"
+  }
+}

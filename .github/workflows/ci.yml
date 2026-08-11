@@ -23,6 +23,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # Full history so `changeset status --since=origin/main` below can actually diff against
+          # main — the default shallow clone doesn't have it.
+          fetch-depth: 0
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
@@ -31,6 +35,20 @@ jobs:
 
       - name: Install dependencies
         run: vp install --frozen-lockfile
+
+      # Fails loudly if a PR changes packages/sdk without `pnpm changeset` — otherwise the
+      # publish workflow just silently skips publishing a version nobody bumped (see
+      # release-sdk.yml). Only meaningful on a PR; on push to main there's nothing to diff.
+      - name: Check for a changeset on SDK changes
+        if: github.event_name == 'pull_request'
+        run: vp run changeset status --since=origin/main
+
+      # packages/sdk's types are generated from the live OpenAPI spec, not committed — `vp check`
+      # type-checks straight from source, bypassing package.json scripts, so the generated file
+      # needs to exist on disk before it runs (Test/Build below regenerate it themselves via their
+      # own package scripts).
+      - name: Generate SDK client types
+        run: vp run --filter @dejanvasic85/matchday-sdk generate
 
       - name: Check (format + lint + type-check)
         run: vp check
