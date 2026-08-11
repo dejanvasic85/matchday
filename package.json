@@ -6,6 +6,7 @@
   "scripts": {
     "mday": "vp run --filter @matchday/cli mday",
     "changeset": "changeset",
+    "release:sdk": "pnpm --filter @dejanvasic85/matchday-sdk run build && pnpm changeset publish",
     "test": "vp run -r test",
     "ready": "vp check && vp run -r test && vp run -r build"
   },

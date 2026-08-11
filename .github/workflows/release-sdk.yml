@@ -66,10 +66,14 @@ jobs:
         uses: changesets/action@v1
         with:
           version: pnpm changeset version
-          # `changeset publish` (not a raw `pnpm publish`) — it skips packages whose version is
-          # already on the registry instead of hard-failing, so this step stays a no-op on a
-          # docs-only commit to packages/sdk that didn't bump the version.
-          publish: pnpm --filter @dejanvasic85/matchday-sdk run build && pnpm changeset publish
+          # A single script name, not a raw "a && b" string — changesets/action execs this
+          # without a shell, so a top-level `&&` here doesn't chain two commands: pnpm just
+          # forwards everything after `run build` as extra CLI args onto the *last* command in
+          # the string, which broke `vp pack`'s entry resolution the first time this ran.
+          # `changeset publish` (not a raw `pnpm publish`) inside the script — it skips packages
+          # whose version is already on the registry instead of hard-failing, so a docs-only
+          # commit to packages/sdk that didn't bump the version stays a no-op here.
+          publish: pnpm run release:sdk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
