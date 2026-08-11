@@ -47,11 +47,17 @@ jobs:
 
       # `changeset publish` shells out to `npm publish` per package, which reads the registry from
       # packages/sdk/package.json's own `publishConfig` — this just supplies the auth token for
-      # that registry (GitHub Packages requires it even for a public repo).
+      # that registry (GitHub Packages requires it even for a public repo). Written to the
+      # runner's user-level ~/.npmrc, not the repo's — pnpm 11 refuses to expand env-var tokens
+      # from a *project* .npmrc (it's a committed file, so a malicious edit to it could redirect
+      # the token to an attacker registry) and silently ignores the credential instead of erring,
+      # which is exactly what broke the first run of this workflow.
       - name: Configure GitHub Packages auth
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "@dejanvasic85:registry=https://npm.pkg.github.com" >> .npmrc
-          echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
+          echo "@dejanvasic85:registry=https://npm.pkg.github.com" >> ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
 
       # Pending changesets in .changeset/ (every PR touching packages/sdk carries one — enforced
       # in ci.yml) → opens/updates a bot "Version Packages" PR instead of publishing directly.
