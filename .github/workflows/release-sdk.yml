@@ -45,10 +45,9 @@ jobs:
           echo "@dejanvasic85:registry=https://npm.pkg.github.com" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
 
-      # No pending changesets in .changeset/ → publish directly (this is how the very first
-      # release goes out, since a first version has nothing to "bump" from). Pending changesets →
-      # opens/updates a bot "Version Packages" PR instead of publishing; merging that PR is what
-      # triggers the actual publish, once no changesets remain.
+      # Pending changesets in .changeset/ (every PR touching packages/sdk carries one — enforced
+      # in ci.yml) → opens/updates a bot "Version Packages" PR instead of publishing directly.
+      # Merging that PR consumes the changesets, which is what triggers the actual publish.
       - name: Create release PR or publish
         uses: changesets/action@v1
         with:
