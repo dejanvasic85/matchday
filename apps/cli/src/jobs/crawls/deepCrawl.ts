@@ -4,15 +4,24 @@
 //
 // This is transport glue (AGENTS.md): it looks up the source's adapter, the real DB client and R2
 // client, then delegates crawling and persistence to the adapter's session (source-abstraction
-// seam, docs/todo.md Phase 3).
+// seam, docs/todo.md Phase 3). It also wraps the crawl with `withLeagueChangeNotification` (#105)
+// so the league's webhook-configured subscriptions hear about it afterwards — that orchestration
+// lives in the service, this just wires the real DB reads and the real sender into it.
 
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";
-import { createDbClient } from "@matchday/db";
+import {
+  createDbClient,
+  listActiveSubscriptionsForLeagueWithWebhook,
+  listFixturesByLeagueId,
+  listTableEntriesByLeagueId,
+} from "@matchday/db";
 import type { CliConfig } from "#config.ts";
 import type { CrawlSource } from "#crawlers/constants.ts";
 import { createEntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 import { getSourceAdapter } from "#crawlers/sourceRegistry.ts";
+import { withLeagueChangeNotification } from "#services/deepCrawlWebhookNotifier.ts";
 import { createR2RawStorage } from "#storage/rawStorage.ts";
+import { sendWebhook } from "#webhookSender.ts";
 
 export type RunDeepCrawlJobInput = {
   logger: Logger;
@@ -33,7 +42,8 @@ export async function runDeepCrawlJob(input: RunDeepCrawlJobInput): Promise<Resu
   const session = sessionResult.value;
 
   try {
-    const deps = createEntityResolutionDeps(createDbClient(config.DATABASE_URL));
+    const db = createDbClient(config.DATABASE_URL);
+    const deps = createEntityResolutionDeps(db);
     const rawStorage = createR2RawStorage({
       accountId: config.R2_ACCOUNT_ID,
       accessKeyId: config.R2_ACCESS_KEY_ID,
@@ -41,7 +51,19 @@ export async function runDeepCrawlJob(input: RunDeepCrawlJobInput): Promise<Resu
       bucketName: config.R2_RAW_BUCKET_NAME,
     });
 
-    const result = await session.deepCrawlLeague({ deps, rawStorage, logger, leagueId, dryRun });
+    const result = await withLeagueChangeNotification(
+      {
+        listActiveSubscriptionsForLeagueWithWebhook: (id) =>
+          listActiveSubscriptionsForLeagueWithWebhook(db, id),
+        listFixturesByLeagueId: (id) => listFixturesByLeagueId(db, id),
+        listTableEntriesByLeagueId: (id) => listTableEntriesByLeagueId(db, id),
+        sendWebhook,
+        logger,
+        now: () => new Date(),
+      },
+      { leagueId, dryRun },
+      () => session.deepCrawlLeague({ deps, rawStorage, logger, leagueId, dryRun }),
+    );
     if (!result.ok) {
       return result;
     }
