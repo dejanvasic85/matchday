@@ -41,7 +41,11 @@ export {
   listSubscribedLeagueIds,
   listSubscriptionsWithLeague,
   deleteSubscription,
+  setSubscriptionWebhook,
+  clearSubscriptionWebhook,
+  listActiveSubscriptionsForLeagueWithWebhook,
   type SubscriptionWithLeague,
+  type SubscriptionWebhook,
 } from "#subscriptionDb.ts";
 export { upsertClientByName, listClients, findClientByName } from "#clientDb.ts";
 export {

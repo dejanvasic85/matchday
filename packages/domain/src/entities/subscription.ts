@@ -9,6 +9,10 @@ export const subscriptionSchema = z.object({
   id: z.string(),
   clientId: z.string(),
   leagueId: z.string(),
+  // Optional post-crawl notification target (#105), set/cleared independently of the
+  // subscription itself.
+  webhookUrl: z.string().nullable(),
+  webhookSecret: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
