@@ -32,6 +32,13 @@ jobs:
       - name: Install dependencies
         run: vp install --frozen-lockfile
 
+      # packages/sdk's types are generated from the live OpenAPI spec, not committed — `vp check`
+      # type-checks straight from source, bypassing package.json scripts, so the generated file
+      # needs to exist on disk before it runs (Test/Build below regenerate it themselves via their
+      # own package scripts).
+      - name: Generate SDK client types
+        run: vp run --filter @dejanvasic85/matchday-sdk generate
+
       - name: Check (format + lint + type-check)
         run: vp check
 
