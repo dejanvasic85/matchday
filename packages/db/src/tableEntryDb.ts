@@ -2,12 +2,29 @@
 // rules here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import type { Result } from "@matchday/domain";
+import { asc, eq } from "drizzle-orm";
 import type { Db } from "#client.ts";
-import { runUpsert } from "#runQuery.ts";
+import { runQuery, runUpsert } from "#runQuery.ts";
 import { tableEntry } from "#schema.ts";
 
 type TableEntry = typeof tableEntry.$inferSelect;
 type TableEntryInsert = typeof tableEntry.$inferInsert;
+
+/** A league's ladder, position-ordered (0045, subscription-scoped per ADR 0012). */
+export async function listTableEntriesByLeagueId(
+  db: Db,
+  leagueId: string,
+): Promise<Result<TableEntry[]>> {
+  return runQuery(
+    () =>
+      db
+        .select()
+        .from(tableEntry)
+        .where(eq(tableEntry.leagueId, leagueId))
+        .orderBy(asc(tableEntry.position)),
+    "Failed to list table entries by league id",
+  );
+}
 
 /**
  * Upsert a table entry by its `(league_id, team_id)` idempotency key: a team appears at most

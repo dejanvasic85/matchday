@@ -3,6 +3,7 @@ export {
   conflict,
   err,
   errorKindValue,
+  forbidden,
   isErr,
   isOk,
   mapResult,

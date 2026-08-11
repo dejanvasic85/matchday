@@ -20,6 +20,7 @@ const errorContentValue = { "application/json": { schema: errorSchema } };
 export const errorResponsesValue = {
   400: { description: "Bad request", content: errorContentValue },
   401: { description: "Unauthorized", content: errorContentValue },
+  403: { description: "Forbidden", content: errorContentValue },
   404: { description: "Not found", content: errorContentValue },
   409: { description: "Conflict", content: errorContentValue },
   500: { description: "Internal server error", content: errorContentValue },

@@ -33,14 +33,15 @@ export {
   listLeaguesByClubId,
   type ListLeaguesFilter,
 } from "#leagueDb.ts";
-export { upsertFixture } from "#fixtureDb.ts";
-export { upsertTableEntry } from "#tableEntryDb.ts";
+export { upsertFixture, listFixturesByLeagueId } from "#fixtureDb.ts";
+export { upsertTableEntry, listTableEntriesByLeagueId } from "#tableEntryDb.ts";
 export { upsertExternalRef, findExternalRef, findExternalRefByInternalId } from "#externalRefDb.ts";
 export {
   upsertSubscription,
   listSubscribedLeagueIds,
   listSubscriptionsWithLeague,
   deleteSubscription,
+  hasActiveSubscription,
   type SubscriptionWithLeague,
 } from "#subscriptionDb.ts";
 export { upsertClientByName, listClients, findClientByName } from "#clientDb.ts";

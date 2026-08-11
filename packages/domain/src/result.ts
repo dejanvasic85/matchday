@@ -13,6 +13,7 @@ export const errorKindValue = {
   notFound: "NotFound",
   badRequest: "BadRequest",
   unauthorized: "Unauthorized",
+  forbidden: "Forbidden",
   conflict: "Conflict",
 } as const;
 
@@ -57,6 +58,13 @@ export function badRequest(message: string): Result<never, ResultError> {
  * is never reported to the client as a rejected credential (ADR 0013). */
 export function unauthorized(message: string): Result<never, ResultError> {
   return err({ kind: errorKindValue.unauthorized, message });
+}
+
+/** The caller authenticated fine but isn't authorised for this specific resource — e.g. a client
+ * with no active subscription to the league whose fixtures/table it requested (ADR 0012). Distinct
+ * from `unauthorized`, which means the credential itself was rejected. */
+export function forbidden(message: string): Result<never, ResultError> {
+  return err({ kind: errorKindValue.forbidden, message });
 }
 
 /** The request conflicts with existing state — a duplicate, or a violated uniqueness rule. */

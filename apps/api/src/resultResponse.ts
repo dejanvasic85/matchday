@@ -47,6 +47,8 @@ export function jsonResult<E extends Env, T>(c: Context<E>, result: Result<T>, e
       return c.json({ error: message }, 400);
     case errorKindValue.unauthorized:
       return c.json({ error: message }, 401);
+    case errorKindValue.forbidden:
+      return c.json({ error: message }, 403);
     case errorKindValue.conflict:
       return c.json({ error: message }, 409);
     case errorKindValue.serverError:
