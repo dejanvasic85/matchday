@@ -7,6 +7,9 @@
     "#*": "./src/*",
     "#test/*": "./test/*"
   },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "test": "vp test run",
     "check": "vp check"
