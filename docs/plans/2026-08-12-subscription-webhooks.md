@@ -15,7 +15,7 @@ revalidate its cache on demand instead of polling.
 
 - `client_subscription` gains an optional webhook URL (+ secret, if slice 1 decides to sign
   deliveries). Unset by default — existing subscriptions are unaffected.
-- After a league's deep crawl, every *active* subscription on that league with a webhook fires a
+- After a league's deep crawl, every _active_ subscription on that league with a webhook fires a
   POST carrying `leagueId`, a `hasChanges` boolean, and a crawl timestamp — every run, not only
   on change, so the client owns the revalidation decision.
 - Change detection compares the league's fixtures + table before vs after the crawl. No such

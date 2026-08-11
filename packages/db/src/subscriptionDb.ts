@@ -2,7 +2,7 @@
 // rules here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
 import { league, subscription } from "#schema.ts";
@@ -101,4 +101,103 @@ export async function deleteSubscription(db: Db, id: string): Promise<Result<Sub
     "Failed to delete subscription",
   );
   return result.ok ? ok(result.value[0] ?? null) : result;
+}
+
+/**
+ * Set (or replace) an active subscription's webhook target + signing secret (#105). Deliberately
+ * separate from `upsertSubscription`: re-subscribing a client to a league (the create/revive
+ * path) must never silently overwrite an already-configured webhook, so the only way to change
+ * one is this explicit call. Returns `null` when no such *active* subscription id exists.
+ */
+export async function setSubscriptionWebhook(
+  db: Db,
+  id: string,
+  webhookUrl: string,
+  webhookSecret: string,
+): Promise<Result<Subscription | null>> {
+  const result = await runQuery(
+    () =>
+      db
+        .update(subscription)
+        .set({ webhookUrl, webhookSecret, updatedAt: new Date() })
+        .where(and(eq(subscription.id, id), isNull(subscription.deletedAt)))
+        .returning(),
+    "Failed to set subscription webhook",
+  );
+  return result.ok ? ok(result.value[0] ?? null) : result;
+}
+
+/** Clear an active subscription's webhook (both URL and secret), returning the updated row — or
+ * `null` when no such *active* subscription id exists. */
+export async function clearSubscriptionWebhook(
+  db: Db,
+  id: string,
+): Promise<Result<Subscription | null>> {
+  const result = await runQuery(
+    () =>
+      db
+        .update(subscription)
+        .set({ webhookUrl: null, webhookSecret: null, updatedAt: new Date() })
+        .where(and(eq(subscription.id, id), isNull(subscription.deletedAt)))
+        .returning(),
+    "Failed to clear subscription webhook",
+  );
+  return result.ok ? ok(result.value[0] ?? null) : result;
+}
+
+/** A subscription's webhook delivery target — what the deep crawl reads post-crawl (#105) to
+ * notify a league's subscribers. Scoped to one league (the crawl's own scope) and to
+ * webhook-configured, active subscriptions only, so callers never branch on a null URL. */
+export type SubscriptionWebhook = {
+  id: string;
+  clientId: string;
+  webhookUrl: string;
+  webhookSecret: string;
+};
+
+/** Every *active*, webhook-configured subscription for a league — the deep crawl's post-run
+ * notification fan-out list. */
+export async function listActiveSubscriptionsForLeagueWithWebhook(
+  db: Db,
+  leagueId: string,
+): Promise<Result<SubscriptionWebhook[]>> {
+  const result = await runQuery(
+    () =>
+      db
+        .select({
+          id: subscription.id,
+          clientId: subscription.clientId,
+          webhookUrl: subscription.webhookUrl,
+          webhookSecret: subscription.webhookSecret,
+        })
+        .from(subscription)
+        .where(
+          and(
+            eq(subscription.leagueId, leagueId),
+            isNull(subscription.deletedAt),
+            isNotNull(subscription.webhookUrl),
+            isNotNull(subscription.webhookSecret),
+          ),
+        ),
+    "Failed to list active subscriptions with webhook for league",
+  );
+  if (!result.ok) {
+    return result;
+  }
+  // The `isNotNull` filters above guarantee both are non-null in SQL, but Drizzle's column types
+  // stay nullable — narrow here so callers get a clean type without an unsafe cast.
+  return ok(
+    result.value.flatMap((row) =>
+      row.webhookUrl === null || row.webhookSecret === null
+        ? []
+        : [
+            {
+              id: row.id,
+              clientId: row.clientId,
+              webhookUrl: row.webhookUrl,
+              webhookSecret: row.webhookSecret,
+            },
+          ],
+    ),
+  );
 }

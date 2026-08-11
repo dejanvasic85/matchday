@@ -192,6 +192,14 @@ export const subscription = pgTable(
     // revive the same row by clearing it, rather than colliding with the still-unique
     // (client_id, league_id) index below.
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    // Optional post-crawl notification target (#105): set/cleared through a dedicated CLI path,
+    // never touched by the subscribe/re-subscribe upsert, so re-subscribing a client to a league
+    // can't silently wipe an already-configured webhook.
+    webhookUrl: text("webhook_url"),
+    // HMAC-SHA256 key for signing webhook deliveries (`X-Matchday-Signature`), shown once when
+    // set. Stored in plaintext (unlike `client_api_token.token_hash`) because we, not the
+    // receiver, compute the signature — there's nothing to hash-and-compare against.
+    webhookSecret: text("webhook_secret"),
     ...timestamps,
   },
   (table) => [

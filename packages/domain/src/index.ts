@@ -18,6 +18,7 @@ export {
 } from "#result.ts";
 export { parseEnv } from "#config.ts";
 export { generateApiToken, hashApiToken } from "#apiTokenHash.ts";
+export { generateWebhookSecret, signWebhookPayload } from "#webhookSignature.ts";
 export type { LogFields, Logger } from "#logger.ts";
 export { createConsoleLogger } from "#consoleLogger.ts";
 export {

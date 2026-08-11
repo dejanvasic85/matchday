@@ -5,6 +5,8 @@ function makeValidSubscription() {
     id: "sub_abc123",
     clientId: "cli_abc123",
     leagueId: "lea_abc123",
+    webhookUrl: null,
+    webhookSecret: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
