@@ -29,6 +29,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      # changesets/action's `version`/`publish` inputs below run as raw shell commands using
+      # `pnpm` directly — Vite+'s setup-vp action manages pnpm internally without putting a bare
+      # binary on PATH (same reason deploy.yml needs this for wrangler-action).
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.21.0
+
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
         with:

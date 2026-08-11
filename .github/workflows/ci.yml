@@ -41,7 +41,7 @@ jobs:
       # release-sdk.yml). Only meaningful on a PR; on push to main there's nothing to diff.
       - name: Check for a changeset on SDK changes
         if: github.event_name == 'pull_request'
-        run: pnpm changeset status --since=origin/main
+        run: vp run changeset status --since=origin/main
 
       # packages/sdk's types are generated from the live OpenAPI spec, not committed — `vp check`
       # type-checks straight from source, bypassing package.json scripts, so the generated file
