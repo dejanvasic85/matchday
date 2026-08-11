@@ -39,8 +39,10 @@ jobs:
       # Fails loudly if a PR changes packages/sdk without `pnpm changeset` — otherwise the
       # publish workflow just silently skips publishing a version nobody bumped (see
       # release-sdk.yml). Only meaningful on a PR; on push to main there's nothing to diff.
+      # Exempts changesets/action's own "Version Packages" PR — it exists specifically to consume
+      # (delete) the changesets that justify its version bump, so by design it never has one left.
       - name: Check for a changeset on SDK changes
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.head_ref != 'changeset-release/main'
         run: vp run changeset status --since=origin/main
 
       # packages/sdk's types are generated from the live OpenAPI spec, not committed — `vp check`
