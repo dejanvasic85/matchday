@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fixtureStatusValue } from "./constants.ts";
+import { fixtureStatusValue } from "#entities/constants.ts";
 
 export const fixtureSchema = z.object({
   id: z.string(),

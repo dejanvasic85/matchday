@@ -1,5 +1,5 @@
 import { notFound, ok, serverError } from "@matchday/domain";
-import { getClub, listAllClubs, type ClubServiceDeps } from "./clubService.ts";
+import { getClub, listAllClubs, type ClubServiceDeps } from "#services/clubService.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 

@@ -4,7 +4,7 @@ import {
   createSubscriptionsForClub,
   removeSubscription,
   type SubscriptionServiceDeps,
-} from "./subscriptionService.ts";
+} from "#services/subscriptionService.ts";
 
 function makeDeps(overrides: Partial<SubscriptionServiceDeps> = {}): SubscriptionServiceDeps {
   return {

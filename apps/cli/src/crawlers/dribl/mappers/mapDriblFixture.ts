@@ -6,7 +6,7 @@
 // This produces an intermediate shape carrying everything a resolution service needs.
 
 import { fixtureStatusValue, type FixtureStatus } from "@matchday/domain";
-import type { DriblFixture } from "../external/driblFixture.ts";
+import type { DriblFixture } from "#crawlers/dribl/external/driblFixture.ts";
 
 export type MappedFixture = {
   sourceId: string;

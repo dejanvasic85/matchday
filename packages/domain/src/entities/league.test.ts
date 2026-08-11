@@ -1,4 +1,4 @@
-import { leagueSchema } from "./league.ts";
+import { leagueSchema } from "#entities/league.ts";
 
 function makeValidLeague() {
   return {

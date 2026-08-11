@@ -10,22 +10,22 @@ import {
   type SubscriptionId,
 } from "@matchday/domain";
 import { Command, InvalidArgumentError, Option } from "commander";
-import { renderClientTable } from "@/clientTable.ts";
-import { renderClubLeagueTable } from "@/clubLeagueTable.ts";
-import { getCliConfig } from "@/config.ts";
-import { crawlSourceValue, type CrawlSource } from "@/crawlers/constants.ts";
-import { runCatalogJob } from "@/jobs/crawls/catalog.ts";
-import { runClubEnrichmentJob } from "@/jobs/clubs/enrichClubs.ts";
-import { runListClubLeaguesJob } from "@/jobs/clubs/listClubLeagues.ts";
-import { runCreateApiTokenJob } from "@/jobs/clients/createApiToken.ts";
-import { runCreateClientJob } from "@/jobs/clients/createClient.ts";
-import { runCreateSubscriptionJob } from "@/jobs/clients/createSubscription.ts";
-import { runCreateSubscriptionsForClubJob } from "@/jobs/clients/createSubscriptionsForClub.ts";
-import { runDeepCrawlJob } from "@/jobs/crawls/deepCrawl.ts";
-import { runListClientsJob } from "@/jobs/clients/listClients.ts";
-import { runRemoveSubscriptionJob } from "@/jobs/clients/removeSubscription.ts";
-import { runRevokeApiTokenJob } from "@/jobs/clients/revokeApiToken.ts";
-import { runSubscribedLeaguesJob } from "@/jobs/crawls/subscribedLeagues.ts";
+import { renderClientTable } from "#clientTable.ts";
+import { renderClubLeagueTable } from "#clubLeagueTable.ts";
+import { getCliConfig } from "#config.ts";
+import { crawlSourceValue, type CrawlSource } from "#crawlers/constants.ts";
+import { runCatalogJob } from "#jobs/crawls/catalog.ts";
+import { runClubEnrichmentJob } from "#jobs/clubs/enrichClubs.ts";
+import { runListClubLeaguesJob } from "#jobs/clubs/listClubLeagues.ts";
+import { runCreateApiTokenJob } from "#jobs/clients/createApiToken.ts";
+import { runCreateClientJob } from "#jobs/clients/createClient.ts";
+import { runCreateSubscriptionJob } from "#jobs/clients/createSubscription.ts";
+import { runCreateSubscriptionsForClubJob } from "#jobs/clients/createSubscriptionsForClub.ts";
+import { runDeepCrawlJob } from "#jobs/crawls/deepCrawl.ts";
+import { runListClientsJob } from "#jobs/clients/listClients.ts";
+import { runRemoveSubscriptionJob } from "#jobs/clients/removeSubscription.ts";
+import { runRevokeApiTokenJob } from "#jobs/clients/revokeApiToken.ts";
+import { runSubscribedLeaguesJob } from "#jobs/crawls/subscribedLeagues.ts";
 
 const currentYear = new Date().getFullYear().toString();
 const crawlSources = Object.values(crawlSourceValue);

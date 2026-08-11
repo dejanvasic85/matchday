@@ -1,4 +1,4 @@
-import { createDbClient } from "./client.ts";
+import { createDbClient } from "#client.ts";
 
 describe("createDbClient", () => {
   it("builds a Drizzle client from a connection string without connecting", () => {

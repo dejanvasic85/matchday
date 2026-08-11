@@ -1,6 +1,6 @@
 import { ok, serverError } from "@matchday/domain";
-import { retryConfigValue } from "./constants.ts";
-import { runQuery } from "./runQuery.ts";
+import { retryConfigValue } from "#constants.ts";
+import { runQuery } from "#runQuery.ts";
 
 /** A neon-http connection-level failure: NeonDbError with no populated sourceError. */
 function makeTransientError() {

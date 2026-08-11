@@ -1,4 +1,4 @@
-import { teamSchema } from "./team.ts";
+import { teamSchema } from "#entities/team.ts";
 
 function makeValidTeam() {
   return {

@@ -9,17 +9,17 @@
 // adapter registered in sourceRegistry.ts — no job or CLI changes required.
 
 import type { LeagueId, Logger, Result } from "@matchday/domain";
-import type { CliConfig } from "../config.ts";
-import type { AssetStorage } from "../storage/assetStorage.ts";
-import type { DownloadedImage } from "../storage/clubLogoMirror.ts";
-import type { RawStorage } from "../storage/rawStorage.ts";
-import type { CrawlSource } from "./constants.ts";
+import type { CliConfig } from "#config.ts";
+import type { AssetStorage } from "#storage/assetStorage.ts";
+import type { DownloadedImage } from "#storage/clubLogoMirror.ts";
+import type { RawStorage } from "#storage/rawStorage.ts";
+import type { CrawlSource } from "#crawlers/constants.ts";
 // `EntityResolutionDeps` is fully source-agnostic (generic @matchday/db upsert bindings) but still
 // lives under crawlers/dribl/ from before this seam existed — same misplacement rawStorage.ts /
 // assetStorage.ts / clubLogoMirror.ts had. Not relocated here: it's imported by ~20 dribl-specific
 // resolver/persistence files, too wide a blast radius for this slice. Relocate alongside adding
 // the Masters adapter, when a second importer actually needs it from outside crawlers/dribl/.
-import type { EntityResolutionDeps } from "./dribl/entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 
 export type CrawlCatalogParams = {
   deps: EntityResolutionDeps;

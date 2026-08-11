@@ -1,6 +1,6 @@
 import { ok } from "@matchday/domain";
-import { makeFakeEntityResolutionDeps } from "@test/fixtures/entityResolutionDeps.ts";
-import { resolveTeamForFixture, resolveTeamForTableEntry } from "./teamResolver.ts";
+import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
+import { resolveTeamForFixture, resolveTeamForTableEntry } from "#crawlers/dribl/teamResolver.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 

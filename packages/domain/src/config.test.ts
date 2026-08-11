@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { parseEnv } from "./config.ts";
+import { parseEnv } from "#config.ts";
 
 const schema = z.object({
   DATABASE_URL: z.url(),

@@ -2,8 +2,8 @@
 // richer `clubs/{id}` response — reuses mapDriblClub's address/socials formatting.
 
 import type { Ground, Socials } from "@matchday/domain";
-import type { DriblClubDetail } from "../external/driblClub.ts";
-import { formatAddress, formatSocials } from "./mapDriblClub.ts";
+import type { DriblClubDetail } from "#crawlers/dribl/external/driblClub.ts";
+import { formatAddress, formatSocials } from "#crawlers/dribl/mappers/mapDriblClub.ts";
 
 export type MappedClubDetail = {
   sourceId: string;

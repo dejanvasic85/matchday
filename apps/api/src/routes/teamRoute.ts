@@ -2,13 +2,13 @@
 // maps data-access results to the wire shape, this just picks the HTTP status.
 
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import type { ApiBindings } from "@/config.ts";
-import type { DbVariables } from "@/middleware/dbClient.ts";
-import { jsonResult } from "@/resultResponse.ts";
-import { errorResponsesValue } from "@/schemas/errorResponses.ts";
-import { idParamSchema } from "@/schemas/idParamSchema.ts";
-import { teamResponseSchema } from "@/schemas/teamSchema.ts";
-import { createTeamServiceDeps, getTeam, listAllTeams } from "@/services/teamService.ts";
+import type { ApiBindings } from "#config.ts";
+import type { DbVariables } from "#middleware/dbClient.ts";
+import { jsonResult } from "#resultResponse.ts";
+import { errorResponsesValue } from "#schemas/errorResponses.ts";
+import { idParamSchema } from "#schemas/idParamSchema.ts";
+import { teamResponseSchema } from "#schemas/teamSchema.ts";
+import { createTeamServiceDeps, getTeam, listAllTeams } from "#services/teamService.ts";
 
 export const teamRoute = new OpenAPIHono<{ Bindings: ApiBindings; Variables: DbVariables }>();
 

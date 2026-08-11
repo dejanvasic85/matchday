@@ -1,4 +1,4 @@
-import { externalRefSchema } from "./externalRef.ts";
+import { externalRefSchema } from "#entities/externalRef.ts";
 
 function makeValidExternalRef() {
   return {

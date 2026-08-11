@@ -14,7 +14,7 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
-import type { FixtureStatus, Source } from "./constants.ts";
+import type { FixtureStatus, Source } from "#constants.ts";
 
 /** Open-ended `platform -> url` map for a club's social links. */
 export type Socials = Record<string, string>;

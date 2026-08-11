@@ -2,17 +2,17 @@
 // the service maps data-access results to the wire shape, this just picks the HTTP status.
 
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
-import type { ApiBindings } from "@/config.ts";
-import type { DbVariables } from "@/middleware/dbClient.ts";
-import { jsonResult } from "@/resultResponse.ts";
-import { competitionResponseSchema } from "@/schemas/competitionSchema.ts";
-import { errorResponsesValue } from "@/schemas/errorResponses.ts";
-import { idParamSchema } from "@/schemas/idParamSchema.ts";
+import type { ApiBindings } from "#config.ts";
+import type { DbVariables } from "#middleware/dbClient.ts";
+import { jsonResult } from "#resultResponse.ts";
+import { competitionResponseSchema } from "#schemas/competitionSchema.ts";
+import { errorResponsesValue } from "#schemas/errorResponses.ts";
+import { idParamSchema } from "#schemas/idParamSchema.ts";
 import {
   createCompetitionServiceDeps,
   getCompetition,
   listAllCompetitions,
-} from "@/services/competitionService.ts";
+} from "#services/competitionService.ts";
 
 export const competitionRoute = new OpenAPIHono<{
   Bindings: ApiBindings;

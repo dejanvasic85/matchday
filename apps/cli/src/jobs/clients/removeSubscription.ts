@@ -3,8 +3,8 @@
 
 import { type Logger, type Result, type SubscriptionId } from "@matchday/domain";
 import { createDbClient, deleteSubscription } from "@matchday/db";
-import type { CliConfig } from "@/config.ts";
-import { removeSubscription } from "@/services/subscriptionService.ts";
+import type { CliConfig } from "#config.ts";
+import { removeSubscription } from "#services/subscriptionService.ts";
 
 export type RunRemoveSubscriptionJobInput = {
   logger: Logger;

@@ -1,6 +1,6 @@
 import { badRequest, conflict, notFound, ok, serverError, unauthorized } from "@matchday/domain";
 import type { Context, Env } from "hono";
-import { jsonResult } from "./resultResponse.ts";
+import { jsonResult } from "#resultResponse.ts";
 
 /** The helper only ever touches `c.json`, so a fake that records its arguments is enough — no
  * Hono request/response plumbing needed to assert the status mapping. */

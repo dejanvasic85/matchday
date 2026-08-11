@@ -1,4 +1,4 @@
-import { generateApiToken, hashApiToken } from "./apiTokenHash.ts";
+import { generateApiToken, hashApiToken } from "#apiTokenHash.ts";
 
 describe("generateApiToken", () => {
   it("generates a token with the mday_ prefix", () => {

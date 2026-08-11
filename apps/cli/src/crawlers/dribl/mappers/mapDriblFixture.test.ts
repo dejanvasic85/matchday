@@ -1,6 +1,6 @@
 import { fixtureStatusValue } from "@matchday/domain";
-import type { DriblFixture } from "../external/driblFixture.ts";
-import { mapDriblFixture } from "./mapDriblFixture.ts";
+import type { DriblFixture } from "#crawlers/dribl/external/driblFixture.ts";
+import { mapDriblFixture } from "#crawlers/dribl/mappers/mapDriblFixture.ts";
 
 function makeDriblFixture(overrides: Partial<DriblFixture["attributes"]> = {}): DriblFixture {
   return {

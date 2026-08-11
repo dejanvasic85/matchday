@@ -3,7 +3,7 @@ import {
   getCompetition,
   listAllCompetitions,
   type CompetitionServiceDeps,
-} from "./competitionService.ts";
+} from "#services/competitionService.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 

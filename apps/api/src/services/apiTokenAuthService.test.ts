@@ -6,7 +6,7 @@ import {
   serverError,
   unauthorized,
 } from "@matchday/domain";
-import { authenticateApiToken, type ApiTokenAuthDeps } from "./apiTokenAuthService.ts";
+import { authenticateApiToken, type ApiTokenAuthDeps } from "#services/apiTokenAuthService.ts";
 
 function makeDeps(overrides: Partial<ApiTokenAuthDeps> = {}): ApiTokenAuthDeps {
   return {

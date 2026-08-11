@@ -1,5 +1,5 @@
-import type { DriblClub } from "../external/driblClub.ts";
-import { mapDriblClub } from "./mapDriblClub.ts";
+import type { DriblClub } from "#crawlers/dribl/external/driblClub.ts";
+import { mapDriblClub } from "#crawlers/dribl/mappers/mapDriblClub.ts";
 
 function makeDriblClub(overrides: Partial<DriblClub["attributes"]> = {}): DriblClub {
   return {

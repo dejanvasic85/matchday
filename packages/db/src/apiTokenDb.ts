@@ -4,9 +4,9 @@
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { eq } from "drizzle-orm";
-import type { Db } from "./client.ts";
-import { runQuery } from "./runQuery.ts";
-import { apiToken } from "./schema.ts";
+import type { Db } from "#client.ts";
+import { runQuery } from "#runQuery.ts";
+import { apiToken } from "#schema.ts";
 
 type ApiToken = typeof apiToken.$inferSelect;
 type ApiTokenInsert = typeof apiToken.$inferInsert;

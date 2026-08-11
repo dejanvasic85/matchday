@@ -1,4 +1,4 @@
-import { browserFetch, type FetchPage } from "./browserFetch.ts";
+import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
 
 function makeFakePage(evaluate: FetchPage["evaluate"]): FetchPage {
   return { evaluate };

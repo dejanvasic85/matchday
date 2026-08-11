@@ -2,9 +2,9 @@
 // here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import type { Result } from "@matchday/domain";
-import type { Db } from "./client.ts";
-import { runUpsert } from "./runQuery.ts";
-import { fixture } from "./schema.ts";
+import type { Db } from "#client.ts";
+import { runUpsert } from "#runQuery.ts";
+import { fixture } from "#schema.ts";
 
 type Fixture = typeof fixture.$inferSelect;
 type FixtureInsert = typeof fixture.$inferInsert;

@@ -4,7 +4,7 @@
 
 import { createDbClient, type Db } from "@matchday/db";
 import { createMiddleware } from "hono/factory";
-import { getApiConfig, type ApiBindings } from "@/config.ts";
+import { getApiConfig, type ApiBindings } from "#config.ts";
 
 export type DbVariables = { db: Db };
 

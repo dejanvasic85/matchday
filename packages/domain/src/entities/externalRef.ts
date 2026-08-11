@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { externalRefEntityTypeValue, sourceValue } from "./constants.ts";
+import { externalRefEntityTypeValue, sourceValue } from "#entities/constants.ts";
 
 export const externalRefSchema = z.object({
   id: z.string(),

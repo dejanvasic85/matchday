@@ -1,7 +1,7 @@
 // Production `Logger` implementation (AGENTS.md): one JSON line per call. `warn`/`error` route
 // through `console.warn`/`console.error` so Cloudflare Workers Logs classifies them correctly.
 
-import type { LogFields, Logger } from "./logger.ts";
+import type { LogFields, Logger } from "#logger.ts";
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 

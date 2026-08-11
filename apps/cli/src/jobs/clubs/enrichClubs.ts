@@ -8,13 +8,13 @@
 
 import { ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { createDbClient } from "@matchday/db";
-import type { CliConfig } from "@/config.ts";
-import type { CrawlSource } from "@/crawlers/constants.ts";
-import { createEntityResolutionDeps } from "@/crawlers/dribl/entityResolutionDeps.ts";
-import { getSourceAdapter } from "@/crawlers/sourceRegistry.ts";
-import { createR2AssetStorage } from "@/storage/assetStorage.ts";
-import type { DownloadedImage } from "@/storage/clubLogoMirror.ts";
-import { createR2RawStorage } from "@/storage/rawStorage.ts";
+import type { CliConfig } from "#config.ts";
+import type { CrawlSource } from "#crawlers/constants.ts";
+import { createEntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import { getSourceAdapter } from "#crawlers/sourceRegistry.ts";
+import { createR2AssetStorage } from "#storage/assetStorage.ts";
+import type { DownloadedImage } from "#storage/clubLogoMirror.ts";
+import { createR2RawStorage } from "#storage/rawStorage.ts";
 
 export type RunClubEnrichmentJobInput = {
   logger: Logger;

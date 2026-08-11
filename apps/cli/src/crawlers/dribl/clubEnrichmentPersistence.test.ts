@@ -1,8 +1,8 @@
 import { ok, type Result } from "@matchday/domain";
-import type { MappedClubDetail } from "./mappers/mapDriblClubDetail.ts";
-import { makeFakeEntityResolutionDeps } from "@test/fixtures/entityResolutionDeps.ts";
-import { makeFakeLogger } from "@test/fixtures/logger.ts";
-import { persistClubEnrichment } from "./clubEnrichmentPersistence.ts";
+import type { MappedClubDetail } from "#crawlers/dribl/mappers/mapDriblClubDetail.ts";
+import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
+import { makeFakeLogger } from "#test/fixtures/logger.ts";
+import { persistClubEnrichment } from "#crawlers/dribl/clubEnrichmentPersistence.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 

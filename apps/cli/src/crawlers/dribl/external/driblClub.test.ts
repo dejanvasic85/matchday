@@ -1,4 +1,7 @@
-import { driblClubDetailApiResponseSchema, driblClubSocialSchema } from "./driblClub.ts";
+import {
+  driblClubDetailApiResponseSchema,
+  driblClubSocialSchema,
+} from "#crawlers/dribl/external/driblClub.ts";
 
 describe("driblClubSocialSchema", () => {
   it("accepts a known platform name", () => {

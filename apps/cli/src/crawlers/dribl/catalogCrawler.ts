@@ -11,11 +11,19 @@
 // want the data (dry runs, tests) can ignore `onLeague`.
 
 import { notFound, ok, serverError, type Logger, type Result } from "@matchday/domain";
-import { browserFetch, type FetchPage } from "./browserFetch.ts";
-import { buildDriblApiUrl } from "./driblApiUrl.ts";
-import { driblTableApiResponseSchema } from "./external/driblTableEntry.ts";
-import { listCompetitions, listLeagues, listSeasons, resolveTenantId } from "./driblCatalogApi.ts";
-import { mapDriblTableEntry, type MappedTableEntry } from "./mappers/mapDriblTableEntry.ts";
+import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
+import { buildDriblApiUrl } from "#crawlers/dribl/driblApiUrl.ts";
+import { driblTableApiResponseSchema } from "#crawlers/dribl/external/driblTableEntry.ts";
+import {
+  listCompetitions,
+  listLeagues,
+  listSeasons,
+  resolveTenantId,
+} from "#crawlers/dribl/driblCatalogApi.ts";
+import {
+  mapDriblTableEntry,
+  type MappedTableEntry,
+} from "#crawlers/dribl/mappers/mapDriblTableEntry.ts";
 
 export type CrawlCatalogInput = {
   page: FetchPage;

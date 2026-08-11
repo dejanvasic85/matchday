@@ -169,14 +169,24 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
   known-safe union after a guard, or working around a wrong external-library type — with an inline
   `oxlint-disable` comment explaining why.
 - TypeScript module filenames are **camelCase** (`fixtureTransformService.ts`).
-- **Alias imports, never relative**, in any package with a `@` alias configured (currently
-  `apps/api`, `apps/cli`) — including same-directory `./foo.ts` imports, not just deep `../../`
-  ones. `@/*` resolves to that app's `src/*`; a package-root `test/fixtures/` module (see Unit
-  testing below) is reached via the separate `@test/*` alias, so a source file never needs a `src`
-  segment (`@/crawlers/constants.ts`, not `@/src/crawlers/constants.ts`) — see
-  `apps/cli/vite.config.ts` / `tsconfig.json` for the two `resolve.alias` entries. Packages without
-  a configured alias (`packages/db`, `packages/domain`) keep same-directory `./foo.ts` imports —
-  there's no alias to use instead.
+- **Alias imports, never relative, everywhere in the monorepo — including same-directory
+  `./foo.ts` imports.** Every package's `package.json` declares a native subpath-imports mapping:
+  ```json
+  "imports": { "#*": "./src/*" }
+  ```
+  (`apps/api` and `apps/cli` additionally map `"#test/*": "./test/*"` for their package-root
+  `test/fixtures/` dir — see Unit testing below.) `#foo.ts` is resolved by **Node itself** — no
+  bundler, no loader — because it's a standard `package.json` field (Node's own "subpath imports"),
+  and the same mapping is understood natively by TypeScript (`moduleResolution: "nodenext"`, no
+  `tsconfig.json` "paths" needed) and by Vite/Vitest/esbuild. That universality is exactly why this
+  replaced an earlier per-app `vite.config.ts` `resolve.alias` (`@/...`): that alias only worked for
+  tooling that reads `vite.config.ts`, and silently didn't exist for `apps/cli`'s `mday` binary,
+  which runs via a raw `node src/cli.ts` invocation in CI (`.github/workflows/crawl-*.yml`) with no
+  bundler in front of it — an "alias imports everywhere" pass that used `resolve.alias` broke every
+  scheduled crawl workflow with `ERR_MODULE_NOT_FOUND` (#92) because nothing in that runtime path
+  understood `@/`. The subpath-imports form has no such blind spot: whether a package's production
+  entrypoint is bundled (`apps/api`, via wrangler/esbuild) or run raw (`apps/cli`), the exact same
+  `#foo.ts` import resolves correctly, so there's one convention, not one per package shape.
 - Avoid magic numbers/strings — name them. Comments only for non-obvious intent; never commented-out
   code.
 - **Zod** for validation schemas and for **env/config**: a Zod-validated config module per app. Env

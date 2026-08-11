@@ -6,9 +6,9 @@
 
 import { createConsoleLogger, errorKindValue, type ClientId } from "@matchday/domain";
 import { createMiddleware } from "hono/factory";
-import type { ApiBindings } from "@/config.ts";
-import type { DbVariables } from "@/middleware/dbClient.ts";
-import { authenticateApiToken, createApiTokenAuthDeps } from "@/services/apiTokenAuthService.ts";
+import type { ApiBindings } from "#config.ts";
+import type { DbVariables } from "#middleware/dbClient.ts";
+import { authenticateApiToken, createApiTokenAuthDeps } from "#services/apiTokenAuthService.ts";
 
 export type ApiTokenAuthVariables = { clientId: ClientId };
 

@@ -1,38 +1,6 @@
-import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { defineConfig, type Plugin } from "vite-plus";
-
-/** Walk up from `fromDir` to find the nearest ancestor containing a package.json. */
-function findPackageRoot(fromDir: string): string {
-  let dir = fromDir;
-  while (!existsSync(join(dir, "package.json"))) {
-    const parent = dirname(dir);
-    if (parent === dir) {
-      throw new Error(`No package.json found above ${fromDir}`);
-    }
-    dir = parent;
-  }
-  return dir;
-}
-
-/** Resolves "@/x" to "x" relative to the importing file's own package root, so each workspace
- * package gets its own package-scoped alias without per-package config. */
-function packageRootAliasPlugin(): Plugin {
-  return {
-    name: "matchday-package-root-alias",
-    enforce: "pre",
-    resolveId(source, importer) {
-      if (!source.startsWith("@/") || importer === undefined) {
-        return null;
-      }
-      const packageRoot = findPackageRoot(dirname(importer));
-      return join(packageRoot, source.slice("@/".length));
-    },
-  };
-}
+import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  plugins: [packageRootAliasPlugin()],
   fmt: {},
   lint: {
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],

@@ -1,4 +1,4 @@
-import { buildDriblApiUrl, type DriblLeagueIds } from "./driblApiUrl.ts";
+import { buildDriblApiUrl, type DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
 
 const ids: DriblLeagueIds = {
   season: "season-id",

@@ -1,9 +1,9 @@
 import { ok } from "@matchday/domain";
-import { makeFakeEntityResolutionDeps } from "@test/fixtures/entityResolutionDeps.ts";
-import { makeFakeLogger } from "@test/fixtures/logger.ts";
-import { makeQueuedFakePage } from "@test/fixtures/fakePage.ts";
-import { makeFakeRawStorage } from "@test/fixtures/rawStorage.ts";
-import { deepCrawlLeague } from "./leagueDeepCrawler.ts";
+import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
+import { makeFakeLogger } from "#test/fixtures/logger.ts";
+import { makeQueuedFakePage } from "#test/fixtures/fakePage.ts";
+import { makeFakeRawStorage } from "#test/fixtures/rawStorage.ts";
+import { deepCrawlLeague } from "#crawlers/dribl/leagueDeepCrawler.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 const leagueId = "lea_abc123" as const;

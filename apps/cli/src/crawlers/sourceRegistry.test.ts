@@ -1,6 +1,6 @@
-import { crawlSourceValue } from "./constants.ts";
-import { driblAdapter } from "./dribl/driblAdapter.ts";
-import { getSourceAdapter } from "./sourceRegistry.ts";
+import { crawlSourceValue } from "#crawlers/constants.ts";
+import { driblAdapter } from "#crawlers/dribl/driblAdapter.ts";
+import { getSourceAdapter } from "#crawlers/sourceRegistry.ts";
 
 describe("getSourceAdapter", () => {
   it("resolves the dribl adapter for the dribl source", () => {

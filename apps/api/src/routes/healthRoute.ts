@@ -4,9 +4,9 @@
 
 import { createConsoleLogger, type Logger } from "@matchday/domain";
 import { Hono } from "hono";
-import type { ApiBindings } from "@/config.ts";
-import type { DbVariables } from "@/middleware/dbClient.ts";
-import { checkHealth, createCheckHealthDeps } from "@/services/healthService.ts";
+import type { ApiBindings } from "#config.ts";
+import type { DbVariables } from "#middleware/dbClient.ts";
+import { checkHealth, createCheckHealthDeps } from "#services/healthService.ts";
 
 export const healthRoute = new Hono<{ Bindings: ApiBindings; Variables: DbVariables }>();
 

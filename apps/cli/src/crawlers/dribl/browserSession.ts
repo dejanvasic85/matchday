@@ -5,7 +5,7 @@
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { type Browser, chromium, type Page } from "playwright-core";
-import { crawlerConfigValue } from "./constants.ts";
+import { crawlerConfigValue } from "#crawlers/dribl/constants.ts";
 
 export type BrowserSession = {
   page: Page;

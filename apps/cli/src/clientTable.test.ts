@@ -1,5 +1,5 @@
-import { renderClientTable } from "@/clientTable.ts";
-import type { ClientSummary } from "@/services/clientService.ts";
+import { renderClientTable } from "#clientTable.ts";
+import type { ClientSummary } from "#services/clientService.ts";
 
 function makeClient(overrides: Partial<ClientSummary> = {}): ClientSummary {
   return {

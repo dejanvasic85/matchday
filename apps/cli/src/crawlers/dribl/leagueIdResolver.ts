@@ -4,12 +4,12 @@
 // changes the league name, misses the cache, and re-resolves automatically.
 
 import { notFound, ok, serverError, type Logger, type Result } from "@matchday/domain";
-import { browserFetch, type FetchPage } from "./browserFetch.ts";
-import type { DriblLeagueIds } from "./driblApiUrl.ts";
-import { crawlerConfigValue } from "./constants.ts";
-import { driblListResponseSchema } from "./external/driblListEndpoints.ts";
-import type { IdCacheStore } from "./idCache.ts";
-import { resolveTenantId } from "./driblCatalogApi.ts";
+import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
+import type { DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
+import { crawlerConfigValue } from "#crawlers/dribl/constants.ts";
+import { driblListResponseSchema } from "#crawlers/dribl/external/driblListEndpoints.ts";
+import type { IdCacheStore } from "#crawlers/dribl/idCache.ts";
+import { resolveTenantId } from "#crawlers/dribl/driblCatalogApi.ts";
 
 const removedLeaguePrefix = "(Removed)";
 

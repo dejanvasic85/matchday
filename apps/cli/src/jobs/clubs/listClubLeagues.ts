@@ -4,8 +4,8 @@
 
 import { type Result } from "@matchday/domain";
 import { createDbClient, findClubsByName, listLeaguesByClubId } from "@matchday/db";
-import type { CliConfig } from "@/config.ts";
-import { listLeaguesForClub, type ClubLeagues } from "@/services/clubLeagueService.ts";
+import type { CliConfig } from "#config.ts";
+import { listLeaguesForClub, type ClubLeagues } from "#services/clubLeagueService.ts";
 
 export type RunListClubLeaguesJobInput = {
   config: CliConfig;

@@ -1,5 +1,5 @@
-import { renderClubLeagueTable } from "@/clubLeagueTable.ts";
-import type { ClubLeagues } from "@/services/clubLeagueService.ts";
+import { renderClubLeagueTable } from "#clubLeagueTable.ts";
+import type { ClubLeagues } from "#services/clubLeagueService.ts";
 
 function makeClubLeagues(overrides: Partial<ClubLeagues> = {}): ClubLeagues {
   return {

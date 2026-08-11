@@ -1,4 +1,4 @@
-import { competitionSchema } from "./competition.ts";
+import { competitionSchema } from "#entities/competition.ts";
 
 function makeValidCompetition() {
   return {

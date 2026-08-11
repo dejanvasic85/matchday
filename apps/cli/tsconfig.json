@@ -6,10 +6,6 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "resolveJsonModule": true,
-    "paths": {
-      "@test/*": ["./test/*"],
-      "@/*": ["./src/*"]
-    },
     "types": ["node", "vite-plus/test/globals"],
     "strict": true,
     "noUnusedLocals": true,

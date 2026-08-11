@@ -12,19 +12,19 @@ import type {
   DeepCrawlParams,
   DeepCrawlSummary,
   SourceAdapter,
-} from "../sourceAdapter.ts";
-import { crawlSourceValue } from "../constants.ts";
-import type { FetchPage } from "./browserFetch.ts";
-import { openBrowserSession } from "./browserSession.ts";
-import { crawlCatalog, type CrawlCatalogLeagueResult } from "./catalogCrawler.ts";
-import { logCatalogDryRun } from "./catalogDryRunLogger.ts";
-import { persistLeague } from "./catalogPersistence.ts";
-import { crawlClubEnrichment } from "./clubEnrichmentCrawler.ts";
-import { logClubEnrichmentDryRun } from "./clubEnrichmentDryRunLogger.ts";
-import { persistClubEnrichment } from "./clubEnrichmentPersistence.ts";
-import { crawlerConfigValue } from "./constants.ts";
-import { resolveTenantId } from "./driblCatalogApi.ts";
-import { deepCrawlLeague } from "./leagueDeepCrawler.ts";
+} from "#crawlers/sourceAdapter.ts";
+import { crawlSourceValue } from "#crawlers/constants.ts";
+import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";
+import { openBrowserSession } from "#crawlers/dribl/browserSession.ts";
+import { crawlCatalog, type CrawlCatalogLeagueResult } from "#crawlers/dribl/catalogCrawler.ts";
+import { logCatalogDryRun } from "#crawlers/dribl/catalogDryRunLogger.ts";
+import { persistLeague } from "#crawlers/dribl/catalogPersistence.ts";
+import { crawlClubEnrichment } from "#crawlers/dribl/clubEnrichmentCrawler.ts";
+import { logClubEnrichmentDryRun } from "#crawlers/dribl/clubEnrichmentDryRunLogger.ts";
+import { persistClubEnrichment } from "#crawlers/dribl/clubEnrichmentPersistence.ts";
+import { crawlerConfigValue } from "#crawlers/dribl/constants.ts";
+import { resolveTenantId } from "#crawlers/dribl/driblCatalogApi.ts";
+import { deepCrawlLeague } from "#crawlers/dribl/leagueDeepCrawler.ts";
 
 type TenantContext = {
   page: FetchPage;

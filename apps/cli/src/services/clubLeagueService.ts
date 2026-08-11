@@ -9,7 +9,7 @@
 
 import { ok, type Result } from "@matchday/domain";
 import type { listLeaguesByClubId } from "@matchday/db";
-import { resolveClub, type ClubResolverDeps, type ResolvedClub } from "@/services/clubResolver.ts";
+import { resolveClub, type ClubResolverDeps, type ResolvedClub } from "#services/clubResolver.ts";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return

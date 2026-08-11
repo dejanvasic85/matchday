@@ -3,7 +3,7 @@
 // without touching the DB.
 
 import type { Logger } from "@matchday/domain";
-import type { CrawlCatalogLeagueResult } from "./catalogCrawler.ts";
+import type { CrawlCatalogLeagueResult } from "#crawlers/dribl/catalogCrawler.ts";
 
 export function logCatalogDryRun(logger: Logger, leagues: CrawlCatalogLeagueResult[]): void {
   logger.info("catalog.dryRun", "catalog crawl complete (dry run, not persisted)", {

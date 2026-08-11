@@ -1,7 +1,7 @@
 import { ok } from "@matchday/domain";
-import type { MappedTableEntry } from "./mappers/mapDriblTableEntry.ts";
-import { makeFakeEntityResolutionDeps } from "@test/fixtures/entityResolutionDeps.ts";
-import { resolveTableEntryEntities } from "./tableEntryEntityResolver.ts";
+import type { MappedTableEntry } from "#crawlers/dribl/mappers/mapDriblTableEntry.ts";
+import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
+import { resolveTableEntryEntities } from "#crawlers/dribl/tableEntryEntityResolver.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 

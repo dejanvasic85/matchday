@@ -17,8 +17,8 @@ import {
   listLeaguesForClub,
   type ClubLeagueServiceDeps,
   type ClubLeagues,
-} from "@/services/clubLeagueService.ts";
-import { resolveClient, type ClientResolverDeps } from "@/services/clientResolver.ts";
+} from "#services/clubLeagueService.ts";
+import { resolveClient, type ClientResolverDeps } from "#services/clientResolver.ts";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return

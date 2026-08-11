@@ -1,5 +1,5 @@
 import { ok, serverError, type ClubId, type Result } from "@matchday/domain";
-import { mirrorClubLogo, type DownloadedImage } from "./clubLogoMirror.ts";
+import { mirrorClubLogo, type DownloadedImage } from "#storage/clubLogoMirror.ts";
 
 const clubId = "clb_existing0001" as ClubId;
 

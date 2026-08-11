@@ -1,4 +1,4 @@
-import { clientSchema } from "./client.ts";
+import { clientSchema } from "#entities/client.ts";
 
 function makeValidClient() {
   return {

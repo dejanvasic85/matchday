@@ -1,4 +1,4 @@
-import { generateId, idPrefixValue, isIdOfType, parseId } from "./id.ts";
+import { generateId, idPrefixValue, isIdOfType, parseId } from "#id.ts";
 
 describe("generateId", () => {
   it.each(Object.entries(idPrefixValue))(

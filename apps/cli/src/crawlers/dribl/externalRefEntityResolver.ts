@@ -24,7 +24,7 @@ import {
   type Result,
   type Source,
 } from "@matchday/domain";
-import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 
 export type ResolveEntityByExternalRefInput<T extends EntityType & ExternalRefEntityType> = {
   deps: Pick<EntityResolutionDeps, "findExternalRef" | "upsertExternalRef">;

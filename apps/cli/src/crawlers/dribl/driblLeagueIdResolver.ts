@@ -16,7 +16,7 @@ import {
   type Result,
   type SeasonId,
 } from "@matchday/domain";
-import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 
 export type DriblLeagueHashes = {
   season: string;

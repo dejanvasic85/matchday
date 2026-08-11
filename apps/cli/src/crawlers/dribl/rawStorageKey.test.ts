@@ -2,7 +2,7 @@ import {
   buildRawClubEnrichmentKey,
   buildRawFixturesKey,
   buildRawTableKey,
-} from "./rawStorageKey.ts";
+} from "#crawlers/dribl/rawStorageKey.ts";
 
 describe("buildRawFixturesKey", () => {
   it("builds a key grouped by league and crawl run", () => {

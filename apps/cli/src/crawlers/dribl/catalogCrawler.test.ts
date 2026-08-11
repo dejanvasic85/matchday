@@ -1,6 +1,6 @@
-import { makeFakeLogger } from "@test/fixtures/logger.ts";
-import { makeQueuedFakePage } from "@test/fixtures/fakePage.ts";
-import { crawlCatalog } from "./catalogCrawler.ts";
+import { makeFakeLogger } from "#test/fixtures/logger.ts";
+import { makeQueuedFakePage } from "#test/fixtures/fakePage.ts";
+import { crawlCatalog } from "#crawlers/dribl/catalogCrawler.ts";
 
 const tenantResponse = { data: { id: "tenant-id" } };
 const seasonsResponse = { data: [{ id: "season-id", name: "2026" }] };

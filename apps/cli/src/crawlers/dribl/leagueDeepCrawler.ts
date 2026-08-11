@@ -5,13 +5,13 @@
 // single job looping over every subscribed league.
 
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";
-import type { FetchPage } from "./browserFetch.ts";
-import { crawlFixturesByRound } from "./fixturesByRoundCrawler.ts";
-import { crawlTable } from "./tableCrawler.ts";
-import { deepCrawlPersist } from "./deepCrawlPersistence.ts";
-import type { EntityResolutionDeps } from "./entityResolutionDeps.ts";
-import type { RawStorage } from "../../storage/rawStorage.ts";
-import { resolveDriblLeagueIds } from "./driblLeagueIdResolver.ts";
+import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";
+import { crawlFixturesByRound } from "#crawlers/dribl/fixturesByRoundCrawler.ts";
+import { crawlTable } from "#crawlers/dribl/tableCrawler.ts";
+import { deepCrawlPersist } from "#crawlers/dribl/deepCrawlPersistence.ts";
+import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import type { RawStorage } from "#storage/rawStorage.ts";
+import { resolveDriblLeagueIds } from "#crawlers/dribl/driblLeagueIdResolver.ts";
 
 export type DeepCrawlLeagueInput = {
   page: FetchPage;
