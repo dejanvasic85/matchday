@@ -3,7 +3,9 @@
 // data-access, so it's unit-testable with fakes instead of a real DB (DI over mocking Drizzle).
 
 import {
+  badRequest,
   generateId,
+  generateWebhookSecret,
   notFound,
   ok,
   parseId,
@@ -12,7 +14,13 @@ import {
   type Result,
   type SubscriptionId,
 } from "@matchday/domain";
-import type { deleteSubscription, getLeagueById, upsertSubscription } from "@matchday/db";
+import type {
+  clearSubscriptionWebhook as clearSubscriptionWebhookDb,
+  deleteSubscription,
+  getLeagueById,
+  setSubscriptionWebhook as setSubscriptionWebhookDb,
+  upsertSubscription,
+} from "@matchday/db";
 import {
   listLeaguesForClub,
   type ClubLeagueServiceDeps,
@@ -29,6 +37,8 @@ export type SubscriptionServiceDeps = ClientResolverDeps &
     getLeagueById: WithoutDb<typeof getLeagueById>;
     upsertSubscription: WithoutDb<typeof upsertSubscription>;
     deleteSubscription: WithoutDb<typeof deleteSubscription>;
+    setSubscriptionWebhook: WithoutDb<typeof setSubscriptionWebhookDb>;
+    clearSubscriptionWebhook: WithoutDb<typeof clearSubscriptionWebhookDb>;
   };
 
 function toSubscriptionId(id: string): Result<SubscriptionId> {
@@ -151,6 +161,64 @@ export async function removeSubscription(
     return deleted;
   }
   if (deleted.value === null) {
+    return notFound(`Subscription not found: ${id}`);
+  }
+  return ok(undefined);
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export type ConfiguredWebhook = {
+  webhookUrl: string;
+  /** Shown once here, like `createApiToken`'s plaintext token — only its value in the response is
+   * ever available; the persisted row is opaque after this call returns. */
+  webhookSecret: string;
+};
+
+/**
+ * Configure (or replace) a subscription's webhook (#105): validates the URL, mints a fresh
+ * signing secret, and persists both. Re-running this on an already-configured subscription
+ * rotates the secret — there's no "keep the old secret" path, matching how `create-token` always
+ * mints a new token rather than exposing an existing one.
+ */
+export async function setSubscriptionWebhook(
+  deps: Pick<SubscriptionServiceDeps, "setSubscriptionWebhook">,
+  id: SubscriptionId,
+  webhookUrl: string,
+): Promise<Result<ConfiguredWebhook>> {
+  if (!isHttpUrl(webhookUrl)) {
+    return badRequest(`Webhook URL must be a valid http(s) URL: ${webhookUrl}`);
+  }
+
+  const webhookSecret = generateWebhookSecret();
+  const updated = await deps.setSubscriptionWebhook(id, webhookUrl, webhookSecret);
+  if (!updated.ok) {
+    return updated;
+  }
+  if (updated.value === null) {
+    return notFound(`Subscription not found: ${id}`);
+  }
+  return ok({ webhookUrl, webhookSecret });
+}
+
+/** Clear a subscription's webhook (#105), narrowing an unknown (or already-webhook-less)
+ * subscription id to a `notFound` outcome, matching `removeSubscription`'s error shape. */
+export async function clearSubscriptionWebhook(
+  deps: Pick<SubscriptionServiceDeps, "clearSubscriptionWebhook">,
+  id: SubscriptionId,
+): Promise<Result<void>> {
+  const updated = await deps.clearSubscriptionWebhook(id);
+  if (!updated.ok) {
+    return updated;
+  }
+  if (updated.value === null) {
     return notFound(`Subscription not found: ${id}`);
   }
   return ok(undefined);

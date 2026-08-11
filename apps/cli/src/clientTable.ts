@@ -13,18 +13,23 @@ function padRow(cells: string[], widths: number[]): string {
     .trimEnd();
 }
 
-/** One line per subscription so ids stay copy-pasteable into `client remove-subscription`; a
- * client's id/name/token count is printed on its first line only, blank on continuation lines. */
+function webhookCell(subscription: { hasWebhook: boolean }): string {
+  return subscription.hasWebhook ? "yes" : emptyCell;
+}
+
+/** One line per subscription so ids stay copy-pasteable into `client remove-subscription`/
+ * `client set-webhook`; a client's id/name/token count is printed on its first line only, blank
+ * on continuation lines. */
 function toRows(clients: ClientSummary[]): string[][] {
   return clients.flatMap((client) => {
     const summary = [client.id, client.name, String(client.activeTokenCount)];
     if (client.subscriptions.length === 0) {
-      return [[...summary, emptyCell, emptyCell]];
+      return [[...summary, emptyCell, emptyCell, emptyCell]];
     }
     return client.subscriptions.map((subscription, index) =>
       index === 0
-        ? [...summary, subscription.id, subscription.leagueName]
-        : ["", "", "", subscription.id, subscription.leagueName],
+        ? [...summary, subscription.id, subscription.leagueName, webhookCell(subscription)]
+        : ["", "", "", subscription.id, subscription.leagueName, webhookCell(subscription)],
     );
   });
 }
@@ -34,7 +39,7 @@ export function renderClientTable(clients: ClientSummary[]): string {
     return 'No clients yet — create one with "mday client add <name>".';
   }
 
-  const header = ["CLIENT ID", "NAME", "TOKENS", "SUBSCRIPTION ID", "LEAGUE"];
+  const header = ["CLIENT ID", "NAME", "TOKENS", "SUBSCRIPTION ID", "LEAGUE", "WEBHOOK"];
   const rows = [header, ...toRows(clients)];
   const widths = header.map((_, index) =>
     Math.max(...rows.map((row) => (row[index] ?? "").length)),

@@ -22,6 +22,7 @@ function makeDeps(overrides: Partial<ClientServiceDeps> = {}): ClientServiceDeps
           clientId: "cli_willy00000",
           leagueId: "lea_abc123",
           leagueName: "Div 1 North",
+          webhookUrl: null,
         },
       ]),
     ),
@@ -37,8 +38,36 @@ describe("listClientSummaries", () => {
     if (result.ok) {
       const [willy] = result.value;
       expect(willy?.subscriptions).toEqual([
-        { id: "sub_one0000000", leagueId: "lea_abc123", leagueName: "Div 1 North" },
+        {
+          id: "sub_one0000000",
+          leagueId: "lea_abc123",
+          leagueName: "Div 1 North",
+          hasWebhook: false,
+        },
       ]);
+    }
+  });
+
+  it("reports hasWebhook true when a subscription has a webhook configured", async () => {
+    const deps = makeDeps({
+      listSubscriptionsWithLeague: vi.fn().mockResolvedValue(
+        ok([
+          {
+            id: "sub_one0000000",
+            clientId: "cli_willy00000",
+            leagueId: "lea_abc123",
+            leagueName: "Div 1 North",
+            webhookUrl: "https://example.com/webhooks/matchday",
+          },
+        ]),
+      ),
+    });
+
+    const result = await listClientSummaries(deps);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value[0]?.subscriptions[0]?.hasWebhook).toBe(true);
     }
   });
 

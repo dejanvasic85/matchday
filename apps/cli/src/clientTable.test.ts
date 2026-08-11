@@ -6,7 +6,14 @@ function makeClient(overrides: Partial<ClientSummary> = {}): ClientSummary {
     id: "cli_willy00000",
     name: "Williamstown SC",
     activeTokenCount: 1,
-    subscriptions: [{ id: "sub_one0000000", leagueId: "lea_abc123", leagueName: "Div 1 North" }],
+    subscriptions: [
+      {
+        id: "sub_one0000000",
+        leagueId: "lea_abc123",
+        leagueName: "Div 1 North",
+        hasWebhook: false,
+      },
+    ],
     ...overrides,
   };
 }
@@ -30,8 +37,18 @@ describe("renderClientTable", () => {
     const output = renderClientTable([
       makeClient({
         subscriptions: [
-          { id: "sub_one0000000", leagueId: "lea_abc123", leagueName: "Div 1 North" },
-          { id: "sub_two0000000", leagueId: "lea_def456", leagueName: "Div 2 South" },
+          {
+            id: "sub_one0000000",
+            leagueId: "lea_abc123",
+            leagueName: "Div 1 North",
+            hasWebhook: false,
+          },
+          {
+            id: "sub_two0000000",
+            leagueId: "lea_def456",
+            leagueName: "Div 2 South",
+            hasWebhook: false,
+          },
         ],
       }),
     ]);
@@ -45,6 +62,31 @@ describe("renderClientTable", () => {
 
     expect(output.split("\n")).toHaveLength(2);
     expect(output).not.toContain("sub_");
+  });
+
+  it("marks a subscription with a configured webhook, and one without", () => {
+    const output = renderClientTable([
+      makeClient({
+        subscriptions: [
+          {
+            id: "sub_one0000000",
+            leagueId: "lea_abc123",
+            leagueName: "Div 1 North",
+            hasWebhook: true,
+          },
+          {
+            id: "sub_two0000000",
+            leagueId: "lea_def456",
+            leagueName: "Div 2 South",
+            hasWebhook: false,
+          },
+        ],
+      }),
+    ]);
+    const [, withWebhook, withoutWebhook] = output.split("\n");
+
+    expect(withWebhook).toContain("yes");
+    expect(withoutWebhook).not.toContain("yes");
   });
 
   it("aligns columns across clients of differing name lengths", () => {

@@ -17,6 +17,7 @@ import { crawlSourceValue, type CrawlSource } from "#crawlers/constants.ts";
 import { runCatalogJob } from "#jobs/crawls/catalog.ts";
 import { runClubEnrichmentJob } from "#jobs/clubs/enrichClubs.ts";
 import { runListClubLeaguesJob } from "#jobs/clubs/listClubLeagues.ts";
+import { runClearSubscriptionWebhookJob } from "#jobs/clients/clearSubscriptionWebhook.ts";
 import { runCreateApiTokenJob } from "#jobs/clients/createApiToken.ts";
 import { runCreateClientJob } from "#jobs/clients/createClient.ts";
 import { runCreateSubscriptionJob } from "#jobs/clients/createSubscription.ts";
@@ -25,6 +26,7 @@ import { runDeepCrawlJob } from "#jobs/crawls/deepCrawl.ts";
 import { runListClientsJob } from "#jobs/clients/listClients.ts";
 import { runRemoveSubscriptionJob } from "#jobs/clients/removeSubscription.ts";
 import { runRevokeApiTokenJob } from "#jobs/clients/revokeApiToken.ts";
+import { runSetSubscriptionWebhookJob } from "#jobs/clients/setSubscriptionWebhook.ts";
 import { runSubscribedLeaguesJob } from "#jobs/crawls/subscribedLeagues.ts";
 
 const currentYear = new Date().getFullYear().toString();
@@ -238,7 +240,8 @@ export function createCli(): Command {
     .command("client")
     .description(
       "Manage API consumers (0012/0013): the clients themselves, their league subscriptions " +
-        "(which drive the deep crawl's scope) and their bearer tokens.",
+        "(which drive the deep crawl's scope), their bearer tokens, and each subscription's " +
+        "optional post-crawl webhook (#105).",
     );
 
   client
@@ -449,6 +452,55 @@ export function createCli(): Command {
         return;
       }
       process.stdout.write(`Removed subscription: ${id}\n`);
+    });
+
+  client
+    .command("set-webhook")
+    .description(
+      "Configure (or rotate) a subscription's webhook (#105): after each deep crawl of its " +
+        "league, matchday POSTs { leagueId, hasChanges, crawledAt } to this URL, signed with a " +
+        "freshly minted secret (X-Matchday-Signature: sha256=<hex>). The secret is shown once " +
+        "here and never recoverable again — re-running this rotates it.",
+    )
+    .argument("<sub_id>", "the subscription id to configure", parseSubscriptionId)
+    .requiredOption("--url <url>", "the http(s) endpoint to POST deliveries to")
+    .action(async (id: SubscriptionId, options: { url: string }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runSetSubscriptionWebhookJob({
+        logger,
+        config,
+        id,
+        webhookUrl: options.url,
+      });
+      if (!result.ok) {
+        logger.error("subscription.webhookfailed", result.error.message, {
+          cause: result.error.cause,
+        });
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(`Webhook URL: ${result.value.webhookUrl}\n`);
+      process.stdout.write(`Webhook secret: ${result.value.webhookSecret}\n`);
+      process.stdout.write("Store this secret now — it will not be shown again.\n");
+    });
+
+  client
+    .command("clear-webhook")
+    .description("Remove a subscription's webhook (#105) so no further deliveries are sent for it.")
+    .argument("<sub_id>", "the subscription id to clear", parseSubscriptionId)
+    .action(async (id: SubscriptionId) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runClearSubscriptionWebhookJob({ logger, config, id });
+      if (!result.ok) {
+        logger.error("subscription.webhookclearfailed", result.error.message, {
+          cause: result.error.cause,
+        });
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(`Cleared webhook for subscription: ${id}\n`);
     });
 
   return program;
