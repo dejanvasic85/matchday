@@ -34,9 +34,9 @@ describe("listAllLeagues", () => {
     );
   });
 
-  it("passes the competitionId/seasonId filter through to data access", async () => {
+  it("passes the competitionId/seasonId/clubId filter through to data access", async () => {
     const deps = makeDeps();
-    const filter = { competitionId: "cmp_abc123", seasonId: "sea_abc123" };
+    const filter = { competitionId: "cmp_abc123", seasonId: "sea_abc123", clubId: "clb_abc123" };
 
     await listAllLeagues(deps, filter);
 

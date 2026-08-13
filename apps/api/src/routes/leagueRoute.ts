@@ -22,7 +22,7 @@ const listLeaguesRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["Leagues"],
-  summary: "List leagues, optionally filtered by competition and/or season",
+  summary: "List leagues, optionally filtered by competition, season, and/or club",
   request: {
     query: z.object({
       competitionId: z
@@ -35,6 +35,15 @@ const listLeaguesRoute = createRoute({
         .regex(/^sea_/)
         .optional()
         .openapi({ param: { name: "seasonId", in: "query" }, example: "sea_V1StGXR8Z5" }),
+      clubId: z
+        .string()
+        .regex(/^clb_/)
+        .optional()
+        .openapi({
+          param: { name: "clubId", in: "query" },
+          example: "clb_V1StGXR8Z5",
+          description: "Leagues this club's teams play in, derived from table entries (0012).",
+        }),
     }),
   },
   responses: {
