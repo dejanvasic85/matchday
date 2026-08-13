@@ -1,4 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>dejanvasic85/renovate-config:default"]
+  "extends": ["github>dejanvasic85/renovate-config:default"],
+  "packageRules": [
+    {
+      "description": "packages/sdk is held below TypeScript 7 by openapi-typescript. TS 7 is the native Go port (tsgo) and no longer ships the JS compiler API, so `ts.factory` is undefined and openapi-typescript crashes on import while generating src/generated/schema.d.ts. TS 6 still exposes ts.factory and works, so v6 is allowed. Lift this rule once openapi-ts/openapi-typescript#2841 ships TS 7 support; the rest of the monorepo already runs TS 7 via the workspace catalog.",
+      "matchFileNames": ["packages/sdk/package.json"],
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7"
+    }
+  ]
 }
