@@ -63,16 +63,14 @@ jobs:
       # in ci.yml) → opens/updates a bot "Version Packages" PR instead of publishing directly.
       # Merging that PR consumes the changesets, which is what triggers the actual publish.
       #
-      # Pinned to v1, not v2: v2.0.0 requires Changesets CLI v3 (`version`/`publish` inputs were
-      # renamed to `version-script`/`publish-script`) and hard-errors under our pinned CLI v2
-      # (@changesets/cli@2.31.1) — a Renovate bump to v2.0.0 (#112) merged clean since nothing had
-      # pushed to `.changeset/**`/`packages/sdk/**` since, so CI never actually exercised this step
-      # until the next real release attempt failed. Re-bump only alongside upgrading
-      # @changesets/cli to v3 and renaming these inputs together.
+      # v2.0.0 requires Changesets CLI v3 (bumped alongside this) and renamed the `version`/
+      # `publish` inputs to `version-script`/`publish-script`. It also dropped the GITHUB_TOKEN
+      # env var as an implicit credential source for the action's own git/PR operations — the
+      # token must now be passed explicitly via the `github-token` input.
       - name: Create release PR or publish
-        uses: changesets/action@v1
+        uses: changesets/action@v2.0.0
         with:
-          version: pnpm changeset version
+          version-script: pnpm changeset version
           # A single script name, not a raw "a && b" string — changesets/action execs this
           # without a shell, so a top-level `&&` here doesn't chain two commands: pnpm just
           # forwards everything after `run build` as extra CLI args onto the *last* command in
@@ -80,7 +78,7 @@ jobs:
           # `changeset publish` (not a raw `pnpm publish`) inside the script — it skips packages
           # whose version is already on the registry instead of hard-failing, so a docs-only
           # commit to packages/sdk that didn't bump the version stays a no-op here.
-          publish: pnpm run release:sdk
+          publish-script: pnpm run release:sdk
+          github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
