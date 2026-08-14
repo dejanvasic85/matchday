@@ -6,7 +6,7 @@ packages:
 catalogMode: prefer
 
 catalog:
-  "@cloudflare/workers-types": 5.20260811.1
+  "@cloudflare/workers-types": 5.20260812.1
   "@hono/zod-openapi": 1.5.2
   "@neondatabase/serverless": 1.1.0
   "@sentry/cloudflare": 10.70.0
@@ -20,11 +20,11 @@ catalog:
   nanoid: 6.0.1
   playwright-core: 1.62.1
   typescript: ^7.0.0
-  wrangler: 4.121.0
+  wrangler: 4.122.0
   zod: 4.4.3
 
 overrides:
-  vite: "npm:@voidzero-dev/vite-plus-core@0.2.8"
+  vite: "npm:@voidzero-dev/vite-plus-core@0.2.9"
 
 peerDependencyRules:
   allowAny:
