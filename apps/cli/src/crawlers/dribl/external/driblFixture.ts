@@ -4,7 +4,10 @@
 import { z } from "zod";
 
 export const driblFixtureAttributesSchema = z.object({
-  name: z.string(),
+  // Dribl returns null for unstructured/placeholder fixtures (e.g. finals rounds whose teams
+  // aren't decided yet, "Second in League 1" vs "Third in League 1") — nullable rather than
+  // required since the mapper doesn't consume this field anyway.
+  name: z.string().nullable(),
   date: z.string(),
   round: z.string(),
   full_round: z.string(),
