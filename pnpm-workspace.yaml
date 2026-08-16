@@ -16,6 +16,7 @@ catalog:
   commander: 15.0.0
   drizzle-kit: 0.31.10
   drizzle-orm: 0.45.2
+  fallow: 3.16.0
   hono: 4.13.2
   nanoid: 6.0.1
   playwright-core: 1.62.1

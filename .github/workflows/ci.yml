@@ -55,6 +55,13 @@ jobs:
       - name: Check (format + lint + type-check)
         run: vp check
 
+      # Gates only what this PR changed — new dead code, complexity, or duplication it
+      # introduces — not the pre-existing backlog, so this can be a blocking gate from day one.
+      # Only meaningful on a PR, same reasoning as the changeset check above.
+      - name: Fallow audit (code health)
+        if: github.event_name == 'pull_request'
+        run: vp run fallow audit
+
       - name: Test
         run: vp run -r test
 
