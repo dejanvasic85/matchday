@@ -4,7 +4,7 @@
 // pipeline — e.g. `mday catalog --max-leagues 1` crawls one league per competition instead of
 // the full source.
 //
-// Some leagues (e.g. MiniRoos junior age groups) have no ladder at all, so a table-less league
+// Some leagues (e.g. MiniRoos junior age groups) have no table at all, so a table-less league
 // falls back to a few rounds of fixtures to discover its teams instead (discoverTeamsFromFixtures)
 // — otherwise those teams would never enter the catalog for Sanity's onboarding dropdowns to find.
 //
@@ -37,7 +37,7 @@ export type CatalogFixtureTeam = {
   name: string;
 };
 
-/** Discovers teams from a few rounds of fixtures — the fallback for a league with no ladder (see
+/** Discovers teams from a few rounds of fixtures — the fallback for a league with no table (see
  * file header). Dedupes by team source id since the same team appears across multiple rounds. */
 async function discoverTeamsFromFixtures(
   page: FetchPage,

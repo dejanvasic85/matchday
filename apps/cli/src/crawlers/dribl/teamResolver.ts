@@ -1,7 +1,7 @@
 // Team resolution differs by caller: fixture data has a team name + Dribl team hash id but no
 // club name, so it creates an *unlinked* team (clubId: null) on first sight rather than guessing
 // a club — resolveTeamForTableEntry links it later if this team's league ever produces a table.
-// Some leagues never do (e.g. MiniRoos junior age groups, which have fixtures but no ladder), so
+// Some leagues never do (e.g. MiniRoos junior age groups, which have fixtures but no table), so
 // this is also how those teams get discovered at all — see catalogCrawler's fixture fallback.
 // Table-entry data carries team name + club name together, so it's the one place that resolves
 // (and can update) the club a team belongs to.
