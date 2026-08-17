@@ -4,6 +4,10 @@
 // pipeline — e.g. `mday catalog --max-leagues 1` crawls one league per competition instead of
 // the full source.
 //
+// Some leagues (e.g. MiniRoos junior age groups) have no table at all, so a table-less league
+// falls back to a few rounds of fixtures to discover its teams instead (discoverTeamsFromFixtures)
+// — otherwise those teams would never enter the catalog for Sanity's onboarding dropdowns to find.
+//
 // An optional `onLeague` callback is invoked with each league the moment it's crawled, so the job
 // can persist it immediately rather than buffering the whole catalog and writing at the end (a DB
 // failure then aborts early with the leagues so far already committed). If it returns `err`, the
@@ -12,7 +16,9 @@
 
 import { notFound, ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
-import { buildDriblApiUrl } from "#crawlers/dribl/driblApiUrl.ts";
+import { crawlerConfigValue } from "#crawlers/dribl/constants.ts";
+import { buildDriblApiUrl, type DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
+import { driblFixturesApiResponseSchema } from "#crawlers/dribl/external/driblFixture.ts";
 import { driblTableApiResponseSchema } from "#crawlers/dribl/external/driblTableEntry.ts";
 import {
   listCompetitions,
@@ -20,10 +26,50 @@ import {
   listSeasons,
   resolveTenantId,
 } from "#crawlers/dribl/driblCatalogApi.ts";
+import { mapDriblFixture } from "#crawlers/dribl/mappers/mapDriblFixture.ts";
 import {
   mapDriblTableEntry,
   type MappedTableEntry,
 } from "#crawlers/dribl/mappers/mapDriblTableEntry.ts";
+
+export type CatalogFixtureTeam = {
+  sourceId: string;
+  name: string;
+};
+
+/** Discovers teams from a few rounds of fixtures — the fallback for a league with no table (see
+ * file header). Dedupes by team source id since the same team appears across multiple rounds. */
+async function discoverTeamsFromFixtures(
+  page: FetchPage,
+  ids: DriblLeagueIds,
+): Promise<Result<CatalogFixtureTeam[]>> {
+  const teamsBySourceId = new Map<string, string>();
+
+  for (let round = 1; round <= crawlerConfigValue.catalogFixtureFallbackRounds; round++) {
+    const url = buildDriblApiUrl("fixtures", ids, { round: String(round) });
+    const fetched = await browserFetch(page, url);
+    if (!fetched.ok) {
+      return fetched;
+    }
+
+    const parsed = driblFixturesApiResponseSchema.safeParse(fetched.value);
+    if (!parsed.success) {
+      return serverError(`Failed to validate fixtures response for round ${round}`, parsed.error);
+    }
+
+    for (const fixture of parsed.data.data) {
+      const mapped = mapDriblFixture(fixture);
+      if (mapped.homeTeamSourceId !== null && mapped.homeTeamName !== null) {
+        teamsBySourceId.set(mapped.homeTeamSourceId, mapped.homeTeamName);
+      }
+      if (mapped.awayTeamSourceId !== null && mapped.awayTeamName !== null) {
+        teamsBySourceId.set(mapped.awayTeamSourceId, mapped.awayTeamName);
+      }
+    }
+  }
+
+  return ok([...teamsBySourceId.entries()].map(([sourceId, name]) => ({ sourceId, name })));
+}
 
 export type CrawlCatalogInput = {
   page: FetchPage;
@@ -45,6 +91,8 @@ export type CrawlCatalogLeagueResult = {
   seasonSourceId: string;
   seasonName: string;
   tableEntries: MappedTableEntry[];
+  /** Teams discovered from fixtures instead — only populated when this league has no table. */
+  fixtureTeams: CatalogFixtureTeam[];
 };
 
 export async function crawlCatalog(
@@ -91,12 +139,13 @@ export async function crawlCatalog(
     });
 
     for (const league of leagues) {
-      const tableUrl = buildDriblApiUrl("ladders", {
+      const ids = {
         season: season.id,
         competition: competition.id,
         league: league.id,
         tenant: tenantId,
-      });
+      };
+      const tableUrl = buildDriblApiUrl("ladders", ids);
       const tableFetched = await browserFetch(page, tableUrl);
       if (!tableFetched.ok) {
         return tableFetched;
@@ -114,6 +163,20 @@ export async function crawlCatalog(
         entries: tableEntries.length,
       });
 
+      let fixtureTeams: CatalogFixtureTeam[] = [];
+      if (tableEntries.length === 0) {
+        const fixtureTeamsResult = await discoverTeamsFromFixtures(page, ids);
+        if (!fixtureTeamsResult.ok) {
+          return fixtureTeamsResult;
+        }
+        fixtureTeams = fixtureTeamsResult.value;
+        logger.info("catalog.fixtureFallback", "no table; discovered teams from fixtures", {
+          competition: competition.attributes.name,
+          league: league.attributes.name,
+          teams: fixtureTeams.length,
+        });
+      }
+
       const crawledLeague: CrawlCatalogLeagueResult = {
         competitionSourceId: competition.id,
         competitionName: competition.attributes.name,
@@ -122,6 +185,7 @@ export async function crawlCatalog(
         seasonSourceId: season.id,
         seasonName: season.attributes.name,
         tableEntries,
+        fixtureTeams,
       };
       results.push(crawledLeague);
 

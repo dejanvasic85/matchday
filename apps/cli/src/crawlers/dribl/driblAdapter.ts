@@ -61,6 +61,11 @@ function addLeagueToCatalogStats(stats: CatalogStats, league: CrawlCatalogLeague
     stats.clubCodes.add(entry.clubCode);
     stats.teamIds.add(entry.teamSourceId);
   }
+  // Fixture-fallback teams (tables-less leagues, e.g. MiniRoos) have no club — count the team,
+  // not a club.
+  for (const fixtureTeam of league.fixtureTeams) {
+    stats.teamIds.add(fixtureTeam.sourceId);
+  }
 }
 
 function summarizeCatalogStats(stats: CatalogStats): CrawlCatalogSummary {

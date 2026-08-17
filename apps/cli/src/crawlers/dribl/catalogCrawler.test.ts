@@ -46,6 +46,47 @@ function makeTableResponse(teamName: string) {
   };
 }
 
+const emptyTableResponse = { data: [] };
+
+function makeFixtureResponse(
+  fixtures: {
+    hashId: string;
+    homeName: string;
+    homeId: string;
+    awayName: string;
+    awayId: string;
+  }[],
+) {
+  return {
+    data: fixtures.map(({ hashId, homeName, homeId, awayName, awayId }) => ({
+      type: "fixtures",
+      hash_id: hashId,
+      attributes: {
+        name: `${homeName} vs ${awayName}`,
+        date: "2026-04-25T23:00:00.000000Z",
+        round: "R1",
+        full_round: "Round 1",
+        ground_name: "AB Shaw Reserve",
+        ground_latitude: -37.865571,
+        ground_longitude: 144.783747,
+        field_name: null,
+        home_team_name: homeName,
+        home_team_hash_id: homeId,
+        home_logo: null,
+        away_team_name: awayName,
+        away_team_hash_id: awayId,
+        away_logo: null,
+        competition_name: "Coles MiniRoos Mixed Sunday (U6 - U11)",
+        league_name: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue",
+        status: "pending",
+        bye_flag: false,
+        home_score: null,
+        away_score: null,
+      },
+    })),
+  };
+}
+
 describe("crawlCatalog", () => {
   it("crawls every league for a single competition when maxLeagues is unset", async () => {
     const page = makeQueuedFakePage([
@@ -126,6 +167,7 @@ describe("crawlCatalog", () => {
           leagueName: "NPL VIC Men",
           seasonSourceId: "season-id",
           seasonName: "2026",
+          fixtureTeams: [],
           tableEntries: [
             {
               teamSourceId: "team-1",
@@ -201,5 +243,107 @@ describe("crawlCatalog", () => {
     assert(result.ok);
     expect(result.value).toHaveLength(1);
     expect(result.value[0]?.competitionName).toBe("Senol NPL Victoria Women");
+  });
+
+  it("falls back to fixtures to discover teams when a league has no table", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      { data: [{ id: "comp-1", name: "Coles MiniRoos Mixed Sunday (U6 - U11)" }] },
+      { data: [{ id: "league-1", name: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue" }] },
+      emptyTableResponse,
+      makeFixtureResponse([
+        {
+          hashId: "fix-1",
+          homeName: "Home Team",
+          homeId: "home-1",
+          awayName: "Away Team",
+          awayId: "away-1",
+        },
+      ]),
+      { data: [] },
+      { data: [] },
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      maxLeagues: 1,
+    });
+
+    assert(result.ok);
+    expect(result.value[0]?.tableEntries).toEqual([]);
+    expect(result.value[0]?.fixtureTeams).toEqual(
+      expect.arrayContaining([
+        { sourceId: "home-1", name: "Home Team" },
+        { sourceId: "away-1", name: "Away Team" },
+      ]),
+    );
+  });
+
+  it("dedupes a team seen across multiple fixture-fallback rounds", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      { data: [{ id: "comp-1", name: "Coles MiniRoos Mixed Sunday (U6 - U11)" }] },
+      { data: [{ id: "league-1", name: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue" }] },
+      emptyTableResponse,
+      makeFixtureResponse([
+        {
+          hashId: "fix-1",
+          homeName: "Home Team",
+          homeId: "home-1",
+          awayName: "Away Team",
+          awayId: "away-1",
+        },
+      ]),
+      makeFixtureResponse([
+        {
+          hashId: "fix-2",
+          homeName: "Home Team",
+          homeId: "home-1",
+          awayName: "Bye Team",
+          awayId: "bye-1",
+        },
+      ]),
+      { data: [] },
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      maxLeagues: 1,
+    });
+
+    assert(result.ok);
+    expect(result.value[0]?.fixtureTeams).toHaveLength(3);
+  });
+
+  it("does not fall back to fixtures when a league's table already has entries", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      { data: [{ id: "comp-1", name: "Senol NPL Victoria Men" }] },
+      { data: [{ id: "league-1", name: "NPL VIC Men" }] },
+      makeTableResponse("Team A"),
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      maxLeagues: 1,
+    });
+
+    assert(result.ok);
+    expect(result.value[0]?.fixtureTeams).toEqual([]);
   });
 });
