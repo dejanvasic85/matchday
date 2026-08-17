@@ -39,19 +39,33 @@ describe("resolveTeamForFixture", () => {
       findExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
     });
 
-    const result = await resolveTeamForFixture(deps, "team-source-1");
+    const result = await resolveTeamForFixture(deps, "team-source-1", "Under 9 Boys Joeys");
 
     expect(result).toEqual({ ok: true, value: "tea_existing001" });
   });
 
-  it("returns null (not an error) when no team with this Dribl id has been seen yet", async () => {
+  it("creates an unlinked team (no club) on first sight of this Dribl id", async () => {
     const deps = makeFakeEntityResolutionDeps({
       findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      upsertExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
+      upsertTeam: vi.fn().mockResolvedValue(ok({ id: "tea_new00000001", clubId: null })),
     });
 
-    const result = await resolveTeamForFixture(deps, "team-source-unknown");
+    const result = await resolveTeamForFixture(
+      deps,
+      "team-source-unknown",
+      "Under 9 Boys Joeys - Dragan/Cian",
+    );
 
-    expect(result).toEqual({ ok: true, value: null });
+    assert(result.ok);
+    expect(deps.upsertTeam).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clubId: null,
+        name: "Under 9 Boys Joeys - Dragan/Cian",
+        ageGroup: null,
+        gender: null,
+      }),
+    );
   });
 
   it("propagates a lookup failure", async () => {
@@ -59,7 +73,7 @@ describe("resolveTeamForFixture", () => {
       findExternalRef: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
     });
 
-    const result = await resolveTeamForFixture(deps, "team-source-1");
+    const result = await resolveTeamForFixture(deps, "team-source-1", "Under 9 Boys Joeys");
 
     assert(!result.ok);
   });

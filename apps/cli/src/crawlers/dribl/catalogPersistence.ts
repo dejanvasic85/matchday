@@ -17,6 +17,7 @@ import type { CrawlCatalogLeagueResult } from "#crawlers/dribl/catalogCrawler.ts
 import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
 import { resolveTableEntryEntities } from "#crawlers/dribl/tableEntryEntityResolver.ts";
+import { resolveTeamForFixture } from "#crawlers/dribl/teamResolver.ts";
 
 export type PersistLeagueInput = {
   deps: EntityResolutionDeps;
@@ -32,11 +33,13 @@ export type PersistCatalogInput = {
 
 export type PersistLeagueSummary = {
   tableEntries: number;
+  fixtureTeams: number;
 };
 
 export type PersistCatalogSummary = {
   leagues: number;
   tableEntries: number;
+  fixtureTeams: number;
 };
 
 export async function persistLeague(
@@ -93,14 +96,22 @@ export async function persistLeague(
     }
   }
 
+  for (const fixtureTeam of league.fixtureTeams) {
+    const teamResult = await resolveTeamForFixture(deps, fixtureTeam.sourceId, fixtureTeam.name);
+    if (!teamResult.ok) {
+      return teamResult;
+    }
+  }
+
   logger.info("catalog.persist.league", "persisted league", {
     competition: league.competitionName,
     league: league.leagueName,
     leagueId: leagueResult.value,
     tableEntries: league.tableEntries.length,
+    fixtureTeams: league.fixtureTeams.length,
   });
 
-  return ok({ tableEntries: league.tableEntries.length });
+  return ok({ tableEntries: league.tableEntries.length, fixtureTeams: league.fixtureTeams.length });
 }
 
 export async function persistCatalog(
@@ -109,6 +120,7 @@ export async function persistCatalog(
   const { deps, logger, leagues } = input;
 
   let tableEntryCount = 0;
+  let fixtureTeamCount = 0;
 
   for (const league of leagues) {
     const result = await persistLeague({ deps, logger, league });
@@ -116,7 +128,12 @@ export async function persistCatalog(
       return result;
     }
     tableEntryCount += result.value.tableEntries;
+    fixtureTeamCount += result.value.fixtureTeams;
   }
 
-  return ok({ leagues: leagues.length, tableEntries: tableEntryCount });
+  return ok({
+    leagues: leagues.length,
+    tableEntries: tableEntryCount,
+    fixtureTeams: fixtureTeamCount,
+  });
 }

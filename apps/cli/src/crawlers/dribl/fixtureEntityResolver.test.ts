@@ -81,9 +81,10 @@ describe("resolveFixtureEntities", () => {
     );
   });
 
-  it("leaves homeTeamId/awayTeamId null when the teams haven't been seen yet", async () => {
+  it("creates unlinked teams (no club) for a fixture whose teams haven't been seen yet", async () => {
     const deps = makeFakeEntityResolutionDeps({
       findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      upsertTeam: vi.fn().mockResolvedValue(ok({ id: "tea_new00000001", clubId: null })),
       upsertFixture: vi.fn().mockResolvedValue(ok({ id: "mtc_new00000001" })),
       upsertExternalRef: vi
         .fn()
@@ -92,6 +93,41 @@ describe("resolveFixtureEntities", () => {
 
     await resolveFixtureEntities(deps, makeMappedFixture(), context);
 
+    expect(deps.upsertTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ clubId: null, name: "Home" }),
+    );
+    expect(deps.upsertTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ clubId: null, name: "Away" }),
+    );
+    expect(deps.upsertFixture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        homeTeamId: expect.stringMatching(/^tea_/),
+        awayTeamId: expect.stringMatching(/^tea_/),
+      }),
+    );
+  });
+
+  it("leaves homeTeamId/awayTeamId null for a placeholder fixture with no team names", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      upsertFixture: vi.fn().mockResolvedValue(ok({ id: "mtc_new00000001" })),
+      upsertExternalRef: vi
+        .fn()
+        .mockResolvedValue(ok(makeExternalRefRow("mtc_new00000001", "fixture-source-1"))),
+    });
+
+    await resolveFixtureEntities(
+      deps,
+      makeMappedFixture({
+        homeTeamSourceId: null,
+        homeTeamName: null,
+        awayTeamSourceId: null,
+        awayTeamName: null,
+      }),
+      context,
+    );
+
+    expect(deps.upsertTeam).not.toHaveBeenCalled();
     expect(deps.upsertFixture).toHaveBeenCalledWith(
       expect.objectContaining({ homeTeamId: null, awayTeamId: null }),
     );
