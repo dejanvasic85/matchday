@@ -129,8 +129,8 @@ describe("persistCatalog", () => {
         makeLeague({
           tableEntries: [],
           fixtureTeams: [
-            { sourceId: "home-1", name: "Under 9 Boys Joeys - Dragan/Cian" },
-            { sourceId: "away-1", name: "Under 9 Boys Wallabies - Eric/Nate" },
+            { sourceId: "home-1", name: "Under 9 Boys Joeys - Dragan/Cian", logoUrl: null },
+            { sourceId: "away-1", name: "Under 9 Boys Wallabies - Eric/Nate", logoUrl: null },
           ],
         }),
       ],
@@ -142,6 +142,34 @@ describe("persistCatalog", () => {
     );
     expect(deps.upsertTeam).toHaveBeenCalledWith(
       expect.objectContaining({ clubId: null, name: "Under 9 Boys Wallabies - Eric/Nate" }),
+    );
+  });
+
+  it("links a fixture-discovered team to a club whose logo bridges", async () => {
+    const deps = makeHappyPathDeps();
+    deps.findClubByLogoUrl = vi
+      .fn()
+      .mockResolvedValue(ok({ id: "clb_existing0001", name: "Williamstown SC" }));
+
+    await persistCatalog({
+      deps,
+      logger: makeFakeLogger(),
+      leagues: [
+        makeLeague({
+          tableEntries: [],
+          fixtureTeams: [
+            {
+              sourceId: "home-1",
+              name: "Williamstown SC U08",
+              logoUrl: "https://ocean.dribl.com/wsc-logo",
+            },
+          ],
+        }),
+      ],
+    });
+
+    expect(deps.upsertTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ clubId: "clb_existing0001", name: "Williamstown SC U08" }),
     );
   });
 

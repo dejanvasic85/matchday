@@ -17,6 +17,7 @@ import {
   type ClubId,
   type Result,
 } from "@matchday/domain";
+import { findClubBridgeMatch } from "#crawlers/dribl/clubBridgeResolver.ts";
 import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 
 export type ResolveClubForEnrichmentInput = {
@@ -56,11 +57,7 @@ export async function resolveClubForEnrichment(
   }
 
   // 2. Bridge by logo, then name, against clubs the deep crawl already discovered.
-  const byLogo = logoUrl !== null ? await deps.findClubByLogoUrl(logoUrl) : ok(null);
-  if (!byLogo.ok) {
-    return byLogo;
-  }
-  const bridgeMatch = byLogo.value === null ? await deps.findClubByName(name) : byLogo;
+  const bridgeMatch = await findClubBridgeMatch(deps, name, logoUrl);
   if (!bridgeMatch.ok) {
     return bridgeMatch;
   }
@@ -69,10 +66,7 @@ export async function resolveClubForEnrichment(
     return ok(null);
   }
 
-  const clubId = toClubId(bridgeMatch.value.id);
-  if (!clubId.ok) {
-    return clubId;
-  }
+  const clubId = bridgeMatch.value;
 
   // A club row can hold at most one `dribl`-source ref (external_ref_entity_source_key). Dribl's
   // own catalog occasionally carries two source ids for what's already one club row here (e.g. a
@@ -81,7 +75,7 @@ export async function resolveClubForEnrichment(
   // constraint or guessing which of the two source records is authoritative.
   const existingBridge = await deps.findExternalRefByInternalId(
     externalRefEntityTypeValue.club,
-    clubId.value,
+    clubId,
     sourceValue.dribl,
   );
   if (!existingBridge.ok) {
@@ -96,7 +90,7 @@ export async function resolveClubForEnrichment(
   const refUpserted = await deps.upsertExternalRef({
     id: generateId("externalRef"),
     entityType: externalRefEntityTypeValue.club,
-    internalId: clubId.value,
+    internalId: clubId,
     source: sourceValue.dribl,
     sourceId,
     sourceUrl: logoUrl,
@@ -105,5 +99,5 @@ export async function resolveClubForEnrichment(
     return refUpserted;
   }
 
-  return ok(clubId.value);
+  return ok(clubId);
 }

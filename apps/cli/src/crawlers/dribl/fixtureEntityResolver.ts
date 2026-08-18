@@ -37,7 +37,12 @@ export async function resolveFixtureEntities(
 
   const homeTeamResult =
     mapped.homeTeamSourceId !== null && mapped.homeTeamName !== null
-      ? await resolveTeamForFixture(deps, mapped.homeTeamSourceId, mapped.homeTeamName)
+      ? await resolveTeamForFixture(
+          deps,
+          mapped.homeTeamSourceId,
+          mapped.homeTeamName,
+          mapped.homeTeamLogoUrl,
+        )
       : ok(null);
   if (!homeTeamResult.ok) {
     return homeTeamResult;
@@ -45,7 +50,12 @@ export async function resolveFixtureEntities(
 
   const awayTeamResult =
     mapped.awayTeamSourceId !== null && mapped.awayTeamName !== null
-      ? await resolveTeamForFixture(deps, mapped.awayTeamSourceId, mapped.awayTeamName)
+      ? await resolveTeamForFixture(
+          deps,
+          mapped.awayTeamSourceId,
+          mapped.awayTeamName,
+          mapped.awayTeamLogoUrl,
+        )
       : ok(null);
   if (!awayTeamResult.ok) {
     return awayTeamResult;
