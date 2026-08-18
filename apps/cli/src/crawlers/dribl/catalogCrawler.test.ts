@@ -278,8 +278,8 @@ describe("crawlCatalog", () => {
     expect(result.value[0]?.tableEntries).toEqual([]);
     expect(result.value[0]?.fixtureTeams).toEqual(
       expect.arrayContaining([
-        { sourceId: "home-1", name: "Home Team" },
-        { sourceId: "away-1", name: "Away Team" },
+        { sourceId: "home-1", name: "Home Team", logoUrl: null },
+        { sourceId: "away-1", name: "Away Team", logoUrl: null },
       ]),
     );
   });

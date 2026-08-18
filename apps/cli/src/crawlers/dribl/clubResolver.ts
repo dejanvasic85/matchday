@@ -16,6 +16,7 @@ import {
   type ClubId,
   type Result,
 } from "@matchday/domain";
+import { findClubBridgeMatch } from "#crawlers/dribl/clubBridgeResolver.ts";
 import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
 
@@ -77,24 +78,17 @@ export async function resolveClub(input: ResolveClubInput): Promise<Result<ClubI
 
   // 2. Bridge: no ref yet — find a pre-existing row by logo, then name, and attach the ref so
   // every future crawl resolves it via step 1 directly instead of re-matching.
-  const byLogo = logoUrl !== null ? await deps.findClubByLogoUrl(logoUrl) : ok(null);
-  if (!byLogo.ok) {
-    return byLogo;
-  }
-  const bridgeMatch = byLogo.value === null ? await deps.findClubByName(name) : byLogo;
+  const bridgeMatch = await findClubBridgeMatch(deps, name, logoUrl);
   if (!bridgeMatch.ok) {
     return bridgeMatch;
   }
 
   if (bridgeMatch.value !== null) {
-    const clubId = toClubId(bridgeMatch.value.id);
-    if (!clubId.ok) {
-      return clubId;
-    }
+    const clubId = bridgeMatch.value;
     const refUpserted = await deps.upsertExternalRef({
       id: generateId("externalRef"),
       entityType: externalRefEntityTypeValue.club,
-      internalId: clubId.value,
+      internalId: clubId,
       source: sourceValue.driblClubCode,
       sourceId: clubCode,
       sourceUrl: null,
@@ -102,7 +96,7 @@ export async function resolveClub(input: ResolveClubInput): Promise<Result<ClubI
     if (!refUpserted.ok) {
       return refUpserted;
     }
-    return upsertClubRow(deps, clubId.value, name, logoUrl);
+    return upsertClubRow(deps, clubId, name, logoUrl);
   }
 
   // 3. Brand new club: generate an id, write the ref, create the row.

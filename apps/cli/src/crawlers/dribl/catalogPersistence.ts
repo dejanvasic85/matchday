@@ -97,7 +97,12 @@ export async function persistLeague(
   }
 
   for (const fixtureTeam of league.fixtureTeams) {
-    const teamResult = await resolveTeamForFixture(deps, fixtureTeam.sourceId, fixtureTeam.name);
+    const teamResult = await resolveTeamForFixture(
+      deps,
+      fixtureTeam.sourceId,
+      fixtureTeam.name,
+      fixtureTeam.logoUrl,
+    );
     if (!teamResult.ok) {
       return teamResult;
     }

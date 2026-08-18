@@ -88,6 +88,9 @@ async function listLeagueQueue(
 export type CatalogFixtureTeam = {
   sourceId: string;
   name: string;
+  /** The club's logo, as seen on the fixture — the primary signal `resolveTeamForFixture` bridges
+   * this team to an existing club with, since fixture data has no club_code. */
+  logoUrl: string | null;
 };
 
 /** Discovers teams from a few rounds of fixtures — the fallback for a league with no table (see
@@ -96,7 +99,7 @@ async function discoverTeamsFromFixtures(
   page: FetchPage,
   ids: DriblLeagueIds,
 ): Promise<Result<CatalogFixtureTeam[]>> {
-  const teamsBySourceId = new Map<string, string>();
+  const teamsBySourceId = new Map<string, { name: string; logoUrl: string | null }>();
 
   for (let round = 1; round <= crawlerConfigValue.catalogFixtureFallbackRounds; round++) {
     const url = buildDriblApiUrl("fixtures", ids, { round: String(round) });
@@ -113,15 +116,27 @@ async function discoverTeamsFromFixtures(
     for (const fixture of parsed.data.data) {
       const mapped = mapDriblFixture(fixture);
       if (mapped.homeTeamSourceId !== null && mapped.homeTeamName !== null) {
-        teamsBySourceId.set(mapped.homeTeamSourceId, mapped.homeTeamName);
+        teamsBySourceId.set(mapped.homeTeamSourceId, {
+          name: mapped.homeTeamName,
+          logoUrl: mapped.homeTeamLogoUrl,
+        });
       }
       if (mapped.awayTeamSourceId !== null && mapped.awayTeamName !== null) {
-        teamsBySourceId.set(mapped.awayTeamSourceId, mapped.awayTeamName);
+        teamsBySourceId.set(mapped.awayTeamSourceId, {
+          name: mapped.awayTeamName,
+          logoUrl: mapped.awayTeamLogoUrl,
+        });
       }
     }
   }
 
-  return ok([...teamsBySourceId.entries()].map(([sourceId, name]) => ({ sourceId, name })));
+  return ok(
+    [...teamsBySourceId.entries()].map(([sourceId, { name, logoUrl }]) => ({
+      sourceId,
+      name,
+      logoUrl,
+    })),
+  );
 }
 
 export type CrawlCatalogInput = {
