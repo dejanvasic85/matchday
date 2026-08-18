@@ -20,13 +20,68 @@ env:
   R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
   R2_PUBLIC_ASSETS_URL: ${{ secrets.R2_PUBLIC_ASSETS_URL }}
   R2_RAW_BUCKET_NAME: ${{ secrets.R2_RAW_BUCKET_NAME }}
+  # Leagues per matrix leg. The full catalog (~750 leagues) persists roughly 1 league every
+  # 10-20s (sequential per-entity DB writes dominate, not the Cloudflare-cleared fetch) — a
+  # single serial run can't fit in any reasonable job timeout. 30/leg bounds each leg to
+  # ~5-10 min, comfortably inside timeout-minutes below.
+  CATALOG_CHUNK_SIZE: "30"
 
 jobs:
-  catalog:
-    name: Catalog
+  setup:
+    name: Setup
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 60
+    timeout-minutes: 10
+    outputs:
+      chunks: ${{ steps.chunks.outputs.chunks }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          cache: true
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Chrome
+        run: vp run --filter @matchday/cli playwright:install
+
+      - name: Count catalog leagues and compute matrix chunks
+        id: chunks
+        run: |
+          output=$(vp run --filter @matchday/cli mday catalog --count)
+          total=$(echo "$output" | grep -o '{.*}' | tail -1 | jq -r '.total')
+          # A parse failure must fail the job loudly, not silently compute chunks=[] and skip
+          # the catalog job entirely (its `if` guard treats an empty matrix as "nothing to do").
+          if ! [[ "$total" =~ ^[0-9]+$ ]]; then
+            echo "::error::Failed to parse a league count from 'mday catalog --count' output: $output"
+            exit 1
+          fi
+          chunkCount=$(( (total + $CATALOG_CHUNK_SIZE - 1) / $CATALOG_CHUNK_SIZE ))
+          chunks=$(jq -c -n --argjson n "$chunkCount" '[range($n)]')
+          echo "chunks=$chunks" >> "$GITHUB_OUTPUT"
+          echo "Total leagues: $total, chunk size: $CATALOG_CHUNK_SIZE, chunks: $chunkCount"
+
+  catalog:
+    name: Catalog
+    needs: setup
+    if: needs.setup.outputs.chunks != '[]'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.setup.outputs.chunks) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -49,7 +104,9 @@ jobs:
         run: vp run --filter @matchday/cli playwright:install
 
       - name: Run catalog crawl
-        run: vp run --filter @matchday/cli mday catalog
+        run: |
+          offset=$(( ${{ matrix.chunk }} * $CATALOG_CHUNK_SIZE ))
+          vp run --filter @matchday/cli mday catalog --offset "$offset" --limit "$CATALOG_CHUNK_SIZE"
 
   club-enrichment:
     name: Club enrichment

@@ -26,6 +26,11 @@ export type CrawlCatalogParams = {
   logger: Logger;
   seasonYear: string;
   maxLeagues?: number;
+  /** Windows the flat (competition, league) queue instead of crawling all of it — the
+   * crawl-catalog.yml matrix uses this to split one run into many bounded parallel legs, each
+   * sized by a prior `countCatalogLeagues` call. */
+  offset?: number;
+  limit?: number;
   dryRun: boolean;
 };
 
@@ -35,6 +40,15 @@ export type CrawlCatalogSummary = {
   clubs: number;
   teams: number;
   tableEntries: number;
+};
+
+export type CountCatalogLeaguesParams = {
+  logger: Logger;
+  maxLeagues?: number;
+};
+
+export type CountCatalogLeaguesSummary = {
+  total: number;
 };
 
 export type DeepCrawlParams = {
@@ -68,6 +82,11 @@ export type CrawlClubEnrichmentSummary = {
 
 export type SourceSession = {
   crawlCatalog(params: CrawlCatalogParams): Promise<Result<CrawlCatalogSummary>>;
+  /** Cheap listing-only companion to `crawlCatalog` (no table/fixture fetches, no persistence) —
+   * sizes the crawl-catalog.yml matrix ahead of the real crawl. */
+  countCatalogLeagues(
+    params: CountCatalogLeaguesParams,
+  ): Promise<Result<CountCatalogLeaguesSummary>>;
   deepCrawlLeague(params: DeepCrawlParams): Promise<Result<DeepCrawlSummary>>;
   crawlClubEnrichment(
     params: CrawlClubEnrichmentParams,
