@@ -8,8 +8,6 @@ function makeTeamRow(overrides: Record<string, unknown> = {}) {
     id: "tea_abc123",
     clubId: "clb_abc123",
     name: "Test FC U12",
-    ageGroup: "U12",
-    gender: "mixed",
     createdAt: epoch,
     updatedAt: epoch,
     ...overrides,

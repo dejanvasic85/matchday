@@ -6,8 +6,6 @@ export const teamResponseSchema = z
     id: z.string().openapi({ example: "tea_V1StGXR8Z5" }),
     clubId: z.string().nullable(),
     name: z.string(),
-    ageGroup: z.string().nullable(),
-    gender: z.string().nullable(),
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
   })

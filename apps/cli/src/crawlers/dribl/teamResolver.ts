@@ -55,8 +55,6 @@ async function bridgeUnlinkedTeam(
     id: teamId,
     clubId: bridgeMatch.value,
     name: current.value.name,
-    ageGroup: current.value.ageGroup,
-    gender: current.value.gender,
   });
   return updated.ok ? ok(teamId) : updated;
 }
@@ -95,8 +93,6 @@ export async function resolveTeamForFixture(
         id,
         clubId: bridgeMatch.value,
         name: teamName,
-        ageGroup: null,
-        gender: null,
       }),
   });
 }
@@ -130,8 +126,6 @@ export async function resolveTeamForTableEntry(
         id,
         clubId,
         name: teamName,
-        ageGroup: null,
-        gender: null,
       }),
   });
 }

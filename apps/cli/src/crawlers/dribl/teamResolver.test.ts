@@ -38,8 +38,6 @@ function makeTeamRow(overrides: Partial<{ clubId: string | null }> = {}) {
     id: "tea_existing001",
     clubId: null,
     name: "Under 9 Boys Joeys",
-    ageGroup: null,
-    gender: null,
     createdAt: epoch,
     updatedAt: epoch,
     ...overrides,
@@ -124,8 +122,6 @@ describe("resolveTeamForFixture", () => {
       expect.objectContaining({
         clubId: "clb_existing0001",
         name: "Altona North SC U08",
-        ageGroup: null,
-        gender: null,
       }),
     );
   });
@@ -151,8 +147,6 @@ describe("resolveTeamForFixture", () => {
       expect.objectContaining({
         clubId: null,
         name: "Under 9 Boys Joeys - Dragan/Cian",
-        ageGroup: null,
-        gender: null,
       }),
     );
   });
