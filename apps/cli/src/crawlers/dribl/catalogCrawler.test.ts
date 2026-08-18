@@ -1,6 +1,6 @@
 import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import { makeQueuedFakePage } from "#test/fixtures/fakePage.ts";
-import { crawlCatalog } from "#crawlers/dribl/catalogCrawler.ts";
+import { countCatalogLeagues, crawlCatalog } from "#crawlers/dribl/catalogCrawler.ts";
 
 const tenantResponse = { data: { id: "tenant-id" } };
 const seasonsResponse = { data: [{ id: "season-id", name: "2026" }] };
@@ -115,10 +115,10 @@ describe("crawlCatalog", () => {
       tenantResponse,
       seasonsResponse,
       twoCompetitionsResponse,
-      twoLeaguesResponse,
-      makeTableResponse("Team A"),
-      twoLeaguesResponse,
-      makeTableResponse("Team A"),
+      twoLeaguesResponse, // comp-1's leagues, listed while building the full queue
+      twoLeaguesResponse, // comp-2's leagues, listed while building the full queue
+      makeTableResponse("Team A"), // comp-1's capped league, crawled from the built queue
+      makeTableResponse("Team A"), // comp-2's capped league, crawled from the built queue
     ]);
 
     const result = await crawlCatalog({
@@ -345,5 +345,107 @@ describe("crawlCatalog", () => {
 
     assert(result.ok);
     expect(result.value[0]?.fixtureTeams).toEqual([]);
+  });
+
+  it("crawls only the requested offset/limit window of the flat league queue", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      twoCompetitionsResponse,
+      twoLeaguesResponse, // comp-1's leagues (queue indices 0, 1)
+      twoLeaguesResponse, // comp-2's leagues (queue indices 2, 3)
+      makeTableResponse("Team B"), // index 1: comp-1 / NPL VIC Men - U20
+      makeTableResponse("Team C"), // index 2: comp-2 / NPL VIC Men
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      offset: 1,
+      limit: 2,
+    });
+
+    assert(result.ok);
+    expect(result.value.map((r) => `${r.competitionName}/${r.leagueName}`)).toEqual([
+      "Senol NPL Victoria Men/NPL VIC Men - U20",
+      "Senol NPL Victoria Women/NPL VIC Men",
+    ]);
+  });
+
+  it("crawls to the end of the queue when only offset is given", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      { data: [{ id: "comp-1", name: "Senol NPL Victoria Men" }] },
+      twoLeaguesResponse,
+      makeTableResponse("Team B"),
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      offset: 1,
+    });
+
+    assert(result.ok);
+    expect(result.value.map((r) => r.leagueName)).toEqual(["NPL VIC Men - U20"]);
+  });
+});
+
+describe("countCatalogLeagues", () => {
+  it("counts every queued league without fetching any tables", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      twoCompetitionsResponse,
+      twoLeaguesResponse,
+      twoLeaguesResponse,
+    ]);
+
+    const result = await countCatalogLeagues({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+    });
+
+    expect(result).toEqual({ ok: true, value: 4 });
+  });
+
+  it("applies maxLeagues per competition the same way crawlCatalog would", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      twoCompetitionsResponse,
+      twoLeaguesResponse,
+      twoLeaguesResponse,
+    ]);
+
+    const result = await countCatalogLeagues({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      maxLeagues: 1,
+    });
+
+    expect(result).toEqual({ ok: true, value: 2 });
+  });
+
+  it("propagates a tenant resolution failure", async () => {
+    const page = makeQueuedFakePage([{ data: {} }]);
+
+    const result = await countCatalogLeagues({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+    });
+
+    assert(!result.ok);
   });
 });

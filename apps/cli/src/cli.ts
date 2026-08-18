@@ -15,6 +15,7 @@ import { renderClubLeagueTable } from "#clubLeagueTable.ts";
 import { getCliConfig } from "#config.ts";
 import { crawlSourceValue, type CrawlSource } from "#crawlers/constants.ts";
 import { runCatalogJob } from "#jobs/crawls/catalog.ts";
+import { runCountCatalogLeaguesJob } from "#jobs/crawls/countCatalogLeagues.ts";
 import { runClubEnrichmentJob } from "#jobs/clubs/enrichClubs.ts";
 import { runListClubLeaguesJob } from "#jobs/clubs/listClubLeagues.ts";
 import { runClearSubscriptionWebhookJob } from "#jobs/clients/clearSubscriptionWebhook.ts";
@@ -36,6 +37,14 @@ function parsePositiveInt(value: string): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw new InvalidArgumentError("must be a positive integer");
+  }
+  return parsed;
+}
+
+function parseNonNegativeInt(value: string): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new InvalidArgumentError("must be a non-negative integer");
   }
   return parsed;
 }
@@ -82,7 +91,9 @@ export function createCli(): Command {
     .description(
       "Crawl all competitions, leagues and teams (with their clubs) for a source + season, " +
         "upserting the catalog used by onboarding dropdowns. Cheap and source-wide; run weekly " +
-        "or monthly.",
+        "or monthly. --offset/--limit crawl a window of the flat league queue instead of all of " +
+        "it (the crawl-catalog.yml matrix's per-leg scope); --count skips crawling and just " +
+        "prints how many leagues are queued, to size that matrix.",
     )
     .option(
       "--source <name>",
@@ -96,22 +107,61 @@ export function createCli(): Command {
       "crawl at most this many leagues per competition (default: all)",
       parsePositiveInt,
     )
+    .option(
+      "--offset <count>",
+      "skip this many leagues at the front of the queue (default: 0)",
+      parseNonNegativeInt,
+    )
+    .option(
+      "--limit <count>",
+      "crawl at most this many leagues from the queue, starting at --offset (default: all)",
+      parsePositiveInt,
+    )
+    .option(
+      "--count",
+      "print how many leagues are queued instead of crawling (for sizing the crawl-catalog.yml matrix)",
+      false,
+    )
     .option("--dry-run", "crawl and log the catalog without writing to the database", false)
     .action(
       async (options: {
         source: CrawlSource;
         season: string;
         maxLeagues?: number;
+        offset?: number;
+        limit?: number;
+        count: boolean;
         dryRun: boolean;
       }) => {
         const config = getCliConfig();
         const logger = createConsoleLogger();
+
+        if (options.count) {
+          const result = await runCountCatalogLeaguesJob({
+            logger,
+            config,
+            source: options.source,
+            maxLeagues: options.maxLeagues,
+          });
+          if (!result.ok) {
+            logger.error("catalog.count.failed", result.error.message, {
+              cause: result.error.cause,
+            });
+            process.exitCode = 1;
+            return;
+          }
+          process.stdout.write(`${JSON.stringify({ total: result.value })}\n`);
+          return;
+        }
+
         const result = await runCatalogJob({
           logger,
           config,
           source: options.source,
           seasonYear: options.season,
           maxLeagues: options.maxLeagues,
+          offset: options.offset,
+          limit: options.limit,
           dryRun: options.dryRun,
         });
         if (!result.ok) {
