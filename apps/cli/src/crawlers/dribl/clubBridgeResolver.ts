@@ -1,9 +1,6 @@
-// Bridges a name+logo pair to an *existing* club row — never creates one, never writes a ref.
-// The shared lookup step behind resolveClub's step 2 (club_code identity, table entries),
-// resolveClubForEnrichment (club-enrichment), and resolveTeamForFixture (fixture-only team
-// discovery, which has no club_code to key identity on at all). Logo first: it's shared by every
-// team of a club and unaffected by name suffixes (age group, grade, e.g. "Altona North SC U08"
-// vs. the club row's "Altona North SC"); exact-name is the fallback for a club with no logo set.
+// Bridges a name+logo pair to an existing club row — never creates one. Shared by resolveClub,
+// resolveClubForEnrichment and resolveTeamForFixture. Logo first: shared club-wide, so it survives
+// team-name suffixes (age group) that would defeat an exact-name match.
 
 import { ok, parseId, serverError, type ClubId, type Result } from "@matchday/domain";
 import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";

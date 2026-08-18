@@ -88,8 +88,7 @@ async function listLeagueQueue(
 export type CatalogFixtureTeam = {
   sourceId: string;
   name: string;
-  /** The club's logo, as seen on the fixture — the primary signal `resolveTeamForFixture` bridges
-   * this team to an existing club with, since fixture data has no club_code. */
+  /** The club's logo as seen on the fixture — resolveTeamForFixture's club-bridge signal. */
   logoUrl: string | null;
 };
 

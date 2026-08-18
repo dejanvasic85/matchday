@@ -2,8 +2,7 @@ import { ok } from "@matchday/domain";
 import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 
 /** Most methods default to a `vi.fn()` returning `undefined` — override per test as needed. The
- * three club-bridge lookups default to `ok(null)` ("no match") since resolveTeamForFixture calls
- * them unconditionally on every existing-team sighting too, not just tests that care about it. */
+ * club-bridge lookups default to `ok(null)` since resolveTeamForFixture calls them unconditionally. */
 export function makeFakeEntityResolutionDeps(
   overrides: Partial<EntityResolutionDeps> = {},
 ): EntityResolutionDeps {

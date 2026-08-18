@@ -1,15 +1,9 @@
-// Team resolution differs by caller: fixture data has a team name + Dribl team hash id but no
-// club_code, so it can't resolve a club by identity the way resolveTeamForTableEntry does.
-// It bridges instead — same logo-then-name match as resolveClub's own bridge step (see
-// clubBridgeResolver) — using the team's logo, which Dribl sets to the *club's* logo on every
-// fixture regardless of age group, so it survives team-name suffixes ("Altona North SC U08")
-// that would defeat a name match. A team whose club can't be bridged yet (its club has never
-// been seen elsewhere, e.g. a MiniRoos-only club) is still created unlinked (clubId: null)
-// rather than blocked — resolveTeamForTableEntry links it later if this team's league ever
-// produces a table, and this resolver retries the bridge on every subsequent sighting (self-
-// healing once the club does show up, e.g. via a senior team's table entry).
-// Table-entry data carries team name + club name together, so it's the one place that resolves
-// (and can update) the club a team belongs to from source data alone.
+// Fixture data has no club_code, so it can't resolve a club by identity — it bridges instead via
+// findClubBridgeMatch (logo survives team-name suffixes like "Altona North SC U08"). If the club
+// can't be bridged yet, the team is still created unlinked (clubId: null) rather than blocked;
+// every subsequent sighting retries the bridge, so it self-heals once the club shows up elsewhere.
+// resolveTeamForTableEntry is the one place that resolves the club from source data alone (table
+// rows carry team name + club name together).
 
 import {
   externalRefEntityTypeValue,
