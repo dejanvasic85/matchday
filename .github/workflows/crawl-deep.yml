@@ -81,6 +81,8 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
+      # playwright:install deliberately omits --with-deps — see crawl-catalog.yml's Install Chrome
+      # step for why (a flaky apt mirror can hang the OS-deps install ubuntu-latest doesn't need).
       - name: Install Chrome
         run: vp run --filter @matchday/cli playwright:install
 
