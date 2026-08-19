@@ -23,6 +23,7 @@ import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.
 export type ResolveClubForEnrichmentInput = {
   deps: Pick<
     EntityResolutionDeps,
+    | "findClubByExternalRefSourceUrl"
     | "findClubByLogoUrl"
     | "findClubByName"
     | "findExternalRef"

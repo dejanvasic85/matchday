@@ -12,6 +12,7 @@ import { resolveClubForEnrichment } from "#crawlers/dribl/clubEnrichmentResolver
 export type PersistClubEnrichmentInput = {
   deps: Pick<
     EntityResolutionDeps,
+    | "findClubByExternalRefSourceUrl"
     | "findClubByLogoUrl"
     | "findClubByName"
     | "findExternalRef"
