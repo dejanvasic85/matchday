@@ -92,6 +92,20 @@ export type CatalogFixtureTeam = {
   logoUrl: string | null;
 };
 
+/** Records one round's sighting of a fixture team, keyed by source id across rounds. A later
+ * round's null logo (e.g. a fixture where Dribl simply didn't populate it) must not clobber an
+ * earlier round's real one — the club-bridge match (resolveTeamForFixture) needs whichever logo
+ * this team has ever shown, not just the most recent round's. */
+function recordFixtureTeamSighting(
+  teamsBySourceId: Map<string, { name: string; logoUrl: string | null }>,
+  sourceId: string,
+  name: string,
+  logoUrl: string | null,
+): void {
+  const existing = teamsBySourceId.get(sourceId);
+  teamsBySourceId.set(sourceId, { name, logoUrl: logoUrl ?? existing?.logoUrl ?? null });
+}
+
 /** Discovers teams from a few rounds of fixtures — the fallback for a league with no table (see
  * file header). Dedupes by team source id since the same team appears across multiple rounds. */
 async function discoverTeamsFromFixtures(
@@ -115,16 +129,20 @@ async function discoverTeamsFromFixtures(
     for (const fixture of parsed.data.data) {
       const mapped = mapDriblFixture(fixture);
       if (mapped.homeTeamSourceId !== null && mapped.homeTeamName !== null) {
-        teamsBySourceId.set(mapped.homeTeamSourceId, {
-          name: mapped.homeTeamName,
-          logoUrl: mapped.homeTeamLogoUrl,
-        });
+        recordFixtureTeamSighting(
+          teamsBySourceId,
+          mapped.homeTeamSourceId,
+          mapped.homeTeamName,
+          mapped.homeTeamLogoUrl,
+        );
       }
       if (mapped.awayTeamSourceId !== null && mapped.awayTeamName !== null) {
-        teamsBySourceId.set(mapped.awayTeamSourceId, {
-          name: mapped.awayTeamName,
-          logoUrl: mapped.awayTeamLogoUrl,
-        });
+        recordFixtureTeamSighting(
+          teamsBySourceId,
+          mapped.awayTeamSourceId,
+          mapped.awayTeamName,
+          mapped.awayTeamLogoUrl,
+        );
       }
     }
   }
@@ -252,6 +270,7 @@ export async function crawlCatalog(
         competition: competition.attributes.name,
         league: league.attributes.name,
         teams: fixtureTeams.length,
+        withoutLogo: fixtureTeams.filter((team) => team.logoUrl === null).length,
       });
     }
 

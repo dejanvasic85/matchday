@@ -55,35 +55,39 @@ function makeFixtureResponse(
     homeId: string;
     awayName: string;
     awayId: string;
+    homeLogo?: string | null;
+    awayLogo?: string | null;
   }[],
 ) {
   return {
-    data: fixtures.map(({ hashId, homeName, homeId, awayName, awayId }) => ({
-      type: "fixtures",
-      hash_id: hashId,
-      attributes: {
-        name: `${homeName} vs ${awayName}`,
-        date: "2026-04-25T23:00:00.000000Z",
-        round: "R1",
-        full_round: "Round 1",
-        ground_name: "AB Shaw Reserve",
-        ground_latitude: -37.865571,
-        ground_longitude: 144.783747,
-        field_name: null,
-        home_team_name: homeName,
-        home_team_hash_id: homeId,
-        home_logo: null,
-        away_team_name: awayName,
-        away_team_hash_id: awayId,
-        away_logo: null,
-        competition_name: "Coles MiniRoos Mixed Sunday (U6 - U11)",
-        league_name: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue",
-        status: "pending",
-        bye_flag: false,
-        home_score: null,
-        away_score: null,
-      },
-    })),
+    data: fixtures.map(
+      ({ hashId, homeName, homeId, awayName, awayId, homeLogo = null, awayLogo = null }) => ({
+        type: "fixtures",
+        hash_id: hashId,
+        attributes: {
+          name: `${homeName} vs ${awayName}`,
+          date: "2026-04-25T23:00:00.000000Z",
+          round: "R1",
+          full_round: "Round 1",
+          ground_name: "AB Shaw Reserve",
+          ground_latitude: -37.865571,
+          ground_longitude: 144.783747,
+          field_name: null,
+          home_team_name: homeName,
+          home_team_hash_id: homeId,
+          home_logo: homeLogo,
+          away_team_name: awayName,
+          away_team_hash_id: awayId,
+          away_logo: awayLogo,
+          competition_name: "Coles MiniRoos Mixed Sunday (U6 - U11)",
+          league_name: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue",
+          status: "pending",
+          bye_flag: false,
+          home_score: null,
+          away_score: null,
+        },
+      }),
+    ),
   };
 }
 
@@ -323,6 +327,53 @@ describe("crawlCatalog", () => {
 
     assert(result.ok);
     expect(result.value[0]?.fixtureTeams).toHaveLength(3);
+  });
+
+  it("keeps an earlier round's logo instead of letting a later null round clobber it", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      { data: [{ id: "comp-1", name: "Coles MiniRoos Mixed Sunday (U6 - U11)" }] },
+      { data: [{ id: "league-1", name: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue" }] },
+      emptyTableResponse,
+      makeFixtureResponse([
+        {
+          hashId: "fix-1",
+          homeName: "Home Team",
+          homeId: "home-1",
+          awayName: "Away Team",
+          awayId: "away-1",
+          homeLogo: "https://ocean.dribl.com/home-logo",
+        },
+      ]),
+      makeFixtureResponse([
+        {
+          hashId: "fix-2",
+          homeName: "Home Team",
+          homeId: "home-1",
+          awayName: "Bye Team",
+          awayId: "bye-1",
+          homeLogo: null,
+        },
+      ]),
+      { data: [] },
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      maxLeagues: 1,
+    });
+
+    assert(result.ok);
+    expect(result.value[0]?.fixtureTeams).toContainEqual({
+      sourceId: "home-1",
+      name: "Home Team",
+      logoUrl: "https://ocean.dribl.com/home-logo",
+    });
   });
 
   it("does not fall back to fixtures when a league's table already has entries", async () => {
