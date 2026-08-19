@@ -83,8 +83,11 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
-      # See crawl-catalog.yml's setup job Install Chrome step for why this retries with a
-      # bounded timeout.
+      # See crawl-catalog.yml's setup job steps for why this pins the apt mirror and retries with
+      # a bounded timeout.
+      - name: Pin apt to a reliable Ubuntu mirror
+        run: echo "http://archive.ubuntu.com/ubuntu" | sudo tee /etc/apt/apt-mirrors.txt
+
       - name: Install Chrome
         env:
           DEBIAN_FRONTEND: noninteractive

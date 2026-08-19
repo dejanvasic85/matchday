@@ -54,13 +54,18 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
+      # GitHub-hosted runners' apt-mirrors.txt lists azure.archive.ubuntu.com first; it's been
+      # unreachable for extended periods from this runner pool (confirmed: apt-get update hung the
+      # full 5-minute retry timeout on it, twice in a row, while archive.ubuntu.com succeeded
+      # instantly every time it was actually reached) — pin directly to the reliable one.
+      - name: Pin apt to a reliable Ubuntu mirror
+        run: echo "http://archive.ubuntu.com/ubuntu" | sudo tee /etc/apt/apt-mirrors.txt
+
       # browserSession.ts deliberately launches channel: "chrome" (the real branded Chrome, not
       # Playwright's portable Chromium) for Cloudflare clearance — so this always shells out to
-      # apt-get/dpkg to install the OS package, regardless of --with-deps (confirmed from a hung
-      # run's logs: apt-get ran either way). It's twice now hung indefinitely past apt-get update
-      # succeeding — most likely a debconf prompt blocking on stdin in this non-interactive
-      # shell — so a bounded timeout + one retry, rather than trusting it to ever finish or fail
-      # loudly on its own.
+      # apt-get/dpkg to install the OS package, regardless of --with-deps. Retry + lock cleanup
+      # below are defense-in-depth for a transient apt hiccup; the mirror pin above addresses the
+      # actual observed cause.
       - name: Install Chrome
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -129,7 +134,11 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
-      # See setup job's Install Chrome step for why this retries with a bounded timeout.
+      # See setup job's steps above for why this pins the apt mirror and retries with a bounded
+      # timeout.
+      - name: Pin apt to a reliable Ubuntu mirror
+        run: echo "http://archive.ubuntu.com/ubuntu" | sudo tee /etc/apt/apt-mirrors.txt
+
       - name: Install Chrome
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -182,7 +191,11 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
-      # See setup job's Install Chrome step for why this retries with a bounded timeout.
+      # See setup job's steps above for why this pins the apt mirror and retries with a bounded
+      # timeout.
+      - name: Pin apt to a reliable Ubuntu mirror
+        run: echo "http://archive.ubuntu.com/ubuntu" | sudo tee /etc/apt/apt-mirrors.txt
+
       - name: Install Chrome
         env:
           DEBIAN_FRONTEND: noninteractive
