@@ -31,7 +31,9 @@ jobs:
     name: Setup
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 10
+    # Install Chrome now retries up to 2x with a 5-min-each bounded timeout, so this needs enough
+    # headroom to absorb that worst case plus the count-leagues crawl.
+    timeout-minutes: 20
     outputs:
       chunks: ${{ steps.chunks.outputs.chunks }}
     steps:
@@ -52,12 +54,25 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
-      # playwright:install deliberately omits --with-deps: it shells out to apt-get for OS-level
-      # libraries, and ubuntu-latest already ships everything Chrome needs — the one time we did
-      # use --with-deps here, a flaky azure.archive.ubuntu.com mirror hung apt-get until the job
-      # timed out. Browser-binary-only install has no apt dependency, so it can't hit that.
+      # browserSession.ts deliberately launches channel: "chrome" (the real branded Chrome, not
+      # Playwright's portable Chromium) for Cloudflare clearance — so this always shells out to
+      # apt-get/dpkg to install the OS package, regardless of --with-deps (confirmed from a hung
+      # run's logs: apt-get ran either way). It's twice now hung indefinitely past apt-get update
+      # succeeding — most likely a debconf prompt blocking on stdin in this non-interactive
+      # shell — so a bounded timeout + one retry, rather than trusting it to ever finish or fail
+      # loudly on its own.
       - name: Install Chrome
-        run: vp run --filter @matchday/cli playwright:install
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          for attempt in 1 2; do
+            if timeout 300 vp run --filter @matchday/cli playwright:install; then
+              exit 0
+            fi
+            echo "::warning::Chrome install attempt $attempt timed out or failed, retrying..."
+          done
+          echo "::error::Chrome install failed after 2 attempts"
+          exit 1
 
       - name: Count catalog leagues and compute matrix chunks
         id: chunks
@@ -81,7 +96,9 @@ jobs:
     if: needs.setup.outputs.chunks != '[]'
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 20
+    # Install Chrome's retry can itself take up to ~10 min worst case (see setup job) on top of
+    # the ~5-10 min crawl leg described above.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -104,8 +121,19 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
+      # See setup job's Install Chrome step for why this retries with a bounded timeout.
       - name: Install Chrome
-        run: vp run --filter @matchday/cli playwright:install
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          for attempt in 1 2; do
+            if timeout 300 vp run --filter @matchday/cli playwright:install; then
+              exit 0
+            fi
+            echo "::warning::Chrome install attempt $attempt timed out or failed, retrying..."
+          done
+          echo "::error::Chrome install failed after 2 attempts"
+          exit 1
 
       - name: Run catalog crawl
         run: |
@@ -117,7 +145,9 @@ jobs:
     needs: catalog
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 30
+    # Install Chrome's retry can itself take up to ~10 min worst case (see setup job) on top of
+    # this job's own ~19-min observed crawl duration.
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -136,8 +166,19 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
+      # See setup job's Install Chrome step for why this retries with a bounded timeout.
       - name: Install Chrome
-        run: vp run --filter @matchday/cli playwright:install
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          for attempt in 1 2; do
+            if timeout 300 vp run --filter @matchday/cli playwright:install; then
+              exit 0
+            fi
+            echo "::warning::Chrome install attempt $attempt timed out or failed, retrying..."
+          done
+          echo "::error::Chrome install failed after 2 attempts"
+          exit 1
 
       - name: Run club enrichment crawl
         run: vp run --filter @matchday/cli mday club-enrichment
