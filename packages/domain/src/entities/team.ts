@@ -4,8 +4,6 @@ export const teamSchema = z.object({
   id: z.string(),
   clubId: z.string().nullable(),
   name: z.string(),
-  ageGroup: z.string().nullable(),
-  gender: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

@@ -79,7 +79,7 @@ written camelCase in Drizzle and mapped to snake_case in Postgres via `casing: "
 
 - **club** — id; `name`, `displayName`, `logoUrl` (our own R2 URL, nullable), `email`, `website`,
   `address`, `socials` (`jsonb`, nullable).
-- **team** — id; `clubId` → club; `name`, `ageGroup`, `gender`.
+- **team** — id; `clubId` → club; `name`.
 - **competition** — id; `name`.
 - **season** — id; `name` (e.g. `"2026"`).
 - **league** — id; `name`; `competitionId` → competition, `seasonId` → season. Ties a competition
@@ -112,8 +112,8 @@ written camelCase in Drizzle and mapped to snake_case in Postgres via `casing: "
 - `socials`/`address` open-ended shape → `jsonb`, typed with Drizzle `.$type<…>()` and validated
   by Zod at the mapper boundary.
 - Scores → nullable `integer` (null pre-match / on bye).
-- `status`, `gender`, `ageGroup` → `text` validated against an `as const`/Zod union in a co-located
-  `constants.ts`, not a DB enum.
+- `status` → `text` validated against an `as const`/Zod union in a co-located `constants.ts`, not a
+  DB enum.
 
 ## Consequences
 

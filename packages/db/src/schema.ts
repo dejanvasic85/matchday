@@ -48,8 +48,6 @@ export const team = pgTable("team", {
   id: text("id").primaryKey(),
   clubId: text("club_id").references(() => club.id),
   name: text("name").notNull(),
-  ageGroup: text("age_group"),
-  gender: text("gender"),
   ...timestamps,
 });
 
