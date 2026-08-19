@@ -8,6 +8,7 @@ import {
   ok,
   type CompetitionId,
   type LeagueId,
+  type Logger,
   type Result,
   type SeasonId,
 } from "@matchday/domain";
@@ -30,6 +31,7 @@ function toNumericString(value: number | null): string | null {
 
 export async function resolveFixtureEntities(
   deps: EntityResolutionDeps,
+  logger: Logger,
   mapped: MappedFixture,
   context: FixtureContext,
 ): Promise<Result<void>> {
@@ -39,6 +41,7 @@ export async function resolveFixtureEntities(
     mapped.homeTeamSourceId !== null && mapped.homeTeamName !== null
       ? await resolveTeamForFixture(
           deps,
+          logger,
           mapped.homeTeamSourceId,
           mapped.homeTeamName,
           mapped.homeTeamLogoUrl,
@@ -52,6 +55,7 @@ export async function resolveFixtureEntities(
     mapped.awayTeamSourceId !== null && mapped.awayTeamName !== null
       ? await resolveTeamForFixture(
           deps,
+          logger,
           mapped.awayTeamSourceId,
           mapped.awayTeamName,
           mapped.awayTeamLogoUrl,

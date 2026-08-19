@@ -1,6 +1,7 @@
 import { fixtureStatusValue, ok } from "@matchday/domain";
 import type { MappedFixture } from "#crawlers/dribl/mappers/mapDriblFixture.ts";
 import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
+import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import { resolveFixtureEntities } from "#crawlers/dribl/fixtureEntityResolver.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
@@ -67,7 +68,12 @@ describe("resolveFixtureEntities", () => {
         .mockResolvedValue(ok(makeExternalRefRow("mtc_new00000001", "fixture-source-1"))),
     });
 
-    const result = await resolveFixtureEntities(deps, makeMappedFixture(), context);
+    const result = await resolveFixtureEntities(
+      deps,
+      makeFakeLogger(),
+      makeMappedFixture(),
+      context,
+    );
 
     assert(result.ok);
     expect(deps.upsertFixture).toHaveBeenCalledWith(
@@ -93,7 +99,7 @@ describe("resolveFixtureEntities", () => {
         .mockResolvedValue(ok(makeExternalRefRow("mtc_new00000001", "fixture-source-1"))),
     });
 
-    await resolveFixtureEntities(deps, makeMappedFixture(), context);
+    await resolveFixtureEntities(deps, makeFakeLogger(), makeMappedFixture(), context);
 
     expect(deps.upsertTeam).toHaveBeenCalledWith(
       expect.objectContaining({ clubId: null, name: "Home" }),
@@ -120,6 +126,7 @@ describe("resolveFixtureEntities", () => {
 
     await resolveFixtureEntities(
       deps,
+      makeFakeLogger(),
       makeMappedFixture({
         homeTeamSourceId: null,
         homeTeamName: null,
@@ -148,6 +155,7 @@ describe("resolveFixtureEntities", () => {
 
     await resolveFixtureEntities(
       deps,
+      makeFakeLogger(),
       makeMappedFixture({ awayTeamSourceId: null, awayTeamName: null, isBye: true }),
       context,
     );
@@ -160,7 +168,12 @@ describe("resolveFixtureEntities", () => {
       findExternalRef: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
     });
 
-    const result = await resolveFixtureEntities(deps, makeMappedFixture(), context);
+    const result = await resolveFixtureEntities(
+      deps,
+      makeFakeLogger(),
+      makeMappedFixture(),
+      context,
+    );
 
     assert(!result.ok);
     expect(deps.upsertFixture).not.toHaveBeenCalled();

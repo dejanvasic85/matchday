@@ -1,5 +1,6 @@
 import { ok } from "@matchday/domain";
 import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
+import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import { resolveTeamForFixture, resolveTeamForTableEntry } from "#crawlers/dribl/teamResolver.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
@@ -51,7 +52,13 @@ describe("resolveTeamForFixture", () => {
       getTeamById: vi.fn().mockResolvedValue(ok(makeTeamRow({ clubId: "clb_existing0001" }))),
     });
 
-    const result = await resolveTeamForFixture(deps, "team-source-1", "Under 9 Boys Joeys", null);
+    const result = await resolveTeamForFixture(
+      deps,
+      makeFakeLogger(),
+      "team-source-1",
+      "Under 9 Boys Joeys",
+      null,
+    );
 
     expect(result).toEqual({ ok: true, value: "tea_existing001" });
     expect(deps.upsertTeam).not.toHaveBeenCalled();
@@ -69,6 +76,7 @@ describe("resolveTeamForFixture", () => {
 
     const result = await resolveTeamForFixture(
       deps,
+      makeFakeLogger(),
       "team-source-1",
       "Altona North SC U08",
       "https://ocean.dribl.com/logo",
@@ -81,16 +89,18 @@ describe("resolveTeamForFixture", () => {
     );
   });
 
-  it("leaves an unlinked team unlinked when no club bridges yet", async () => {
+  it("leaves an unlinked team unlinked when no club bridges yet, logging the miss", async () => {
     const deps = makeFakeEntityResolutionDeps({
       findExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
       getTeamById: vi.fn().mockResolvedValue(ok(makeTeamRow({ clubId: null }))),
       findClubByLogoUrl: vi.fn().mockResolvedValue(ok(null)),
       findClubByName: vi.fn().mockResolvedValue(ok(null)),
     });
+    const logger = makeFakeLogger();
 
     const result = await resolveTeamForFixture(
       deps,
+      logger,
       "team-source-1",
       "Under 9 Boys Joeys",
       "https://ocean.dribl.com/logo",
@@ -98,6 +108,27 @@ describe("resolveTeamForFixture", () => {
 
     expect(result).toEqual({ ok: true, value: "tea_existing001" });
     expect(deps.upsertTeam).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(
+      "catalog.teamBridge.unmatched",
+      expect.any(String),
+      expect.objectContaining({
+        teamName: "Under 9 Boys Joeys",
+        teamLogoUrl: "https://ocean.dribl.com/logo",
+      }),
+    );
+  });
+
+  it("does not log an unmatched bridge when there was no logo to try in the first place", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow())),
+      getTeamById: vi.fn().mockResolvedValue(ok(makeTeamRow({ clubId: null }))),
+      findClubByName: vi.fn().mockResolvedValue(ok(null)),
+    });
+    const logger = makeFakeLogger();
+
+    await resolveTeamForFixture(deps, logger, "team-source-1", "Under 9 Boys Joeys", null);
+
+    expect(logger.info).not.toHaveBeenCalled();
   });
 
   it("creates a team bridged to a club by logo on first sight of this Dribl id", async () => {
@@ -112,6 +143,7 @@ describe("resolveTeamForFixture", () => {
 
     const result = await resolveTeamForFixture(
       deps,
+      makeFakeLogger(),
       "team-source-unknown",
       "Altona North SC U08",
       "https://ocean.dribl.com/logo",
@@ -137,6 +169,7 @@ describe("resolveTeamForFixture", () => {
 
     const result = await resolveTeamForFixture(
       deps,
+      makeFakeLogger(),
       "team-source-unknown",
       "Under 9 Boys Joeys - Dragan/Cian",
       null,
@@ -156,7 +189,13 @@ describe("resolveTeamForFixture", () => {
       findExternalRef: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
     });
 
-    const result = await resolveTeamForFixture(deps, "team-source-1", "Under 9 Boys Joeys", null);
+    const result = await resolveTeamForFixture(
+      deps,
+      makeFakeLogger(),
+      "team-source-1",
+      "Under 9 Boys Joeys",
+      null,
+    );
 
     assert(!result.ok);
   });
