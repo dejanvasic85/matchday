@@ -21,6 +21,7 @@ import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityRes
 
 type ResolveTeamForFixtureDeps = Pick<
   EntityResolutionDeps,
+  | "findClubByExternalRefSourceUrl"
   | "findClubByLogoUrl"
   | "findClubByName"
   | "findExternalRef"

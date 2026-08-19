@@ -8,6 +8,7 @@ export function makeFakeEntityResolutionDeps(
 ): EntityResolutionDeps {
   return {
     findClubByLogoUrl: vi.fn().mockResolvedValue(ok(null)),
+    findClubByExternalRefSourceUrl: vi.fn().mockResolvedValue(ok(null)),
     findClubByName: vi.fn().mockResolvedValue(ok(null)),
     getClubById: vi.fn(),
     upsertClub: vi.fn(),

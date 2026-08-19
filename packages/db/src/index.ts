@@ -17,6 +17,7 @@ export {
   listClubs,
   getClubById,
   findClubByLogoUrl,
+  findClubByExternalRefSourceUrl,
   findClubByName,
   findClubsByName,
   upsertClub,

@@ -24,14 +24,16 @@ function makeClubRow(overrides: Partial<{ id: string; name: string }> = {}) {
   };
 }
 
-function makeExternalRefRow(overrides: Partial<{ internalId: string }> = {}) {
+function makeExternalRefRow(
+  overrides: Partial<{ internalId: string; sourceUrl: string | null }> = {},
+) {
   return {
     id: "ext_row0000001",
     entityType: "club",
     internalId: "clb_existing0001",
     source: "dribl_club_code" as const,
     sourceId: "club-code-1",
-    sourceUrl: null,
+    sourceUrl: "https://ocean.dribl.com/logo",
     createdAt: epoch,
     updatedAt: epoch,
     ...overrides,
@@ -68,6 +70,51 @@ describe("resolveClub", () => {
     await resolveClub({ deps, ...baseInput });
 
     expect(deps.upsertClub).toHaveBeenCalledWith(expect.objectContaining({ logoUrl: null }));
+  });
+
+  it("backfills the ref's sourceUrl when an existing ref predates it being recorded", async () => {
+    const upsertExternalRef = vi.fn().mockResolvedValue(ok(makeExternalRefRow()));
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow({ sourceUrl: null }))),
+      upsertExternalRef,
+      upsertClub: vi.fn().mockResolvedValue(ok(makeClubRow())),
+    });
+
+    const result = await resolveClub({ deps, ...baseInput });
+
+    assert(result.ok);
+    expect(upsertExternalRef).toHaveBeenCalledWith(
+      expect.objectContaining({
+        internalId: "clb_existing0001",
+        source: "dribl_club_code",
+        sourceId: "club-code-1",
+        sourceUrl: baseInput.logoUrl,
+      }),
+    );
+  });
+
+  it("does not backfill the ref when logoUrl is null", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow({ sourceUrl: null }))),
+      upsertClub: vi.fn().mockResolvedValue(ok(makeClubRow())),
+    });
+
+    const result = await resolveClub({ ...baseInput, deps, logoUrl: null });
+
+    assert(result.ok);
+    expect(deps.upsertExternalRef).not.toHaveBeenCalled();
+  });
+
+  it("propagates a backfill upsertExternalRef failure", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(makeExternalRefRow({ sourceUrl: null }))),
+      upsertExternalRef: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
+    });
+
+    const result = await resolveClub({ deps, ...baseInput });
+
+    assert(!result.ok);
+    expect(deps.upsertClub).not.toHaveBeenCalled();
   });
 
   it("bridges via a logo match when no club_code ref exists yet, writing the ref", async () => {

@@ -2,10 +2,11 @@
 // (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
-import { asc, eq, ilike, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, sql } from "drizzle-orm";
 import type { Db } from "#client.ts";
+import { externalRefEntityTypeValue } from "#constants.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
-import { club } from "#schema.ts";
+import { club, externalRef } from "#schema.ts";
 
 type Club = typeof club.$inferSelect;
 type ClubInsert = typeof club.$inferInsert;
@@ -33,6 +34,35 @@ export async function findClubByLogoUrl(db: Db, logoUrl: string): Promise<Result
     "Failed to find club by logo url",
   );
   return result.ok ? ok(result.value[0] ?? null) : result;
+}
+
+/**
+ * Find a club by the *original* source logo URL retained on its `external_ref` (ADR 0004).
+ * Unlike {@link findClubByLogoUrl}, which matches the club row's current `logoUrl`, this survives
+ * club-enrichment mirroring that to an R2 URL: `external_ref.sourceUrl` is written once at
+ * identity-resolution time and never rewritten, so it still matches what Dribl sends elsewhere
+ * (e.g. a fixture's team logo, which is always the club's *original* Dribl CDN URL).
+ */
+export async function findClubByExternalRefSourceUrl(
+  db: Db,
+  sourceUrl: string,
+): Promise<Result<Club | null>> {
+  const result = await runQuery(
+    () =>
+      db
+        .select({ club })
+        .from(externalRef)
+        .innerJoin(club, eq(club.id, externalRef.internalId))
+        .where(
+          and(
+            eq(externalRef.entityType, externalRefEntityTypeValue.club),
+            eq(externalRef.sourceUrl, sourceUrl),
+          ),
+        )
+        .limit(1),
+    "Failed to find club by external ref source url",
+  );
+  return result.ok ? ok(result.value[0]?.club ?? null) : result;
 }
 
 /**
