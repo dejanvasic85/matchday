@@ -12,10 +12,10 @@
   },
   "devDependencies": {
     "@changesets/cli": "3.0.0",
-    "@vitest/coverage-v8": "4.1.10",
+    "@vitest/coverage-v8": "4.1.11",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9",
     "vite-plus": "0.2.9",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   },
   "devEngines": {
     "runtime": {
