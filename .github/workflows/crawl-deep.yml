@@ -58,7 +58,9 @@ jobs:
     if: needs.setup.outputs.leagues != '[]'
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 30
+    # Install Chrome's retry can itself take up to ~10 min worst case (see crawl-catalog.yml's
+    # setup job) on top of this job's own crawl work.
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -81,10 +83,20 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
-      # playwright:install deliberately omits --with-deps — see crawl-catalog.yml's Install Chrome
-      # step for why (a flaky apt mirror can hang the OS-deps install ubuntu-latest doesn't need).
+      # See crawl-catalog.yml's setup job Install Chrome step for why this retries with a
+      # bounded timeout.
       - name: Install Chrome
-        run: vp run --filter @matchday/cli playwright:install
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          for attempt in 1 2; do
+            if timeout 300 vp run --filter @matchday/cli playwright:install; then
+              exit 0
+            fi
+            echo "::warning::Chrome install attempt $attempt timed out or failed, retrying..."
+          done
+          echo "::error::Chrome install failed after 2 attempts"
+          exit 1
 
       - name: Run deep crawl
         run: vp run --filter @matchday/cli mday deep-crawl --league ${{ matrix.league }}
