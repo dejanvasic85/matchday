@@ -52,6 +52,10 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
+      # playwright:install deliberately omits --with-deps: it shells out to apt-get for OS-level
+      # libraries, and ubuntu-latest already ships everything Chrome needs — the one time we did
+      # use --with-deps here, a flaky azure.archive.ubuntu.com mirror hung apt-get until the job
+      # timed out. Browser-binary-only install has no apt dependency, so it can't hit that.
       - name: Install Chrome
         run: vp run --filter @matchday/cli playwright:install
 

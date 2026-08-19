@@ -11,7 +11,7 @@
     "#test/*": "./test/*"
   },
   "scripts": {
-    "playwright:install": "playwright-core install --with-deps chrome",
+    "playwright:install": "playwright-core install chrome",
     "test": "vp test run",
     "check": "vp check"
   },
