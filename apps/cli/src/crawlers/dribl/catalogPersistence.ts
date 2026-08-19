@@ -99,6 +99,7 @@ export async function persistLeague(
   for (const fixtureTeam of league.fixtureTeams) {
     const teamResult = await resolveTeamForFixture(
       deps,
+      logger,
       fixtureTeam.sourceId,
       fixtureTeam.name,
       fixtureTeam.logoUrl,

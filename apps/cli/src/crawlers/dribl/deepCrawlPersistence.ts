@@ -37,7 +37,7 @@ export async function deepCrawlPersist(
   for (const response of fixtureResponses) {
     for (const fixture of response.data) {
       const mapped = mapDriblFixture(fixture);
-      const result = await resolveFixtureEntities(deps, mapped, context);
+      const result = await resolveFixtureEntities(deps, logger, mapped, context);
       if (!result.ok) {
         return result;
       }

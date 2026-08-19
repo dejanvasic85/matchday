@@ -11,6 +11,7 @@ import {
   parseId,
   serverError,
   sourceValue,
+  type Logger,
   type Result,
   type TeamId,
 } from "@matchday/domain";
@@ -30,8 +31,21 @@ type ResolveTeamForFixtureDeps = Pick<
   | "upsertTeam"
 >;
 
+/** A logo was available to bridge on but nothing matched — worth a look, unlike a null logo
+ * (nothing to try in the first place) or a genuinely-unseen-elsewhere club (expected, common). */
+function logUnmatchedBridge(logger: Logger, teamName: string, teamLogoUrl: string | null): void {
+  if (teamLogoUrl === null) {
+    return;
+  }
+  logger.info("catalog.teamBridge.unmatched", "fixture team's logo matched no known club", {
+    teamName,
+    teamLogoUrl,
+  });
+}
+
 async function bridgeUnlinkedTeam(
   deps: ResolveTeamForFixtureDeps,
+  logger: Logger,
   teamId: TeamId,
   teamName: string,
   teamLogoUrl: string | null,
@@ -49,6 +63,7 @@ async function bridgeUnlinkedTeam(
     return bridgeMatch;
   }
   if (bridgeMatch.value === null) {
+    logUnmatchedBridge(logger, teamName, teamLogoUrl);
     return ok(teamId);
   }
 
@@ -62,6 +77,7 @@ async function bridgeUnlinkedTeam(
 
 export async function resolveTeamForFixture(
   deps: ResolveTeamForFixtureDeps,
+  logger: Logger,
   teamSourceId: string,
   teamName: string,
   teamLogoUrl: string | null,
@@ -77,12 +93,15 @@ export async function resolveTeamForFixture(
         `external_ref internalId "${existing.value.internalId}" doesn't match expected prefix for "team"`,
       );
     }
-    return bridgeUnlinkedTeam(deps, teamId, teamName, teamLogoUrl);
+    return bridgeUnlinkedTeam(deps, logger, teamId, teamName, teamLogoUrl);
   }
 
   const bridgeMatch = await findClubBridgeMatch(deps, teamName, teamLogoUrl);
   if (!bridgeMatch.ok) {
     return bridgeMatch;
+  }
+  if (bridgeMatch.value === null) {
+    logUnmatchedBridge(logger, teamName, teamLogoUrl);
   }
 
   return resolveEntityByExternalRef({
