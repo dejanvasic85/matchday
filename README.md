@@ -144,4 +144,3 @@ Licensed under the [PolyForm Strict License 1.0.0](https://polyformproject.org/l
 
 You may use this software for noncommercial purposes only.
 Modification and redistribution are not permitted.
-
