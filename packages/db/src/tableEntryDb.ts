@@ -10,6 +10,18 @@ import { tableEntry } from "#schema.ts";
 type TableEntry = typeof tableEntry.$inferSelect;
 type TableEntryInsert = typeof tableEntry.$inferInsert;
 
+export type TableEntryTeamPair = { leagueId: string; teamId: string };
+
+/** Every `(league_id, team_id)` pair with a table entry — the source data for the one-off
+ * `league_team` backfill (#143). `table_entry` already carries a unique `(league_id, team_id)`
+ * index, so every row here is already a distinct pair; no dedup needed. */
+export async function listTableEntryTeamPairs(db: Db): Promise<Result<TableEntryTeamPair[]>> {
+  return runQuery(
+    () => db.select({ leagueId: tableEntry.leagueId, teamId: tableEntry.teamId }).from(tableEntry),
+    "Failed to list table entry team pairs",
+  );
+}
+
 /** A league's ladder, position-ordered (0045, subscription-scoped per ADR 0012). */
 export async function listTableEntriesByLeagueId(
   db: Db,

@@ -35,7 +35,12 @@ export {
   type ListLeaguesFilter,
 } from "#leagueDb.ts";
 export { upsertFixture, listFixturesByLeagueId } from "#fixtureDb.ts";
-export { upsertTableEntry, listTableEntriesByLeagueId } from "#tableEntryDb.ts";
+export {
+  upsertTableEntry,
+  listTableEntriesByLeagueId,
+  listTableEntryTeamPairs,
+  type TableEntryTeamPair,
+} from "#tableEntryDb.ts";
 export { upsertLeagueTeam } from "#leagueTeamDb.ts";
 export { upsertExternalRef, findExternalRef, findExternalRefByInternalId } from "#externalRefDb.ts";
 export {
