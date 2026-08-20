@@ -25,6 +25,7 @@ import { runCreateSubscriptionJob } from "#jobs/clients/createSubscription.ts";
 import { runCreateSubscriptionsForClubJob } from "#jobs/clients/createSubscriptionsForClub.ts";
 import { runDeepCrawlJob } from "#jobs/crawls/deepCrawl.ts";
 import { runListClientsJob } from "#jobs/clients/listClients.ts";
+import { runBackfillLeagueTeamsJob } from "#jobs/maintenance/backfillLeagueTeams.ts";
 import { runRemoveSubscriptionJob } from "#jobs/clients/removeSubscription.ts";
 import { runRevokeApiTokenJob } from "#jobs/clients/revokeApiToken.ts";
 import { runSetSubscriptionWebhookJob } from "#jobs/clients/setSubscriptionWebhook.ts";
@@ -551,6 +552,44 @@ export function createCli(): Command {
         return;
       }
       process.stdout.write(`Cleared webhook for subscription: ${id}\n`);
+    });
+
+  const leagueTeam = program
+    .command("league-team")
+    .description("Maintenance for the league_team membership table (#141).");
+
+  leagueTeam
+    .command("backfill")
+    .description(
+      "One-off: upsert a league_team row for every (league, team) pair already in table_entry " +
+        "(#143), for leagues crawled before the catalog crawl started writing league_team " +
+        "directly. Idempotent — safe to re-run. Table-less leagues (MiniRoos etc.) aren't covered " +
+        "here; they need a fresh `catalog` crawl instead, since table_entry has nothing to derive " +
+        "their membership from. --dry-run prints the pair count without writing.",
+    )
+    .option("--dry-run", "count the pairs that would be backfilled without writing", false)
+    .action(async (options: { dryRun: boolean }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runBackfillLeagueTeamsJob({
+        logger,
+        config,
+        dryRun: options.dryRun,
+      });
+      if (!result.ok) {
+        logger.error("leagueteam.backfillfailed", result.error.message, {
+          cause: result.error.cause,
+        });
+        process.exitCode = 1;
+        return;
+      }
+      if (options.dryRun) {
+        process.stdout.write(`Dry run — would backfill ${result.value.pairs} pair(s).\n`);
+        return;
+      }
+      process.stdout.write(
+        `Backfilled ${result.value.upserted} of ${result.value.pairs} pair(s).\n`,
+      );
     });
 
   return program;
