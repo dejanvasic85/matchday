@@ -12,7 +12,7 @@
     "fallow": "fallow"
   },
   "devDependencies": {
-    "@changesets/cli": "3.0.0",
+    "@changesets/cli": "3.0.1",
     "@vitest/coverage-v8": "4.1.11",
     "fallow": "catalog:",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9",
