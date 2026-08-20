@@ -20,6 +20,7 @@ export function makeFakeEntityResolutionDeps(
     upsertLeague: vi.fn(),
     upsertFixture: vi.fn(),
     upsertTableEntry: vi.fn(),
+    upsertLeagueTeam: vi.fn(),
     findExternalRef: vi.fn(),
     findExternalRefByInternalId: vi.fn(),
     upsertExternalRef: vi.fn(),

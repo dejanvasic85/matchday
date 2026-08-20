@@ -20,6 +20,7 @@ import {
   upsertExternalRef,
   upsertFixture,
   upsertLeague,
+  upsertLeagueTeam,
   upsertSeason,
   upsertTableEntry,
   upsertTeam,
@@ -43,6 +44,7 @@ export type EntityResolutionDeps = {
   upsertLeague: WithoutDb<typeof upsertLeague>;
   upsertFixture: WithoutDb<typeof upsertFixture>;
   upsertTableEntry: WithoutDb<typeof upsertTableEntry>;
+  upsertLeagueTeam: WithoutDb<typeof upsertLeagueTeam>;
   findExternalRef: WithoutDb<typeof findExternalRef>;
   findExternalRefByInternalId: WithoutDb<typeof findExternalRefByInternalId>;
   upsertExternalRef: WithoutDb<typeof upsertExternalRef>;
@@ -67,6 +69,7 @@ export function createEntityResolutionDeps(
     upsertLeague: (values) => upsertLeague(db, values),
     upsertFixture: (values) => upsertFixture(db, values),
     upsertTableEntry: (values) => upsertTableEntry(db, values),
+    upsertLeagueTeam: (values) => upsertLeagueTeam(db, values),
     findExternalRef: (source, sourceId) => findExternalRef(db, source, sourceId),
     findExternalRefByInternalId: (entityType, internalId, source) =>
       findExternalRefByInternalId(db, entityType, internalId, source),

@@ -12,7 +12,13 @@
 // One league's failure aborts the run and surfaces as `err` — an incomplete catalog is worse than
 // a loud failure the scheduler can retry (every step is idempotent, so a retry is safe).
 
-import { externalRefEntityTypeValue, ok, type Logger, type Result } from "@matchday/domain";
+import {
+  externalRefEntityTypeValue,
+  generateId,
+  ok,
+  type Logger,
+  type Result,
+} from "@matchday/domain";
 import type { CrawlCatalogLeagueResult } from "#crawlers/dribl/catalogCrawler.ts";
 import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
@@ -106,6 +112,18 @@ export async function persistLeague(
     );
     if (!teamResult.ok) {
       return teamResult;
+    }
+
+    // Table-less leagues (MiniRoos etc.) never get a table_entry row, so this is the only place
+    // membership gets recorded for them (#142) — without it, club/league lookups joined on
+    // league_team would never see these teams.
+    const membership = await deps.upsertLeagueTeam({
+      id: generateId("leagueTeam"),
+      leagueId: context.leagueId,
+      teamId: teamResult.value,
+    });
+    if (!membership.ok) {
+      return membership;
     }
   }
 

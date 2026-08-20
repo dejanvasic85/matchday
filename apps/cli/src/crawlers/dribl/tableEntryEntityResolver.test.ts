@@ -75,6 +75,7 @@ describe("resolveTableEntryEntities", () => {
       upsertClub: vi.fn().mockResolvedValue(ok(makeClubRow())),
       upsertTeam: vi.fn().mockResolvedValue(ok({ id: "tea_existing001" })),
       upsertTableEntry: vi.fn().mockResolvedValue(ok({ id: "tab_new00000001" })),
+      upsertLeagueTeam: vi.fn().mockResolvedValue(ok({ id: "lgt_new0000001" })),
     });
 
     const result = await resolveTableEntryEntities(deps, makeMappedTableEntry(), context);
@@ -90,9 +91,12 @@ describe("resolveTableEntryEntities", () => {
         points: 13,
       }),
     );
+    expect(deps.upsertLeagueTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ teamId: "tea_existing001", leagueId: "lea_abc123" }),
+    );
   });
 
-  it("propagates a team resolution failure without upserting the table entry", async () => {
+  it("propagates a team resolution failure without upserting the table entry or membership", async () => {
     const deps = makeFakeEntityResolutionDeps({
       findExternalRef: vi.fn().mockResolvedValue(ok(null)),
       findClubByLogoUrl: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
@@ -102,5 +106,26 @@ describe("resolveTableEntryEntities", () => {
 
     assert(!result.ok);
     expect(deps.upsertTableEntry).not.toHaveBeenCalled();
+    expect(deps.upsertLeagueTeam).not.toHaveBeenCalled();
+  });
+
+  it("propagates a league_team upsert failure after the table entry is written", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi
+        .fn()
+        .mockImplementation((source: string) =>
+          Promise.resolve(ok(source === "dribl_club_code" ? null : makeExternalRefRow())),
+        ),
+      findClubByLogoUrl: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      upsertExternalRef: vi.fn().mockResolvedValue(ok({ id: "ext_new00000001" })),
+      upsertClub: vi.fn().mockResolvedValue(ok(makeClubRow())),
+      upsertTeam: vi.fn().mockResolvedValue(ok({ id: "tea_existing001" })),
+      upsertTableEntry: vi.fn().mockResolvedValue(ok({ id: "tab_new00000001" })),
+      upsertLeagueTeam: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
+    });
+
+    const result = await resolveTableEntryEntities(deps, makeMappedTableEntry(), context);
+
+    assert(!result.ok);
   });
 });
