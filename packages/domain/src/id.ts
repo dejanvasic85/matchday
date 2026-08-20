@@ -12,6 +12,7 @@ export const idPrefixValue = {
   league: "lea",
   fixture: "mtc",
   tableEntry: "tab",
+  leagueTeam: "lgt",
   externalRef: "ext",
   subscription: "sub",
   client: "cli",
@@ -34,6 +35,7 @@ export type SeasonId = EntityId<"season">;
 export type LeagueId = EntityId<"league">;
 export type FixtureId = EntityId<"fixture">;
 export type TableEntryId = EntityId<"tableEntry">;
+export type LeagueTeamId = EntityId<"leagueTeam">;
 export type ExternalRefId = EntityId<"externalRef">;
 export type SubscriptionId = EntityId<"subscription">;
 export type ClientId = EntityId<"client">;

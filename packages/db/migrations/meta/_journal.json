@@ -78,6 +78,13 @@
       "when": 1787095046199,
       "tag": "0010_fantastic_sauron",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1787228497332,
+      "tag": "0011_slim_virginia_dare",
+      "breakpoints": true
     }
   ]
 }

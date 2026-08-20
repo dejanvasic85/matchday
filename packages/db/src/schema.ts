@@ -135,6 +135,27 @@ export const tableEntry = pgTable(
   ],
 );
 
+// A team's membership in a league, independent of whether that league ever publishes a table
+// (0011 addendum, #141). `table_entry` only gets a row when a ladder exists — table-less
+// divisions (e.g. MiniRoos age groups, which publish fixtures but no standings) have no such row,
+// so anything deriving "this club's leagues" via `table_entry` silently misses them. This table
+// is written for every discovered team regardless of ladder/fixture-fallback discovery path, so
+// club/league membership lookups don't depend on a division being competitive.
+export const leagueTeam = pgTable(
+  "league_team",
+  {
+    id: text("id").primaryKey(),
+    leagueId: text("league_id")
+      .notNull()
+      .references(() => league.id),
+    teamId: text("team_id")
+      .notNull()
+      .references(() => team.id),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("league_team_league_team_key").on(table.leagueId, table.teamId)],
+);
+
 export const externalRef = pgTable(
   "external_ref",
   {
@@ -249,6 +270,7 @@ export const leagueRelations = relations(league, ({ one, many }) => ({
   season: one(season, { fields: [league.seasonId], references: [season.id] }),
   fixtures: many(fixture),
   tableEntries: many(tableEntry),
+  leagueTeams: many(leagueTeam),
   subscriptions: many(subscription),
 }));
 
@@ -266,6 +288,11 @@ export const fixtureRelations = relations(fixture, ({ one }) => ({
 export const tableEntryRelations = relations(tableEntry, ({ one }) => ({
   league: one(league, { fields: [tableEntry.leagueId], references: [league.id] }),
   team: one(team, { fields: [tableEntry.teamId], references: [team.id] }),
+}));
+
+export const leagueTeamRelations = relations(leagueTeam, ({ one }) => ({
+  league: one(league, { fields: [leagueTeam.leagueId], references: [league.id] }),
+  team: one(team, { fields: [leagueTeam.teamId], references: [team.id] }),
 }));
 
 export const subscriptionRelations = relations(subscription, ({ one }) => ({
