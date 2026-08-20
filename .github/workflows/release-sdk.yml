@@ -68,7 +68,7 @@ jobs:
       # env var as an implicit credential source for the action's own git/PR operations — the
       # token must now be passed explicitly via the `github-token` input.
       - name: Create release PR or publish
-        uses: changesets/action@v2.1.0
+        uses: changesets/action@v2.1.1
         with:
           version-script: pnpm changeset version
           # A single script name, not a raw "a && b" string — changesets/action execs this
