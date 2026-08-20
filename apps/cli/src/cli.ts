@@ -265,10 +265,10 @@ export function createCli(): Command {
   club
     .command("leagues")
     .description(
-      "List the distinct leagues a club's teams play in, resolved via table_entry — a league " +
-        "is only discoverable here once the deep crawl has run for it at least once (fine for " +
-        "onboarding a club into an existing dataset, circular for a brand-new league). A name " +
-        "matching more than one club fails listing every candidate rather than guessing.",
+      "List the distinct leagues a club's teams play in, resolved via league_team (#144) — a " +
+        "league is only discoverable here once the catalog crawl has run for it at least once " +
+        "(fine for onboarding a club into an existing dataset, circular for a brand-new league). " +
+        "A name matching more than one club fails listing every candidate rather than guessing.",
     )
     .argument("<name>", "a club name, or a fragment of one")
     .option("--json", "print the result as JSON instead of a table", false)
@@ -380,8 +380,8 @@ export function createCli(): Command {
     .command("add-subscription")
     .description(
       "Subscribe an existing client to a league (0012), or to every league a club's teams play " +
-        "in (#85) — exactly one of --league/--club. --club resolves via table_entry, only " +
-        "discoverable once the deep crawl has run for a league at least once; run `club " +
+        "in (#85) — exactly one of --league/--club. --club resolves via league_team (#144), only " +
+        "discoverable once the catalog crawl has run for a league at least once; run `club " +
         "leagues <name>` or pass --dry-run first to preview before writing N subscription rows " +
         "off a single fuzzy name match.",
     )

@@ -42,7 +42,8 @@ const listLeaguesRoute = createRoute({
         .openapi({
           param: { name: "clubId", in: "query" },
           example: "clb_V1StGXR8Z5",
-          description: "Leagues this club's teams play in, derived from table entries (0012).",
+          description:
+            "Leagues this club's teams play in, derived from league membership (0012, #144).",
         }),
     }),
   },
