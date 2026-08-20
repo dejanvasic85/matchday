@@ -135,3 +135,13 @@ pnpm mday client revoke-token tok_xxxxxxxxxxxx
 `add-subscription` and `create-token` require an **existing** client and fail on an unknown name —
 the client name is a free-text key, so an implicit create would turn a typo into a second silent
 tenant holding its own tokens. `client add` is the one command that creates one.
+
+## License
+
+Copyright © 2026 Dejan Vasic. All rights reserved.
+
+Licensed under the [PolyForm Strict License 1.0.0](https://polyformproject.org/licenses/strict/1.0.0/).
+
+You may use this software for noncommercial purposes only.
+Modification and redistribution are not permitted.
+
