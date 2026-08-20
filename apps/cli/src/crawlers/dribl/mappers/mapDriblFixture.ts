@@ -15,8 +15,10 @@ export type MappedFixture = {
   leagueName: string;
   homeTeamName: string | null;
   homeTeamSourceId: string | null;
+  homeTeamLogoUrl: string | null;
   awayTeamName: string | null;
   awayTeamSourceId: string | null;
+  awayTeamLogoUrl: string | null;
   venue: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -85,8 +87,10 @@ export function mapDriblFixture(fixture: DriblFixture): MappedFixture {
     leagueName: attributes.league_name,
     homeTeamName: attributes.home_team_name,
     homeTeamSourceId: attributes.home_team_hash_id,
+    homeTeamLogoUrl: attributes.home_logo,
     awayTeamName: attributes.away_team_name,
     awayTeamSourceId: attributes.away_team_hash_id,
+    awayTeamLogoUrl: attributes.away_logo,
     venue: formatVenue(attributes.ground_name, attributes.field_name),
     latitude: attributes.ground_latitude,
     longitude: attributes.ground_longitude,

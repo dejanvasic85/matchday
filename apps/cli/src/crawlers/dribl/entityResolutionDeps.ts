@@ -6,12 +6,14 @@
 // fakes here instead of vi.mock("@matchday/db")).
 
 import {
+  findClubByExternalRefSourceUrl,
   findClubByLogoUrl,
   findClubByName,
   findExternalRef,
   findExternalRefByInternalId,
   getClubById,
   getLeagueById,
+  getTeamById,
   updateClubEnrichmentFields,
   upsertClub,
   upsertCompetition,
@@ -29,10 +31,12 @@ type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
 
 export type EntityResolutionDeps = {
   findClubByLogoUrl: WithoutDb<typeof findClubByLogoUrl>;
+  findClubByExternalRefSourceUrl: WithoutDb<typeof findClubByExternalRefSourceUrl>;
   findClubByName: WithoutDb<typeof findClubByName>;
   getClubById: WithoutDb<typeof getClubById>;
   upsertClub: WithoutDb<typeof upsertClub>;
   updateClubEnrichmentFields: WithoutDb<typeof updateClubEnrichmentFields>;
+  getTeamById: WithoutDb<typeof getTeamById>;
   upsertTeam: WithoutDb<typeof upsertTeam>;
   upsertCompetition: WithoutDb<typeof upsertCompetition>;
   upsertSeason: WithoutDb<typeof upsertSeason>;
@@ -51,10 +55,12 @@ export function createEntityResolutionDeps(
 ): EntityResolutionDeps {
   return {
     findClubByLogoUrl: (logoUrl) => findClubByLogoUrl(db, logoUrl),
+    findClubByExternalRefSourceUrl: (sourceUrl) => findClubByExternalRefSourceUrl(db, sourceUrl),
     findClubByName: (name) => findClubByName(db, name),
     getClubById: (id) => getClubById(db, id),
     upsertClub: (values) => upsertClub(db, values),
     updateClubEnrichmentFields: (id, fields) => updateClubEnrichmentFields(db, id, fields),
+    getTeamById: (id) => getTeamById(db, id),
     upsertTeam: (values) => upsertTeam(db, values),
     upsertCompetition: (values) => upsertCompetition(db, values),
     upsertSeason: (values) => upsertSeason(db, values),

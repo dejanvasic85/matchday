@@ -40,8 +40,6 @@ export async function upsertTeam(db: Db, values: TeamInsert): Promise<Result<Tea
           set: {
             clubId: values.clubId,
             name: values.name,
-            ageGroup: values.ageGroup ?? null,
-            gender: values.gender ?? null,
             updatedAt: new Date(),
           },
         })

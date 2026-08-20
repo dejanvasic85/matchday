@@ -1,6 +1,6 @@
 import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import { makeQueuedFakePage } from "#test/fixtures/fakePage.ts";
-import { crawlCatalog } from "#crawlers/dribl/catalogCrawler.ts";
+import { countCatalogLeagues, crawlCatalog } from "#crawlers/dribl/catalogCrawler.ts";
 
 const tenantResponse = { data: { id: "tenant-id" } };
 const seasonsResponse = { data: [{ id: "season-id", name: "2026" }] };
@@ -46,6 +46,51 @@ function makeTableResponse(teamName: string) {
   };
 }
 
+const emptyTableResponse = { data: [] };
+
+function makeFixtureResponse(
+  fixtures: {
+    hashId: string;
+    homeName: string;
+    homeId: string;
+    awayName: string;
+    awayId: string;
+    homeLogo?: string | null;
+    awayLogo?: string | null;
+  }[],
+) {
+  return {
+    data: fixtures.map(
+      ({ hashId, homeName, homeId, awayName, awayId, homeLogo = null, awayLogo = null }) => ({
+        type: "fixtures",
+        hash_id: hashId,
+        attributes: {
+          name: `${homeName} vs ${awayName}`,
+          date: "2026-04-25T23:00:00.000000Z",
+          round: "R1",
+          full_round: "Round 1",
+          ground_name: "AB Shaw Reserve",
+          ground_latitude: -37.865571,
+          ground_longitude: 144.783747,
+          field_name: null,
+          home_team_name: homeName,
+          home_team_hash_id: homeId,
+          home_logo: homeLogo,
+          away_team_name: awayName,
+          away_team_hash_id: awayId,
+          away_logo: awayLogo,
+          competition_name: "Coles MiniRoos Mixed Sunday (U6 - U11)",
+          league_name: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue",
+          status: "pending",
+          bye_flag: false,
+          home_score: null,
+          away_score: null,
+        },
+      }),
+    ),
+  };
+}
+
 describe("crawlCatalog", () => {
   it("crawls every league for a single competition when maxLeagues is unset", async () => {
     const page = makeQueuedFakePage([
@@ -74,10 +119,10 @@ describe("crawlCatalog", () => {
       tenantResponse,
       seasonsResponse,
       twoCompetitionsResponse,
-      twoLeaguesResponse,
-      makeTableResponse("Team A"),
-      twoLeaguesResponse,
-      makeTableResponse("Team A"),
+      twoLeaguesResponse, // comp-1's leagues, listed while building the full queue
+      twoLeaguesResponse, // comp-2's leagues, listed while building the full queue
+      makeTableResponse("Team A"), // comp-1's capped league, crawled from the built queue
+      makeTableResponse("Team A"), // comp-2's capped league, crawled from the built queue
     ]);
 
     const result = await crawlCatalog({
@@ -126,6 +171,7 @@ describe("crawlCatalog", () => {
           leagueName: "NPL VIC Men",
           seasonSourceId: "season-id",
           seasonName: "2026",
+          fixtureTeams: [],
           tableEntries: [
             {
               teamSourceId: "team-1",
@@ -201,5 +247,256 @@ describe("crawlCatalog", () => {
     assert(result.ok);
     expect(result.value).toHaveLength(1);
     expect(result.value[0]?.competitionName).toBe("Senol NPL Victoria Women");
+  });
+
+  it("falls back to fixtures to discover teams when a league has no table", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      { data: [{ id: "comp-1", name: "Coles MiniRoos Mixed Sunday (U6 - U11)" }] },
+      { data: [{ id: "league-1", name: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue" }] },
+      emptyTableResponse,
+      makeFixtureResponse([
+        {
+          hashId: "fix-1",
+          homeName: "Home Team",
+          homeId: "home-1",
+          awayName: "Away Team",
+          awayId: "away-1",
+        },
+      ]),
+      { data: [] },
+      { data: [] },
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      maxLeagues: 1,
+    });
+
+    assert(result.ok);
+    expect(result.value[0]?.tableEntries).toEqual([]);
+    expect(result.value[0]?.fixtureTeams).toEqual(
+      expect.arrayContaining([
+        { sourceId: "home-1", name: "Home Team", logoUrl: null },
+        { sourceId: "away-1", name: "Away Team", logoUrl: null },
+      ]),
+    );
+  });
+
+  it("dedupes a team seen across multiple fixture-fallback rounds", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      { data: [{ id: "comp-1", name: "Coles MiniRoos Mixed Sunday (U6 - U11)" }] },
+      { data: [{ id: "league-1", name: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue" }] },
+      emptyTableResponse,
+      makeFixtureResponse([
+        {
+          hashId: "fix-1",
+          homeName: "Home Team",
+          homeId: "home-1",
+          awayName: "Away Team",
+          awayId: "away-1",
+        },
+      ]),
+      makeFixtureResponse([
+        {
+          hashId: "fix-2",
+          homeName: "Home Team",
+          homeId: "home-1",
+          awayName: "Bye Team",
+          awayId: "bye-1",
+        },
+      ]),
+      { data: [] },
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      maxLeagues: 1,
+    });
+
+    assert(result.ok);
+    expect(result.value[0]?.fixtureTeams).toHaveLength(3);
+  });
+
+  it("keeps an earlier round's logo instead of letting a later null round clobber it", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      { data: [{ id: "comp-1", name: "Coles MiniRoos Mixed Sunday (U6 - U11)" }] },
+      { data: [{ id: "league-1", name: "Coles MiniRoos Mixed Sunday West 8 Kangaroos Blue" }] },
+      emptyTableResponse,
+      makeFixtureResponse([
+        {
+          hashId: "fix-1",
+          homeName: "Home Team",
+          homeId: "home-1",
+          awayName: "Away Team",
+          awayId: "away-1",
+          homeLogo: "https://ocean.dribl.com/home-logo",
+        },
+      ]),
+      makeFixtureResponse([
+        {
+          hashId: "fix-2",
+          homeName: "Home Team",
+          homeId: "home-1",
+          awayName: "Bye Team",
+          awayId: "bye-1",
+          homeLogo: null,
+        },
+      ]),
+      { data: [] },
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      maxLeagues: 1,
+    });
+
+    assert(result.ok);
+    expect(result.value[0]?.fixtureTeams).toContainEqual({
+      sourceId: "home-1",
+      name: "Home Team",
+      logoUrl: "https://ocean.dribl.com/home-logo",
+    });
+  });
+
+  it("does not fall back to fixtures when a league's table already has entries", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      { data: [{ id: "comp-1", name: "Senol NPL Victoria Men" }] },
+      { data: [{ id: "league-1", name: "NPL VIC Men" }] },
+      makeTableResponse("Team A"),
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      maxLeagues: 1,
+    });
+
+    assert(result.ok);
+    expect(result.value[0]?.fixtureTeams).toEqual([]);
+  });
+
+  it("crawls only the requested offset/limit window of the flat league queue", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      twoCompetitionsResponse,
+      twoLeaguesResponse, // comp-1's leagues (queue indices 0, 1)
+      twoLeaguesResponse, // comp-2's leagues (queue indices 2, 3)
+      makeTableResponse("Team B"), // index 1: comp-1 / NPL VIC Men - U20
+      makeTableResponse("Team C"), // index 2: comp-2 / NPL VIC Men
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      offset: 1,
+      limit: 2,
+    });
+
+    assert(result.ok);
+    expect(result.value.map((r) => `${r.competitionName}/${r.leagueName}`)).toEqual([
+      "Senol NPL Victoria Men/NPL VIC Men - U20",
+      "Senol NPL Victoria Women/NPL VIC Men",
+    ]);
+  });
+
+  it("crawls to the end of the queue when only offset is given", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      seasonsResponse,
+      { data: [{ id: "comp-1", name: "Senol NPL Victoria Men" }] },
+      twoLeaguesResponse,
+      makeTableResponse("Team B"),
+    ]);
+
+    const result = await crawlCatalog({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      seasonYear: "2026",
+      offset: 1,
+    });
+
+    assert(result.ok);
+    expect(result.value.map((r) => r.leagueName)).toEqual(["NPL VIC Men - U20"]);
+  });
+});
+
+describe("countCatalogLeagues", () => {
+  it("counts every queued league without fetching any tables", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      twoCompetitionsResponse,
+      twoLeaguesResponse,
+      twoLeaguesResponse,
+    ]);
+
+    const result = await countCatalogLeagues({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+    });
+
+    expect(result).toEqual({ ok: true, value: 4 });
+  });
+
+  it("applies maxLeagues per competition the same way crawlCatalog would", async () => {
+    const page = makeQueuedFakePage([
+      tenantResponse,
+      twoCompetitionsResponse,
+      twoLeaguesResponse,
+      twoLeaguesResponse,
+    ]);
+
+    const result = await countCatalogLeagues({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+      maxLeagues: 1,
+    });
+
+    expect(result).toEqual({ ok: true, value: 2 });
+  });
+
+  it("propagates a tenant resolution failure", async () => {
+    const page = makeQueuedFakePage([{ data: {} }]);
+
+    const result = await countCatalogLeagues({
+      page,
+      logger: makeFakeLogger(),
+      tenantHost: "fv.dribl.com",
+      tenantSlug: "fv",
+    });
+
+    assert(!result.ok);
   });
 });

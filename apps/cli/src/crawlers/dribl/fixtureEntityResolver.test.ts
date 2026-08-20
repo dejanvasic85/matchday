@@ -1,6 +1,7 @@
 import { fixtureStatusValue, ok } from "@matchday/domain";
 import type { MappedFixture } from "#crawlers/dribl/mappers/mapDriblFixture.ts";
 import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
+import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import { resolveFixtureEntities } from "#crawlers/dribl/fixtureEntityResolver.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
@@ -13,8 +14,10 @@ function makeMappedFixture(overrides: Partial<MappedFixture> = {}): MappedFixtur
     leagueName: "League",
     homeTeamName: "Home",
     homeTeamSourceId: "home-source-1",
+    homeTeamLogoUrl: null,
     awayTeamName: "Away",
     awayTeamSourceId: "away-source-1",
+    awayTeamLogoUrl: null,
     venue: "AB Shaw Reserve",
     latitude: -37.865571,
     longitude: 144.783747,
@@ -65,7 +68,12 @@ describe("resolveFixtureEntities", () => {
         .mockResolvedValue(ok(makeExternalRefRow("mtc_new00000001", "fixture-source-1"))),
     });
 
-    const result = await resolveFixtureEntities(deps, makeMappedFixture(), context);
+    const result = await resolveFixtureEntities(
+      deps,
+      makeFakeLogger(),
+      makeMappedFixture(),
+      context,
+    );
 
     assert(result.ok);
     expect(deps.upsertFixture).toHaveBeenCalledWith(
@@ -81,7 +89,33 @@ describe("resolveFixtureEntities", () => {
     );
   });
 
-  it("leaves homeTeamId/awayTeamId null when the teams haven't been seen yet", async () => {
+  it("creates unlinked teams (no club) for a fixture whose teams haven't been seen yet", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+      upsertTeam: vi.fn().mockResolvedValue(ok({ id: "tea_new00000001", clubId: null })),
+      upsertFixture: vi.fn().mockResolvedValue(ok({ id: "mtc_new00000001" })),
+      upsertExternalRef: vi
+        .fn()
+        .mockResolvedValue(ok(makeExternalRefRow("mtc_new00000001", "fixture-source-1"))),
+    });
+
+    await resolveFixtureEntities(deps, makeFakeLogger(), makeMappedFixture(), context);
+
+    expect(deps.upsertTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ clubId: null, name: "Home" }),
+    );
+    expect(deps.upsertTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ clubId: null, name: "Away" }),
+    );
+    expect(deps.upsertFixture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        homeTeamId: expect.stringMatching(/^tea_/),
+        awayTeamId: expect.stringMatching(/^tea_/),
+      }),
+    );
+  });
+
+  it("leaves homeTeamId/awayTeamId null for a placeholder fixture with no team names", async () => {
     const deps = makeFakeEntityResolutionDeps({
       findExternalRef: vi.fn().mockResolvedValue(ok(null)),
       upsertFixture: vi.fn().mockResolvedValue(ok({ id: "mtc_new00000001" })),
@@ -90,8 +124,19 @@ describe("resolveFixtureEntities", () => {
         .mockResolvedValue(ok(makeExternalRefRow("mtc_new00000001", "fixture-source-1"))),
     });
 
-    await resolveFixtureEntities(deps, makeMappedFixture(), context);
+    await resolveFixtureEntities(
+      deps,
+      makeFakeLogger(),
+      makeMappedFixture({
+        homeTeamSourceId: null,
+        homeTeamName: null,
+        awayTeamSourceId: null,
+        awayTeamName: null,
+      }),
+      context,
+    );
 
+    expect(deps.upsertTeam).not.toHaveBeenCalled();
     expect(deps.upsertFixture).toHaveBeenCalledWith(
       expect.objectContaining({ homeTeamId: null, awayTeamId: null }),
     );
@@ -110,6 +155,7 @@ describe("resolveFixtureEntities", () => {
 
     await resolveFixtureEntities(
       deps,
+      makeFakeLogger(),
       makeMappedFixture({ awayTeamSourceId: null, awayTeamName: null, isBye: true }),
       context,
     );
@@ -122,7 +168,12 @@ describe("resolveFixtureEntities", () => {
       findExternalRef: vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } }),
     });
 
-    const result = await resolveFixtureEntities(deps, makeMappedFixture(), context);
+    const result = await resolveFixtureEntities(
+      deps,
+      makeFakeLogger(),
+      makeMappedFixture(),
+      context,
+    );
 
     assert(!result.ok);
     expect(deps.upsertFixture).not.toHaveBeenCalled();

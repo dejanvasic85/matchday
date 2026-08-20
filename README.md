@@ -70,6 +70,13 @@ pnpm mday catalog
 
 # A specific season, capped, without writing
 pnpm mday catalog --season 2025 --max-leagues 5 --dry-run
+
+# Crawl only a window of the flat league queue (crawl-catalog.yml's matrix legs use this — the
+# full catalog is too large to fit one serial run in any reasonable job timeout)
+pnpm mday catalog --offset 30 --limit 30
+
+# Print how many leagues are queued, without crawling (sizes the matrix above)
+pnpm mday catalog --count
 ```
 
 ### `deep-crawl` — expensive, one league

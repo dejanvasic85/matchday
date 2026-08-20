@@ -19,11 +19,15 @@ export type RunCatalogJobInput = {
   source: CrawlSource;
   seasonYear: string;
   maxLeagues?: number;
+  /** Windows the flat (competition, league) queue instead of crawling all of it — the
+   * crawl-catalog.yml matrix's per-leg scope (see `mday catalog count`). */
+  offset?: number;
+  limit?: number;
   dryRun: boolean;
 };
 
 export async function runCatalogJob(input: RunCatalogJobInput): Promise<Result<void>> {
-  const { logger, config, source, seasonYear, maxLeagues, dryRun } = input;
+  const { logger, config, source, seasonYear, maxLeagues, offset, limit, dryRun } = input;
   const startedAt = Date.now();
 
   const adapter = getSourceAdapter(source);
@@ -35,7 +39,15 @@ export async function runCatalogJob(input: RunCatalogJobInput): Promise<Result<v
 
   try {
     const deps = createEntityResolutionDeps(createDbClient(config.DATABASE_URL));
-    const result = await session.crawlCatalog({ deps, logger, seasonYear, maxLeagues, dryRun });
+    const result = await session.crawlCatalog({
+      deps,
+      logger,
+      seasonYear,
+      maxLeagues,
+      offset,
+      limit,
+      dryRun,
+    });
     if (!result.ok) {
       return result;
     }

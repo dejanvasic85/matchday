@@ -20,13 +20,22 @@ env:
   R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
   R2_PUBLIC_ASSETS_URL: ${{ secrets.R2_PUBLIC_ASSETS_URL }}
   R2_RAW_BUCKET_NAME: ${{ secrets.R2_RAW_BUCKET_NAME }}
+  # Leagues per matrix leg. The full catalog (~750 leagues) persists roughly 1 league every
+  # 10-20s (sequential per-entity DB writes dominate, not the Cloudflare-cleared fetch) — a
+  # single serial run can't fit in any reasonable job timeout. 30/leg bounds each leg to
+  # ~5-10 min, comfortably inside timeout-minutes below.
+  CATALOG_CHUNK_SIZE: "30"
 
 jobs:
-  catalog:
-    name: Catalog
+  setup:
+    name: Setup
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 60
+    # Install Chrome now retries up to 2x with a 5-min-each bounded timeout, so this needs enough
+    # headroom to absorb that worst case plus the count-leagues crawl.
+    timeout-minutes: 20
+    outputs:
+      chunks: ${{ steps.chunks.outputs.chunks }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -45,18 +54,125 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
+      # GitHub-hosted runners' apt-mirrors.txt lists azure.archive.ubuntu.com first; it's been
+      # unreachable for extended periods from this runner pool (confirmed: apt-get update hung the
+      # full 5-minute retry timeout on it, twice in a row, while archive.ubuntu.com succeeded
+      # instantly every time it was actually reached) — pin directly to the reliable one.
+      - name: Pin apt to a reliable Ubuntu mirror
+        run: echo "http://archive.ubuntu.com/ubuntu" | sudo tee /etc/apt/apt-mirrors.txt
+
+      # browserSession.ts deliberately launches channel: "chrome" (the real branded Chrome, not
+      # Playwright's portable Chromium) for Cloudflare clearance — so this always shells out to
+      # apt-get/dpkg to install the OS package, regardless of --with-deps. Retry + lock cleanup
+      # below are defense-in-depth for a transient apt hiccup; the mirror pin above addresses the
+      # actual observed cause.
       - name: Install Chrome
-        run: vp run --filter @matchday/cli playwright:install
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          for attempt in 1 2; do
+            if timeout 300 vp run --filter @matchday/cli playwright:install; then
+              exit 0
+            fi
+            echo "::warning::Chrome install attempt $attempt timed out or failed, retrying..."
+            # A killed apt-get can leave its lock held (observed: "Could not get lock
+            # /var/lib/apt/lists/lock. It is held by process ..." on the very next attempt) —
+            # clear it and any leftover process before retrying.
+            sudo pkill -9 -f apt-get || true
+            sudo pkill -9 -f dpkg || true
+            sudo rm -f /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock \
+              /var/lib/dpkg/lock-frontend
+            sudo dpkg --configure -a || true
+          done
+          echo "::error::Chrome install failed after 2 attempts"
+          exit 1
+
+      - name: Count catalog leagues and compute matrix chunks
+        id: chunks
+        run: |
+          output=$(vp run --filter @matchday/cli mday catalog --count)
+          total=$(echo "$output" | grep -o '{.*}' | tail -1 | jq -r '.total')
+          # A parse failure must fail the job loudly, not silently compute chunks=[] and skip
+          # the catalog job entirely (its `if` guard treats an empty matrix as "nothing to do").
+          if ! [[ "$total" =~ ^[0-9]+$ ]]; then
+            echo "::error::Failed to parse a league count from 'mday catalog --count' output: $output"
+            exit 1
+          fi
+          chunkCount=$(( (total + $CATALOG_CHUNK_SIZE - 1) / $CATALOG_CHUNK_SIZE ))
+          chunks=$(jq -c -n --argjson n "$chunkCount" '[range($n)]')
+          echo "chunks=$chunks" >> "$GITHUB_OUTPUT"
+          echo "Total leagues: $total, chunk size: $CATALOG_CHUNK_SIZE, chunks: $chunkCount"
+
+  catalog:
+    name: Catalog
+    needs: setup
+    if: needs.setup.outputs.chunks != '[]'
+    runs-on: ubuntu-latest
+    environment: production
+    # Install Chrome's retry can itself take up to ~10 min worst case (see setup job) on top of
+    # the ~5-10 min crawl leg described above.
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.setup.outputs.chunks) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          cache: true
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # See setup job's steps above for why this pins the apt mirror and retries with a bounded
+      # timeout.
+      - name: Pin apt to a reliable Ubuntu mirror
+        run: echo "http://archive.ubuntu.com/ubuntu" | sudo tee /etc/apt/apt-mirrors.txt
+
+      - name: Install Chrome
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          for attempt in 1 2; do
+            if timeout 300 vp run --filter @matchday/cli playwright:install; then
+              exit 0
+            fi
+            echo "::warning::Chrome install attempt $attempt timed out or failed, retrying..."
+            # A killed apt-get can leave its lock held (observed: "Could not get lock
+            # /var/lib/apt/lists/lock. It is held by process ..." on the very next attempt) —
+            # clear it and any leftover process before retrying.
+            sudo pkill -9 -f apt-get || true
+            sudo pkill -9 -f dpkg || true
+            sudo rm -f /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock \
+              /var/lib/dpkg/lock-frontend
+            sudo dpkg --configure -a || true
+          done
+          echo "::error::Chrome install failed after 2 attempts"
+          exit 1
 
       - name: Run catalog crawl
-        run: vp run --filter @matchday/cli mday catalog
+        run: |
+          offset=$(( ${{ matrix.chunk }} * $CATALOG_CHUNK_SIZE ))
+          vp run --filter @matchday/cli mday catalog --offset "$offset" --limit "$CATALOG_CHUNK_SIZE"
 
   club-enrichment:
     name: Club enrichment
     needs: catalog
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 30
+    # Install Chrome's retry can itself take up to ~10 min worst case (see setup job) on top of
+    # this job's own ~19-min observed crawl duration.
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -75,8 +191,31 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chrome-${{ hashFiles('pnpm-lock.yaml') }}
 
+      # See setup job's steps above for why this pins the apt mirror and retries with a bounded
+      # timeout.
+      - name: Pin apt to a reliable Ubuntu mirror
+        run: echo "http://archive.ubuntu.com/ubuntu" | sudo tee /etc/apt/apt-mirrors.txt
+
       - name: Install Chrome
-        run: vp run --filter @matchday/cli playwright:install
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          for attempt in 1 2; do
+            if timeout 300 vp run --filter @matchday/cli playwright:install; then
+              exit 0
+            fi
+            echo "::warning::Chrome install attempt $attempt timed out or failed, retrying..."
+            # A killed apt-get can leave its lock held (observed: "Could not get lock
+            # /var/lib/apt/lists/lock. It is held by process ..." on the very next attempt) —
+            # clear it and any leftover process before retrying.
+            sudo pkill -9 -f apt-get || true
+            sudo pkill -9 -f dpkg || true
+            sudo rm -f /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock \
+              /var/lib/dpkg/lock-frontend
+            sudo dpkg --configure -a || true
+          done
+          echo "::error::Chrome install failed after 2 attempts"
+          exit 1
 
       - name: Run club enrichment crawl
         run: vp run --filter @matchday/cli mday club-enrichment

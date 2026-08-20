@@ -16,13 +16,19 @@ import {
   type ClubId,
   type Result,
 } from "@matchday/domain";
+import { findClubBridgeMatch } from "#crawlers/dribl/clubBridgeResolver.ts";
 import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
 
 export type ResolveClubInput = {
   deps: Pick<
     EntityResolutionDeps,
-    "findClubByLogoUrl" | "findClubByName" | "findExternalRef" | "upsertExternalRef" | "upsertClub"
+    | "findClubByExternalRefSourceUrl"
+    | "findClubByLogoUrl"
+    | "findClubByName"
+    | "findExternalRef"
+    | "upsertExternalRef"
+    | "upsertClub"
   >;
   name: string;
   logoUrl: string | null;
@@ -62,7 +68,9 @@ export async function resolveClub(input: ResolveClubInput): Promise<Result<ClubI
   // 1. Primary identity: has this club_code been seen before? Once a club is identity-resolved,
   // logo curation belongs to the club-enrichment job — pass `null` so upsertClub's COALESCE
   // leaves whatever it (or an earlier bridge/create) set alone, instead of reverting an
-  // R2-mirrored logo back to Dribl's CDN URL on every subsequent deep crawl.
+  // R2-mirrored logo back to Dribl's CDN URL on every subsequent deep crawl. The ref's own
+  // sourceUrl is a separate, never-rewritten record of the *original* Dribl logo (see
+  // clubBridgeResolver) — backfill it once if an earlier version of this resolver left it null.
   const existingRef = await deps.findExternalRef(sourceValue.driblClubCode, clubCode);
   if (!existingRef.ok) {
     return existingRef;
@@ -72,37 +80,43 @@ export async function resolveClub(input: ResolveClubInput): Promise<Result<ClubI
     if (!clubId.ok) {
       return clubId;
     }
+    if (existingRef.value.sourceUrl === null && logoUrl !== null) {
+      const backfilled = await deps.upsertExternalRef({
+        id: generateId("externalRef"),
+        entityType: externalRefEntityTypeValue.club,
+        internalId: clubId.value,
+        source: sourceValue.driblClubCode,
+        sourceId: clubCode,
+        sourceUrl: logoUrl,
+      });
+      if (!backfilled.ok) {
+        return backfilled;
+      }
+    }
     return upsertClubRow(deps, clubId.value, name, null);
   }
 
   // 2. Bridge: no ref yet — find a pre-existing row by logo, then name, and attach the ref so
   // every future crawl resolves it via step 1 directly instead of re-matching.
-  const byLogo = logoUrl !== null ? await deps.findClubByLogoUrl(logoUrl) : ok(null);
-  if (!byLogo.ok) {
-    return byLogo;
-  }
-  const bridgeMatch = byLogo.value === null ? await deps.findClubByName(name) : byLogo;
+  const bridgeMatch = await findClubBridgeMatch(deps, name, logoUrl);
   if (!bridgeMatch.ok) {
     return bridgeMatch;
   }
 
   if (bridgeMatch.value !== null) {
-    const clubId = toClubId(bridgeMatch.value.id);
-    if (!clubId.ok) {
-      return clubId;
-    }
+    const clubId = bridgeMatch.value;
     const refUpserted = await deps.upsertExternalRef({
       id: generateId("externalRef"),
       entityType: externalRefEntityTypeValue.club,
-      internalId: clubId.value,
+      internalId: clubId,
       source: sourceValue.driblClubCode,
       sourceId: clubCode,
-      sourceUrl: null,
+      sourceUrl: logoUrl,
     });
     if (!refUpserted.ok) {
       return refUpserted;
     }
-    return upsertClubRow(deps, clubId.value, name, logoUrl);
+    return upsertClubRow(deps, clubId, name, logoUrl);
   }
 
   // 3. Brand new club: generate an id, write the ref, create the row.
@@ -111,6 +125,7 @@ export async function resolveClub(input: ResolveClubInput): Promise<Result<ClubI
     entityType: externalRefEntityTypeValue.club,
     source: sourceValue.driblClubCode,
     sourceId: clubCode,
+    sourceUrl: logoUrl ?? undefined,
     upsertEntity: (id) => upsertClubRow(deps, id, name, logoUrl),
   });
 }

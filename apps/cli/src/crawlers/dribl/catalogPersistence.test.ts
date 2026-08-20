@@ -36,6 +36,7 @@ function makeLeague(overrides: Partial<CrawlCatalogLeagueResult> = {}): CrawlCat
     seasonSourceId: "season-src-1",
     seasonName: "2026",
     tableEntries: [makeTableEntry()],
+    fixtureTeams: [],
     ...overrides,
   };
 }
@@ -66,7 +67,7 @@ describe("persistCatalog", () => {
       leagues: [makeLeague()],
     });
 
-    expect(result).toEqual(ok({ leagues: 1, tableEntries: 1 }));
+    expect(result).toEqual(ok({ leagues: 1, tableEntries: 1, fixtureTeams: 0 }));
     expect(deps.upsertCompetition).toHaveBeenCalledWith(
       expect.objectContaining({ name: "Senol NPL Victoria Men" }),
     );
@@ -115,7 +116,61 @@ describe("persistCatalog", () => {
       ],
     });
 
-    expect(result).toEqual(ok({ leagues: 2, tableEntries: 3 }));
+    expect(result).toEqual(ok({ leagues: 2, tableEntries: 3, fixtureTeams: 0 }));
+  });
+
+  it("persists fixture-discovered teams (unlinked, no club) for a table-less league", async () => {
+    const deps = makeHappyPathDeps();
+
+    const result = await persistCatalog({
+      deps,
+      logger: makeFakeLogger(),
+      leagues: [
+        makeLeague({
+          tableEntries: [],
+          fixtureTeams: [
+            { sourceId: "home-1", name: "Under 9 Boys Joeys - Dragan/Cian", logoUrl: null },
+            { sourceId: "away-1", name: "Under 9 Boys Wallabies - Eric/Nate", logoUrl: null },
+          ],
+        }),
+      ],
+    });
+
+    expect(result).toEqual(ok({ leagues: 1, tableEntries: 0, fixtureTeams: 2 }));
+    expect(deps.upsertTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ clubId: null, name: "Under 9 Boys Joeys - Dragan/Cian" }),
+    );
+    expect(deps.upsertTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ clubId: null, name: "Under 9 Boys Wallabies - Eric/Nate" }),
+    );
+  });
+
+  it("links a fixture-discovered team to a club whose logo bridges", async () => {
+    const deps = makeHappyPathDeps();
+    deps.findClubByLogoUrl = vi
+      .fn()
+      .mockResolvedValue(ok({ id: "clb_existing0001", name: "Williamstown SC" }));
+
+    await persistCatalog({
+      deps,
+      logger: makeFakeLogger(),
+      leagues: [
+        makeLeague({
+          tableEntries: [],
+          fixtureTeams: [
+            {
+              sourceId: "home-1",
+              name: "Williamstown SC U08",
+              logoUrl: "https://ocean.dribl.com/wsc-logo",
+            },
+          ],
+        }),
+      ],
+    });
+
+    expect(deps.upsertTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ clubId: "clb_existing0001", name: "Williamstown SC U08" }),
+    );
   });
 
   it("returns err and stops when a competition upsert fails", async () => {

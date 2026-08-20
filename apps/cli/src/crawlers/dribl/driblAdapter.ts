@@ -1,10 +1,14 @@
 // The Dribl `SourceAdapter` (0012, docs/todo.md Phase 3): opens a Cloudflare-cleared browser
 // session (see browserSession.ts / the dribl-crawling skill) and exposes the three crawl
-// operations against it. Each operation's body is the dry-run-vs-persist orchestration that used
-// to live in src/jobs/*.ts, relocated here unchanged now that jobs are source-agnostic dispatchers.
+// operations against it, plus countCatalogLeagues — a cheap listing-only companion to
+// crawlCatalog used to size the crawl-catalog.yml matrix. Each operation's body is the
+// dry-run-vs-persist orchestration that used to live in src/jobs/*.ts, relocated here unchanged
+// now that jobs are source-agnostic dispatchers.
 
 import { ok, type Result } from "@matchday/domain";
 import type {
+  CountCatalogLeaguesParams,
+  CountCatalogLeaguesSummary,
   CrawlCatalogParams,
   CrawlCatalogSummary,
   CrawlClubEnrichmentParams,
@@ -16,7 +20,11 @@ import type {
 import { crawlSourceValue } from "#crawlers/constants.ts";
 import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";
 import { openBrowserSession } from "#crawlers/dribl/browserSession.ts";
-import { crawlCatalog, type CrawlCatalogLeagueResult } from "#crawlers/dribl/catalogCrawler.ts";
+import {
+  countCatalogLeagues,
+  crawlCatalog,
+  type CrawlCatalogLeagueResult,
+} from "#crawlers/dribl/catalogCrawler.ts";
 import { logCatalogDryRun } from "#crawlers/dribl/catalogDryRunLogger.ts";
 import { persistLeague } from "#crawlers/dribl/catalogPersistence.ts";
 import { crawlClubEnrichment } from "#crawlers/dribl/clubEnrichmentCrawler.ts";
@@ -61,6 +69,11 @@ function addLeagueToCatalogStats(stats: CatalogStats, league: CrawlCatalogLeague
     stats.clubCodes.add(entry.clubCode);
     stats.teamIds.add(entry.teamSourceId);
   }
+  // Fixture-fallback teams (tables-less leagues, e.g. MiniRoos) have no club — count the team,
+  // not a club.
+  for (const fixtureTeam of league.fixtureTeams) {
+    stats.teamIds.add(fixtureTeam.sourceId);
+  }
 }
 
 function summarizeCatalogStats(stats: CatalogStats): CrawlCatalogSummary {
@@ -76,7 +89,18 @@ function summarizeCatalogStats(stats: CatalogStats): CrawlCatalogSummary {
 export async function runCatalogCrawl(
   input: TenantContext & CrawlCatalogParams,
 ): Promise<Result<CrawlCatalogSummary>> {
-  const { page, tenantHost, tenantSlug, seasonYear, maxLeagues, dryRun, deps, logger } = input;
+  const {
+    page,
+    tenantHost,
+    tenantSlug,
+    seasonYear,
+    maxLeagues,
+    offset,
+    limit,
+    dryRun,
+    deps,
+    logger,
+  } = input;
   const stats = createCatalogStats();
 
   if (dryRun) {
@@ -87,6 +111,8 @@ export async function runCatalogCrawl(
       tenantSlug,
       seasonYear,
       maxLeagues,
+      offset,
+      limit,
     });
     if (!crawlResult.ok) {
       return crawlResult;
@@ -105,6 +131,8 @@ export async function runCatalogCrawl(
     tenantSlug,
     seasonYear,
     maxLeagues,
+    offset,
+    limit,
     onLeague: async (league) => {
       const persisted = await persistLeague({ deps, logger, league });
       if (persisted.ok) {
@@ -118,6 +146,25 @@ export async function runCatalogCrawl(
   }
 
   return ok(summarizeCatalogStats(stats));
+}
+
+export async function runCountCatalogLeagues(
+  input: TenantContext & CountCatalogLeaguesParams,
+): Promise<Result<CountCatalogLeaguesSummary>> {
+  const { page, tenantHost, tenantSlug, maxLeagues, logger } = input;
+
+  const countResult = await countCatalogLeagues({
+    page,
+    logger,
+    tenantHost,
+    tenantSlug,
+    maxLeagues,
+  });
+  if (!countResult.ok) {
+    return countResult;
+  }
+
+  return ok({ total: countResult.value });
 }
 
 export async function runDeepCrawl(
@@ -227,6 +274,8 @@ export const driblAdapter: SourceAdapter = {
     return ok({
       close,
       crawlCatalog: (params) => runCatalogCrawl({ page, tenantHost, tenantSlug, ...params }),
+      countCatalogLeagues: (params) =>
+        runCountCatalogLeagues({ page, tenantHost, tenantSlug, ...params }),
       deepCrawlLeague: (params) => runDeepCrawl({ page, tenantHost, tenantSlug, ...params }),
       crawlClubEnrichment: (params) =>
         runClubEnrichmentCrawl({ page, tenantHost, tenantSlug, ...params }),

@@ -10,7 +10,7 @@ export function logCatalogDryRun(logger: Logger, leagues: CrawlCatalogLeagueResu
     leagues: leagues.length,
   });
 
-  for (const { competitionName, leagueName, tableEntries } of leagues) {
+  for (const { competitionName, leagueName, tableEntries, fixtureTeams } of leagues) {
     for (const entry of tableEntries) {
       logger.info("catalog.tableEntry", `${entry.position}. ${entry.teamName}`, {
         competitionName,
@@ -19,6 +19,13 @@ export function logCatalogDryRun(logger: Logger, leagues: CrawlCatalogLeagueResu
         clubCode: entry.clubCode,
         played: entry.played,
         points: entry.points,
+      });
+    }
+
+    for (const team of fixtureTeams) {
+      logger.info("catalog.fixtureTeam", team.name, {
+        competitionName,
+        leagueName,
       });
     }
   }

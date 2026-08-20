@@ -1,8 +1,9 @@
-// Team resolution differs by caller: fixture data has a team name + Dribl team hash id but no
-// club name, so a team can't be safely created there without guessing its club — lookup only,
-// leaving the fixture's team id null if unknown (the schema already allows null, for byes).
-// Table-entry data carries team name + club name together, so it's the one place that creates
-// teams, resolving/creating the club alongside.
+// Fixture data has no club_code, so it can't resolve a club by identity — it bridges instead via
+// findClubBridgeMatch (logo survives team-name suffixes like "Altona North SC U08"). If the club
+// can't be bridged yet, the team is still created unlinked (clubId: null) rather than blocked;
+// every subsequent sighting retries the bridge, so it self-heals once the club shows up elsewhere.
+// resolveTeamForTableEntry is the one place that resolves the club from source data alone (table
+// rows carry team name + club name together).
 
 import {
   externalRefEntityTypeValue,
@@ -10,33 +11,110 @@ import {
   parseId,
   serverError,
   sourceValue,
+  type Logger,
   type Result,
   type TeamId,
 } from "@matchday/domain";
-import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import { findClubBridgeMatch } from "#crawlers/dribl/clubBridgeResolver.ts";
 import { resolveClub } from "#crawlers/dribl/clubResolver.ts";
+import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
 
-/** `null` when no team with this Dribl id has been seen yet (not an error). */
+type ResolveTeamForFixtureDeps = Pick<
+  EntityResolutionDeps,
+  | "findClubByExternalRefSourceUrl"
+  | "findClubByLogoUrl"
+  | "findClubByName"
+  | "findExternalRef"
+  | "getTeamById"
+  | "upsertExternalRef"
+  | "upsertTeam"
+>;
+
+/** A logo was available to bridge on but nothing matched — worth a look, unlike a null logo
+ * (nothing to try in the first place) or a genuinely-unseen-elsewhere club (expected, common). */
+function logUnmatchedBridge(logger: Logger, teamName: string, teamLogoUrl: string | null): void {
+  if (teamLogoUrl === null) {
+    return;
+  }
+  logger.info("catalog.teamBridge.unmatched", "fixture team's logo matched no known club", {
+    teamName,
+    teamLogoUrl,
+  });
+}
+
+async function bridgeUnlinkedTeam(
+  deps: ResolveTeamForFixtureDeps,
+  logger: Logger,
+  teamId: TeamId,
+  teamName: string,
+  teamLogoUrl: string | null,
+): Promise<Result<TeamId>> {
+  const current = await deps.getTeamById(teamId);
+  if (!current.ok) {
+    return current;
+  }
+  if (current.value === null || current.value.clubId !== null) {
+    return ok(teamId);
+  }
+
+  const bridgeMatch = await findClubBridgeMatch(deps, teamName, teamLogoUrl);
+  if (!bridgeMatch.ok) {
+    return bridgeMatch;
+  }
+  if (bridgeMatch.value === null) {
+    logUnmatchedBridge(logger, teamName, teamLogoUrl);
+    return ok(teamId);
+  }
+
+  const updated = await deps.upsertTeam({
+    id: teamId,
+    clubId: bridgeMatch.value,
+    name: current.value.name,
+  });
+  return updated.ok ? ok(teamId) : updated;
+}
+
 export async function resolveTeamForFixture(
-  deps: Pick<EntityResolutionDeps, "findExternalRef">,
+  deps: ResolveTeamForFixtureDeps,
+  logger: Logger,
   teamSourceId: string,
-): Promise<Result<TeamId | null>> {
+  teamName: string,
+  teamLogoUrl: string | null,
+): Promise<Result<TeamId>> {
   const existing = await deps.findExternalRef(sourceValue.dribl, teamSourceId);
   if (!existing.ok) {
     return existing;
   }
-  if (existing.value === null) {
-    return ok(null);
+  if (existing.value !== null) {
+    const teamId = parseId(existing.value.internalId, "team");
+    if (teamId === undefined) {
+      return serverError(
+        `external_ref internalId "${existing.value.internalId}" doesn't match expected prefix for "team"`,
+      );
+    }
+    return bridgeUnlinkedTeam(deps, logger, teamId, teamName, teamLogoUrl);
   }
 
-  const teamId = parseId(existing.value.internalId, "team");
-  if (teamId === undefined) {
-    return serverError(
-      `external_ref internalId "${existing.value.internalId}" doesn't match expected prefix for "team"`,
-    );
+  const bridgeMatch = await findClubBridgeMatch(deps, teamName, teamLogoUrl);
+  if (!bridgeMatch.ok) {
+    return bridgeMatch;
   }
-  return ok(teamId);
+  if (bridgeMatch.value === null) {
+    logUnmatchedBridge(logger, teamName, teamLogoUrl);
+  }
+
+  return resolveEntityByExternalRef({
+    deps,
+    entityType: externalRefEntityTypeValue.team,
+    sourceId: teamSourceId,
+    upsertEntity: (id) =>
+      deps.upsertTeam({
+        id,
+        clubId: bridgeMatch.value,
+        name: teamName,
+      }),
+  });
 }
 
 export type ResolveTeamForTableEntryInput = {
@@ -68,8 +146,6 @@ export async function resolveTeamForTableEntry(
         id,
         clubId,
         name: teamName,
-        ageGroup: null,
-        gender: null,
       }),
   });
 }

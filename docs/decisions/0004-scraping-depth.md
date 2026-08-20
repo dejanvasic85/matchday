@@ -26,7 +26,7 @@ without over-collecting data no one uses yet.
 
 - **Fixture**: date, time, round, venue, coordinates, status, home/away scores, bye flag.
 - **Club**: name, display name, logo, email, website, address, socials.
-- **Team**: name, age group, gender, competition membership.
+- **Team**: name, competition membership.
 - **Competition/Season/League**: as entities with IDs (not just names).
 - **Table entry**: full rows (position, played, W/D/L, GF/GA/GD, points).
 

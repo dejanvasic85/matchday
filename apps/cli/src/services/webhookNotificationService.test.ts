@@ -79,13 +79,22 @@ describe("notifyLeagueSubscribers", () => {
   });
 
   it("isolates one subscriber's delivery failure from the rest", async () => {
+    // Each subscriber's delivery independently awaits signWebhookPayload before calling
+    // sendWebhook, so the two calls can reach it in either order — dispatch by which URL was
+    // actually requested, not by call order (mockResolvedValueOnce assumed call order matched
+    // subscription order, which isn't guaranteed and made this flaky in CI).
     const sendWebhook = vi
       .fn()
-      .mockResolvedValueOnce(serverError("Webhook POST failed: HTTP 500"))
-      .mockResolvedValueOnce(ok(undefined));
+      .mockImplementation(({ url }: { url: string }) =>
+        Promise.resolve(
+          url === "https://example.com/webhooks/failing"
+            ? serverError("Webhook POST failed: HTTP 500")
+            : ok(undefined),
+        ),
+      );
     const deps = makeDeps({ sendWebhook });
     const subscriptions = [
-      makeSubscription({ id: "sub_failing" }),
+      makeSubscription({ id: "sub_failing", webhookUrl: "https://example.com/webhooks/failing" }),
       makeSubscription({ id: "sub_ok" }),
     ];
 
