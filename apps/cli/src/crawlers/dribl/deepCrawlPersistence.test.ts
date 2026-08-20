@@ -85,6 +85,7 @@ function makeHappyPathDeps() {
     upsertTeam: vi.fn().mockResolvedValue(ok({ id: "tea_new00000001" })),
     upsertFixture: vi.fn().mockResolvedValue(ok({ id: "mtc_new00000001" })),
     upsertTableEntry: vi.fn().mockResolvedValue(ok({ id: "tab_new00000001" })),
+    upsertLeagueTeam: vi.fn().mockResolvedValue(ok({ id: "lgt_new00000001" })),
   });
 }
 

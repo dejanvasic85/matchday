@@ -54,6 +54,7 @@ function makeHappyPathDeps() {
     upsertClub: vi.fn().mockResolvedValue(ok({ id: "clb_new00000001" })),
     upsertTeam: vi.fn().mockResolvedValue(ok({ id: "tea_new00000001" })),
     upsertTableEntry: vi.fn().mockResolvedValue(ok({ id: "tab_new00000001" })),
+    upsertLeagueTeam: vi.fn().mockResolvedValue(ok({ id: "lgt_new00000001" })),
   });
 }
 
@@ -89,6 +90,12 @@ describe("persistCatalog", () => {
         teamId: expect.stringMatching(/^tea_/),
         position: 1,
         points: 44,
+      }),
+    );
+    expect(deps.upsertLeagueTeam).toHaveBeenCalledWith(
+      expect.objectContaining({
+        leagueId: expect.stringMatching(/^lea_/),
+        teamId: expect.stringMatching(/^tea_/),
       }),
     );
   });
@@ -143,6 +150,12 @@ describe("persistCatalog", () => {
     expect(deps.upsertTeam).toHaveBeenCalledWith(
       expect.objectContaining({ clubId: null, name: "Under 9 Boys Wallabies - Eric/Nate" }),
     );
+    // Table-less leagues never get a table_entry row, so this is the only membership record
+    // written for them — the data #144's clubId-filtered lookup fix depends on existing.
+    expect(deps.upsertLeagueTeam).toHaveBeenCalledTimes(2);
+    expect(deps.upsertLeagueTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ leagueId: expect.stringMatching(/^lea_/) }),
+    );
   });
 
   it("links a fixture-discovered team to a club whose logo bridges", async () => {
@@ -171,6 +184,24 @@ describe("persistCatalog", () => {
     expect(deps.upsertTeam).toHaveBeenCalledWith(
       expect.objectContaining({ clubId: "clb_existing0001", name: "Williamstown SC U08" }),
     );
+  });
+
+  it("returns err and stops when a fixture-fallback team's league_team upsert fails", async () => {
+    const deps = makeHappyPathDeps();
+    deps.upsertLeagueTeam = vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } });
+
+    const result = await persistCatalog({
+      deps,
+      logger: makeFakeLogger(),
+      leagues: [
+        makeLeague({
+          tableEntries: [],
+          fixtureTeams: [{ sourceId: "home-1", name: "Under 9 Boys Joeys", logoUrl: null }],
+        }),
+      ],
+    });
+
+    expect(result.ok).toBe(false);
   });
 
   it("returns err and stops when a competition upsert fails", async () => {
