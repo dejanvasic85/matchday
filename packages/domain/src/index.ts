@@ -36,6 +36,7 @@ export {
   type FixtureId,
   type IdPrefix,
   type LeagueId,
+  type LeagueTeamId,
   type SeasonId,
   type SubscriptionId,
   type TableEntryId,

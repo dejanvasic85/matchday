@@ -7,6 +7,11 @@
   discovered from the crawl (team by `team_hash_id`, club by `club_code`), not enumerated.
 - Reshaped by: [0013](0013-api-auth.md) — adds `client` (the tenant entity) and `api_token`;
   `subscription.clientName` becomes `subscription.clientId` → `client.id`.
+- Reshaped by: [#141](https://github.com/dejanvasic85/matchday/issues/141) — adds `league_team`
+  (a team's membership in a league, independent of `table_entry`) and the `lgt_` prefix. Deriving
+  club/league membership from `table_entry` silently misses table-less divisions (e.g. MiniRoos age
+  groups, which publish fixtures but no ladder) — `league_team` is written for every discovered
+  team regardless of that.
 
 ## Context
 
@@ -69,6 +74,7 @@ Phase 2). Finalised prefixes:
 | `lea_` | league              |
 | `mtc_` | fixture (match)     |
 | `tab_` | table_entry         |
+| `lgt_` | league_team         |
 | `ext_` | external_ref        |
 | `trk_` | tracked_competition |
 
@@ -92,6 +98,11 @@ written camelCase in Drizzle and mapped to snake_case in Postgres via `casing: "
 - **table_entry** — id; `leagueId` → league, `competitionId` → competition, `seasonId` → season,
   `teamId` → team; `position`, `played`, `won`, `drawn`, `lost`, `goalsFor`, `goalsAgainst`,
   `goalDifference`, `points` (all `integer`). One row per team's standing in a league table.
+- **league_team** (#141) — id; `leagueId` → league, `teamId` → team. One row per team's
+  _membership_ in a league, unique on `(leagueId, teamId)`, decoupled from `table_entry`: written
+  for every team the crawl discovers whether or not that league ever publishes a ladder. No
+  `competitionId`/`seasonId` denormalization — both are reachable via `leagueId → league` and this
+  table has no reporting use case that needs the shortcut.
 - **external_ref** — id; `entityType` (`text`), `internalId` (`text`), `source` (`text`, default
   `'dribl'`), `sourceId` (`text`), `sourceUrl` (`text`, nullable — retains the original Dribl logo
   URL for R2 re-fetch, per 0004). **Unique `(source, sourceId)`** — the idempotency key; unique
