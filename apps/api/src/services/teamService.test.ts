@@ -1,13 +1,39 @@
 import { notFound, ok, serverError } from "@matchday/domain";
-import { getTeam, listAllTeams, type TeamServiceDeps } from "#services/teamService.ts";
+import {
+  getTeam,
+  listAllTeams,
+  listLeagueTeams,
+  type TeamServiceDeps,
+} from "#services/teamService.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
+
+function makeClubRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "clb_abc123",
+    name: "Test FC",
+    displayName: "Test FC",
+    logoUrl: "https://example.com/logo.png",
+    email: null,
+    website: null,
+    address: null,
+    socials: null,
+    grounds: null,
+    color: null,
+    accent: null,
+    store: null,
+    createdAt: epoch,
+    updatedAt: epoch,
+    ...overrides,
+  };
+}
 
 function makeTeamRow(overrides: Record<string, unknown> = {}) {
   return {
     id: "tea_abc123",
     clubId: "clb_abc123",
     name: "Test FC U12",
+    club: makeClubRow(),
     createdAt: epoch,
     updatedAt: epoch,
     ...overrides,
@@ -18,6 +44,7 @@ function makeDeps(overrides: Partial<TeamServiceDeps> = {}): TeamServiceDeps {
   return {
     listTeams: vi.fn().mockResolvedValue(ok([makeTeamRow()])),
     getTeamById: vi.fn().mockResolvedValue(ok(makeTeamRow())),
+    listTeamsByLeagueId: vi.fn().mockResolvedValue(ok([makeTeamRow()])),
     ...overrides,
   };
 }
@@ -31,6 +58,35 @@ describe("listAllTeams", () => {
     expect(result).toEqual(
       ok([expect.objectContaining({ id: "tea_abc123", createdAt: epoch.toISOString() })]),
     );
+  });
+
+  it("embeds the owning club as a lean summary", async () => {
+    const deps = makeDeps();
+
+    const result = await listAllTeams(deps);
+
+    expect(result).toEqual(
+      ok([
+        expect.objectContaining({
+          club: {
+            id: "clb_abc123",
+            name: "Test FC",
+            displayName: "Test FC",
+            logoUrl: "https://example.com/logo.png",
+          },
+        }),
+      ]),
+    );
+  });
+
+  it("embeds a null club when the team has no club", async () => {
+    const deps = makeDeps({
+      listTeams: vi.fn().mockResolvedValue(ok([makeTeamRow({ clubId: null, club: null })])),
+    });
+
+    const result = await listAllTeams(deps);
+
+    expect(result).toEqual(ok([expect.objectContaining({ clubId: null, club: null })]));
   });
 
   it("passes the clubId filter through to data access", async () => {
@@ -75,6 +131,33 @@ describe("getTeam", () => {
     const deps = makeDeps({ getTeamById: vi.fn().mockResolvedValue(lookupError) });
 
     const result = await getTeam(deps, "tea_abc123");
+
+    expect(result).toEqual(lookupError);
+  });
+});
+
+describe("listLeagueTeams", () => {
+  it("maps each team in the league, including its club summary", async () => {
+    const deps = makeDeps();
+
+    const result = await listLeagueTeams(deps, "lea_abc123");
+
+    expect(result).toEqual(
+      ok([
+        expect.objectContaining({
+          id: "tea_abc123",
+          club: expect.objectContaining({ id: "clb_abc123" }),
+        }),
+      ]),
+    );
+    expect(deps.listTeamsByLeagueId).toHaveBeenCalledWith("lea_abc123");
+  });
+
+  it("propagates a lookup failure", async () => {
+    const lookupError = serverError("Failed to list teams by league id");
+    const deps = makeDeps({ listTeamsByLeagueId: vi.fn().mockResolvedValue(lookupError) });
+
+    const result = await listLeagueTeams(deps, "lea_abc123");
 
     expect(result).toEqual(lookupError);
   });
