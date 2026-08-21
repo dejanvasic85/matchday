@@ -60,7 +60,7 @@ describe("listAllTeams", () => {
     );
   });
 
-  it("embeds the owning club as a lean summary", async () => {
+  it("marks a team with a club as type 'club', embedding a lean summary", async () => {
     const deps = makeDeps();
 
     const result = await listAllTeams(deps);
@@ -68,6 +68,7 @@ describe("listAllTeams", () => {
     expect(result).toEqual(
       ok([
         expect.objectContaining({
+          type: "club",
           club: {
             id: "clb_abc123",
             name: "Test FC",
@@ -79,14 +80,18 @@ describe("listAllTeams", () => {
     );
   });
 
-  it("embeds a null club when the team has no club", async () => {
+  it("marks a team with no club as type 'unaffiliated', omitting club entirely", async () => {
     const deps = makeDeps({
       listTeams: vi.fn().mockResolvedValue(ok([makeTeamRow({ clubId: null, club: null })])),
     });
 
     const result = await listAllTeams(deps);
 
-    expect(result).toEqual(ok([expect.objectContaining({ clubId: null, club: null })]));
+    expect(result).toEqual(
+      ok([expect.objectContaining({ id: "tea_abc123", type: "unaffiliated" })]),
+    );
+    assert(result.ok);
+    expect(result.value[0]).not.toHaveProperty("club");
   });
 
   it("passes the clubId filter through to data access", async () => {
@@ -146,6 +151,7 @@ describe("listLeagueTeams", () => {
       ok([
         expect.objectContaining({
           id: "tea_abc123",
+          type: "club",
           club: expect.objectContaining({ id: "clb_abc123" }),
         }),
       ]),
