@@ -1,5 +1,5 @@
 ---
-"@dejanvasic85/matchday-sdk": minor
+"@dejanvasic85/matchday-sdk": major
 ---
 
 `GET /leagues/{id}/teams` — list a league's teams (works for table-less leagues like MiniRoos, unlike deriving membership from the league's table).
