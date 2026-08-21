@@ -1,7 +1,11 @@
 // Team service (0045): thin business logic over data access (AGENTS.md) — maps the DB row to the
 // wire shape (timestamps as ISO strings, owning club trimmed to a lean summary — #145) and
-// lists/fetches teams. Catalog data — open to any authenticated client, no subscription scoping
-// (ADR 0013).
+// lists/fetches teams. A team's club link is nullable at the DB layer (a fixture-discovered team
+// not yet bridged to a club — teamResolver.ts), but that's a data-access-honest detail, not
+// something every API consumer should have to null-check: `mapToTeamResponse` below splits it
+// into a `type: "club" | "unaffiliated"` discriminated union instead, so the common case (club
+// always present) is null-check-free. Catalog data — open to any authenticated client, no
+// subscription scoping (ADR 0013).
 
 import { mapResult, requireFound, type Result } from "@matchday/domain";
 import {
@@ -39,28 +43,38 @@ export type ClubSummaryResponse = {
   logoUrl: string | null;
 };
 
-export type TeamResponse = Omit<TeamWithClub, "createdAt" | "updatedAt" | "club"> & {
+type BaseTeamResponse = {
+  id: string;
+  name: string;
   createdAt: string;
   updatedAt: string;
-  club: ClubSummaryResponse | null;
 };
 
+export type TeamResponse =
+  | (BaseTeamResponse & { type: "club"; club: ClubSummaryResponse })
+  | (BaseTeamResponse & { type: "unaffiliated" });
+
 function mapToTeamResponse(team: TeamWithClub): TeamResponse {
-  return {
+  const base: BaseTeamResponse = {
     id: team.id,
-    clubId: team.clubId,
     name: team.name,
-    club:
-      team.club === null
-        ? null
-        : {
-            id: team.club.id,
-            name: team.club.name,
-            displayName: team.club.displayName,
-            logoUrl: team.club.logoUrl,
-          },
     createdAt: team.createdAt.toISOString(),
     updatedAt: team.updatedAt.toISOString(),
+  };
+
+  if (team.club === null) {
+    return { ...base, type: "unaffiliated" };
+  }
+
+  return {
+    ...base,
+    type: "club",
+    club: {
+      id: team.club.id,
+      name: team.club.name,
+      displayName: team.club.displayName,
+      logoUrl: team.club.logoUrl,
+    },
   };
 }
 
