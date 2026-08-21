@@ -2,7 +2,7 @@ import { z } from "@hono/zod-openapi";
 
 /** Lean embed of a team's owning club (#145) — not the full Club resource (skips socials,
  * grounds, email, etc.), just enough to render a team without a second request. */
-export const clubSummarySchema = z
+const clubSummarySchema = z
   .object({
     id: z.string().openapi({ example: "clb_V1StGXR8Z5" }),
     name: z.string(),
