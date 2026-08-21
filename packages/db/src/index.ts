@@ -24,7 +24,13 @@ export {
   updateClubEnrichmentFields,
   type ClubEnrichmentFields,
 } from "#clubDb.ts";
-export { listTeams, getTeamById, upsertTeam } from "#teamDb.ts";
+export {
+  listTeams,
+  getTeamById,
+  listTeamsByLeagueId,
+  upsertTeam,
+  type TeamWithClub,
+} from "#teamDb.ts";
 export { listCompetitions, getCompetitionById, upsertCompetition } from "#competitionDb.ts";
 export { listSeasons, getSeasonById, upsertSeason } from "#seasonDb.ts";
 export {

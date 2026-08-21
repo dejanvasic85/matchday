@@ -12,9 +12,11 @@ import { fixtureResponseSchema } from "#schemas/fixtureSchema.ts";
 import { idParamSchema } from "#schemas/idParamSchema.ts";
 import { leagueResponseSchema } from "#schemas/leagueSchema.ts";
 import { tableEntryResponseSchema } from "#schemas/tableEntrySchema.ts";
+import { teamResponseSchema } from "#schemas/teamSchema.ts";
 import { createFixtureServiceDeps, listLeagueFixtures } from "#services/fixtureService.ts";
 import { createLeagueServiceDeps, getLeague, listAllLeagues } from "#services/leagueService.ts";
 import { createTableEntryServiceDeps, listLeagueTable } from "#services/tableEntryService.ts";
+import { createTeamServiceDeps, listLeagueTeams } from "#services/teamService.ts";
 
 export const leagueRoute = new OpenAPIHono<{ Bindings: ApiBindings; Variables: DbVariables }>();
 
@@ -123,4 +125,27 @@ leagueRoute.openapi(listLeagueTableRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await listLeagueTable(createTableEntryServiceDeps(c.get("db")), id);
   return jsonResult(c, result, "api.league.table.failed");
+});
+
+const listLeagueTeamsRoute = createRoute({
+  method: "get",
+  path: "/{id}/teams",
+  tags: ["Leagues"],
+  summary: "List a league's teams",
+  request: { params: idParamSchema("league", "lea_V1StGXR8Z5") },
+  responses: {
+    200: {
+      description:
+        "The league's teams, via league_team membership (#141) — includes teams in table-less " +
+        "leagues (e.g. MiniRoos) that never appear in the league's table",
+      content: { "application/json": { schema: teamResponseSchema.array() } },
+    },
+    ...errorResponsesValue,
+  },
+});
+
+leagueRoute.openapi(listLeagueTeamsRoute, async (c) => {
+  const { id } = c.req.valid("param");
+  const result = await listLeagueTeams(createTeamServiceDeps(c.get("db")), id);
+  return jsonResult(c, result, "api.league.teams.failed");
 });
