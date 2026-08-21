@@ -6,8 +6,8 @@ packages:
 catalogMode: prefer
 
 catalog:
-  "@cloudflare/workers-types": 5.20260819.1
-  "@hono/zod-openapi": 1.6.0
+  "@cloudflare/workers-types": 5.20260820.1
+  "@hono/zod-openapi": 1.6.1
   "@neondatabase/serverless": 1.1.0
   "@sentry/cloudflare": 10.70.0
   "@sentry/hono": 10.70.0
@@ -21,7 +21,7 @@ catalog:
   nanoid: 6.0.1
   playwright-core: 1.62.1
   typescript: ^7.0.0
-  wrangler: 4.124.0
+  wrangler: 4.125.0
   zod: 4.4.3
 
 overrides:
