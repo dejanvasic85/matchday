@@ -40,8 +40,9 @@ function dedupeLeagues(rows: LeagueSummary[]): LeagueSummary[] {
   return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Resolve a club by name and list the distinct leagues its teams play in, via table_entry (#85):
- * a league is only discoverable once the deep crawl has run for it at least once. */
+/** Resolve a club by name and list the distinct leagues its teams play in, via league_team
+ * (#144, superseding table_entry — #85): a league is only discoverable once the catalog crawl has
+ * run for it at least once. */
 export async function listLeaguesForClub(
   deps: ClubLeagueServiceDeps,
   clubName: string,
