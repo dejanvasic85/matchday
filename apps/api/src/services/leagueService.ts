@@ -32,10 +32,9 @@ export function createLeagueServiceDeps(db: Db): LeagueServiceDeps {
  * and the timestamps are ingest bookkeeping no consumer labels a league with. */
 export type LeagueRefSummaryResponse = { id: string; name: string };
 
-export type LeagueResponse = Omit<
-  LeagueWithRefs,
-  "competition" | "season" | "createdAt" | "updatedAt"
-> & {
+/** `Pick`, not `Omit`, so a new `league` column stays off the wire until it's added here
+ * deliberately — and mapped field-by-field below, since a spread would leak it regardless. */
+export type LeagueResponse = Pick<LeagueWithRefs, "id" | "name" | "competitionId" | "seasonId"> & {
   competition: LeagueRefSummaryResponse;
   season: LeagueRefSummaryResponse;
   createdAt: string;
@@ -44,7 +43,10 @@ export type LeagueResponse = Omit<
 
 function mapToLeagueResponse(league: LeagueWithRefs): LeagueResponse {
   return {
-    ...league,
+    id: league.id,
+    name: league.name,
+    competitionId: league.competitionId,
+    seasonId: league.seasonId,
     competition: { id: league.competition.id, name: league.competition.name },
     season: { id: league.season.id, name: league.season.name },
     createdAt: league.createdAt.toISOString(),

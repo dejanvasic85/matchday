@@ -71,6 +71,16 @@ describe("listAllLeagues", () => {
     );
   });
 
+  it("keeps a column the response doesn't name off the wire", async () => {
+    const deps = makeDeps({
+      listLeagues: vi.fn().mockResolvedValue(ok([makeLeagueRow({ internalNotes: "secret" })])),
+    });
+
+    const result = await listAllLeagues(deps);
+
+    expect(result).toEqual(ok([expect.not.objectContaining({ internalNotes: expect.anything() })]));
+  });
+
   it("passes the competitionId/seasonId/clubId filter through to data access", async () => {
     const deps = makeDeps();
     const filter = { competitionId: "cmp_abc123", seasonId: "sea_abc123", clubId: "clb_abc123" };
