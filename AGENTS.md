@@ -188,7 +188,8 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
   entrypoint is bundled (`apps/api`, via wrangler/esbuild) or run raw (`apps/cli`), the exact same
   `#foo.ts` import resolves correctly, so there's one convention, not one per package shape.
 - Avoid magic numbers/strings — name them. Comments only for non-obvious intent; never commented-out
-  code.
+  code. **Max 2 lines per comment** — if it needs more, put the reasoning in the PR description or
+  an ADR instead.
 - **Zod** for validation schemas and for **env/config**: a Zod-validated config module per app. Env
   vars are documented in `.env.example` only — never listed in docs or README files.
 
