@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 
-export const driblTableEntryAttributesSchema = z.object({
+const driblTableEntryAttributesSchema = z.object({
   team_hash_id: z.string(),
   team_name: z.string(),
   club_code: z.string(),
@@ -22,7 +22,7 @@ export const driblTableEntryAttributesSchema = z.object({
   points: z.number().int(),
 });
 
-export const driblTableEntrySchema = z.object({
+const driblTableEntrySchema = z.object({
   type: z.literal("ladder-entry"),
   id: z.string(),
   attributes: driblTableEntryAttributesSchema,
@@ -32,6 +32,5 @@ export const driblTableApiResponseSchema = z.object({
   data: z.array(driblTableEntrySchema),
 });
 
-export type DriblTableEntryAttributes = z.infer<typeof driblTableEntryAttributesSchema>;
 export type DriblTableEntry = z.infer<typeof driblTableEntrySchema>;
 export type DriblTableApiResponse = z.infer<typeof driblTableApiResponseSchema>;

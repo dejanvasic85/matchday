@@ -81,7 +81,7 @@ function summarizeCatalogStats(stats: CatalogStats): CrawlCatalogSummary {
   };
 }
 
-export async function runCatalogCrawl(
+async function runCatalogCrawl(
   input: TenantContext & CrawlCatalogParams,
 ): Promise<Result<CrawlCatalogSummary>> {
   const {
@@ -143,7 +143,7 @@ export async function runCatalogCrawl(
   return ok(summarizeCatalogStats(stats));
 }
 
-export async function runCountCatalogLeagues(
+async function runCountCatalogLeagues(
   input: TenantContext & CountCatalogLeaguesParams,
 ): Promise<Result<CountCatalogLeaguesSummary>> {
   const { page, tenantHost, tenantSlug, maxLeagues, logger } = input;
@@ -162,7 +162,7 @@ export async function runCountCatalogLeagues(
   return ok({ total: countResult.value });
 }
 
-export async function runDeepCrawl(
+async function runDeepCrawl(
   input: TenantContext & DeepCrawlParams,
 ): Promise<Result<DeepCrawlSummary>> {
   const { page, tenantHost, tenantSlug, leagueId, dryRun, deps, rawStorage, logger } = input;
@@ -184,7 +184,7 @@ export async function runDeepCrawl(
   });
 }
 
-export async function runClubEnrichmentCrawl(
+async function runClubEnrichmentCrawl(
   input: TenantContext & CrawlClubEnrichmentParams,
 ): Promise<Result<CrawlClubEnrichmentSummary>> {
   const {

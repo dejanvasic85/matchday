@@ -9,7 +9,7 @@ export type WebhookSubscription = {
   webhookSecret: string;
 };
 
-export type WebhookPayload = {
+type WebhookPayload = {
   leagueId: string;
   hasChanges: boolean;
   crawledAt: string;

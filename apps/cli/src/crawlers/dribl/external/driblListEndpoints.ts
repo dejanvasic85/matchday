@@ -23,6 +23,4 @@ export const driblListResponseSchema = z.object({
   data: z.array(driblListItemSchema),
 });
 
-export type DriblTenantResponse = z.infer<typeof driblTenantResponseSchema>;
 export type DriblListItem = z.infer<typeof driblListItemSchema>;
-export type DriblListResponse = z.infer<typeof driblListResponseSchema>;
