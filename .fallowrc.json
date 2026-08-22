@@ -3,5 +3,6 @@
   "duplicates": {
     "minOccurrences": 3
   },
-  "ignoreDependencies": ["@sentry/cloudflare"]
+  "ignoreDependencies": ["@sentry/cloudflare"],
+  "ignoreUnresolvedImports": ["#generated/*"]
 }
