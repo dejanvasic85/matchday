@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 
-export const driblFixtureAttributesSchema = z.object({
+const driblFixtureAttributesSchema = z.object({
   // Dribl returns null for unstructured/placeholder fixtures (e.g. undecided finals rounds) —
   // nullable since the mapper doesn't consume this field anyway.
   name: z.string().nullable(),
@@ -30,7 +30,7 @@ export const driblFixtureAttributesSchema = z.object({
   away_score: z.number().nullable(),
 });
 
-export const driblFixtureSchema = z.object({
+const driblFixtureSchema = z.object({
   type: z.union([z.literal("fixtures"), z.literal("results")]),
   hash_id: z.string(),
   attributes: driblFixtureAttributesSchema,

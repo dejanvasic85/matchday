@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 
-export const driblClubAddressSchema = z.object({
+const driblClubAddressSchema = z.object({
   address_line_1: z.string().nullable(),
   address_line_2: z.string().nullable(),
   city: z.string().nullable(),
@@ -21,14 +21,14 @@ export const driblClubSocialSchema = z.object({
 
 // Despite the plural name, Dribl carries at most one ground per club (confirmed against a live
 // `clubs/{id}` response); `address` is already a formatted string, not the nested address shape.
-export const driblClubGroundSchema = z.object({
+const driblClubGroundSchema = z.object({
   name: z.string(),
   address: z.string().nullable(),
 });
 
 // `list/clubs` already carries these fields, just nulled out; `clubs/{id}` is the same shape
 // plus `store` — kept as one base schema so both endpoints validate correctly.
-export const driblClubAttributesSchema = z.object({
+const driblClubAttributesSchema = z.object({
   name: z.string(),
   image: z.url().nullable(),
   email: z.string().nullable(),
@@ -41,7 +41,7 @@ export const driblClubAttributesSchema = z.object({
   grounds: driblClubGroundSchema.nullable(),
 });
 
-export const driblClubSchema = z.object({
+const driblClubSchema = z.object({
   type: z.literal("clubs"),
   id: z.string(),
   attributes: driblClubAttributesSchema,
@@ -53,11 +53,11 @@ export const driblClubsApiResponseSchema = z.object({
 
 // `store` is `null` for most clubs but missing entirely for others on `clubs/{id}` (confirmed
 // live) — optional as well as nullable, not just nullable.
-export const driblClubDetailAttributesSchema = driblClubAttributesSchema.extend({
+const driblClubDetailAttributesSchema = driblClubAttributesSchema.extend({
   store: z.string().nullable().optional(),
 });
 
-export const driblClubDetailSchema = z.object({
+const driblClubDetailSchema = z.object({
   type: z.literal("clubs"),
   id: z.string(),
   attributes: driblClubDetailAttributesSchema,
@@ -68,10 +68,6 @@ export const driblClubDetailApiResponseSchema = z.object({
   data: driblClubDetailSchema,
 });
 
-export type DriblClubGround = z.infer<typeof driblClubGroundSchema>;
-export type DriblClubAttributes = z.infer<typeof driblClubAttributesSchema>;
 export type DriblClub = z.infer<typeof driblClubSchema>;
-export type DriblClubsApiResponse = z.infer<typeof driblClubsApiResponseSchema>;
-export type DriblClubDetailAttributes = z.infer<typeof driblClubDetailAttributesSchema>;
 export type DriblClubDetail = z.infer<typeof driblClubDetailSchema>;
 export type DriblClubDetailApiResponse = z.infer<typeof driblClubDetailApiResponseSchema>;
