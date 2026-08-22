@@ -22,14 +22,17 @@ export function createCompetitionServiceDeps(db: Db): CompetitionServiceDeps {
   };
 }
 
-export type CompetitionResponse = Omit<Competition, "createdAt" | "updatedAt"> & {
+/** `Pick`, not `Omit`, so a new column stays off the wire until named here — and mapped
+ * field-by-field below, since a spread would leak it regardless (#169). */
+export type CompetitionResponse = Pick<Competition, "id" | "name"> & {
   createdAt: string;
   updatedAt: string;
 };
 
 function mapToCompetitionResponse(competition: Competition): CompetitionResponse {
   return {
-    ...competition,
+    id: competition.id,
+    name: competition.name,
     createdAt: competition.createdAt.toISOString(),
     updatedAt: competition.updatedAt.toISOString(),
   };

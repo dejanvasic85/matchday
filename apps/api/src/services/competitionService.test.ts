@@ -36,6 +36,18 @@ describe("listAllCompetitions", () => {
     );
   });
 
+  it("keeps a column the response doesn't name off the wire", async () => {
+    const deps = makeDeps({
+      listCompetitions: vi
+        .fn()
+        .mockResolvedValue(ok([makeCompetitionRow({ internalNotes: "secret" })])),
+    });
+
+    const result = await listAllCompetitions(deps);
+
+    expect(result).toEqual(ok([expect.not.objectContaining({ internalNotes: expect.anything() })]));
+  });
+
   it("propagates a list failure", async () => {
     const listError = serverError("Failed to list competitions");
     const deps = makeDeps({ listCompetitions: vi.fn().mockResolvedValue(listError) });

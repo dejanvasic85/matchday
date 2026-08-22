@@ -22,14 +22,45 @@ export function createTableEntryServiceDeps(db: Db): TableEntryServiceDeps {
 
 type TableEntryRow = typeof schema.tableEntry.$inferSelect;
 
-export type TableEntryResponse = Omit<TableEntryRow, "createdAt" | "updatedAt"> & {
+/** `Pick`, not `Omit`, so a new column stays off the wire until named here — and mapped
+ * field-by-field below, since a spread would leak it regardless (#169). */
+export type TableEntryResponse = Pick<
+  TableEntryRow,
+  | "id"
+  | "leagueId"
+  | "competitionId"
+  | "seasonId"
+  | "teamId"
+  | "position"
+  | "played"
+  | "won"
+  | "drawn"
+  | "lost"
+  | "goalsFor"
+  | "goalsAgainst"
+  | "goalDifference"
+  | "points"
+> & {
   createdAt: string;
   updatedAt: string;
 };
 
 function mapToTableEntryResponse(row: TableEntryRow): TableEntryResponse {
   return {
-    ...row,
+    id: row.id,
+    leagueId: row.leagueId,
+    competitionId: row.competitionId,
+    seasonId: row.seasonId,
+    teamId: row.teamId,
+    position: row.position,
+    played: row.played,
+    won: row.won,
+    drawn: row.drawn,
+    lost: row.lost,
+    goalsFor: row.goalsFor,
+    goalsAgainst: row.goalsAgainst,
+    goalDifference: row.goalDifference,
+    points: row.points,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

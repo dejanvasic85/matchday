@@ -42,6 +42,16 @@ describe("listAllClubs", () => {
     );
   });
 
+  it("keeps a column the response doesn't name off the wire", async () => {
+    const deps = makeDeps({
+      listClubs: vi.fn().mockResolvedValue(ok([makeClubRow({ internalNotes: "secret" })])),
+    });
+
+    const result = await listAllClubs(deps);
+
+    expect(result).toEqual(ok([expect.not.objectContaining({ internalNotes: expect.anything() })]));
+  });
+
   it("propagates a list failure", async () => {
     const listError = serverError("Failed to list clubs");
     const deps = makeDeps({ listClubs: vi.fn().mockResolvedValue(listError) });
