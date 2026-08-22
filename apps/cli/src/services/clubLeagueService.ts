@@ -1,11 +1,5 @@
-// Club -> league resolution (#85): "which leagues do this club's teams actually play in?" —
-// business logic lives here (AGENTS.md) so it's unit-testable with fakes.
-//
-// packages/db's listLeaguesByClubId deliberately returns one row per (team, league) pair,
-// undeduplicated — a club with two teams in the same league gets that league twice. Dedup is a
-// business rule (which of the duplicate rows' fields wins, if they ever differ), so it lives here
-// rather than in a SQL DISTINCT, keeping it unit-testable instead of only verifiable against a
-// live database.
+// Club -> league resolution (#85): listLeaguesByClubId returns one row per (team, league) pair,
+// undeduplicated; dedup is a business rule so it lives here, not in a SQL DISTINCT.
 
 import { ok, type Result } from "@matchday/domain";
 import type { listLeaguesByClubId } from "@matchday/db";

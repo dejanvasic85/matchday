@@ -1,6 +1,5 @@
-// GET /health — thin transport glue (AGENTS.md): reads the request's `db` (set by
-// dbClientMiddleware), delegates the readiness decision to healthService, and maps the Result to
-// a status code.
+// GET /health — thin transport glue: delegates the readiness decision to healthService and maps
+// the Result to a status code.
 
 import { createConsoleLogger, type Logger } from "@matchday/domain";
 import { Hono } from "hono";

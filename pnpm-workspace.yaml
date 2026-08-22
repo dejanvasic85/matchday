@@ -37,11 +37,8 @@ peerDependencyRules:
     # @sentry/hono's peer range (^4.x) is stale; wrangler itself requires ^5.x and the mismatch
     # is TS-ambient-types-only, not a runtime incompatibility.
     "@cloudflare/workers-types": "*"
-    # openapi-typescript's peer range (^5.x) is stale for TS 6, which still exposes the JS
-    # compiler API it builds ASTs with. It is NOT stale for TS 7: the native Go port drops
-    # ts.factory entirely and openapi-typescript crashes on import, so packages/sdk is held
-    # below 7 in renovate.json until openapi-ts/openapi-typescript#2841 lands. Capped at <7
-    # rather than "*" so a TS 7 creeping back into the SDK still warns instead of going quiet.
+    # TS 7's native Go port drops ts.factory entirely, crashing openapi-typescript on import —
+    # packages/sdk is held below 7 in renovate.json until openapi-ts/openapi-typescript#2841 lands.
     typescript: "<7"
 
 allowBuilds:

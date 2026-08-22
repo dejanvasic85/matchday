@@ -1,7 +1,5 @@
-// Stages a source's raw API responses to Cloudflare R2 pre-transform (0004), via aws4fetch — a
-// fetch-native SigV4 signer with no Node-specific dependencies, so this client works unchanged
-// whether the scraper runs on thanos (Node) or is ever split onto a Worker-compatible runtime.
-// Source-agnostic: any adapter's crawl functions can stage responses through this.
+// Stages a source's raw API responses to R2 pre-transform (0004), via aws4fetch (fetch-native
+// SigV4, no Node-specific deps) so it works unchanged on Node or a Worker runtime. Source-agnostic.
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { AwsClient } from "aws4fetch";

@@ -3,10 +3,8 @@ import { defineConfig } from "vite-plus";
 export default defineConfig({
   run: {
     tasks: {
-      // Cloudflare Workers apps are bundled by Wrangler itself (esbuild), not the Vite build.
-      // `build` is a deterministic dry-run bundle check (cacheable, catches Workers-incompatible
-      // code in CI); `dev`/`deploy` are side-effecting/long-running, uncached like apps/cli's
-      // `mday` task.
+      // Wrangler (not Vite) bundles this Worker; `build` is a cacheable dry-run bundle check,
+      // `dev`/`deploy` are side-effecting and uncached.
       dev: {
         command: "wrangler dev",
         cache: false,

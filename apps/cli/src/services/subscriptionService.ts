@@ -1,6 +1,5 @@
-// Subscription creation (0012): a client subscribes to one of our leagues. Business logic lives
-// here (AGENTS.md) — validates the league exists, mints the id, and delegates the write to
-// data-access, so it's unit-testable with fakes instead of a real DB (DI over mocking Drizzle).
+// Subscription creation (0012): a client subscribes to one of our leagues — validates the league
+// exists, mints the id, and delegates the write to data-access.
 
 import {
   badRequest,
@@ -73,9 +72,8 @@ export async function createSubscription(
     return clientResult;
   }
 
-  // The generated id is only used when this insert wins; re-subscribing conflicts on
-  // (client, league) and keeps the original row's id, so return what came back rather than what we
-  // minted — otherwise the caller prints an id that was never persisted.
+  // Re-subscribing conflicts on (client, league) and keeps the original row's id, so return what
+  // came back rather than what we minted, or the caller prints an id that was never persisted.
   const id = generateId("subscription");
   const upserted = await deps.upsertSubscription({ id, clientId: clientResult.value, leagueId });
   if (!upserted.ok) {
@@ -129,9 +127,8 @@ export async function createSubscriptionsForClub(
   const subscriptionIds: SubscriptionId[] = [];
   for (const league of leagues) {
     const id = generateId("subscription");
-    // Sequential, not Promise.all: each failure should stop the run where it is rather than
-    // firing every remaining upsert concurrently against a client that just failed to resolve
-    // or a league that turned out invalid.
+    // Sequential, not Promise.all: a failure should stop the run rather than firing every
+    // remaining upsert concurrently.
     const upserted = await deps.upsertSubscription({
       id,
       clientId: clientResult.value,

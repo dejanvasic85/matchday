@@ -1,6 +1,5 @@
-// Dry-run output for the club-enrichment crawl: logs each crawled club instead of persisting it,
-// so `mday club-enrichment --dry-run` shows what a real run would upsert without touching the DB
-// or uploading logos to R2.
+// Dry-run output for the club-enrichment crawl: logs each club instead of persisting it, so
+// `mday club-enrichment --dry-run` shows what a real run would do without touching the DB.
 
 import type { Logger } from "@matchday/domain";
 import type { MappedClubDetail } from "#crawlers/dribl/mappers/mapDriblClubDetail.ts";

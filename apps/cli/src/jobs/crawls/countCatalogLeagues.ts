@@ -1,6 +1,5 @@
-// Count catalog leagues (0012): cheap listing-only companion to the catalog crawl (no table/
-// fixture fetches, no persistence) — sizes the crawl-catalog.yml matrix ahead of the real crawl.
-// Thin transport glue (AGENTS.md): looks up the source adapter, opens its session, delegates.
+// Count catalog leagues (0012): cheap listing-only companion to the catalog crawl (no fetches or
+// persistence) — sizes the crawl-catalog.yml matrix ahead of the real crawl.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
 import type { CliConfig } from "#config.ts";

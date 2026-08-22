@@ -1,8 +1,5 @@
-// Webhook secret generation + HMAC signing (#105). A subscription's webhook secret is used to
-// sign each delivery so a receiver can verify it actually came from us — unlike an API token,
-// it's stored in plaintext (there's no inbound value to hash-and-compare, we're the ones signing).
-// Uses the Web Crypto API (`crypto` global) rather than `node:crypto` so this runs unmodified on
-// Cloudflare Workers, matching `apiTokenHash.ts`.
+// Webhook secret generation + HMAC signing (#105), stored in plaintext (unlike an API token —
+// we're the ones signing). Uses Web Crypto (not `node:crypto`) to run unmodified on Workers.
 
 const webhookSecretPrefixValue = "whsec_";
 const webhookSecretByteLength = 32;

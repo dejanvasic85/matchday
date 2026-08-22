@@ -1,6 +1,5 @@
-// Season service (0045): thin business logic over data access (AGENTS.md) — maps the DB row to
-// the wire shape (timestamps as ISO strings) and lists/fetches seasons. Catalog data — open to
-// any authenticated client, no subscription scoping (ADR 0013).
+// Season service (0045): maps DB rows to the wire shape. Catalog data, open to any authenticated
+// client, no subscription scoping (ADR 0013).
 
 import { mapResult, requireFound, type Result, type Season } from "@matchday/domain";
 import { getSeasonById, listSeasons, type Db } from "@matchday/db";

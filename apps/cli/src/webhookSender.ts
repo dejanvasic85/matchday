@@ -1,7 +1,5 @@
-// Real webhook delivery (#105): a single POST with a short timeout, no retries — the v1 scope
-// decided in docs/plans/2026-08-12-subscription-webhooks.md. Failure is reported as a `Result`,
-// never thrown, so `webhookNotificationService` can isolate one subscriber's failure from the
-// rest without a try/catch of its own.
+// Real webhook delivery (#105): single POST, short timeout, no retries (v1 scope). Failure is
+// reported as a `Result`, never thrown, so callers can isolate one subscriber's failure.
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import type { SendWebhook } from "#services/webhookNotificationService.ts";

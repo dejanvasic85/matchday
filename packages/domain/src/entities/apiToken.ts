@@ -1,8 +1,7 @@
 import { z } from "zod";
 
-// A client's API bearer token (ADR 0013), hashed at rest — `tokenHash` never holds the plaintext
-// token. A client can hold several active tokens at once so it can rotate one in before revoking
-// the old one; `revokedAt` set marks a token no longer valid for auth.
+// A client's API bearer token (ADR 0013), hashed at rest. A client can hold several active
+// tokens to rotate one in before revoking the old; `revokedAt` set means no longer valid.
 export const apiTokenSchema = z.object({
   id: z.string(),
   clientId: z.string(),

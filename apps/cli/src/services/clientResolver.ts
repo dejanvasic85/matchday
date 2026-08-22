@@ -1,9 +1,5 @@
-// Client resolution (ADR 0013): resolve a client by name. Business logic lives here (AGENTS.md)
-// so it's unit-testable with fakes.
-//
-// Creation is deliberately its own explicit step (`mday client add`) rather than a side effect of
-// subscribing or minting a token: keyed on a free-text name, an implicit create turns a typo into
-// a second silent tenant holding its own tokens. Lookups here fail with `notFound` instead.
+// Client resolution (ADR 0013): resolve a client by name. Creation is deliberately its own
+// explicit step (`mday client add`) — an implicit create would turn a name typo into a new tenant.
 
 import {
   generateId,

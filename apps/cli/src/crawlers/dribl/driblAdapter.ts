@@ -1,9 +1,5 @@
-// The Dribl `SourceAdapter` (0012, docs/todo.md Phase 3): opens a Cloudflare-cleared browser
-// session (see browserSession.ts / the dribl-crawling skill) and exposes the three crawl
-// operations against it, plus countCatalogLeagues — a cheap listing-only companion to
-// crawlCatalog used to size the crawl-catalog.yml matrix. Each operation's body is the
-// dry-run-vs-persist orchestration that used to live in src/jobs/*.ts, relocated here unchanged
-// now that jobs are source-agnostic dispatchers.
+// The Dribl `SourceAdapter` (0012): opens a Cloudflare-cleared browser session and exposes the
+// crawl operations plus countCatalogLeagues, a cheap listing-only sizer for crawl-catalog.yml.
 
 import { ok, type Result } from "@matchday/domain";
 import type {
@@ -40,9 +36,8 @@ type TenantContext = {
   tenantSlug: string;
 };
 
-// Distinct competitions/clubs/teams touched by a catalog crawl, for the final summary log
-// (jobs/crawls/catalog.ts). Accumulated incrementally so the non-dry-run path never has to buffer
-// the whole catalog just to count it (see crawlCatalog's onLeague doc comment).
+// Distinct competitions/clubs/teams touched by a catalog crawl, accumulated incrementally so the
+// non-dry-run path never has to buffer the whole catalog just to count it.
 type CatalogStats = {
   competitionIds: Set<string>;
   clubCodes: Set<string>;

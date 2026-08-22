@@ -7,9 +7,8 @@ if (existsSync(".env.local")) {
   process.loadEnvFile(".env.local");
 }
 
-// `generate` diffs the schema and needs no connection; `migrate`/`studio` connect using
-// DATABASE_URL. Runtime URL validation lives in `src/config.ts`; here we pass it through so
-// `generate` works even without a live database.
+// `generate` diffs the schema and needs no connection, so pass the URL through unvalidated
+// (real validation lives in `src/config.ts`) — `generate` still works without a live database.
 const databaseUrl = process.env.DATABASE_URL ?? "";
 
 export default defineConfig({

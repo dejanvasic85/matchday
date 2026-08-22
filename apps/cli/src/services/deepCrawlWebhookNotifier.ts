@@ -1,9 +1,5 @@
-// Wraps a deep crawl with post-crawl webhook notification (#105): snapshots a league's fixtures +
-// table before the crawl, runs it, snapshots again, diffs, and notifies that league's
-// webhook-configured subscriptions. A higher-order wrapper around the crawl call (rather than a
-// job constructing this inline) so the branching — skip on dry run, skip when nobody's listening,
-// skip notifying on a failed crawl or a snapshot we couldn't take — is unit-testable without a
-// live crawl session, per AGENTS.md's "orchestration belongs in services".
+// Wraps a deep crawl with post-crawl webhook notification (#105): snapshots fixtures+table before
+// and after, diffs, and notifies. Kept as a wrapper so the skip branches are unit-testable.
 
 import { type Logger, type Result } from "@matchday/domain";
 import type {

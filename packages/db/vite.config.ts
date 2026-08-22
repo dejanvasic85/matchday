@@ -8,9 +8,7 @@ export default defineConfig({
     tasks: {
       "db:migrate": {
         command: "drizzle-kit migrate",
-        // Migrations are a side effect against a live database, not a pure function of
-        // inputs — never cache/replay a run, and uncached tasks get the full environment
-        // (including DATABASE_URL) rather than the cache-fingerprinting allowlist.
+        // Migrations are a side effect against a live database — never cache/replay a run.
         cache: false,
       },
     },

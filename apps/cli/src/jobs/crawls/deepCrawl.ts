@@ -1,12 +1,5 @@
-// Deep crawl (0012): fixtures + table for exactly one league, discovering clubs/teams as it goes,
-// persisted via external_ref. One invocation = one league (docs/plans/2026-07-18-deep-crawl.md) —
-// deciding which leagues to invoke this for, and when, is a separate scheduling concern.
-//
-// This is transport glue (AGENTS.md): it looks up the source's adapter, the real DB client and R2
-// client, then delegates crawling and persistence to the adapter's session (source-abstraction
-// seam, docs/todo.md Phase 3). It also wraps the crawl with `withLeagueChangeNotification` (#105)
-// so the league's webhook-configured subscriptions hear about it afterwards — that orchestration
-// lives in the service, this just wires the real DB reads and the real sender into it.
+// Deep crawl (0012): fixtures + table for exactly one league, discovering clubs/teams as it goes.
+// Transport glue that wires the real DB/R2 clients and wraps the crawl with `withLeagueChangeNotification` (#105).
 
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";
 import {

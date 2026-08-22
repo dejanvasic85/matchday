@@ -1,6 +1,5 @@
 // Regenerates src/generated/schema.d.ts straight from the live OpenAPI doc — no committed spec
-// file to drift from the routes it describes (mirrors apps/api not committing a static
-// openapi.json either). Runs as part of `build`.
+// file to drift from the routes it describes. Runs as part of `build`.
 
 import { mkdir, writeFile } from "node:fs/promises";
 import app from "@matchday/api";

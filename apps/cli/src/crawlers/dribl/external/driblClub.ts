@@ -26,9 +26,8 @@ export const driblClubGroundSchema = z.object({
   address: z.string().nullable(),
 });
 
-// `list/clubs` already carries `email_address`/`color`/`accent`/`grounds` (confirmed live), just
-// nulled out — `clubs/{id}` is the same shape plus `store`. Kept as one base schema so both
-// endpoints validate against the fields they actually send.
+// `list/clubs` already carries these fields, just nulled out; `clubs/{id}` is the same shape
+// plus `store` — kept as one base schema so both endpoints validate correctly.
 export const driblClubAttributesSchema = z.object({
   name: z.string(),
   image: z.url().nullable(),
@@ -52,9 +51,8 @@ export const driblClubsApiResponseSchema = z.object({
   data: z.array(driblClubSchema),
 });
 
-// `store` is a relative path (e.g. `/club/9294`), never present on `list/clubs`. On `clubs/{id}`
-// it's `null` for most clubs but the key is missing entirely for others (confirmed live) — so
-// it's optional as well as nullable, not just nullable.
+// `store` is `null` for most clubs but missing entirely for others on `clubs/{id}` (confirmed
+// live) — optional as well as nullable, not just nullable.
 export const driblClubDetailAttributesSchema = driblClubAttributesSchema.extend({
   store: z.string().nullable().optional(),
 });

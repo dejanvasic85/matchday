@@ -1,10 +1,5 @@
-// Club enrichment job (0012): fetches rich club detail (grounds/colours/store) from the source's
-// club-detail endpoint for every listed club, bridge-matches each to a club row the deep crawl
-// already discovered (never creates), mirrors its logo to R2, and writes the curated fields.
-//
-// This is transport glue (AGENTS.md): it looks up the source's adapter, the real DB client, R2
-// clients and downloadImage implementation, then delegates crawling and persistence to the
-// adapter's session (source-abstraction seam, docs/todo.md Phase 3).
+// Club enrichment job (0012): enriches clubs the deep crawl already discovered (never creates)
+// with detail/logo from the source, then mirrors the logo to R2. Transport glue (AGENTS.md).
 
 import { ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { createDbClient } from "@matchday/db";

@@ -1,8 +1,5 @@
-// One-off league_team backfill (#143): the crawler dual-write (#142) only populates league_team
-// going forward, so every league crawled before it shipped has no league_team row yet. Every
-// table_entry row already is a distinct (league_id, team_id) pair (table_entry's own unique
-// index guarantees that), so the backfill is just "upsert a league_team row for each one" — no
-// dedup step needed here. Idempotent: safe to re-run if it's interrupted partway.
+// One-off league_team backfill (#143): populates league_team for leagues crawled before #142's
+// dual-write shipped. table_entry's unique index guarantees no dedup needed. Idempotent.
 
 import { generateId, ok, type Result } from "@matchday/domain";
 import type { listTableEntryTeamPairs, upsertLeagueTeam } from "@matchday/db";
@@ -37,9 +34,8 @@ export async function backfillLeagueTeams(
 
   let upserted = 0;
   for (const pair of pairs) {
-    // Sequential, not Promise.all: a failure partway should stop where it is, leaving every pair
-    // upserted so far committed, rather than firing every remaining upsert concurrently once one
-    // has already failed (same reasoning as createSubscriptionsForClub's loop).
+    // Sequential, not Promise.all: a failure should stop the run, not fire remaining upserts
+    // concurrently (same reasoning as createSubscriptionsForClub's loop).
     const result = await deps.upsertLeagueTeam({
       id: generateId("leagueTeam"),
       leagueId: pair.leagueId,
