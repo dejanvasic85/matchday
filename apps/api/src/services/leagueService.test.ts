@@ -39,7 +39,7 @@ function makeLeagueRow(overrides: Record<string, unknown> = {}) {
 
 function makeDeps(overrides: Partial<LeagueServiceDeps> = {}): LeagueServiceDeps {
   return {
-    listLeagues: vi.fn().mockResolvedValue(ok([makeLeagueRow()])),
+    listLeagues: vi.fn().mockResolvedValue(ok({ rows: [makeLeagueRow()], nextCursor: null })),
     getLeagueById: vi.fn().mockResolvedValue(ok(makeLeagueRow())),
     ...overrides,
   };
@@ -52,7 +52,10 @@ describe("listAllLeagues", () => {
     const result = await listAllLeagues(deps);
 
     expect(result).toEqual(
-      ok([expect.objectContaining({ id: "lea_abc123", createdAt: epoch.toISOString() })]),
+      ok({
+        data: [expect.objectContaining({ id: "lea_abc123", createdAt: epoch.toISOString() })],
+        nextCursor: null,
+      }),
     );
   });
 
@@ -62,23 +65,35 @@ describe("listAllLeagues", () => {
     const result = await listAllLeagues(deps);
 
     expect(result).toEqual(
-      ok([
-        expect.objectContaining({
-          competition: { id: "cmp_abc123", name: "Metro League" },
-          season: { id: "sea_abc123", name: "2026" },
-        }),
-      ]),
+      ok({
+        data: [
+          expect.objectContaining({
+            competition: { id: "cmp_abc123", name: "Metro League" },
+            season: { id: "sea_abc123", name: "2026" },
+          }),
+        ],
+        nextCursor: null,
+      }),
     );
   });
 
   it("keeps a column the response doesn't name off the wire", async () => {
     const deps = makeDeps({
-      listLeagues: vi.fn().mockResolvedValue(ok([makeLeagueRow({ internalNotes: "secret" })])),
+      listLeagues: vi
+        .fn()
+        .mockResolvedValue(
+          ok({ rows: [makeLeagueRow({ internalNotes: "secret" })], nextCursor: null }),
+        ),
     });
 
     const result = await listAllLeagues(deps);
 
-    expect(result).toEqual(ok([expect.not.objectContaining({ internalNotes: expect.anything() })]));
+    expect(result).toEqual(
+      ok({
+        data: [expect.not.objectContaining({ internalNotes: expect.anything() })],
+        nextCursor: null,
+      }),
+    );
   });
 
   it("passes the competitionId/seasonId/clubId filter through to data access", async () => {
@@ -87,7 +102,7 @@ describe("listAllLeagues", () => {
 
     await listAllLeagues(deps, filter);
 
-    expect(deps.listLeagues).toHaveBeenCalledWith(filter);
+    expect(deps.listLeagues).toHaveBeenCalledWith(filter, undefined);
   });
 
   it("propagates a list failure", async () => {

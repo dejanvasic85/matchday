@@ -1,8 +1,9 @@
 // Club service (0045): maps DB rows to the wire shape. Catalog data, open to any authenticated
 // client, no subscription scoping (ADR 0013).
 
-import { mapResult, requireFound, type Club, type Result } from "@matchday/domain";
-import { getClubById, listClubs, type Db } from "@matchday/db";
+import { requireFound, type Club, type Result } from "@matchday/domain";
+import { mapPage, type PagedResponse } from "#services/pagedResponse.ts";
+import { getClubById, listClubs, type Db, type PageRequest } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
@@ -37,9 +38,9 @@ function mapToClubResponse(club: Club): ClubResponse {
 
 export async function listAllClubs(
   deps: Pick<ClubServiceDeps, "listClubs">,
-): Promise<Result<ClubResponse[]>> {
-  const result = await deps.listClubs();
-  return mapResult(result, (clubs) => clubs.map(mapToClubResponse));
+  page?: PageRequest,
+): Promise<Result<PagedResponse<ClubResponse>>> {
+  return mapPage(await deps.listClubs(page), mapToClubResponse);
 }
 
 export async function getClub(

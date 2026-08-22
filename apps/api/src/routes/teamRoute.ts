@@ -7,6 +7,7 @@ import type { DbVariables } from "#middleware/dbClient.ts";
 import { jsonResult } from "#resultResponse.ts";
 import { errorResponsesValue } from "#schemas/errorResponses.ts";
 import { idParamSchema } from "#schemas/idParamSchema.ts";
+import { pagedSchema, pagingQuerySchema } from "#schemas/pagedSchema.ts";
 import { teamResponseSchema } from "#schemas/teamSchema.ts";
 import { createTeamServiceDeps, getTeam, listAllTeams } from "#services/teamService.ts";
 
@@ -18,7 +19,7 @@ const listTeamsRoute = createRoute({
   tags: ["Teams"],
   summary: "List teams, optionally filtered to one club",
   request: {
-    query: z.object({
+    query: pagingQuerySchema.extend({
       clubId: z
         .string()
         .regex(/^clb_/)
@@ -28,16 +29,16 @@ const listTeamsRoute = createRoute({
   },
   responses: {
     200: {
-      description: "Teams matching the filter",
-      content: { "application/json": { schema: teamResponseSchema.array() } },
+      description: "A page of teams; follow `nextCursor` until it is null",
+      content: { "application/json": { schema: pagedSchema(teamResponseSchema, "TeamPage") } },
     },
     ...errorResponsesValue,
   },
 });
 
 teamRoute.openapi(listTeamsRoute, async (c) => {
-  const { clubId } = c.req.valid("query");
-  const result = await listAllTeams(createTeamServiceDeps(c.get("db")), clubId);
+  const { clubId, ...page } = c.req.valid("query");
+  const result = await listAllTeams(createTeamServiceDeps(c.get("db")), clubId, page);
   return jsonResult(c, result, "api.team.list.failed");
 });
 

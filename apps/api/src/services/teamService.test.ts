@@ -42,7 +42,7 @@ function makeTeamRow(overrides: Record<string, unknown> = {}) {
 
 function makeDeps(overrides: Partial<TeamServiceDeps> = {}): TeamServiceDeps {
   return {
-    listTeams: vi.fn().mockResolvedValue(ok([makeTeamRow()])),
+    listTeams: vi.fn().mockResolvedValue(ok({ rows: [makeTeamRow()], nextCursor: null })),
     getTeamById: vi.fn().mockResolvedValue(ok(makeTeamRow())),
     listTeamsByLeagueId: vi.fn().mockResolvedValue(ok([makeTeamRow()])),
     ...overrides,
@@ -56,7 +56,10 @@ describe("listAllTeams", () => {
     const result = await listAllTeams(deps);
 
     expect(result).toEqual(
-      ok([expect.objectContaining({ id: "tea_abc123", createdAt: epoch.toISOString() })]),
+      ok({
+        data: [expect.objectContaining({ id: "tea_abc123", createdAt: epoch.toISOString() })],
+        nextCursor: null,
+      }),
     );
   });
 
@@ -66,32 +69,42 @@ describe("listAllTeams", () => {
     const result = await listAllTeams(deps);
 
     expect(result).toEqual(
-      ok([
-        expect.objectContaining({
-          type: "club",
-          club: {
-            id: "clb_abc123",
-            name: "Test FC",
-            displayName: "Test FC",
-            logoUrl: "https://example.com/logo.png",
-          },
-        }),
-      ]),
+      ok({
+        data: [
+          expect.objectContaining({
+            type: "club",
+            club: {
+              id: "clb_abc123",
+              name: "Test FC",
+              displayName: "Test FC",
+              logoUrl: "https://example.com/logo.png",
+            },
+          }),
+        ],
+        nextCursor: null,
+      }),
     );
   });
 
   it("marks a team with no club as type 'unaffiliated', omitting club entirely", async () => {
     const deps = makeDeps({
-      listTeams: vi.fn().mockResolvedValue(ok([makeTeamRow({ clubId: null, club: null })])),
+      listTeams: vi
+        .fn()
+        .mockResolvedValue(
+          ok({ rows: [makeTeamRow({ clubId: null, club: null })], nextCursor: null }),
+        ),
     });
 
     const result = await listAllTeams(deps);
 
     expect(result).toEqual(
-      ok([expect.objectContaining({ id: "tea_abc123", type: "unaffiliated" })]),
+      ok({
+        data: [expect.objectContaining({ id: "tea_abc123", type: "unaffiliated" })],
+        nextCursor: null,
+      }),
     );
     assert(result.ok);
-    expect(result.value[0]).not.toHaveProperty("club");
+    expect(result.value.data[0]).not.toHaveProperty("club");
   });
 
   it("passes the clubId filter through to data access", async () => {
@@ -99,7 +112,7 @@ describe("listAllTeams", () => {
 
     await listAllTeams(deps, "clb_abc123");
 
-    expect(deps.listTeams).toHaveBeenCalledWith("clb_abc123");
+    expect(deps.listTeams).toHaveBeenCalledWith("clb_abc123", undefined);
   });
 
   it("propagates a list failure", async () => {

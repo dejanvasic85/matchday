@@ -2,11 +2,13 @@
 // fixture-discovered team) is exposed as a `type: "club" | "unaffiliated"` union, null-check-free.
 
 import { mapResult, requireFound, type Result } from "@matchday/domain";
+import { mapPage, type PagedResponse } from "#services/pagedResponse.ts";
 import {
   getTeamById,
   listTeams,
   listTeamsByLeagueId,
   type Db,
+  type PageRequest,
   type TeamWithClub,
 } from "@matchday/db";
 
@@ -24,7 +26,7 @@ export type TeamServiceDeps = {
  * layer should reach into @matchday/db (AGENTS.md: routes are glue, services own the logic). */
 export function createTeamServiceDeps(db: Db): TeamServiceDeps {
   return {
-    listTeams: (clubId) => listTeams(db, clubId),
+    listTeams: (clubId, page) => listTeams(db, clubId, page),
     getTeamById: (id) => getTeamById(db, id),
     listTeamsByLeagueId: (leagueId) => listTeamsByLeagueId(db, leagueId),
   };
@@ -75,9 +77,9 @@ function mapToTeamResponse(team: TeamWithClub): TeamResponse {
 export async function listAllTeams(
   deps: Pick<TeamServiceDeps, "listTeams">,
   clubId?: string,
-): Promise<Result<TeamResponse[]>> {
-  const result = await deps.listTeams(clubId);
-  return mapResult(result, (teams) => teams.map(mapToTeamResponse));
+  page?: PageRequest,
+): Promise<Result<PagedResponse<TeamResponse>>> {
+  return mapPage(await deps.listTeams(clubId, page), mapToTeamResponse);
 }
 
 export async function getTeam(

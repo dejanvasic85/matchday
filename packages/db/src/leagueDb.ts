@@ -2,8 +2,9 @@
 // here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, gt } from "drizzle-orm";
 import type { Db } from "#client.ts";
+import { decodeCursor, resolveLimit, toPage, type Page, type PageRequest } from "#paging.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
 import { competition, league, leagueTeam, season, team } from "#schema.ts";
 
@@ -45,38 +46,48 @@ const leagueSelection = {
 export async function listLeagues(
   db: Db,
   filter: ListLeaguesFilter = {},
-): Promise<Result<LeagueWithRefs[]>> {
+  page: PageRequest = {},
+): Promise<Result<Page<LeagueWithRefs>>> {
   const { competitionId, seasonId, clubId } = filter;
+  const limit = resolveLimit(page.limit);
+  const after = page.cursor === undefined ? undefined : decodeCursor(page.cursor);
+  if (after !== undefined && !after.ok) {
+    return after;
+  }
+
   const conditions = [
     competitionId !== undefined ? eq(league.competitionId, competitionId) : undefined,
     seasonId !== undefined ? eq(league.seasonId, seasonId) : undefined,
     clubId !== undefined ? eq(team.clubId, clubId) : undefined,
+    after !== undefined ? gt(league.id, after.value) : undefined,
   ].filter((condition) => condition !== undefined);
 
-  if (clubId === undefined) {
-    return runQuery(() => {
-      const query = db
-        .select(leagueSelection)
-        .from(league)
-        .innerJoin(competition, eq(competition.id, league.competitionId))
-        .innerJoin(season, eq(season.id, league.seasonId));
-      return conditions.length === 0 ? query : query.where(and(...conditions));
-    }, "Failed to list leagues");
-  }
+  const where = conditions.length === 0 ? undefined : and(...conditions);
 
-  return runQuery(
+  const result = await runQuery(
     () =>
-      db
-        .selectDistinct(leagueSelection)
-        .from(league)
-        .innerJoin(competition, eq(competition.id, league.competitionId))
-        .innerJoin(season, eq(season.id, league.seasonId))
-        .innerJoin(leagueTeam, eq(leagueTeam.leagueId, league.id))
-        .innerJoin(team, eq(team.id, leagueTeam.teamId))
-        .where(and(...conditions))
-        .orderBy(asc(league.name)),
+      clubId === undefined
+        ? db
+            .select(leagueSelection)
+            .from(league)
+            .innerJoin(competition, eq(competition.id, league.competitionId))
+            .innerJoin(season, eq(season.id, league.seasonId))
+            .where(where)
+            .orderBy(asc(league.id))
+            .limit(limit + 1)
+        : db
+            .selectDistinct(leagueSelection)
+            .from(league)
+            .innerJoin(competition, eq(competition.id, league.competitionId))
+            .innerJoin(season, eq(season.id, league.seasonId))
+            .innerJoin(leagueTeam, eq(leagueTeam.leagueId, league.id))
+            .innerJoin(team, eq(team.id, leagueTeam.teamId))
+            .where(where)
+            .orderBy(asc(league.id))
+            .limit(limit + 1),
     "Failed to list leagues",
   );
+  return result.ok ? ok(toPage(result.value, limit)) : result;
 }
 
 /**
