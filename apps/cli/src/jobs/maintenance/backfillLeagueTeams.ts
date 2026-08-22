@@ -1,8 +1,5 @@
-// Backfill league_team job (#143): transport glue (AGENTS.md) — builds the real DB client and
-// delegates to the service. One-off admin operation: run once after #142 ships to populate
-// league_team for every league that already has a table_entry (leagues discovered from a table);
-// table-less leagues (MiniRoos etc.) need a fresh catalog crawl instead, since there's nothing to
-// derive their membership from in the existing data.
+// Backfill league_team job (#143): one-off admin op, run once after #142, to populate league_team
+// from existing table_entry rows. Table-less leagues (MiniRoos etc.) need a fresh crawl instead.
 
 import { type Logger, type Result } from "@matchday/domain";
 import { createDbClient, listTableEntryTeamPairs, upsertLeagueTeam } from "@matchday/db";

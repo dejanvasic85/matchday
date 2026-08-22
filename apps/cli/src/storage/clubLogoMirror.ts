@@ -1,6 +1,5 @@
-// Self-hosts a club's logo on R2 instead of hotlinking Dribl's CDN (ADR 0004): download, hash,
-// and upload only if the hash changed since the last mirror — content-hash keyed object names
-// give idempotent re-upload for free (a re-run with an unchanged logo is a no-op PUT-wise).
+// Self-hosts a club's logo on R2 instead of hotlinking Dribl's CDN (ADR 0004) — content-hash
+// keyed object names give idempotent re-upload for free (unchanged logo = no-op PUT).
 
 import { createHash } from "node:crypto";
 import { ok, type ClubId, type Result } from "@matchday/domain";
@@ -60,9 +59,8 @@ export async function mirrorClubLogo(input: MirrorClubLogoInput): Promise<Result
   const key = `logos/${clubId}-${hash}.${extension}`;
   const filename = `${clubId}-${hash}.${extension}`;
 
-  // Already mirrored at this exact content hash — skip the PUT, keep the existing URL. Anchored
-  // to the filename segment, not a loose substring match, so an incidental hex-string collision
-  // elsewhere in the URL can't cause a false "unchanged" positive.
+  // Already mirrored at this exact content hash — skip the PUT. Anchored to the filename segment
+  // so an incidental hex-string collision elsewhere in the URL can't false-positive.
   if (currentLogoUrl !== null && currentLogoUrl.endsWith(filename)) {
     return ok(currentLogoUrl);
   }

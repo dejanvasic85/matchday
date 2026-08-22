@@ -1,6 +1,5 @@
-// API token data access: build a query, execute it, return a `Result` of rows. No business rules
-// here (ADR / AGENTS.md) — token generation/hashing is a service concern. Driver errors are
-// captured into `err` rather than thrown.
+// API token data access: build/execute a query, return a `Result` of rows. No business rules
+// here — token generation/hashing is a service concern.
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { eq } from "drizzle-orm";

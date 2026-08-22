@@ -1,6 +1,5 @@
-// Club service (0045): thin business logic over data access (AGENTS.md) — maps the DB row to the
-// wire shape (timestamps as ISO strings) and lists/fetches clubs. Catalog data — open to any
-// authenticated client, no subscription scoping (ADR 0013).
+// Club service (0045): maps DB rows to the wire shape. Catalog data, open to any authenticated
+// client, no subscription scoping (ADR 0013).
 
 import { mapResult, requireFound, type Club, type Result } from "@matchday/domain";
 import { getClubById, listClubs, type Db } from "@matchday/db";

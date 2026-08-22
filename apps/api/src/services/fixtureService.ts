@@ -1,9 +1,5 @@
-// Fixture service (0045): thin business logic over data access (AGENTS.md) — maps the DB row to
-// the wire shape (timestamps as ISO strings, numeric lat/long as numbers) and lists a league's
-// fixtures. Catalog data — open to any authenticated client, no subscription scoping. Subscriptions
-// only drive *which* leagues get deep-crawled (ADR 0012); once a league's fixtures exist, any
-// client can read them, same as clubs/leagues/etc (contrast an earlier draft of this file, which
-// wrongly gated reads on the requester's own subscription).
+// Fixture service (0045): maps DB rows to the wire shape. Catalog data, open to any authenticated
+// client — subscriptions only gate which leagues get deep-crawled (ADR 0012), not who can read.
 
 import { mapResult, type Result } from "@matchday/domain";
 import { listFixturesByLeagueId, type Db, type schema } from "@matchday/db";

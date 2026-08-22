@@ -1,7 +1,5 @@
-// Turns a MappedFixture (raw Dribl names/ids) into a ready-to-upsert Fixture row: resolves
-// home/away team ids (lookup-only — see teamResolver.ts) and combines them with the
-// competition/season/league ids the crawl job already resolved once per tracked competition
-// (via resolveLeagueIds' external_ref lookups), rather than re-deriving them from name strings.
+// Turns a MappedFixture into a ready-to-upsert Fixture row: resolves home/away team ids and
+// combines with the competition/season/league ids already resolved via external_ref lookups.
 
 import {
   externalRefEntityTypeValue,

@@ -1,10 +1,5 @@
-// Resolves a club by its Dribl `club_code` (ADR 0012): stable, unique, rebrand-safe, always
-// present on table rows — the primary identity. Logo/name matching is demoted to a one-time
-// bridge for clubs that predate this resolver (every club in the DB today, since no earlier code
-// wrote a `dribl_club_code` ref) — it attaches the ref to the existing row instead of duplicating
-// it. Once bridged (or created new), every future crawl hits the `external_ref` lookup directly.
-// Per the ADR, logo is a join hint, not identity: it's mutable and shared by admin pseudo-clubs,
-// so it must never be the primary key.
+// Resolves a club by its Dribl `club_code` (ADR 0012), the primary identity — logo/name matching
+// is only a one-time bridge for pre-existing rows since logo is mutable and shared by pseudo-clubs.
 
 import {
   externalRefEntityTypeValue,
@@ -65,12 +60,8 @@ async function upsertClubRow(
 export async function resolveClub(input: ResolveClubInput): Promise<Result<ClubId>> {
   const { deps, name, logoUrl, clubCode } = input;
 
-  // 1. Primary identity: has this club_code been seen before? Once a club is identity-resolved,
-  // logo curation belongs to the club-enrichment job — pass `null` so upsertClub's COALESCE
-  // leaves whatever it (or an earlier bridge/create) set alone, instead of reverting an
-  // R2-mirrored logo back to Dribl's CDN URL on every subsequent deep crawl. The ref's own
-  // sourceUrl is a separate, never-rewritten record of the *original* Dribl logo (see
-  // clubBridgeResolver) — backfill it once if an earlier version of this resolver left it null.
+  // 1. Primary identity. Pass `null` logo so upsertClub's COALESCE never reverts an R2-mirrored
+  // logo back to Dribl's CDN URL; backfill the ref's own sourceUrl once if left null previously.
   const existingRef = await deps.findExternalRef(sourceValue.driblClubCode, clubCode);
   if (!existingRef.ok) {
     return existingRef;

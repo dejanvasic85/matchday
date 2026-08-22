@@ -1,7 +1,5 @@
-// Bearer API token generation and hashing (ADR 0013). The plaintext token is shown to a client
-// once, at creation time, and never persisted — only its hash is stored, and re-derived from the
-// incoming `Authorization` header to look the token up on each request. Uses the Web Crypto API
-// (`crypto` global) rather than `node:crypto` so this runs unmodified on Cloudflare Workers.
+// Bearer API token generation and hashing (ADR 0013). Plaintext is shown once and never
+// persisted — only its hash. Uses Web Crypto (not `node:crypto`) to run unmodified on Workers.
 
 const tokenPrefixValue = "mday_";
 const tokenByteLength = 32;

@@ -1,6 +1,5 @@
-// Fetches a URL from inside an already-cleared browser page context, so Cloudflare's clearance
-// cookies apply transparently (dribl-crawling skill). A raw `curl`/fetch outside the browser
-// context gets HTTP 403.
+// Fetches a URL from inside an already-cleared browser page so Cloudflare's clearance cookies
+// apply; a raw `curl`/fetch outside the browser context gets HTTP 403.
 
 import { ok, serverError, type Result } from "@matchday/domain";
 

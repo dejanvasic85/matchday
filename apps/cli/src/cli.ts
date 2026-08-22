@@ -441,9 +441,8 @@ export function createCli(): Command {
 
         const clubName = options.club;
         if (clubName === undefined) {
-          // Unreachable: the check above already ruled out both being undefined, and
-          // Option.conflicts rules out both being set. Kept so `clubName` narrows to `string`
-          // without a cast.
+          // Unreachable: the check above ruled out both undefined, Option.conflicts rules out
+          // both set. Kept so `clubName` narrows to `string` without a cast.
           logger.error("subscription.failed", "one of --league or --club is required");
           process.exitCode = 1;
           return;

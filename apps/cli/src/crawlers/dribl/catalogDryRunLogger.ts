@@ -1,6 +1,5 @@
-// Dry-run output for the catalog crawl: logs each crawled league's table entries instead of
-// persisting them, so a `mday catalog --dry-run` shows exactly what a real run would upsert
-// without touching the DB.
+// Dry-run output for the catalog crawl: logs each league's table entries instead of persisting,
+// so `mday catalog --dry-run` shows what a real run would upsert without touching the DB.
 
 import type { Logger } from "@matchday/domain";
 import type { CrawlCatalogLeagueResult } from "#crawlers/dribl/catalogCrawler.ts";

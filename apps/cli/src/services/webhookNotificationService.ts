@@ -1,8 +1,5 @@
-// Webhook notification service (#105): after a deep crawl, tell each webhook-configured
-// subscription on that league whether anything changed. Every delivery is independent — a
-// failing or slow endpoint is logged and skipped, never surfaced as a failure of the batch,
-// because a webhook is a courtesy notification, not part of the crawl's own success (per the
-// plan, docs/plans/2026-08-12-subscription-webhooks.md).
+// Webhook notification service (#105): notifies webhook-configured subscriptions after a crawl.
+// Each delivery is independent — a failing endpoint is logged and skipped, never fails the batch.
 
 import { signWebhookPayload, type Logger, type Result } from "@matchday/domain";
 

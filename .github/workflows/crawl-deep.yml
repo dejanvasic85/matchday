@@ -97,9 +97,7 @@ jobs:
               exit 0
             fi
             echo "::warning::Chrome install attempt $attempt timed out or failed, retrying..."
-            # A killed apt-get can leave its lock held (observed: "Could not get lock
-            # /var/lib/apt/lists/lock. It is held by process ..." on the very next attempt) —
-            # clear it and any leftover process before retrying.
+            # A killed apt-get can leave its lock held — clear it before retrying.
             sudo pkill -9 -f apt-get || true
             sudo pkill -9 -f dpkg || true
             sudo rm -f /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock \

@@ -1,6 +1,5 @@
 // Drizzle schema for matchday's Postgres (Neon), modelling ADR 0011.
-// Camelcase field names map to snake_case columns via `casing: "snake_case"` on the client.
-// Primary keys are app-owned prefixed-nanoid strings (generated in @matchday/domain, Phase 2).
+// Camelcase fields map to snake_case columns via `casing: "snake_case"`.
 
 import { relations } from "drizzle-orm";
 import {
@@ -128,19 +127,14 @@ export const tableEntry = pgTable(
     ...timestamps,
   },
   (table) => [
-    // A team appears at most once per league's table; re-crawling the same league updates
-    // this row instead of inserting a duplicate (no external_ref — the whole ladder is
-    // re-fetched and replaced each crawl, so there's no stable per-row Dribl id worth tracking).
+    // A team appears at most once per league's table; re-crawling updates this row
+    // (no external_ref — the whole ladder is re-fetched and replaced each crawl).
     uniqueIndex("table_entry_league_team_key").on(table.leagueId, table.teamId),
   ],
 );
 
-// A team's membership in a league, independent of whether that league ever publishes a table
-// (0011 addendum, #141). `table_entry` only gets a row when a ladder exists — table-less
-// divisions (e.g. MiniRoos age groups, which publish fixtures but no standings) have no such row,
-// so anything deriving "this club's leagues" via `table_entry` silently misses them. This table
-// is written for every discovered team regardless of ladder/fixture-fallback discovery path, so
-// club/league membership lookups don't depend on a division being competitive.
+// A team's membership in a league, independent of a table existing (0011 addendum, #141).
+// table_entry only gets a row when a ladder exists, missing table-less divisions (e.g. MiniRoos).
 export const leagueTeam = pgTable(
   "league_team",
   {
@@ -192,10 +186,8 @@ export const client = pgTable(
   (table) => [uniqueIndex("client_name_key").on(table.name)],
 );
 
-// A client subscribes to one of our leagues (ADR 0012): drives the deep crawl (fixtures + tables
-// are crawled only for subscribed leagues). Keyed on our internal `league.id` — the league already
-// ties competition + season (0011), so the subscription is season-scoped through it. Subsumes the
-// old tracked_competition.
+// A client subscribes to one of our leagues (ADR 0012): drives the deep crawl (fixtures +
+// tables crawled only for subscribed leagues). Subsumes the old tracked_competition.
 export const subscription = pgTable(
   "client_subscription",
   {
@@ -206,32 +198,26 @@ export const subscription = pgTable(
     leagueId: text("league_id")
       .notNull()
       .references(() => league.id),
-    // Soft delete: `client remove-subscription` sets this instead of deleting the row, so the
-    // (client, league) history survives and re-subscribing (the upsert's conflict branch) can
-    // revive the same row by clearing it, rather than colliding with the still-unique
-    // (client_id, league_id) index below.
+    // Soft delete: `client remove-subscription` sets this instead of deleting the row, so
+    // re-subscribing (the upsert's conflict branch) revives it instead of colliding on the unique index.
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
-    // Optional post-crawl notification target (#105): set/cleared through a dedicated CLI path,
-    // never touched by the subscribe/re-subscribe upsert, so re-subscribing a client to a league
-    // can't silently wipe an already-configured webhook.
+    // Optional post-crawl notification target (#105); set/cleared via a dedicated CLI path so
+    // the subscribe upsert never wipes an already-configured webhook.
     webhookUrl: text("webhook_url"),
-    // HMAC-SHA256 key for signing webhook deliveries (`X-Matchday-Signature`), shown once when
-    // set. Stored in plaintext (unlike `client_api_token.token_hash`) because we, not the
-    // receiver, compute the signature — there's nothing to hash-and-compare against.
+    // HMAC-SHA256 signing key for webhook deliveries (`X-Matchday-Signature`), shown once.
+    // Plaintext (unlike token_hash) because we compute the signature, not the receiver.
     webhookSecret: text("webhook_secret"),
     ...timestamps,
   },
   (table) => [
-    // One *active* subscription per (client, league) — enforced in application code (the upsert
-    // revives a soft-deleted row instead of inserting a second one), since a partial unique index
-    // scoped to `deleted_at is null` isn't expressible through Drizzle's `uniqueIndex` builder.
+    // One *active* subscription per (client, league), enforced in app code (upsert revives a
+    // soft-deleted row) since a partial unique index isn't expressible via Drizzle's builder.
     uniqueIndex("client_subscription_client_league_key").on(table.clientId, table.leagueId),
   ],
 );
 
-// A client's API bearer token (ADR 0013), hashed at rest — the row never holds the plaintext
-// token, only its hash, looked up on each request. A client can hold multiple active tokens at
-// once (like an AWS access key pair) so it can roll a new one in before revoking the old.
+// A client's API bearer token (ADR 0013), hashed at rest — never the plaintext.
+// A client can hold multiple active tokens (like an AWS key pair) to roll one in before revoking.
 export const apiToken = pgTable(
   "client_api_token",
   {

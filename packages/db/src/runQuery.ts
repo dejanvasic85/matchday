@@ -1,16 +1,10 @@
-// The single execute-and-capture wrapper every data-access function runs through: it awaits the
-// query, returns `ok(rows)`, and turns any driver error into `err({ message, cause })` — no query
-// throws. It also transparently retries transient neon-http failures (dropped WebSocket, pooler
-// hiccup) with bounded backoff, so a single flaky HTTP round-trip no longer aborts a long crawl.
-// neon-http has no interactive transactions (ADR 0011); every caller is a single idempotent
-// statement (a lookup or an upsert), so replaying one on a transient failure is always safe.
+// Execute-and-capture wrapper every data-access function runs through: no query throws, and
+// transient neon-http failures are retried with bounded backoff (safe — every caller is idempotent).
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { retryConfigValue } from "#constants.ts";
 
-/** A neon-http error is transient when it carries no `sourceError` — i.e. the SQL never executed
- * (connection/HTTP-level failure) rather than a database rejecting a well-formed statement. A real
- * SQL error (constraint violation, bad type) carries `sourceError` and must not be retried. */
+/** Transient iff no `sourceError` — the SQL never executed, vs. a real SQL error which must not be retried. */
 function isTransientDbError(cause: unknown): boolean {
   if (typeof cause !== "object" || cause === null) {
     return false;

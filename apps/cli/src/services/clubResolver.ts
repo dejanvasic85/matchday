@@ -1,10 +1,5 @@
-// Club resolution (#85): resolve a club by a human-typed name fragment. Business logic lives here
-// (AGENTS.md) so it's unit-testable with fakes.
-//
-// Unlike clientResolver's exact match, this is a fuzzy lookup (packages/db's `findClubsByName`
-// does a case-insensitive partial match) — the operator types a recognisable fragment
-// ("Williamstown"), not the exact stored name. Ambiguous input fails listing the candidates
-// (AGENTS.md); it never guesses.
+// Club resolution (#85): resolve a club by a human-typed name fragment via fuzzy, case-insensitive
+// partial match (unlike clientResolver's exact match). Ambiguous input fails listing candidates.
 
 import {
   badRequest,

@@ -1,7 +1,5 @@
-// League routes (0045): thin transport glue (AGENTS.md) — OpenAPI validates params, the service
-// maps data-access results to the wire shape, this just picks the HTTP status. Fixtures/table are
-// nested under a league, same open-catalog access as the list/get routes above (ADR 0012:
-// subscriptions only pick which leagues get deep-crawled, not who can read the result).
+// League routes (0045): thin transport glue. Fixtures/table nested under a league share the same
+// open-catalog access (ADR 0012: subscriptions only pick which leagues get deep-crawled).
 
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { ApiBindings } from "#config.ts";

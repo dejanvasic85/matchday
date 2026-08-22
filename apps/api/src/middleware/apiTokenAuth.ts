@@ -1,8 +1,5 @@
-// Bearer API token auth middleware (ADR 0013) — thin transport glue (AGENTS.md): reads the
-// request's `db` (set by dbClientMiddleware), delegates the auth decision to
-// apiTokenAuthService, and maps the Result to `next()` (with the resolved client id on the
-// context), a 401, or a logged 500. A rejected credential and an unreachable token store are
-// different failures: only the former is the client's problem.
+// Bearer API token auth middleware (ADR 0013) — delegates the auth decision to
+// apiTokenAuthService; a rejected credential and an unreachable token store are different failures.
 
 import { createConsoleLogger, errorKindValue, type ClientId } from "@matchday/domain";
 import { createMiddleware } from "hono/factory";

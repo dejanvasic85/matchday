@@ -4,9 +4,8 @@
 import { z } from "zod";
 
 export const driblFixtureAttributesSchema = z.object({
-  // Dribl returns null for unstructured/placeholder fixtures (e.g. finals rounds whose teams
-  // aren't decided yet, "Second in League 1" vs "Third in League 1") — nullable rather than
-  // required since the mapper doesn't consume this field anyway.
+  // Dribl returns null for unstructured/placeholder fixtures (e.g. undecided finals rounds) —
+  // nullable since the mapper doesn't consume this field anyway.
   name: z.string().nullable(),
   date: z.string(),
   round: z.string(),
@@ -24,9 +23,8 @@ export const driblFixtureAttributesSchema = z.object({
   competition_name: z.string(),
   league_name: z.string(),
   status: z.string(),
-  // Dribl sends this as a boolean or a 0/1 number depending on endpoint; narrow to those two
-  // literals (not a bare z.number()) so an unexpected numeric value fails validation loudly
-  // instead of silently coercing truthy.
+  // Dribl sends this as a boolean or 0/1 depending on endpoint; narrow to those literals so an
+  // unexpected value fails validation loudly instead of silently coercing truthy.
   bye_flag: z.union([z.boolean(), z.literal(0), z.literal(1)]).transform((value) => Boolean(value)),
   home_score: z.number().nullable(),
   away_score: z.number().nullable(),

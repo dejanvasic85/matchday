@@ -1,9 +1,5 @@
-// API token authentication (ADR 0013): resolves the client behind a request's `Authorization`
-// header. Pure business logic (AGENTS.md) — the header is hashed and looked up, never compared
-// as plaintext. Every *credential* failure (missing header, unknown token, revoked token) maps to
-// the same `Unauthorized` error so the transport layer cannot leak which case applied. A failing
-// token lookup is a `ServerError` instead: an unreachable database must surface as a logged 500,
-// never as "your token is bad".
+// API token authentication (ADR 0013). Every *credential* failure maps to the same `Unauthorized`
+// error so the transport can't leak which case applied; a failed lookup is `ServerError` instead.
 
 import {
   hashApiToken,

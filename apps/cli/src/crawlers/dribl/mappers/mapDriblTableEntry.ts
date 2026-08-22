@@ -1,7 +1,5 @@
-// Dribl-raw -> domain mapper (0004: explicit named transform at the crawl boundary).
-//
-// Like fixtures, a raw table entry carries team/league/season *names* and a Dribl hash ID, not
-// matchday's real entity IDs — resolving those is a service concern, not a pure mapper.
+// Dribl-raw -> domain mapper (0004). Carries names/hash IDs only; resolving real entity IDs is a
+// service concern, not this pure mapper's.
 
 import type { DriblTableEntry } from "#crawlers/dribl/external/driblTableEntry.ts";
 

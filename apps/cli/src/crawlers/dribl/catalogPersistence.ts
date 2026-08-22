@@ -1,16 +1,5 @@
-// Persists a catalog crawl (0012): turns each crawled league (competition/season/league source
-// names+ids plus its table entries) into upserted rows. Competition, season and league each carry
-// a stable Dribl source id, so they're resolved via external_ref (find-or-create the internal id,
-// upsert the row every run); their internal ids then form the context each table entry's club +
-// team + table_entry row is resolved against (resolveTableEntryEntities).
-//
-// `persistLeague` persists one league; the crawl job calls it as each league is crawled (rather
-// than crawling the whole catalog into memory and persisting at the end) so a DB failure surfaces
-// early and every league persisted before it stays committed. `persistCatalog` persists a batch by
-// calling `persistLeague` in a loop — used where the leagues are already in hand (e.g. tests).
-//
-// One league's failure aborts the run and surfaces as `err` — an incomplete catalog is worse than
-// a loud failure the scheduler can retry (every step is idempotent, so a retry is safe).
+// Persists a catalog crawl (0012): upserts competition/season/league via external_ref, then resolves each table entry's club/team.
+// `persistLeague` is called per-league so a DB failure surfaces early with prior leagues already committed.
 
 import {
   externalRefEntityTypeValue,
@@ -115,8 +104,7 @@ export async function persistLeague(
     }
 
     // Table-less leagues (MiniRoos etc.) never get a table_entry row, so this is the only place
-    // membership gets recorded for them (#142) — without it, club/league lookups joined on
-    // league_team would never see these teams.
+    // membership is recorded for them (#142).
     const membership = await deps.upsertLeagueTeam({
       id: generateId("leagueTeam"),
       leagueId: context.leagueId,

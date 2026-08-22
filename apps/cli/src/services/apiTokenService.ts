@@ -1,6 +1,5 @@
-// API token issuance/revocation (ADR 0013). Business logic lives here (AGENTS.md): resolves the
-// owning client, mints the token, and persists only its hash — the plaintext token is returned to
-// the caller once and never stored, so it can't be recovered later, only rotated.
+// API token issuance/revocation (ADR 0013): persists only the token's hash — the plaintext is
+// returned once and never stored, so it can't be recovered later, only rotated.
 
 import {
   generateApiToken,

@@ -1,6 +1,5 @@
-// Persists one crawled club (club-enrichment job): bridge-matches it to an existing club row
-// (never creates, per ADR 0012), mirrors its logo to R2, then writes the curated fields. A club
-// with no match (admin pseudo-clubs) is skipped and logged at debug, not treated as a failure.
+// Persists one crawled club: bridge-matches to an existing row (never creates, ADR 0012), mirrors
+// its logo to R2, writes curated fields. No match (admin pseudo-clubs) is skipped, not a failure.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
 import type { AssetStorage } from "#storage/assetStorage.ts";
@@ -70,9 +69,8 @@ export async function persistClubEnrichment(
     return mirrored;
   }
 
-  // A transient/incomplete clubs/{id} response shouldn't regress previously-curated data: keep
-  // the current value for any field this run came back null for, mirroring the COALESCE
-  // protection upsertClub applies on the deep-crawl side.
+  // A transient/incomplete clubs/{id} response shouldn't regress previously-curated data — keep
+  // the current value for any field this run came back null for.
   const current = currentRow.value;
   const updated = await deps.updateClubEnrichmentFields(clubId, {
     logoUrl: mirrored.value ?? current?.logoUrl ?? null,

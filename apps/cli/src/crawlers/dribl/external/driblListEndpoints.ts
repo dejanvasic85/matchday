@@ -1,6 +1,5 @@
-// Raw Dribl `api/tenants` and `api/list/*` response shapes, used to resolve human-readable
-// names (league/competition/season) to the opaque hashed IDs the fixtures/ladders endpoints
-// require. Field names mirror the Dribl API verbatim (snake_case).
+// Raw Dribl `api/tenants` and `api/list/*` response shapes, used to resolve human-readable names
+// to opaque hashed IDs. Field names mirror the Dribl API verbatim (snake_case).
 
 import { z } from "zod";
 
@@ -8,10 +7,8 @@ export const driblTenantResponseSchema = z.object({
   data: z.object({ id: z.string() }),
 });
 
-// List endpoints (list/seasons, list/competitions, list/leagues) return items with `id`/`name`
-// as top-level fields, unlike the JSON:API-style `attributes.name` used by fixtures/ladders.
-// Normalized to `{ id, attributes: { name } }` here so downstream matching (resolveLeagueIds)
-// has one consistent shape across all raw Dribl endpoints.
+// List endpoints return `id`/`name` as top-level fields, unlike fixtures/ladders' JSON:API-style
+// `attributes.name`; normalized here so downstream matching has one consistent shape.
 const rawDriblListItemSchema = z.object({
   id: z.string(),
   name: z.string(),

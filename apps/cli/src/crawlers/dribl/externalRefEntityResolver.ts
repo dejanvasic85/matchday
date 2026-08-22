@@ -1,16 +1,5 @@
-// Shared "find or create, then always upsert" pattern behind club/team/fixture resolution: look
-// up the entity via its external_ref(source, sourceId) to find (or generate) its internal id,
-// then upsert the entity row either way — a re-crawl must refresh fields that change over time
-// (a fixture's score/status, for instance), not just create-once-and-skip. No interactive
-// transactions available over neon-http (ADR 0011) — each step is itself idempotent (a lookup
-// or an upsert), so a partial failure is safe to retry on the next crawl.
-//
-// For a *new* entity the external_ref is written *before* the entity row. There's no transaction,
-// so if the second write fails we're left with a partial state either way — but with the ref
-// written first, the orphan is a ref pointing at a not-yet-existing entity, which the next crawl
-// self-heals: `findExternalRef` returns the same internal id and the entity upsert completes it.
-// The reverse order (entity first) would instead orphan the entity — the next crawl wouldn't find
-// its ref, would mint a *new* id, and would leave a duplicate row behind.
+// Find-or-create via external_ref, then always upsert the entity (fields like score/status change on re-crawl).
+// external_ref is written before the entity row: no transaction (ADR 0011), so this order lets a partial failure self-heal on retry.
 
 import {
   generateId,

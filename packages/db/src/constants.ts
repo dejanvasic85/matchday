@@ -1,6 +1,5 @@
-// Constrained string values used by the schema. Stored as `text` columns and validated
-// against these unions at the mapper/Zod boundary (per ADR 0011) rather than as DB enums,
-// so values can evolve without a migration.
+// Constrained string values for the schema: stored as `text` and validated at the Zod
+// boundary (ADR 0011) rather than as DB enums, so values can evolve without a migration.
 
 /** External identity sources (ADR 0005, 0012). */
 export const sourceValue = {
@@ -21,10 +20,7 @@ export const fixtureStatusValue = {
 
 export type FixtureStatus = (typeof fixtureStatusValue)[keyof typeof fixtureStatusValue];
 
-/**
- * Entity type tags for the polymorphic `external_ref` mapping. Mirrors the prefixed-nanoid
- * ID types; the ID prefixes themselves are owned by the Phase 2 ID service in `@matchday/domain`.
- */
+/** Entity type tags for the polymorphic `external_ref` mapping; mirrors the prefixed-nanoid ID types. */
 export const externalRefEntityTypeValue = {
   club: "club",
   team: "team",

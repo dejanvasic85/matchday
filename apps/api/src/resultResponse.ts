@@ -1,7 +1,5 @@
-// Result -> HTTP response mapping (AGENTS.md: routes are glue) — the one place that decides how
-// a Result becomes a status code and logs a failure, so route handlers don't each repeat it.
-// The domain describes *what* went wrong via `error.kind`; this module is the only thing that
-// knows which number that becomes.
+// Result -> HTTP response mapping — the one place that decides how a Result becomes a status
+// code, so route handlers don't each repeat it.
 
 import {
   createConsoleLogger,
@@ -16,11 +14,8 @@ function logFailure(event: string, error: ResultError): void {
   logger.error(event, error.message, { cause: error.cause });
 }
 
-// No explicit return type annotation below: `@hono/zod-openapi` type-checks a route handler's
-// return value against that route's exact declared response union (`TypedResponse<Body, Status,
-// "json">` per status). Annotating `: Response` here would erase that precision and break every
-// call site's type-check — leaving it off lets TS infer the exact union straight from the
-// `c.json(...)` calls, which stays specific to each call site's `T`.
+// No explicit return type below: annotating `: Response` would erase the precise per-status
+// `TypedResponse` union `@hono/zod-openapi` checks handlers against.
 
 /**
  * Maps a Result to 200 with its value, or to the status matching the failure's kind. Only

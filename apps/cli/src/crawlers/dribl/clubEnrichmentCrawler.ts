@@ -1,10 +1,5 @@
-// Crawls club detail for the club-enrichment job (0012): source-wide, DB-free — lists every
-// Dribl club for the tenant, fetches `clubs/{id}` detail for each (staged to R2 before mapping,
-// per 0004), and maps to domain. Includes admin pseudo-clubs; the persist phase's bridge-match
-// filters those out (never creates a row for them), not this crawl phase.
-//
-// An optional `onClub` callback is invoked with each mapped club as it's crawled, mirroring
-// crawlCatalog's `onLeague` — lets the job persist as it goes rather than buffering everything.
+// Crawls club detail for club-enrichment (0012): source-wide, DB-free, includes admin
+// pseudo-clubs — the persist phase's bridge-match filters those out, not this crawl phase.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
 import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";

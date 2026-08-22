@@ -1,6 +1,5 @@
-// Gitignored on-disk cache for resolved Dribl IDs, keyed by league name (dribl-crawling skill).
-// On a regrade the league name changes, the cache misses, the resolver re-resolves, and the new
-// IDs are cached — regrades are handled automatically.
+// Gitignored on-disk cache for resolved Dribl IDs, keyed by league name. A regrade changes the
+// name, misses the cache, and the resolver re-resolves and re-caches automatically.
 
 import { promises as fs } from "node:fs";
 import { z } from "zod";

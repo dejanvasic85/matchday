@@ -1,8 +1,5 @@
-// Table entry service (0045): thin business logic over data access (AGENTS.md) — maps the DB row
-// to the wire shape (timestamps as ISO strings) and lists a league's table. Catalog data — open to
-// any authenticated client, no subscription scoping. Subscriptions only drive *which* leagues get
-// deep-crawled (ADR 0012); once a league's table exists, any client can read it, same as
-// clubs/leagues/etc.
+// Table entry service (0045): maps DB rows to the wire shape. Catalog data, open to any
+// authenticated client — subscriptions only gate which leagues get deep-crawled (ADR 0012).
 
 import { mapResult, type Result } from "@matchday/domain";
 import { listTableEntriesByLeagueId, type Db, type schema } from "@matchday/db";

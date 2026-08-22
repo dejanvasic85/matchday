@@ -1,9 +1,5 @@
-// Fixture data has no club_code, so it can't resolve a club by identity — it bridges instead via
-// findClubBridgeMatch (logo survives team-name suffixes like "Altona North SC U08"). If the club
-// can't be bridged yet, the team is still created unlinked (clubId: null) rather than blocked;
-// every subsequent sighting retries the bridge, so it self-heals once the club shows up elsewhere.
-// resolveTeamForTableEntry is the one place that resolves the club from source data alone (table
-// rows carry team name + club name together).
+// Fixture data has no club_code, so it bridges by logo/name instead; an unbridgeable team is
+// created unlinked (clubId: null) and self-heals on a later sighting rather than blocking.
 
 import {
   externalRefEntityTypeValue,

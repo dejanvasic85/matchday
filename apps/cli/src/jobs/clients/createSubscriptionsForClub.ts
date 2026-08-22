@@ -1,5 +1,4 @@
-// Create-subscriptions-for-club job (#85): transport glue (AGENTS.md) — builds the real DB client
-// and delegates club resolution + bulk subscription to the service. Onboarding a real club is one
+// Create-subscriptions-for-club job (#85): transport glue (AGENTS.md); onboarding a club is one
 // call instead of one `add-subscription` per league.
 
 import { type Logger, type Result } from "@matchday/domain";

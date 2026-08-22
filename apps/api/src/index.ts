@@ -1,7 +1,5 @@
-// matchday REST API — Hono on Cloudflare Workers, REST + OpenAPI via @hono/zod-openapi (0007).
-// Reaches Neon Postgres through the serverless driver (never raw pg TCP, 0009). Sentry captures
-// errors/traces; Cloudflare Workers Logs captures console.warn/error (AGENTS.md structured
-// logging).
+// matchday REST API — Hono on Cloudflare Workers (0007). Reaches Neon via the serverless driver,
+// never raw pg TCP (0009).
 
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { sentry } from "@sentry/hono/cloudflare";
@@ -27,10 +25,8 @@ app.use(
   })),
 );
 
-// Builds the request's `Db` once, so every route/middleware downstream reads `c.get("db")`
-// instead of each repeating `getApiConfig` + `createDbClient`. Runs before /health (which needs
-// it for the readiness ping) and before the auth middleware (which needs it for the token
-// lookup), so it must be the first thing registered after Sentry.
+// Builds the request's `Db` once for downstream `c.get("db")` reads; must run before /health and
+// auth middleware, which both need it.
 app.use("*", dbClientMiddleware);
 
 app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
@@ -45,13 +41,8 @@ app.doc("/openapi.json", {
   security: [{ bearerAuth: [] }],
 });
 
-// /health and /openapi.json are public (a liveness probe and the API's own discovery document —
-// consumers need the spec before they can even see there's a bearer scheme to use). Every other
-// route requires a bearer API token (ADR 0013). Hono composes matched handlers in registration
-// order, so a public route's own terminal handler runs (and returns) before reaching the wildcard
-// auth middleware below it. IMPORTANT: any route registered ABOVE the app.use("*", ...) line
-// bypasses auth the same way — new public routes must be added above it; new protected routes
-// (the default, e.g. the resource routes below) must be added below it.
+// /health and /openapi.json are public; every other route requires a bearer token (ADR 0013).
+// IMPORTANT: routes registered above app.use("*", authMiddleware) bypass auth.
 app.route("/health", healthRoute);
 app.use("*", apiTokenAuthMiddleware);
 

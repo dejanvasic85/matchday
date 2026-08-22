@@ -1,7 +1,5 @@
-// Source-wide catalog list calls (0012 catalog crawl): tenant -> competitions -> leagues, each
-// returned in full (no name-matching) so a catalog job can enumerate everything for a season.
-// Reuses the same list/* endpoints as resolveLeagueIds, but that resolver requires knowing the
-// target name upfront — this module is for listing every item instead.
+// Source-wide catalog list calls (0012): tenant -> competitions -> leagues returned in full (no
+// name-matching), unlike resolveLeagueIds which needs the target name upfront.
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
