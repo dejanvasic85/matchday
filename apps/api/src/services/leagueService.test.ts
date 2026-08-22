@@ -3,12 +3,34 @@ import { getLeague, listAllLeagues, type LeagueServiceDeps } from "#services/lea
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 
+function makeCompetitionRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "cmp_abc123",
+    name: "Metro League",
+    createdAt: epoch,
+    updatedAt: epoch,
+    ...overrides,
+  };
+}
+
+function makeSeasonRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "sea_abc123",
+    name: "2026",
+    createdAt: epoch,
+    updatedAt: epoch,
+    ...overrides,
+  };
+}
+
 function makeLeagueRow(overrides: Record<string, unknown> = {}) {
   return {
     id: "lea_abc123",
     name: "Division 1",
     competitionId: "cmp_abc123",
     seasonId: "sea_abc123",
+    competition: makeCompetitionRow(),
+    season: makeSeasonRow(),
     createdAt: epoch,
     updatedAt: epoch,
     ...overrides,
@@ -31,6 +53,21 @@ describe("listAllLeagues", () => {
 
     expect(result).toEqual(
       ok([expect.objectContaining({ id: "lea_abc123", createdAt: epoch.toISOString() })]),
+    );
+  });
+
+  it("embeds each league's competition and season as id/name summaries", async () => {
+    const deps = makeDeps();
+
+    const result = await listAllLeagues(deps);
+
+    expect(result).toEqual(
+      ok([
+        expect.objectContaining({
+          competition: { id: "cmp_abc123", name: "Metro League" },
+          season: { id: "sea_abc123", name: "2026" },
+        }),
+      ]),
     );
   });
 
@@ -61,6 +98,21 @@ describe("getLeague", () => {
 
     expect(result).toEqual(
       ok(expect.objectContaining({ id: "lea_abc123", updatedAt: epoch.toISOString() })),
+    );
+  });
+
+  it("trims the embedded competition/season to id and name, dropping their timestamps", async () => {
+    const deps = makeDeps();
+
+    const result = await getLeague(deps, "lea_abc123");
+
+    expect(result).toEqual(
+      ok(
+        expect.objectContaining({
+          competition: { id: "cmp_abc123", name: "Metro League" },
+          season: { id: "sea_abc123", name: "2026" },
+        }),
+      ),
     );
   });
 

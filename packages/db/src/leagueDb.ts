@@ -5,23 +5,30 @@ import { ok, type Result } from "@matchday/domain";
 import { and, asc, eq } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
-import { league, leagueTeam, team } from "#schema.ts";
+import { competition, league, leagueTeam, season, team } from "#schema.ts";
 
 type League = typeof league.$inferSelect;
 type LeagueInsert = typeof league.$inferInsert;
+type Competition = typeof competition.$inferSelect;
+type Season = typeof season.$inferSelect;
+
+/** A league with its competition and season embedded. Both are `notNull` FKs, so the inner joins
+ * below can't drop a league and neither side is nullable — unlike `TeamWithClub`. */
+export type LeagueWithRefs = League & { competition: Competition; season: Season };
 
 export type ListLeaguesFilter = { competitionId?: string; seasonId?: string; clubId?: string };
 
-/** Every column `listLeagues` returns, named explicitly so the `clubId`-filtered branch below
- * (which must join through `league_team`/`team`) still yields plain `League` rows rather than
- * drizzle's per-table nested shape a join produces from an unqualified `.select()`. */
-const leagueColumns = {
+/** Selecting each joined table as a whole under its own key is what makes drizzle nest it as one
+ * object, instead of flattening its columns in among the league's. */
+const leagueSelection = {
   id: league.id,
   name: league.name,
   competitionId: league.competitionId,
   seasonId: league.seasonId,
   createdAt: league.createdAt,
   updatedAt: league.updatedAt,
+  competition,
+  season,
 };
 
 /**
@@ -30,16 +37,15 @@ const leagueColumns = {
  * this club's teams play in" (a consumer picking which league to bind a team page's display to).
  *
  * `clubId` isn't a column on `league` — it's derived via `team`/`league_team`, the same join
- * `listLeaguesByClubId` below uses — so it only joins those tables when asked for, keeping the
- * competition/season-only case (today's only caller) a single-table query. A club with two teams
- * in the same league would otherwise duplicate that league one row per team; `selectDistinct` on
- * league-only columns collapses that safely (unlike `listLeaguesByClubId`'s dedup, this isn't a
- * business decision — the duplicate rows are byte-for-byte identical, nothing to pick between).
+ * `listLeaguesByClubId` below uses — so it only joins those tables when asked for. A club with two
+ * teams in the same league would otherwise duplicate that league one row per team; `selectDistinct`
+ * collapses that safely (unlike `listLeaguesByClubId`'s dedup, this isn't a business decision — the
+ * duplicate rows are byte-for-byte identical, nothing to pick between).
  */
 export async function listLeagues(
   db: Db,
   filter: ListLeaguesFilter = {},
-): Promise<Result<League[]>> {
+): Promise<Result<LeagueWithRefs[]>> {
   const { competitionId, seasonId, clubId } = filter;
   const conditions = [
     competitionId !== undefined ? eq(league.competitionId, competitionId) : undefined,
@@ -48,23 +54,23 @@ export async function listLeagues(
   ].filter((condition) => condition !== undefined);
 
   if (clubId === undefined) {
-    return runQuery(
-      () =>
-        conditions.length === 0
-          ? db.select().from(league)
-          : db
-              .select()
-              .from(league)
-              .where(and(...conditions)),
-      "Failed to list leagues",
-    );
+    return runQuery(() => {
+      const query = db
+        .select(leagueSelection)
+        .from(league)
+        .innerJoin(competition, eq(competition.id, league.competitionId))
+        .innerJoin(season, eq(season.id, league.seasonId));
+      return conditions.length === 0 ? query : query.where(and(...conditions));
+    }, "Failed to list leagues");
   }
 
   return runQuery(
     () =>
       db
-        .selectDistinct(leagueColumns)
+        .selectDistinct(leagueSelection)
         .from(league)
+        .innerJoin(competition, eq(competition.id, league.competitionId))
+        .innerJoin(season, eq(season.id, league.seasonId))
         .innerJoin(leagueTeam, eq(leagueTeam.leagueId, league.id))
         .innerJoin(team, eq(team.id, leagueTeam.teamId))
         .where(and(...conditions))
@@ -88,19 +94,17 @@ export async function listLeagues(
  * Depends on the catalog crawl having already run for a league before it's discoverable here: fine
  * for onboarding a club into an existing dataset, circular for a brand-new league.
  */
-export async function listLeaguesByClubId(db: Db, clubId: string): Promise<Result<League[]>> {
+export async function listLeaguesByClubId(
+  db: Db,
+  clubId: string,
+): Promise<Result<LeagueWithRefs[]>> {
   return runQuery(
     () =>
       db
-        .select({
-          id: league.id,
-          name: league.name,
-          competitionId: league.competitionId,
-          seasonId: league.seasonId,
-          createdAt: league.createdAt,
-          updatedAt: league.updatedAt,
-        })
+        .select(leagueSelection)
         .from(league)
+        .innerJoin(competition, eq(competition.id, league.competitionId))
+        .innerJoin(season, eq(season.id, league.seasonId))
         .innerJoin(leagueTeam, eq(leagueTeam.leagueId, league.id))
         .innerJoin(team, eq(team.id, leagueTeam.teamId))
         .where(eq(team.clubId, clubId))
@@ -130,9 +134,16 @@ export async function upsertLeague(db: Db, values: LeagueInsert): Promise<Result
   );
 }
 
-export async function getLeagueById(db: Db, id: string): Promise<Result<League | null>> {
+export async function getLeagueById(db: Db, id: string): Promise<Result<LeagueWithRefs | null>> {
   const result = await runQuery(
-    () => db.select().from(league).where(eq(league.id, id)).limit(1),
+    () =>
+      db
+        .select(leagueSelection)
+        .from(league)
+        .innerJoin(competition, eq(competition.id, league.competitionId))
+        .innerJoin(season, eq(season.id, league.seasonId))
+        .where(eq(league.id, id))
+        .limit(1),
     "Failed to get league by id",
   );
   return result.ok ? ok(result.value[0] ?? null) : result;
