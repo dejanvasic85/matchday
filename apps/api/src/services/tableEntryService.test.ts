@@ -51,6 +51,18 @@ describe("listLeagueTable", () => {
     expect(deps.listTableEntriesByLeagueId).toHaveBeenCalledWith("lea_abc123");
   });
 
+  it("keeps a column the response doesn't name off the wire", async () => {
+    const deps = makeDeps({
+      listTableEntriesByLeagueId: vi
+        .fn()
+        .mockResolvedValue(ok([makeTableEntryRow({ internalNotes: "secret" })])),
+    });
+
+    const result = await listLeagueTable(deps, "lea_abc123");
+
+    expect(result).toEqual(ok([expect.not.objectContaining({ internalNotes: expect.anything() })]));
+  });
+
   it("propagates a table entry list failure", async () => {
     const listError = serverError("Failed to list table entries by league id");
     const deps = makeDeps({ listTableEntriesByLeagueId: vi.fn().mockResolvedValue(listError) });

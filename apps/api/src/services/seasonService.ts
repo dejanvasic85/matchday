@@ -22,14 +22,17 @@ export function createSeasonServiceDeps(db: Db): SeasonServiceDeps {
   };
 }
 
-export type SeasonResponse = Omit<Season, "createdAt" | "updatedAt"> & {
+/** `Pick`, not `Omit`, so a new column stays off the wire until named here — and mapped
+ * field-by-field below, since a spread would leak it regardless (#169). */
+export type SeasonResponse = Pick<Season, "id" | "name"> & {
   createdAt: string;
   updatedAt: string;
 };
 
 function mapToSeasonResponse(season: Season): SeasonResponse {
   return {
-    ...season,
+    id: season.id,
+    name: season.name,
     createdAt: season.createdAt.toISOString(),
     updatedAt: season.updatedAt.toISOString(),
   };

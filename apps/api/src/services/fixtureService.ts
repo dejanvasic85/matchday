@@ -22,9 +22,22 @@ export function createFixtureServiceDeps(db: Db): FixtureServiceDeps {
 
 type FixtureRow = typeof schema.fixture.$inferSelect;
 
-export type FixtureResponse = Omit<
+/** `Pick`, not `Omit`, so a new column stays off the wire until named here — and mapped
+ * field-by-field below, since a spread would leak it regardless (#169). */
+export type FixtureResponse = Pick<
   FixtureRow,
-  "latitude" | "longitude" | "kickoffAt" | "createdAt" | "updatedAt"
+  | "id"
+  | "leagueId"
+  | "competitionId"
+  | "seasonId"
+  | "round"
+  | "homeTeamId"
+  | "awayTeamId"
+  | "venue"
+  | "status"
+  | "homeScore"
+  | "awayScore"
+  | "isBye"
 > & {
   latitude: number | null;
   longitude: number | null;
@@ -35,7 +48,18 @@ export type FixtureResponse = Omit<
 
 function mapToFixtureResponse(row: FixtureRow): FixtureResponse {
   return {
-    ...row,
+    id: row.id,
+    leagueId: row.leagueId,
+    competitionId: row.competitionId,
+    seasonId: row.seasonId,
+    round: row.round,
+    homeTeamId: row.homeTeamId,
+    awayTeamId: row.awayTeamId,
+    venue: row.venue,
+    status: row.status,
+    homeScore: row.homeScore,
+    awayScore: row.awayScore,
+    isBye: row.isBye,
     latitude: row.latitude === null ? null : Number(row.latitude),
     longitude: row.longitude === null ? null : Number(row.longitude),
     kickoffAt: row.kickoffAt === null ? null : row.kickoffAt.toISOString(),

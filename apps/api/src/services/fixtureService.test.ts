@@ -53,6 +53,18 @@ describe("listLeagueFixtures", () => {
     );
   });
 
+  it("keeps a column the response doesn't name off the wire", async () => {
+    const deps = makeDeps({
+      listFixturesByLeagueId: vi
+        .fn()
+        .mockResolvedValue(ok([makeFixtureRow({ internalNotes: "secret" })])),
+    });
+
+    const result = await listLeagueFixtures(deps, "lea_abc123");
+
+    expect(result).toEqual(ok([expect.not.objectContaining({ internalNotes: expect.anything() })]));
+  });
+
   it("maps a null kickoffAt/lat/long through as null", async () => {
     const deps = makeDeps({
       listFixturesByLeagueId: vi

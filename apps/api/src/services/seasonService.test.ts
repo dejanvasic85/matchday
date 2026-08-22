@@ -26,6 +26,16 @@ describe("listAllSeasons", () => {
     );
   });
 
+  it("keeps a column the response doesn't name off the wire", async () => {
+    const deps = makeDeps({
+      listSeasons: vi.fn().mockResolvedValue(ok([makeSeasonRow({ internalNotes: "secret" })])),
+    });
+
+    const result = await listAllSeasons(deps);
+
+    expect(result).toEqual(ok([expect.not.objectContaining({ internalNotes: expect.anything() })]));
+  });
+
   it("propagates a list failure", async () => {
     const listError = serverError("Failed to list seasons");
     const deps = makeDeps({ listSeasons: vi.fn().mockResolvedValue(listError) });

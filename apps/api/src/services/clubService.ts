@@ -22,14 +22,41 @@ export function createClubServiceDeps(db: Db): ClubServiceDeps {
   };
 }
 
-export type ClubResponse = Omit<Club, "createdAt" | "updatedAt"> & {
+/** `Pick`, not `Omit`, so a new column stays off the wire until named here — and mapped
+ * field-by-field below, since a spread would leak it regardless (#169). */
+export type ClubResponse = Pick<
+  Club,
+  | "id"
+  | "name"
+  | "displayName"
+  | "logoUrl"
+  | "email"
+  | "website"
+  | "address"
+  | "socials"
+  | "grounds"
+  | "color"
+  | "accent"
+  | "store"
+> & {
   createdAt: string;
   updatedAt: string;
 };
 
 function mapToClubResponse(club: Club): ClubResponse {
   return {
-    ...club,
+    id: club.id,
+    name: club.name,
+    displayName: club.displayName,
+    logoUrl: club.logoUrl,
+    email: club.email,
+    website: club.website,
+    address: club.address,
+    socials: club.socials,
+    grounds: club.grounds,
+    color: club.color,
+    accent: club.accent,
+    store: club.store,
     createdAt: club.createdAt.toISOString(),
     updatedAt: club.updatedAt.toISOString(),
   };
