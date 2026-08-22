@@ -8,10 +8,15 @@ import { jsonResult } from "#resultResponse.ts";
 import { errorResponsesValue } from "#schemas/errorResponses.ts";
 import { fixtureResponseSchema } from "#schemas/fixtureSchema.ts";
 import { idParamSchema } from "#schemas/idParamSchema.ts";
+import { leagueOverviewResponseSchema } from "#schemas/leagueOverviewSchema.ts";
 import { leagueResponseSchema } from "#schemas/leagueSchema.ts";
 import { tableEntryResponseSchema } from "#schemas/tableEntrySchema.ts";
 import { teamResponseSchema } from "#schemas/teamSchema.ts";
 import { createFixtureServiceDeps, listLeagueFixtures } from "#services/fixtureService.ts";
+import {
+  createLeagueOverviewServiceDeps,
+  getLeagueOverview,
+} from "#services/leagueOverviewService.ts";
 import { createLeagueServiceDeps, getLeague, listAllLeagues } from "#services/leagueService.ts";
 import { createTableEntryServiceDeps, listLeagueTable } from "#services/tableEntryService.ts";
 import { createTeamServiceDeps, listLeagueTeams } from "#services/teamService.ts";
@@ -81,6 +86,31 @@ leagueRoute.openapi(getLeagueRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getLeague(createLeagueServiceDeps(c.get("db")), id);
   return jsonResult(c, result, "api.league.get.failed");
+});
+
+const getLeagueOverviewRoute = createRoute({
+  method: "get",
+  path: "/{id}/overview",
+  tags: ["Leagues"],
+  summary: "Get a league with its fixtures, table and teams in one response",
+  description:
+    "Everything one league page renders, in a single round-trip. All three collections are " +
+    "always present (empty arrays when the league has none) — use /{id}/fixtures, /{id}/table " +
+    "or /{id}/teams to fetch just one.",
+  request: { params: idParamSchema("league", "lea_V1StGXR8Z5") },
+  responses: {
+    200: {
+      description: "The league, its fixtures, its table and its teams",
+      content: { "application/json": { schema: leagueOverviewResponseSchema } },
+    },
+    ...errorResponsesValue,
+  },
+});
+
+leagueRoute.openapi(getLeagueOverviewRoute, async (c) => {
+  const { id } = c.req.valid("param");
+  const result = await getLeagueOverview(createLeagueOverviewServiceDeps(c.get("db")), id);
+  return jsonResult(c, result, "api.league.overview.failed");
 });
 
 const listLeagueFixturesRoute = createRoute({
