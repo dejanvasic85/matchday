@@ -6,6 +6,7 @@ import { sentry } from "@sentry/hono/cloudflare";
 import type { ApiBindings } from "#config.ts";
 import { apiTokenAuthMiddleware, type ApiTokenAuthVariables } from "#middleware/apiTokenAuth.ts";
 import { dbClientMiddleware, type DbVariables } from "#middleware/dbClient.ts";
+import { cacheTtlValue, edgeCache } from "#middleware/edgeCache.ts";
 import { clubRoute } from "#routes/clubRoute.ts";
 import { competitionRoute } from "#routes/competitionRoute.ts";
 import { healthRoute } from "#routes/healthRoute.ts";
@@ -45,6 +46,16 @@ app.doc("/openapi.json", {
 // IMPORTANT: routes registered above app.use("*", authMiddleware) bypass auth.
 app.route("/health", healthRoute);
 app.use("*", apiTokenAuthMiddleware);
+
+// Cache TTLs follow each resource's crawl cadence (0003/0046). /leagues carries both: its own
+// catalog data plus nested fixtures/table, so it takes the shorter match-data TTL.
+// Both forms per resource: Hono's `/clubs/*` matches `/clubs/{id}` but not the `/clubs` list.
+for (const path of ["/clubs", "/teams", "/competitions", "/seasons"]) {
+  app.use(path, edgeCache(cacheTtlValue.catalog));
+  app.use(`${path}/*`, edgeCache(cacheTtlValue.catalog));
+}
+app.use("/leagues", edgeCache(cacheTtlValue.matchData));
+app.use("/leagues/*", edgeCache(cacheTtlValue.matchData));
 
 app.route("/clubs", clubRoute);
 app.route("/teams", teamRoute);
