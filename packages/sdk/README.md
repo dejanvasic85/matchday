@@ -31,6 +31,8 @@ import { createMatchdayClient } from "@dejanvasic85/matchday-sdk";
 const client = createMatchdayClient({
   baseUrl: "https://api.matchday.example",
   apiToken: process.env.MATCHDAY_API_TOKEN,
+  timeoutMs: 30_000, // optional, default 30s
+  retries: 2, // optional, default 2 — idempotent requests only, on 5xx/network
 });
 
 const { data, error } = await client.GET("/clubs");
@@ -38,6 +40,46 @@ const { data, error } = await client.GET("/clubs");
 
 `data`/`error` and every request/response shape are typed from the spec — see
 [openapi-fetch](https://openapi-ts.dev/openapi-fetch/) for the full calling convention.
+
+### Task helpers
+
+Wrappers that encode _what to ask for_, so you don't rebuild a full-catalog fetch-and-join:
+
+| Function                              | Returns                                           |
+| ------------------------------------- | ------------------------------------------------- |
+| `getLeagueOverview(client, leagueId)` | league + fixtures + table + teams, in one request |
+| `getLeagueTeams(client, leagueId)`    | a league's teams, each with its club embedded     |
+| `getClubLeagues(client, clubId)`      | every league a club's teams play in               |
+
+```ts
+import { getLeagueOverview } from "@dejanvasic85/matchday-sdk";
+
+const result = await getLeagueOverview(client, "lea_V1StGXR8Z5");
+if (result.ok) {
+  console.log(result.value.name, result.value.fixtures.length);
+}
+```
+
+Prefer `getLeagueTeams` over `GET /teams` + `GET /clubs`: the full catalog is ~6500 teams and
+2.4 MB to resolve the handful in one league.
+
+### Handling errors
+
+`unwrap` turns a call into a `Result`, so you stop repeating `if (error || !data) throw`:
+
+```ts
+import { unwrap, unwrapOrThrow } from "@dejanvasic85/matchday-sdk";
+
+const result = unwrap(await client.GET("/clubs"));
+if (!result.ok) {
+  console.error(result.error.status, result.error.message);
+}
+
+// Or throw at a transport boundary:
+const clubs = unwrapOrThrow(await client.GET("/clubs"));
+```
+
+`result.error.status` is the HTTP status, or `"timeout"` / `"network"` when no response arrived.
 
 ## Releasing
 
