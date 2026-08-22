@@ -1,8 +1,5 @@
-// Locks in ADR 0013's last piece (#77): the OpenAPI spec advertises the bearer scheme globally so
-// a client generated from it (#47) knows to send the header, and that requirement actually covers
-// routes registered after the wildcard auth middleware — including fixtures/table (#45), which
-// landed after the security scheme was wired and only inherits it because `security` is declared
-// once at the doc level rather than per-route.
+// Locks in ADR 0013's last piece (#77): the doc-level `security` declaration covers routes added
+// later (e.g. fixtures/table, #45) without each needing its own.
 
 import { z } from "zod";
 import app from "#index.ts";

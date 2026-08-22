@@ -1,22 +1,5 @@
-// Catalog crawl (0012): resolves the tenant + season, then crawls a window of the flat
-// (competition, league) queue every competition's leagues flatten into (listLeagueQueue),
-// fetching each league's table (teams + club info). `maxLeagues` caps how many leagues per
-// competition enter the queue at all — e.g. `mday catalog --max-leagues 1` for a cheap
-// single-league-per-competition pass while iterating on the pipeline. `offset`/`limit` instead
-// slice the (already-capped) queue itself — the crawl-catalog.yml matrix uses this to split one
-// oversized serial crawl into many bounded parallel legs (countCatalogLeagues sizes the matrix;
-// each leg gets its own offset/limit window). The two compose: maxLeagues shrinks the queue built
-// per competition, offset/limit then windows the resulting flat list.
-//
-// Some leagues (e.g. MiniRoos junior age groups) have no table at all, so a table-less league
-// falls back to a few rounds of fixtures to discover its teams instead (discoverTeamsFromFixtures)
-// — otherwise those teams would never enter the catalog for Sanity's onboarding dropdowns to find.
-//
-// An optional `onLeague` callback is invoked with each league the moment it's crawled, so the job
-// can persist it immediately rather than buffering the whole catalog and writing at the end (a DB
-// failure then aborts early with the leagues so far already committed). If it returns `err`, the
-// crawl stops and surfaces that error. Every crawled league is also returned, so callers that just
-// want the data (dry runs, tests) can ignore `onLeague`.
+// Catalog crawl (0012): `offset`/`limit` window the flat league queue so crawl-catalog.yml can split
+// one crawl into parallel legs. Table-less leagues (e.g. MiniRoos) fall back to fixtures for teams.
 
 import { notFound, ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";

@@ -1,6 +1,5 @@
-// Fetches one club's rich detail (grounds/colours/store, per the club-enrichment job) from
-// Dribl's `clubs/{id}` endpoint. Unlike `list/clubs`, this returns a single object under `data`,
-// not an array (confirmed against a live response).
+// Fetches one club's rich detail (grounds/colours/store) from Dribl's `clubs/{id}` endpoint.
+// Unlike `list/clubs`, this returns a single object under `data`, not an array.
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";

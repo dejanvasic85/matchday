@@ -1,8 +1,5 @@
-// Resolves the Dribl `{season, competition, league}` hashes for one of our leagues by walking
-// `external_ref` in reverse (internal id -> source hash) — the catalog crawl already populated
-// these refs, so no name-matching against Dribl's list/* endpoints is needed here (unlike the
-// older leagueIdResolver.ts spike). Tenant is resolved separately, once per job run, since it's a
-// live network call rather than a DB lookup.
+// Resolves Dribl `{season, competition, league}` hashes by walking `external_ref` in reverse —
+// the catalog crawl already populated these, so no name-matching (unlike leagueIdResolver.ts).
 
 import {
   externalRefEntityTypeValue,

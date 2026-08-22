@@ -1,7 +1,5 @@
-// Launches a real Chrome browser (local, or connected to a managed endpoint per 0009), visits
-// the Dribl site once to obtain Cloudflare clearance, and hands back the page for subsequent
-// API calls via browserFetch. Browser endpoint is abstracted so thanos <-> managed is a config
-// change (0009): connect over BROWSER_WS_ENDPOINT when set, else launch local Chrome.
+// Launches Chrome, visits the Dribl site once for Cloudflare clearance, hands back the page.
+// Endpoint is abstracted (0009): connect over BROWSER_WS_ENDPOINT when set, else launch local.
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { type Browser, chromium, type Page } from "playwright-core";

@@ -1,9 +1,5 @@
-// League change detection (#105): compares a league's fixtures + table before vs. after a deep
-// crawl to decide whether a webhook notification should report `hasChanges`. Pure comparison over
-// two already-fetched snapshots — no DB/network here, so it's cheap to unit test and independent
-// of crawler internals. Timestamps (`createdAt`/`updatedAt`) are deliberately excluded from the
-// comparison: the crawl's upsert bumps `updatedAt` on every row it touches regardless of whether
-// any visible field actually changed, so comparing it would report a change on every run.
+// League change detection (#105): compares fixtures+table before/after a crawl for `hasChanges`.
+// Timestamps are excluded — the crawl's upsert bumps `updatedAt` on every touched row regardless.
 
 import type { schema } from "@matchday/db";
 

@@ -1,7 +1,5 @@
-// League service (0045): thin business logic over data access (AGENTS.md) — maps the DB row to
-// the wire shape (timestamps as ISO strings) and lists/fetches leagues. Catalog data — open to
-// any authenticated client, no subscription scoping (ADR 0013). Fixtures/tables (the subscription
-// scoped resources) are a separate follow-up.
+// League service (0045): maps DB rows to the wire shape. Catalog data, open to any authenticated
+// client, no subscription scoping (ADR 0013).
 
 import { mapResult, requireFound, type League, type Result } from "@matchday/domain";
 import { getLeagueById, listLeagues, type Db, type ListLeaguesFilter } from "@matchday/db";

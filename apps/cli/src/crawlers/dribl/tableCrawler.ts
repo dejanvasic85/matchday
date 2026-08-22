@@ -1,6 +1,5 @@
-// Table (ladder) crawl: a single request after the round crawl, using the same resolved IDs
-// (dribl-crawling skill). Raw response staged to R2 before mapping, per 0004. Dribl's own
-// endpoint/wire format calls this a "ladder" — our side of the boundary calls it "table".
+// Table (ladder) crawl: a single request after the round crawl, staged to R2 before mapping
+// (0004). Dribl's own wire format calls this a "ladder" — our side calls it "table".
 
 import { ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";

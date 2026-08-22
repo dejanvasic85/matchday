@@ -1,7 +1,5 @@
-// Resolves the opaque hashed IDs (season/competition/league/tenant) Dribl's fixtures/ladders
-// endpoints require from human-readable names, via the tenant + list endpoints. Results are
-// cached by league name (dribl-crawling skill) so repeat crawls skip re-resolution; a regrade
-// changes the league name, misses the cache, and re-resolves automatically.
+// Resolves Dribl's opaque hashed IDs from human-readable names. Cached by league name so repeat
+// crawls skip re-resolution; a regrade changes the name, misses the cache, re-resolves.
 
 import { notFound, ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";

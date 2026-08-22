@@ -1,10 +1,7 @@
 import { z } from "zod";
 
-// A client subscribes to one of our leagues (ADR 0012): the subscription drives the deep crawl
-// (fixtures + tables are crawled only for subscribed leagues). It stores our internal `lea_` id,
-// never a Dribl name/hash — the league already ties competition + season (0011), so the
-// subscription is season-scoped through it. `clientId` references the client entity (ADR 0013),
-// which also owns API tokens.
+// A client subscribes to one of our leagues (ADR 0012), driving the deep crawl (fixtures +
+// tables crawled only for subscribed leagues). Stores our internal `lea_` id, never a Dribl name.
 export const subscriptionSchema = z.object({
   id: z.string(),
   clientId: z.string(),

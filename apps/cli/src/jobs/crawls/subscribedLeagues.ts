@@ -1,6 +1,5 @@
-// Subscribed leagues (0012): the distinct set of league ids with >=1 subscription — the scope
-// the deep-crawl GitHub Actions matrix crawls this run. Thin transport glue (AGENTS.md); dedup
-// across clients already happens in SQL (subscriptionDb.listSubscribedLeagueIds).
+// Subscribed leagues (0012): distinct league ids with >=1 subscription — scopes the deep-crawl
+// GitHub Actions matrix. Dedup across clients already happens in SQL.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
 import { createDbClient, listSubscribedLeagueIds } from "@matchday/db";

@@ -1,6 +1,5 @@
-// Shared fixture factories for db tests. `makeXRow` builds a snake_case DB-row shape (as returned
-// by Drizzle selects) for use in data-access fakes. Fill sensible defaults; pass only the fields a
-// test asserts on via `overrides`.
+// Shared fixture factories for db tests. `makeXRow` builds a snake_case DB-row shape (as
+// returned by Drizzle selects) for use in data-access fakes.
 
 import { schema, sourceValue } from "@matchday/db";
 

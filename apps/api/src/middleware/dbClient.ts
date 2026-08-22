@@ -1,6 +1,5 @@
-// Db client middleware (AGENTS.md: routes are glue, services own the logic) — the single place
-// a `Db` is constructed from the request's config, so every route/middleware downstream just
-// reads `c.get("db")` instead of each repeating `getApiConfig` + `createDbClient`.
+// Single place a `Db` is constructed from request config, so downstream code just reads
+// `c.get("db")` instead of repeating `getApiConfig` + `createDbClient`.
 
 import { createDbClient, type Db } from "@matchday/db";
 import { createMiddleware } from "hono/factory";

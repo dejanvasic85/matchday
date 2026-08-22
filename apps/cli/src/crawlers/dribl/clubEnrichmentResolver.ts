@@ -1,11 +1,5 @@
-// Resolves a `list/clubs`/`clubs/{id}` source id to an *existing* club row for the club-enrichment
-// job — mirrors resolveClub's identity-then-bridge steps but deliberately omits its third step
-// ("brand new club"): enrichment attaches to clubs the deep crawl already discovered by
-// `club_code`, never creates its own (ADR 0012). Resolves to `null`, which the caller skips
-// rather than treating as an error, for two distinct reasons: no match anywhere (the ~11 admin
-// pseudo-"clubs" that never appear on a table, per the Dribl identity investigation), or a bridge
-// match onto a club row that's already claimed by a different `dribl` source id (a duplicate
-// club entry in Dribl's own catalog).
+// Resolves a source id to an *existing* club row only — never creates one (ADR 0012). Returns
+// `null` (not an error) for admin pseudo-clubs or a row already claimed by a different source id.
 
 import {
   externalRefEntityTypeValue,
@@ -69,11 +63,8 @@ export async function resolveClubForEnrichment(
 
   const clubId = bridgeMatch.value;
 
-  // A club row can hold at most one `dribl`-source ref (external_ref_entity_source_key). Dribl's
-  // own catalog occasionally carries two source ids for what's already one club row here (e.g. a
-  // legacy/duplicate club entry) — the first source id to bridge claims the ref; treat any later
-  // source id that bridges to the same row as unresolvable rather than racing the unique
-  // constraint or guessing which of the two source records is authoritative.
+  // A club row can hold at most one `dribl`-source ref; if a second source id bridges to the same
+  // row (Dribl duplicate), treat it as unresolvable rather than racing the unique constraint.
   const existingBridge = await deps.findExternalRefByInternalId(
     externalRefEntityTypeValue.club,
     clubId,

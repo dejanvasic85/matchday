@@ -1,9 +1,5 @@
-// Shared collaborator shape for the entity-resolution services in this directory (resolveClub,
-// resolveTeam, resolveFixtureEntities, resolveTableEntryEntities). Each entry is a @matchday/db
-// query function with `db` already bound — the crawl job builds one `EntityResolutionDeps` per
-// run and threads it through every resolver, so services depend on injectable functions rather
-// than importing @matchday/db directly (AGENTS.md: DI over mocking the DB — tests pass vi.fn()
-// fakes here instead of vi.mock("@matchday/db")).
+// Shared collaborator shape for this directory's entity-resolution services, with `db` already
+// bound — DI over mocking the DB, so tests pass vi.fn() fakes instead of vi.mock("@matchday/db").
 
 import {
   findClubByExternalRefSourceUrl,

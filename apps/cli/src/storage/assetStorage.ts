@@ -1,6 +1,5 @@
-// Stages permanent assets (club logos, per 0004) to Cloudflare R2 — the sibling of rawStorage.ts,
-// which targets the separate 7-day-expiry raw-staging bucket. Same aws4fetch approach (a
-// fetch-native SigV4 signer, no Node-specific dependencies) but a binary PUT, not JSON.
+// Stages permanent assets (club logos, 0004) to R2 — sibling of rawStorage.ts, which targets the
+// separate 7-day-expiry raw-staging bucket. Same aws4fetch approach, but a binary PUT, not JSON.
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { AwsClient } from "aws4fetch";

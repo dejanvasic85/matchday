@@ -1,9 +1,5 @@
-// Dribl-raw -> domain mapper (0004: explicit named transform at the crawl boundary).
-//
-// A raw fixture only carries team/league/competition/season *names* and Dribl hash IDs, not
-// matchday's real entity IDs — resolving those requires DB lookups (upserting/looking up club,
-// team, competition, season and league rows), which is a service concern, not a pure mapper.
-// This produces an intermediate shape carrying everything a resolution service needs.
+// Dribl-raw -> domain mapper (0004). Only names/hash IDs are available here, not matchday's real
+// entity IDs; resolving those needs DB lookups, so this produces an intermediate shape for that.
 
 import { fixtureStatusValue, type FixtureStatus } from "@matchday/domain";
 import type { DriblFixture } from "#crawlers/dribl/external/driblFixture.ts";
@@ -61,9 +57,8 @@ function parseRound(round: string): number | null {
 const hasTimezoneMarker = /(Z|[+-]\d{2}:?\d{2})$/;
 
 function parseKickoffAt(date: string): Date | null {
-  // Results payloads omit a timezone indicator (e.g. "2026-04-26 03:15:00") but the value is
-  // UTC; append Z only when no timezone marker (Z or +/-offset) is already present, so an
-  // already-offset date isn't corrupted into "...+10:00Z".
+  // Results payloads omit a timezone marker but the value is UTC; append Z only when no marker
+  // is already present, so an already-offset date isn't corrupted into "...+10:00Z".
   const isoDate = date.replace(" ", "T");
   const normalised = hasTimezoneMarker.test(isoDate) ? isoDate : `${isoDate}Z`;
   const parsed = new Date(normalised);

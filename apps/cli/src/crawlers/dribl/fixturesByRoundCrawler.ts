@@ -1,7 +1,5 @@
-// Round-based fixture crawl (dribl-crawling skill): iterating round=1..N is deterministic and
-// never drops rounds, unlike the SPA's date-windowed views. Each non-empty round's raw response
-// is staged to R2 before mapping, per 0004, so a bad transform can be reprocessed without
-// re-crawling.
+// Round-based fixture crawl: iterating round=1..N is deterministic, unlike the SPA's date-windowed
+// views. Each non-empty round is staged to R2 before mapping (0004) for reprocessing.
 
 import { ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";

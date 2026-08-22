@@ -1,6 +1,5 @@
-// List-club-leagues job (#85): transport glue (AGENTS.md) — builds the real DB client and
-// delegates club -> league resolution to the service. Read-only discovery for onboarding: "which
-// leagues does this club's teams actually play in?"
+// List-club-leagues job (#85): read-only discovery for onboarding — "which leagues does this
+// club's teams actually play in?"
 
 import { type Result } from "@matchday/domain";
 import { createDbClient, findClubsByName, listLeaguesByClubId } from "@matchday/db";

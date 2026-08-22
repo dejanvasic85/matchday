@@ -1,6 +1,5 @@
-// Client roster assembly (0013). Business logic lives here (AGENTS.md): three flat data-access
-// reads are stitched into the per-client view `mday client list` renders, so it costs three
-// queries regardless of how many clients exist rather than 2N+1.
+// Client roster assembly (0013): stitches three flat data-access reads into the per-client view
+// `mday client list` renders — three queries total, not 2N+1.
 
 import { ok, type Result } from "@matchday/domain";
 import type { listApiTokens, listClients, listSubscriptionsWithLeague } from "@matchday/db";

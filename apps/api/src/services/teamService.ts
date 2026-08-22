@@ -1,11 +1,5 @@
-// Team service (0045): thin business logic over data access (AGENTS.md) — maps the DB row to the
-// wire shape (timestamps as ISO strings, owning club trimmed to a lean summary — #145) and
-// lists/fetches teams. A team's club link is nullable at the DB layer (a fixture-discovered team
-// not yet bridged to a club — teamResolver.ts), but that's a data-access-honest detail, not
-// something every API consumer should have to null-check: `mapToTeamResponse` below splits it
-// into a `type: "club" | "unaffiliated"` discriminated union instead, so the common case (club
-// always present) is null-check-free. Catalog data — open to any authenticated client, no
-// subscription scoping (ADR 0013).
+// Team service (0045): maps DB rows to the wire shape. A nullable club link (unbridged
+// fixture-discovered team) is exposed as a `type: "club" | "unaffiliated"` union, null-check-free.
 
 import { mapResult, requireFound, type Result } from "@matchday/domain";
 import {

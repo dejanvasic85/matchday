@@ -79,10 +79,8 @@ describe("notifyLeagueSubscribers", () => {
   });
 
   it("isolates one subscriber's delivery failure from the rest", async () => {
-    // Each subscriber's delivery independently awaits signWebhookPayload before calling
-    // sendWebhook, so the two calls can reach it in either order — dispatch by which URL was
-    // actually requested, not by call order (mockResolvedValueOnce assumed call order matched
-    // subscription order, which isn't guaranteed and made this flaky in CI).
+    // Deliveries can reach sendWebhook in either order, so dispatch by URL requested, not call
+    // order (mockResolvedValueOnce assumed call order, which was flaky in CI).
     const sendWebhook = vi
       .fn()
       .mockImplementation(({ url }: { url: string }) =>

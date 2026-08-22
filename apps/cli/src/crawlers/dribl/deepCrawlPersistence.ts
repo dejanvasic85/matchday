@@ -1,9 +1,5 @@
-// Persists one league's deep crawl (0012): maps each raw fixture/table-entry response to domain
-// via the local Dribl mappers, then upserts via the existing fixture/table-entry entity
-// resolution (resolveFixtureEntities/resolveTableEntryEntities — the same services the catalog
-// crawl uses for table entries). Sequential, aborting on the first `err`: every step here is
-// idempotent, so a partial run is safe to retry on the next crawl rather than persisting a
-// half-mapped league silently.
+// Persists one league's deep crawl (0012). Sequential, aborting on the first `err`: every step is
+// idempotent, so a partial run is safe to retry rather than persisting a half-mapped league.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
 import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
