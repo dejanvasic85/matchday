@@ -35,7 +35,7 @@ export default defineConfig({
     clearMocks: true,
   },
   staged: {
-    "*.{js,ts}": "vp check --fix",
+    "*.{js,ts,md}": "vp check --fix",
   },
   run: {
     cache: true,
