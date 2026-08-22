@@ -1,8 +1,14 @@
 // League service (0045): maps DB rows to the wire shape. Catalog data, open to any authenticated
 // client, no subscription scoping (ADR 0013).
 
-import { mapResult, requireFound, type League, type Result } from "@matchday/domain";
-import { getLeagueById, listLeagues, type Db, type ListLeaguesFilter } from "@matchday/db";
+import { mapResult, requireFound, type Result } from "@matchday/domain";
+import {
+  getLeagueById,
+  listLeagues,
+  type Db,
+  type LeagueWithRefs,
+  type ListLeaguesFilter,
+} from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
@@ -22,14 +28,27 @@ export function createLeagueServiceDeps(db: Db): LeagueServiceDeps {
   };
 }
 
-export type LeagueResponse = Omit<League, "createdAt" | "updatedAt"> & {
+/** Lean embed of a league's competition/season — both tables are `{ id, name }` plus timestamps,
+ * and the timestamps are ingest bookkeeping no consumer labels a league with. */
+export type LeagueRefSummaryResponse = { id: string; name: string };
+
+/** `Pick`, not `Omit`, so a new `league` column stays off the wire until it's added here
+ * deliberately — and mapped field-by-field below, since a spread would leak it regardless. */
+export type LeagueResponse = Pick<LeagueWithRefs, "id" | "name" | "competitionId" | "seasonId"> & {
+  competition: LeagueRefSummaryResponse;
+  season: LeagueRefSummaryResponse;
   createdAt: string;
   updatedAt: string;
 };
 
-function mapToLeagueResponse(league: League): LeagueResponse {
+function mapToLeagueResponse(league: LeagueWithRefs): LeagueResponse {
   return {
-    ...league,
+    id: league.id,
+    name: league.name,
+    competitionId: league.competitionId,
+    seasonId: league.seasonId,
+    competition: { id: league.competition.id, name: league.competition.name },
+    season: { id: league.season.id, name: league.season.name },
     createdAt: league.createdAt.toISOString(),
     updatedAt: league.updatedAt.toISOString(),
   };

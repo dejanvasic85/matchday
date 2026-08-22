@@ -38,6 +38,7 @@ export {
   upsertLeague,
   getLeagueById,
   listLeaguesByClubId,
+  type LeagueWithRefs,
   type ListLeaguesFilter,
 } from "#leagueDb.ts";
 export { upsertFixture, listFixturesByLeagueId } from "#fixtureDb.ts";
