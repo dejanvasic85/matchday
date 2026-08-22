@@ -1,4 +1,4 @@
-name: Release SDK
+name: Publish SDK
 
 on:
   push:
@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   release:
-    name: Version or publish @dejanvasic85/matchday-sdk
+    name: Version or publish SDK
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -70,7 +70,11 @@ jobs:
       - name: Create release PR or publish
         uses: changesets/action@v2.1.1
         with:
-          version-script: pnpm changeset version
+          # `changeset version` alone leaves CHANGELOG.md in Changesets' own markdown style, which
+          # doesn't match oxfmt's — that's why the "Version Packages" PR failed `vp check` on
+          # merge. `pnpm run version:sdk` chains a `vp check --fix` after versioning so the PR's
+          # generated files are pre-formatted.
+          version-script: pnpm run version:sdk
           # A single script name, not a raw "a && b" string — changesets/action execs this
           # without a shell, so a top-level `&&` here doesn't chain two commands: pnpm just
           # forwards everything after `run build` as extra CLI args onto the *last* command in
