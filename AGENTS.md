@@ -245,5 +245,6 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 - [ ] Run `vp check` and `vp test` to format, lint, type check and test changes.
 - [ ] Check if there are `vite.config.ts` tasks or `package.json` scripts necessary for validation, run via `vp run <script>`.
 - [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
+- [ ] Run fallow `pnpm fallow` audit please and ensure no new issues are introduced.
 
 <!--VITE PLUS END-->
