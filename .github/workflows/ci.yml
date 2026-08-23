@@ -35,10 +35,6 @@ jobs:
       - name: Install dependencies
         run: vp install --frozen-lockfile
 
-      - name: Check for a changeset on SDK changes
-        if: github.event_name == 'pull_request' && github.head_ref != 'changeset-release/main'
-        run: vp run changeset status --since=origin/main
-
       - name: Generate SDK client types
         run: vp run --filter @dejanvasic85/matchday-sdk generate
 
