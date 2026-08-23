@@ -22,6 +22,12 @@ but doesn't scale to onboarding others — hence a standalone, API-served servic
 
 ## Local development
 
+### Running the API
+
+```
+vp run --filter @matchday/api dev
+```
+
 ### Running the `mday` CLI
 
 `mday` is the crawler CLI ([apps/cli](apps/cli/src/cli.ts)). It drives a real Chrome via
