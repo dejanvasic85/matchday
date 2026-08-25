@@ -27,7 +27,7 @@
     "@cloudflare/workers-types": "catalog:",
     "@types/node": "catalog:",
     "typescript": "catalog:",
-    "vite-plus": "0.2.9",
+    "vite-plus": "0.3.0",
     "wrangler": "catalog:"
   }
 }
