@@ -16,8 +16,8 @@
     "@changesets/cli": "3.0.1",
     "@vitest/coverage-v8": "4.1.11",
     "fallow": "catalog:",
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9",
-    "vite-plus": "0.2.9",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.0",
+    "vite-plus": "0.3.0",
     "vitest": "4.1.11"
   },
   "devEngines": {
@@ -30,5 +30,5 @@
   "engines": {
     "node": "24.18.0"
   },
-  "packageManager": "pnpm@11.23.0"
+  "packageManager": "pnpm@11.24.0"
 }
