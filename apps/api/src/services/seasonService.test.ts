@@ -31,12 +31,21 @@ describe("listAllSeasons", () => {
 
   it("keeps a column the response doesn't name off the wire", async () => {
     const deps = makeDeps({
-      listSeasons: vi.fn().mockResolvedValue(ok([makeSeasonRow({ internalNotes: "secret" })])),
+      listSeasons: vi
+        .fn()
+        .mockResolvedValue(
+          ok({ rows: [makeSeasonRow({ internalNotes: "secret" })], nextCursor: null }),
+        ),
     });
 
     const result = await listAllSeasons(deps);
 
-    expect(result).toEqual(ok([expect.not.objectContaining({ internalNotes: expect.anything() })]));
+    expect(result).toEqual(
+      ok({
+        data: [expect.not.objectContaining({ internalNotes: expect.anything() })],
+        nextCursor: null,
+      }),
+    );
   });
 
   it("propagates a list failure", async () => {

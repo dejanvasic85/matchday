@@ -70,12 +70,21 @@ describe("listAllClubs", () => {
 
   it("keeps a column the response doesn't name off the wire", async () => {
     const deps = makeDeps({
-      listClubs: vi.fn().mockResolvedValue(ok([makeClubRow({ internalNotes: "secret" })])),
+      listClubs: vi
+        .fn()
+        .mockResolvedValue(
+          ok({ rows: [makeClubRow({ internalNotes: "secret" })], nextCursor: null }),
+        ),
     });
 
     const result = await listAllClubs(deps);
 
-    expect(result).toEqual(ok([expect.not.objectContaining({ internalNotes: expect.anything() })]));
+    expect(result).toEqual(
+      ok({
+        data: [expect.not.objectContaining({ internalNotes: expect.anything() })],
+        nextCursor: null,
+      }),
+    );
   });
 
   it("propagates a list failure", async () => {
