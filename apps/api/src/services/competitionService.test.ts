@@ -45,12 +45,19 @@ describe("listAllCompetitions", () => {
     const deps = makeDeps({
       listCompetitions: vi
         .fn()
-        .mockResolvedValue(ok([makeCompetitionRow({ internalNotes: "secret" })])),
+        .mockResolvedValue(
+          ok({ rows: [makeCompetitionRow({ internalNotes: "secret" })], nextCursor: null }),
+        ),
     });
 
     const result = await listAllCompetitions(deps);
 
-    expect(result).toEqual(ok([expect.not.objectContaining({ internalNotes: expect.anything() })]));
+    expect(result).toEqual(
+      ok({
+        data: [expect.not.objectContaining({ internalNotes: expect.anything() })],
+        nextCursor: null,
+      }),
+    );
   });
 
   it("propagates a list failure", async () => {
