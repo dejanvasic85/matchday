@@ -7,6 +7,7 @@ import type { DbVariables } from "#middleware/dbClient.ts";
 import { jsonResult } from "#resultResponse.ts";
 import { errorResponsesValue } from "#schemas/errorResponses.ts";
 import { idParamSchema } from "#schemas/idParamSchema.ts";
+import { pagedSchema, pagingQuerySchema } from "#schemas/pagedSchema.ts";
 import { seasonResponseSchema } from "#schemas/seasonSchema.ts";
 import { createSeasonServiceDeps, getSeason, listAllSeasons } from "#services/seasonService.ts";
 
@@ -16,18 +17,19 @@ const listSeasonsRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["Seasons"],
-  summary: "List all seasons",
+  summary: "List seasons",
+  request: { query: pagingQuerySchema },
   responses: {
     200: {
-      description: "The full season catalog",
-      content: { "application/json": { schema: seasonResponseSchema.array() } },
+      description: "A page of seasons; follow `nextCursor` until it is null",
+      content: { "application/json": { schema: pagedSchema(seasonResponseSchema, "SeasonPage") } },
     },
     ...errorResponsesValue,
   },
 });
 
 seasonRoute.openapi(listSeasonsRoute, async (c) => {
-  const result = await listAllSeasons(createSeasonServiceDeps(c.get("db")));
+  const result = await listAllSeasons(createSeasonServiceDeps(c.get("db")), c.req.valid("query"));
   return jsonResult(c, result, "api.season.list.failed");
 });
 

@@ -19,7 +19,9 @@ function makeCompetitionRow(overrides: Record<string, unknown> = {}) {
 
 function makeDeps(overrides: Partial<CompetitionServiceDeps> = {}): CompetitionServiceDeps {
   return {
-    listCompetitions: vi.fn().mockResolvedValue(ok([makeCompetitionRow()])),
+    listCompetitions: vi
+      .fn()
+      .mockResolvedValue(ok({ rows: [makeCompetitionRow()], nextCursor: null })),
     getCompetitionById: vi.fn().mockResolvedValue(ok(makeCompetitionRow())),
     ...overrides,
   };
@@ -32,7 +34,10 @@ describe("listAllCompetitions", () => {
     const result = await listAllCompetitions(deps);
 
     expect(result).toEqual(
-      ok([expect.objectContaining({ id: "cmp_abc123", createdAt: epoch.toISOString() })]),
+      ok({
+        data: [expect.objectContaining({ id: "cmp_abc123", createdAt: epoch.toISOString() })],
+        nextCursor: null,
+      }),
     );
   });
 

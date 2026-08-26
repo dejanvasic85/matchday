@@ -2,17 +2,35 @@
 // (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
-import { and, asc, eq, ilike, sql } from "drizzle-orm";
+import { and, asc, eq, gt, ilike, sql } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { externalRefEntityTypeValue } from "#constants.ts";
+import { decodeCursor, resolveLimit, toPage, type Page, type PageRequest } from "#paging.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
 import { club, externalRef } from "#schema.ts";
 
 type Club = typeof club.$inferSelect;
 type ClubInsert = typeof club.$inferInsert;
 
-export async function listClubs(db: Db): Promise<Result<Club[]>> {
-  return runQuery(() => db.select().from(club), "Failed to list clubs");
+/** Keyset-paged on `id` (#164): ordered by primary key, seeking past the cursor. */
+export async function listClubs(db: Db, page: PageRequest = {}): Promise<Result<Page<Club>>> {
+  const limit = resolveLimit(page.limit);
+  const after = page.cursor === undefined ? undefined : decodeCursor(page.cursor);
+  if (after !== undefined && !after.ok) {
+    return after;
+  }
+
+  const result = await runQuery(
+    () =>
+      db
+        .select()
+        .from(club)
+        .where(after === undefined ? undefined : gt(club.id, after.value))
+        .orderBy(asc(club.id))
+        .limit(limit + 1),
+    "Failed to list clubs",
+  );
+  return result.ok ? ok(toPage(result.value, limit)) : result;
 }
 
 export async function getClubById(db: Db, id: string): Promise<Result<Club | null>> {

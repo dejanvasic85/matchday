@@ -9,7 +9,7 @@ function makeSeasonRow(overrides: Record<string, unknown> = {}) {
 
 function makeDeps(overrides: Partial<SeasonServiceDeps> = {}): SeasonServiceDeps {
   return {
-    listSeasons: vi.fn().mockResolvedValue(ok([makeSeasonRow()])),
+    listSeasons: vi.fn().mockResolvedValue(ok({ rows: [makeSeasonRow()], nextCursor: null })),
     getSeasonById: vi.fn().mockResolvedValue(ok(makeSeasonRow())),
     ...overrides,
   };
@@ -22,7 +22,10 @@ describe("listAllSeasons", () => {
     const result = await listAllSeasons(deps);
 
     expect(result).toEqual(
-      ok([expect.objectContaining({ id: "sea_abc123", createdAt: epoch.toISOString() })]),
+      ok({
+        data: [expect.objectContaining({ id: "sea_abc123", createdAt: epoch.toISOString() })],
+        nextCursor: null,
+      }),
     );
   });
 

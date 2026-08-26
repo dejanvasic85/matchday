@@ -1,13 +1,15 @@
 // League service (0045): maps DB rows to the wire shape. Catalog data, open to any authenticated
 // client, no subscription scoping (ADR 0013).
 
-import { mapResult, requireFound, type Result } from "@matchday/domain";
+import { requireFound, type Result } from "@matchday/domain";
+import { mapPage, type PagedResponse } from "#services/pagedResponse.ts";
 import {
   getLeagueById,
   listLeagues,
   type Db,
   type LeagueWithRefs,
   type ListLeaguesFilter,
+  type PageRequest,
 } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -23,7 +25,7 @@ export type LeagueServiceDeps = {
  * layer should reach into @matchday/db (AGENTS.md: routes are glue, services own the logic). */
 export function createLeagueServiceDeps(db: Db): LeagueServiceDeps {
   return {
-    listLeagues: (filter) => listLeagues(db, filter),
+    listLeagues: (filter, page) => listLeagues(db, filter, page),
     getLeagueById: (id) => getLeagueById(db, id),
   };
 }
@@ -57,9 +59,9 @@ function mapToLeagueResponse(league: LeagueWithRefs): LeagueResponse {
 export async function listAllLeagues(
   deps: Pick<LeagueServiceDeps, "listLeagues">,
   filter?: ListLeaguesFilter,
-): Promise<Result<LeagueResponse[]>> {
-  const result = await deps.listLeagues(filter);
-  return mapResult(result, (leagues) => leagues.map(mapToLeagueResponse));
+  page?: PageRequest,
+): Promise<Result<PagedResponse<LeagueResponse>>> {
+  return mapPage(await deps.listLeagues(filter, page), mapToLeagueResponse);
 }
 
 export async function getLeague(

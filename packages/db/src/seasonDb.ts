@@ -2,16 +2,34 @@
 // here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
-import { eq } from "drizzle-orm";
+import { asc, eq, gt } from "drizzle-orm";
 import type { Db } from "#client.ts";
+import { decodeCursor, resolveLimit, toPage, type Page, type PageRequest } from "#paging.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
 import { season } from "#schema.ts";
 
 type Season = typeof season.$inferSelect;
 type SeasonInsert = typeof season.$inferInsert;
 
-export async function listSeasons(db: Db): Promise<Result<Season[]>> {
-  return runQuery(() => db.select().from(season), "Failed to list seasons");
+/** Keyset-paged on `id` (#164): ordered by primary key, seeking past the cursor. */
+export async function listSeasons(db: Db, page: PageRequest = {}): Promise<Result<Page<Season>>> {
+  const limit = resolveLimit(page.limit);
+  const after = page.cursor === undefined ? undefined : decodeCursor(page.cursor);
+  if (after !== undefined && !after.ok) {
+    return after;
+  }
+
+  const result = await runQuery(
+    () =>
+      db
+        .select()
+        .from(season)
+        .where(after === undefined ? undefined : gt(season.id, after.value))
+        .orderBy(asc(season.id))
+        .limit(limit + 1),
+    "Failed to list seasons",
+  );
+  return result.ok ? ok(toPage(result.value, limit)) : result;
 }
 
 export async function getSeasonById(db: Db, id: string): Promise<Result<Season | null>> {

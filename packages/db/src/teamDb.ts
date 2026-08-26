@@ -2,8 +2,9 @@
 // (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
-import { eq } from "drizzle-orm";
+import { and, asc, eq, gt } from "drizzle-orm";
 import type { Db } from "#client.ts";
+import { decodeCursor, resolveLimit, toPage, type Page, type PageRequest } from "#paging.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
 import { club, leagueTeam, team } from "#schema.ts";
 
@@ -27,22 +28,35 @@ const teamColumns = {
 
 /** List teams, optionally narrowed to one club — the filter a club's roster page needs. Each
  * team's owning club is embedded (null if `clubId` is null) so a consumer can render a team
- * without a second request. */
-export async function listTeams(db: Db, clubId?: string): Promise<Result<TeamWithClub[]>> {
-  return runQuery(
+ * without a second request. Keyset-paged on `id` (#164): unscoped this is ~6500 rows / 2.4 MB. */
+export async function listTeams(
+  db: Db,
+  clubId?: string,
+  page: PageRequest = {},
+): Promise<Result<Page<TeamWithClub>>> {
+  const limit = resolveLimit(page.limit);
+  const after = page.cursor === undefined ? undefined : decodeCursor(page.cursor);
+  if (after !== undefined && !after.ok) {
+    return after;
+  }
+
+  const conditions = [
+    clubId === undefined ? undefined : eq(team.clubId, clubId),
+    after === undefined ? undefined : gt(team.id, after.value),
+  ].filter((condition) => condition !== undefined);
+
+  const result = await runQuery(
     () =>
-      clubId === undefined
-        ? db
-            .select({ ...teamColumns, club })
-            .from(team)
-            .leftJoin(club, eq(team.clubId, club.id))
-        : db
-            .select({ ...teamColumns, club })
-            .from(team)
-            .leftJoin(club, eq(team.clubId, club.id))
-            .where(eq(team.clubId, clubId)),
+      db
+        .select({ ...teamColumns, club })
+        .from(team)
+        .leftJoin(club, eq(team.clubId, club.id))
+        .where(conditions.length === 0 ? undefined : and(...conditions))
+        .orderBy(asc(team.id))
+        .limit(limit + 1),
     "Failed to list teams",
   );
+  return result.ok ? ok(toPage(result.value, limit)) : result;
 }
 
 export async function getTeamById(db: Db, id: string): Promise<Result<TeamWithClub | null>> {

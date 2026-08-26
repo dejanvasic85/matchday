@@ -1,8 +1,9 @@
 // Competition service (0045): maps DB rows to the wire shape. Catalog data, open to any
 // authenticated client, no subscription scoping (ADR 0013).
 
-import { mapResult, requireFound, type Competition, type Result } from "@matchday/domain";
-import { getCompetitionById, listCompetitions, type Db } from "@matchday/db";
+import { requireFound, type Competition, type Result } from "@matchday/domain";
+import { mapPage, type PagedResponse } from "#services/pagedResponse.ts";
+import { getCompetitionById, listCompetitions, type Db, type PageRequest } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
@@ -40,9 +41,9 @@ function mapToCompetitionResponse(competition: Competition): CompetitionResponse
 
 export async function listAllCompetitions(
   deps: Pick<CompetitionServiceDeps, "listCompetitions">,
-): Promise<Result<CompetitionResponse[]>> {
-  const result = await deps.listCompetitions();
-  return mapResult(result, (competitions) => competitions.map(mapToCompetitionResponse));
+  page?: PageRequest,
+): Promise<Result<PagedResponse<CompetitionResponse>>> {
+  return mapPage(await deps.listCompetitions(page), mapToCompetitionResponse);
 }
 
 export async function getCompetition(

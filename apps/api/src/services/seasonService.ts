@@ -1,8 +1,9 @@
 // Season service (0045): maps DB rows to the wire shape. Catalog data, open to any authenticated
 // client, no subscription scoping (ADR 0013).
 
-import { mapResult, requireFound, type Result, type Season } from "@matchday/domain";
-import { getSeasonById, listSeasons, type Db } from "@matchday/db";
+import { requireFound, type Result, type Season } from "@matchday/domain";
+import { mapPage, type PagedResponse } from "#services/pagedResponse.ts";
+import { getSeasonById, listSeasons, type Db, type PageRequest } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
@@ -40,9 +41,9 @@ function mapToSeasonResponse(season: Season): SeasonResponse {
 
 export async function listAllSeasons(
   deps: Pick<SeasonServiceDeps, "listSeasons">,
-): Promise<Result<SeasonResponse[]>> {
-  const result = await deps.listSeasons();
-  return mapResult(result, (seasons) => seasons.map(mapToSeasonResponse));
+  page?: PageRequest,
+): Promise<Result<PagedResponse<SeasonResponse>>> {
+  return mapPage(await deps.listSeasons(page), mapToSeasonResponse);
 }
 
 export async function getSeason(

@@ -8,6 +8,7 @@ import { jsonResult } from "#resultResponse.ts";
 import { competitionResponseSchema } from "#schemas/competitionSchema.ts";
 import { errorResponsesValue } from "#schemas/errorResponses.ts";
 import { idParamSchema } from "#schemas/idParamSchema.ts";
+import { pagedSchema, pagingQuerySchema } from "#schemas/pagedSchema.ts";
 import {
   createCompetitionServiceDeps,
   getCompetition,
@@ -23,18 +24,24 @@ const listCompetitionsRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["Competitions"],
-  summary: "List all competitions",
+  summary: "List competitions",
+  request: { query: pagingQuerySchema },
   responses: {
     200: {
-      description: "The full competition catalog",
-      content: { "application/json": { schema: competitionResponseSchema.array() } },
+      description: "A page of competitions; follow `nextCursor` until it is null",
+      content: {
+        "application/json": { schema: pagedSchema(competitionResponseSchema, "CompetitionPage") },
+      },
     },
     ...errorResponsesValue,
   },
 });
 
 competitionRoute.openapi(listCompetitionsRoute, async (c) => {
-  const result = await listAllCompetitions(createCompetitionServiceDeps(c.get("db")));
+  const result = await listAllCompetitions(
+    createCompetitionServiceDeps(c.get("db")),
+    c.req.valid("query"),
+  );
   return jsonResult(c, result, "api.competition.list.failed");
 });
 

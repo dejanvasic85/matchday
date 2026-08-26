@@ -8,6 +8,7 @@ import { jsonResult } from "#resultResponse.ts";
 import { clubResponseSchema } from "#schemas/clubSchema.ts";
 import { errorResponsesValue } from "#schemas/errorResponses.ts";
 import { idParamSchema } from "#schemas/idParamSchema.ts";
+import { pagedSchema, pagingQuerySchema } from "#schemas/pagedSchema.ts";
 import { createClubServiceDeps, getClub, listAllClubs } from "#services/clubService.ts";
 
 export const clubRoute = new OpenAPIHono<{ Bindings: ApiBindings; Variables: DbVariables }>();
@@ -16,18 +17,19 @@ const listClubsRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["Clubs"],
-  summary: "List all clubs",
+  summary: "List clubs, newest page first",
+  request: { query: pagingQuerySchema },
   responses: {
     200: {
-      description: "The full club catalog",
-      content: { "application/json": { schema: clubResponseSchema.array() } },
+      description: "A page of clubs; follow `nextCursor` until it is null",
+      content: { "application/json": { schema: pagedSchema(clubResponseSchema, "ClubPage") } },
     },
     ...errorResponsesValue,
   },
 });
 
 clubRoute.openapi(listClubsRoute, async (c) => {
-  const result = await listAllClubs(createClubServiceDeps(c.get("db")));
+  const result = await listAllClubs(createClubServiceDeps(c.get("db")), c.req.valid("query"));
   return jsonResult(c, result, "api.club.list.failed");
 });
 

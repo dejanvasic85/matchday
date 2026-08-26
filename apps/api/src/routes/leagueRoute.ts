@@ -10,6 +10,7 @@ import { fixtureResponseSchema } from "#schemas/fixtureSchema.ts";
 import { idParamSchema } from "#schemas/idParamSchema.ts";
 import { leagueOverviewResponseSchema } from "#schemas/leagueOverviewSchema.ts";
 import { leagueResponseSchema } from "#schemas/leagueSchema.ts";
+import { pagedSchema, pagingQuerySchema } from "#schemas/pagedSchema.ts";
 import { tableEntryResponseSchema } from "#schemas/tableEntrySchema.ts";
 import { teamResponseSchema } from "#schemas/teamSchema.ts";
 import { createFixtureServiceDeps, listLeagueFixtures } from "#services/fixtureService.ts";
@@ -29,7 +30,7 @@ const listLeaguesRoute = createRoute({
   tags: ["Leagues"],
   summary: "List leagues, optionally filtered by competition, season, and/or club",
   request: {
-    query: z.object({
+    query: pagingQuerySchema.extend({
       competitionId: z
         .string()
         .regex(/^cmp_/)
@@ -54,16 +55,19 @@ const listLeaguesRoute = createRoute({
   },
   responses: {
     200: {
-      description: "Leagues matching the filter",
-      content: { "application/json": { schema: leagueResponseSchema.array() } },
+      description: "A page of leagues; follow `nextCursor` until it is null",
+      content: { "application/json": { schema: pagedSchema(leagueResponseSchema, "LeaguePage") } },
     },
     ...errorResponsesValue,
   },
 });
 
 leagueRoute.openapi(listLeaguesRoute, async (c) => {
-  const filter = c.req.valid("query");
-  const result = await listAllLeagues(createLeagueServiceDeps(c.get("db")), filter);
+  const { limit, cursor, ...filter } = c.req.valid("query");
+  const result = await listAllLeagues(createLeagueServiceDeps(c.get("db")), filter, {
+    limit,
+    cursor,
+  });
   return jsonResult(c, result, "api.league.list.failed");
 });
 

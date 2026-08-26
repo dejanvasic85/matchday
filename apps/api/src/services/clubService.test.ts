@@ -25,7 +25,7 @@ function makeClubRow(overrides: Record<string, unknown> = {}) {
 
 function makeDeps(overrides: Partial<ClubServiceDeps> = {}): ClubServiceDeps {
   return {
-    listClubs: vi.fn().mockResolvedValue(ok([makeClubRow()])),
+    listClubs: vi.fn().mockResolvedValue(ok({ rows: [makeClubRow()], nextCursor: null })),
     getClubById: vi.fn().mockResolvedValue(ok(makeClubRow())),
     ...overrides,
   };
@@ -38,7 +38,33 @@ describe("listAllClubs", () => {
     const result = await listAllClubs(deps);
 
     expect(result).toEqual(
-      ok([expect.objectContaining({ id: "clb_abc123", createdAt: epoch.toISOString() })]),
+      ok({
+        data: [expect.objectContaining({ id: "clb_abc123", createdAt: epoch.toISOString() })],
+        nextCursor: null,
+      }),
+    );
+  });
+
+  it("passes limit and cursor through to data access", async () => {
+    const deps = makeDeps();
+    const page = { limit: 25, cursor: "Y2xiX2FiYzEyMw" };
+
+    await listAllClubs(deps, page);
+
+    expect(deps.listClubs).toHaveBeenCalledWith(page);
+  });
+
+  it("surfaces nextCursor so a caller knows another page exists", async () => {
+    const deps = makeDeps({
+      listClubs: vi
+        .fn()
+        .mockResolvedValue(ok({ rows: [makeClubRow()], nextCursor: "Y2xiX2FiYzEyMw" })),
+    });
+
+    const result = await listAllClubs(deps);
+
+    expect(result).toEqual(
+      ok({ data: [expect.objectContaining({ id: "clb_abc123" })], nextCursor: "Y2xiX2FiYzEyMw" }),
     );
   });
 
