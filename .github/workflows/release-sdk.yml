@@ -24,10 +24,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # RELEASE_PAT, not the default token: a PR opened by GITHUB_TOKEN triggers no workflow runs,
+      # so its required Verify check never reports and the release PR can't be merged (#167).
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_PAT }}
 
       # Vite+'s setup-vp action doesn't put a bare pnpm binary on PATH, but changesets/action's
       # version/publish inputs below need one (same reason deploy.yml needs this for wrangler-action).
@@ -64,6 +67,6 @@ jobs:
           # A single script name, not "a && b" — changesets/action execs without a shell, so a
           # top-level `&&` here silently mis-chains (broke `vp pack`'s entry resolution once).
           publish-script: pnpm run release:sdk
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.RELEASE_PAT }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
