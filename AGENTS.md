@@ -10,8 +10,8 @@ In any discussion, add humour and funny memes to lighten the mood.
 Always be succinct, never repeat yourself and keep it brief please.
 Use dot points where possible.
 
-**Always write in plain language, per ISO 24495-1:2023.** The reader must be able to find what
-they need, understand it, and use it — first time through. In practice:
+**Always respond in plain language, per ISO 24495-1:2023.** Every reply must let the reader find
+what they need, understand it, and use it — first time through. In practice:
 
 - **Relevant** — write for the reader who has to act; cut anything they don't need.
 - **Findable** — lead with the answer, then the detail. Headings and dot points, not walls of text.
@@ -20,9 +20,13 @@ they need, understand it, and use it — first time through. In practice:
 - **Usable** — say exactly what to do and in what order; no vague "consider" or "it may be
   possible".
 
-This governs prose — chat replies, PR descriptions, commit messages, docs, ADRs, `--help` text and
-error messages. Domain terms (`external_ref`, upsert, Hyperdrive) stay as they are; plain language
-means plain phrasing, not dumbed-down technical accuracy.
+**Applies to everything you emit for a human to read:** chat replies, PR descriptions, commit
+messages, docs, ADRs, plans, `--help` text and error messages.
+
+**Does not apply to thinking.** Reason however you need to — long, messy, exploratory, jargon-heavy,
+whatever gets to the right answer. The standard is about the output, not the working out. Never
+trade away correctness to keep a sentence short: plain language is plain phrasing, not thinner
+analysis, and domain terms (`external_ref`, upsert, Hyperdrive) stay exactly as they are.
 
 ## Project context
 
