@@ -1,5 +1,5 @@
 import { createMatchdayClient } from "#client.ts";
-import { getClubLeagues, getLeagueOverview, getLeagueTeams } from "#leagueTasks.ts";
+import { getClubLeagues, getLeagueOverview, getLeagueTeams, listAllLeagues } from "#leagueTasks.ts";
 
 function makeClient(body: unknown, status = 200) {
   const fetch = vi.fn(async (_request: Request) => new Response(JSON.stringify(body), { status }));
@@ -62,6 +62,28 @@ function makePagingClient(pages: { data: unknown[]; nextCursor: string | null }[
   });
   return { client, urls };
 }
+
+describe("listAllLeagues", () => {
+  it("sends every supplied filter server-side", async () => {
+    const { client, urls } = makePagingClient([{ data: [], nextCursor: null }]);
+
+    await listAllLeagues(client, { competitionId: "cmp_abc123", seasonId: "sea_abc123" });
+
+    expect(urls[0]).toContain("competitionId=cmp_abc123");
+    expect(urls[0]).toContain("seasonId=sea_abc123");
+  });
+
+  it("returns every league across pages when unfiltered", async () => {
+    const { client } = makePagingClient([
+      { data: [{ id: "lea_a" }], nextCursor: "Y3Vyc29yMQ" },
+      { data: [{ id: "lea_b" }], nextCursor: null },
+    ]);
+
+    const result = await listAllLeagues(client);
+
+    expect(result).toEqual({ ok: true, value: [{ id: "lea_a" }, { id: "lea_b" }] });
+  });
+});
 
 describe("getClubLeagues", () => {
   it("filters leagues by clubId server-side", async () => {

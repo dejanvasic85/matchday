@@ -63,6 +63,53 @@ if (result.ok) {
 Prefer `getLeagueTeams` over `GET /teams` + `GET /clubs`: the full catalog is ~6500 teams and
 2.4 MB to resolve the handful in one league.
 
+### Auto-paging
+
+List routes return `{ data, nextCursor }`. The `listAll*` helpers follow `nextCursor` to the end
+for you and hand back one array — no cursor loop in your code:
+
+```ts
+import { listAllClubs, listAllLeagues, listAllTeams } from "@dejanvasic85/matchday-sdk";
+
+const clubs = await listAllClubs(client);
+if (clubs.ok) {
+  console.log(clubs.value.length); // every club, however many pages that took
+}
+
+// Filters are applied server-side — always prefer one over walking a full catalog
+const teams = await listAllTeams(client, { clubId: "clb_V1StGXR8Z5" });
+const leagues = await listAllLeagues(client, { seasonId: "sea_V1StGXR8Z5" });
+```
+
+| Function                            | Returns                                             |
+| ----------------------------------- | --------------------------------------------------- |
+| `listAllClubs(client)`              | every club                                          |
+| `listAllTeams(client, { clubId? })` | every team, optionally scoped to one club           |
+| `listAllCompetitions(client)`       | every competition                                   |
+| `listAllSeasons(client)`            | every season                                        |
+| `listAllLeagues(client, filter)`    | every league by `competitionId`/`seasonId`/`clubId` |
+
+Each takes an optional third argument: `{ signal, limit, maxPages }`. `limit` defaults to 500 (the
+server's max, so a walk costs the fewest round-trips) and `maxPages` to 100 — past that you get an
+`err` Result rather than an endless loop. A failure on any page returns that failure, never a
+silently partial list.
+
+For a route these helpers don't cover, `fetchAllPages` is the same loop with the request left to
+you:
+
+```ts
+import { fetchAllPages, type components } from "@dejanvasic85/matchday-sdk";
+
+type Season = components["schemas"]["Season"];
+
+const seasons = await fetchAllPages<Season>((query, signal) =>
+  client.GET("/seasons", { params: { query }, signal }),
+);
+```
+
+Paging is a guard rail, not the intended access path: if you find yourself walking `/teams` whole,
+there is almost certainly a filter or a league-scoped route that does the job in one request.
+
 ### Handling errors
 
 `unwrap` turns a call into a `Result`, so you stop repeating `if (error || !data) throw`:
