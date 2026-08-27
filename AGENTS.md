@@ -10,6 +10,24 @@ In any discussion, add humour and funny memes to lighten the mood.
 Always be succinct, never repeat yourself and keep it brief please.
 Use dot points where possible.
 
+**Always respond in plain language, per ISO 24495-1:2023.** Every reply must let the reader find
+what they need, understand it, and use it — first time through. In practice:
+
+- **Relevant** — write for the reader who has to act; cut anything they don't need.
+- **Findable** — lead with the answer, then the detail. Headings and dot points, not walls of text.
+- **Understandable** — short sentences, everyday words, active voice ("the crawler upserts the
+  club", not "clubs are upserted"). Expand a term or acronym the first time it appears.
+- **Usable** — say exactly what to do and in what order; no vague "consider" or "it may be
+  possible".
+
+**Applies to everything you emit for a human to read:** chat replies, PR descriptions, commit
+messages, docs, ADRs, plans, `--help` text and error messages.
+
+**Does not apply to thinking.** Reason however you need to — long, messy, exploratory, jargon-heavy,
+whatever gets to the right answer. The standard is about the output, not the working out. Never
+trade away correctness to keep a sentence short: plain language is plain phrasing, not thinner
+analysis, and domain terms (`external_ref`, upsert, Hyperdrive) stay exactly as they are.
+
 ## Project context
 
 matchday is a **multi-tenant sports competition data service** — it scrapes Dribl fixtures,
@@ -30,7 +48,7 @@ pnpm + Vite+ monorepo:
 
 The **ADRs in `docs/decisions/` are the source of truth**; read the relevant one before a change.
 The build backlog lives in **GitHub Issues** (`gh issue list`), grouped by phase milestones and
-tagged with `phase:N` / `adr:NNNN` labels. `docs/todo.md` is now just a pointer to it.
+tagged with `phase:N` / `adr:NNNN` labels.
 
 ## Tech stack (from ADRs — target this stack)
 
@@ -40,9 +58,11 @@ tagged with `phase:N` / `adr:NNNN` labels. `docs/todo.md` is now just a pointer 
 - **Database:** **Postgres on Neon**, via **Drizzle**. From a Worker, reach it through the Neon
   serverless driver / Hyperdrive — **never a raw `pg` TCP connection from a V8 isolate**.
 - **Scraper:** **playwright-core** with real Chrome to clear Dribl's Cloudflare, then direct
-  `mc-api.dribl.com` calls. The browser endpoint is abstracted (thanos primary ↔ managed-browser
-  fallback) so switching is a config change, not a rewrite. See the `dribl-crawling` skill.
-- **Identifiers:** app-owned **prefixed-nanoid** primary IDs (`clb_`/`tea_`/`cmp_`/`sea_`/`lea_`/`mtc_`/`tab_`);
+  `mc-api.dribl.com` calls. It runs on **GitHub Actions** hosted runners (0009). The browser
+  endpoint stays abstracted, so moving off them is a config change, not a rewrite. See the
+  `dribl-crawling` skill.
+- **Identifiers:** app-owned **prefixed-nanoid** primary IDs
+  (`clb_`/`tea_`/`cmp_`/`sea_`/`lea_`/`mtc_`/`tab_`/`lgt_`);
   external identity lives in an `external_ref (source, source_id)` mapping. Ingest **upserts by
   `(source, source_id)`** for idempotent re-scraping. Prefer branded ID types. The ID service lives in
   `packages/domain`.
@@ -171,22 +191,28 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
 - TypeScript module filenames are **camelCase** (`fixtureTransformService.ts`).
 - **Alias imports, never relative, everywhere in the monorepo — including same-directory
   `./foo.ts` imports.** Every package's `package.json` declares a native subpath-imports mapping:
+
   ```json
   "imports": { "#*": "./src/*" }
   ```
-  (`apps/api` and `apps/cli` additionally map `"#test/*": "./test/*"` for their package-root
-  `test/fixtures/` dir — see Unit testing below.) `#foo.ts` is resolved by **Node itself** — no
-  bundler, no loader — because it's a standard `package.json` field (Node's own "subpath imports"),
-  and the same mapping is understood natively by TypeScript (`moduleResolution: "nodenext"`, no
-  `tsconfig.json` "paths" needed) and by Vite/Vitest/esbuild. That universality is exactly why this
-  replaced an earlier per-app `vite.config.ts` `resolve.alias` (`@/...`): that alias only worked for
-  tooling that reads `vite.config.ts`, and silently didn't exist for `apps/cli`'s `mday` binary,
-  which runs via a raw `node src/cli.ts` invocation in CI (`.github/workflows/crawl-*.yml`) with no
-  bundler in front of it — an "alias imports everywhere" pass that used `resolve.alias` broke every
-  scheduled crawl workflow with `ERR_MODULE_NOT_FOUND` (#92) because nothing in that runtime path
-  understood `@/`. The subpath-imports form has no such blind spot: whether a package's production
-  entrypoint is bundled (`apps/api`, via wrangler/esbuild) or run raw (`apps/cli`), the exact same
-  `#foo.ts` import resolves correctly, so there's one convention, not one per package shape.
+
+  `apps/api` and `apps/cli` also map `"#test/*": "./test/*"`, for the `test/fixtures/` directory at
+  their package root — see Unit testing below.
+
+  **Node resolves `#foo.ts` itself**, with no bundler and no loader, because subpath imports are a
+  standard `package.json` field. TypeScript reads the same mapping natively under
+  `moduleResolution: "nodenext"`, so it needs no `tsconfig.json` "paths" entry, and so do Vite,
+  Vitest and esbuild.
+
+  That universality is the whole point. An earlier convention used a per-app `resolve.alias`
+  (`@/...`) in `vite.config.ts`, which only worked for tooling that reads that file. It silently
+  did not exist for `apps/cli`'s `mday` binary, which CI runs as a raw `node src/cli.ts` with no
+  bundler in front of it. So an "alias imports everywhere" pass broke every scheduled crawl
+  workflow with `ERR_MODULE_NOT_FOUND` (#92), because nothing in that runtime path understood
+  `@/`. Subpath imports have no such blind spot: the same `#foo.ts` resolves whether the package's
+  production entrypoint is bundled (`apps/api`, through wrangler and esbuild) or run raw
+  (`apps/cli`). One convention, not one per package shape.
+
 - Avoid magic numbers/strings — name them. Comments only for non-obvious intent; never commented-out
   code. **Max 2 lines per comment** — if it needs more, put the reasoning in the PR description or
   an ADR instead.

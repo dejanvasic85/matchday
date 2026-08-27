@@ -6,16 +6,16 @@
 ## Context
 
 0001 commits matchday to a single monorepo holding the scraper, the API, shared domain code
-(entities, Zod schemas, DB layer), and infra. We need a package manager and, optionally, a
-task runner to manage multiple workspaces, shared dependencies, and build/test orchestration.
-williamstownsc already uses **pnpm**, so the team is familiar with it.
+(entities, Zod schemas, database layer) and infrastructure. We need a package manager, and
+possibly a task runner, to manage several workspaces, shared dependencies, and build and test
+orchestration. williamstownsc already uses **pnpm**, so we know it.
 
-Since the original decision, **Vite+** (VoidZero, MIT-licensed, currently beta) was released as
-a unified web toolchain that bundles Vite, Vitest, Oxlint, Oxfmt, Rolldown, tsdown, and Vite
-Task behind a single `vp` CLI. It runs monorepo tasks (`vp run`) with caching and per-package
-config overrides — the role Turborepo would otherwise fill — while also folding lint, format,
-test, and build into one tool. It does **not** replace the package manager; pnpm workspaces
-are still needed for install/linking.
+Since we first made this decision, VoidZero released **Vite+**, an MIT-licensed unified web
+toolchain, currently in beta. It puts Vite, Vitest, Oxlint, Oxfmt, Rolldown, tsdown and Vite Task
+behind a single `vp` command. `vp run` executes monorepo tasks with caching and per-package
+config overrides, which is the role Turborepo would otherwise fill, and it folds lint, format,
+test and build into the same tool. It does **not** replace the package manager: we still need
+pnpm workspaces to install and link.
 
 ## Options
 
@@ -38,14 +38,16 @@ are still needed for install/linking.
 
 ## Recommendation
 
-**pnpm workspaces + Vite+** from the outset. pnpm for install/linking (matches WSC), Vite+ as
-the single toolchain for cached/parallel task orchestration plus lint, format, test, and build
-across packages. This collapses what would otherwise be Turborepo + a separate lint/format/test
-stack into one tool. We accept Vite+'s beta status as a considered risk; the downside is limited
-because pnpm workspaces remain the load-bearing layer and Vite+ can be swapped for Turborepo (or
-plain pnpm scripts) if it doesn't hold up.
+**pnpm workspaces plus Vite+**, from the outset. pnpm installs and links, which matches WSC.
+Vite+ is the single toolchain for cached, parallel task orchestration, and for lint, format, test
+and build across packages. That collapses what would otherwise be Turborepo plus a separate
+lint, format and test stack into one tool.
 
-Proposed initial workspace layout:
+We accept Vite+'s beta status as a considered risk. The downside stays limited, because pnpm
+workspaces remain the load-bearing layer, and we can swap Vite+ for Turborepo or plain pnpm
+scripts if it does not hold up.
+
+The initial workspace layout we proposed:
 
 ```
 matchday/
@@ -59,16 +61,21 @@ matchday/
   docs/decisions/   # ADRs
 ```
 
+The shape held, with two changes as the repo grew: `apps/scraper` became `apps/cli` (the `mday`
+crawler and administration surface, per 0014), and `packages/sdk` was added for the published
+typed client.
+
 ## Consequences
 
-- `pnpm-workspace.yaml` at the repo root for install/linking.
-- Root `vite.config.ts` defining shared `lint`/`fmt`/test defaults, with per-package
-  `overrides`; tasks run via `vp run` with caching.
-- Vite+'s bundled Oxlint/Oxfmt replace a separately configured ESLint/Prettier stack;
-  Vitest is the test runner.
-- Shared code lives in `packages/*`, deployables in `apps/*`.
-- Consistent with williamstownsc's pnpm familiarity.
-- Node version pinned via `engines.node` / `devEngines.runtime` in `package.json`, resolved by
-  pnpm/Vite+ — no separate runtime manager (superseded an initial Mise pin, #74).
-- Vite+ is beta: pin its version and revisit this ADR if breaking changes or gaps in
-  backend/CF-Workers workflows surface.
+- `pnpm-workspace.yaml` sits at the repo root and handles install and linking.
+- A root `vite.config.ts` defines shared lint, format and test defaults, with per-package
+  `overrides`. Tasks run through `vp run`, with caching.
+- Vite+'s bundled Oxlint and Oxfmt replace a separately configured ESLint and Prettier stack.
+  Vitest runs the tests.
+- Shared code lives in `packages/*`, and anything we deploy lives in `apps/*`.
+- The choice matches what we already know from williamstownsc.
+- We pin the Node version through `engines.node` and `devEngines.runtime` in `package.json`,
+  which pnpm and Vite+ resolve. We need no separate runtime manager, which superseded an initial
+  Mise pin (#74).
+- Vite+ is beta, so pin its version. Revisit this ADR if it breaks compatibility, or if gaps show
+  up in backend or Cloudflare Workers workflows.

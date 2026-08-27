@@ -5,10 +5,10 @@
 
 ## Context
 
-matchday serves read-mostly competition data with a well-defined, stable resource set:
-clubs, teams, competitions, seasons, fixtures, tables. Consumers (starting with
-williamstownsc's Next.js app) need predictable, cacheable responses. The API sits behind
-Cloudflare for edge caching.
+matchday serves read-mostly competition data over a stable, well-defined set of resources: clubs,
+teams, competitions, seasons, fixtures and tables. Consumers need predictable, cacheable
+responses — starting with williamstownsc's Next.js app. The API sits behind Cloudflare, which
+caches at the edge.
 
 ## Options
 
@@ -23,27 +23,29 @@ Cloudflare for edge caching.
 
 ## Recommendation
 
-**REST with an OpenAPI spec as the contract.** Resource-oriented endpoints (e.g.
-`/clubs/{id}`, `/teams/{id}/fixtures`, `/competitions/{id}/table`). Consumers — starting with
-WSC's Next.js app — **generate typed clients from the OpenAPI spec**, giving end-to-end type
-safety while staying language-agnostic for any future non-TS or third-party consumer. Cache
-aggressively at Cloudflare with per-resource TTLs.
+**REST, with an OpenAPI spec as the contract.** Endpoints are resource-oriented, such as
+`/clubs/{id}`, `/teams/{id}/fixtures` and `/competitions/{id}/table`. Consumers **generate typed
+clients from the spec**, starting with WSC's Next.js app. That gives end-to-end type safety and
+still works for a future consumer that does not write TypeScript. Cache aggressively at
+Cloudflare, with a time-to-live set per resource.
 
-tRPC and a shared-types package were considered but rejected: both assume a TS-only world and
-lack a language-agnostic contract / auto-generated docs suited to a multi-tenant public API.
+We considered tRPC and a shared-types package, and rejected both. Each assumes a TypeScript-only
+world, and neither gives us the language-agnostic contract and generated docs a multi-tenant
+public API needs.
 
 ### Framework & runtime
 
-**Hono** on **Cloudflare Workers** (see 0009). Hono is edge-native, runs the same code on
-Workers/Bun/Node (so the runtime stays reversible), and has first-class OpenAPI support
-(`@hono/zod-openapi`) — the spec and the Zod validation come from one source. Postgres is
-reached from the Worker via the Neon serverless driver or Cloudflare Hyperdrive (a raw TCP
-`pg` connection doesn't work from a V8 isolate).
+**Hono** on **Cloudflare Workers**, per 0009. Hono is edge-native and runs the same code on
+Workers, Bun and Node, so we can reverse the runtime choice later. It also supports OpenAPI
+directly through `@hono/zod-openapi`, which means one Zod source drives both the spec and the
+request validation. The Worker reaches Postgres through the Neon serverless driver or Cloudflare
+Hyperdrive, because a raw TCP `pg` connection does not work from a V8 isolate.
 
 ## Consequences
 
-- OpenAPI spec is the API contract; generate consumer types from it.
-- Edge caching keyed on URL — align cache TTLs with scrape cadence (0003).
-- Revisit GraphQL only if consumers need highly variable nested queries later.
-- Hono keeps the runtime reversible (Workers → Bun/Node) if Worker isolate limits bite.
-- Use `@hono/zod-openapi` so Zod schemas (per 0004/0005) generate the OpenAPI spec.
+- The OpenAPI spec is the contract. Consumers generate their types from it.
+- Cloudflare caches at the edge keyed on URL, so align each cache lifetime with the scrape
+  cadence in 0003.
+- Revisit GraphQL only if consumers later need highly variable nested queries.
+- Hono keeps the runtime reversible, so we can move to Bun or Node if Worker isolate limits bite.
+- Use `@hono/zod-openapi`, so the Zod schemas from 0004 and 0005 generate the spec.

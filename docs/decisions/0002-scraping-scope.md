@@ -1,14 +1,16 @@
 # 0002. Scraping scope
 
-- Status: decided
+- Status: superseded
 - Date: 2026-07-12
+- Superseded by: [0012](0012-subscription-multisource.md) — subscriptions drive the crawl scope,
+  not a hand-seeded tracked-competition registry.
 
 ## Context
 
-The current WSC crawler is **per-team**: it iterates each enabled team, resolves Dribl
-season/competition/league IDs by name, and crawls that team's fixtures round-by-round. When
-teams share a competition, the same fixtures get fetched multiple times. For a multi-tenant
-service onboarding many clubs, per-team crawling multiplies redundant fetches and load on
+The crawler in `williamstownsc` (WSC) works **per team**. It walks each enabled team, matches
+Dribl season, competition and league IDs by name, then crawls that team's fixtures round by
+round. When two teams share a competition, it fetches the same fixtures twice. Across a
+multi-tenant service onboarding many clubs, that multiplies both wasted fetches and load on
 Dribl.
 
 ## Options
@@ -25,35 +27,35 @@ Dribl.
   - Pros: complete dataset, instant onboarding.
   - Cons: large, wasteful, most data never served; heavier Dribl load.
 
-### Key insight: competition-keyed crawling solves dedup
+### Key insight: keying the crawl on competition removes duplicates
 
-The "same fixture/result scraped multiple times" problem is an artefact of the _per-team_
-model. If the crawl is **keyed on competition**, each fixture and table is fetched **exactly
-once** no matter how many tenant teams sit in that competition. Dedup is therefore not a
-separate mechanism — it falls out of the crawl key. This makes competition-keyed crawling the
-right base regardless of how wide we cast the net.
+Scraping the same fixture twice is an artefact of the _per-team_ model. Key the crawl on
+**competition** instead, and it fetches each fixture and table **exactly once**, however many
+tenant teams sit in that competition. So we need no separate de-duplication step: it falls out
+of the crawl key. That makes competition-keyed crawling the right base however wide we cast the
+net.
 
-That leaves one open axis: _which_ competitions to crawl — only tenants' competitions, or a
-whole association. That choice is driven by **crawl efficiency/cost** (0003 cadence + how heavy
-the Cloudflare-bypass browser step is), which we haven't measured yet.
+One question stays open: _which_ competitions to crawl — only our tenants', or a whole
+association. Crawl cost decides that, and we have not measured it yet. Cost depends on the 0003
+cadence and on how expensive the Cloudflare-bypass browser step turns out to be.
 
 ## Recommendation
 
 **Crawl by competition, driven by a tracked-competitions registry, seeded from tenant teams.**
 
-- The crawler iterates a **registry of tracked competitions**, fetching each fixture/table
-  once; per-club and per-team views are derived on top.
-- Seed the registry from the competitions that registered tenant teams play in (lean — scrape
-  only what's served today).
-- The registry is just a list, so widening to a **whole association** later is a config change,
-  not a rearchitecture. Defer that call until real crawl cost is measured.
+- The crawler walks a **registry of tracked competitions** and fetches each fixture and table
+  once. Per-club and per-team views build on top of that.
+- Seed the registry from the competitions our registered tenant teams play in, so we scrape only
+  what we serve today.
+- The registry is just a list. Widening it to a **whole association** later is a config change,
+  not a redesign, so we can defer that call until we have measured real crawl cost.
 
 ## Consequences
 
-- Crawler keyed on competition, not team — a shift from the current per-team loop; dedup is
-  intrinsic.
-- Need a `tracked_competition` registry, initially populated by resolving tenant teams →
+- The crawler keys on competition, not team. That changes the current per-team loop, and it
+  removes duplicates for free.
+- We need a `tracked_competition` registry. We populate it by resolving tenant teams to their
   competitions.
 - Onboarding a club adds only its _new_ competitions to the registry.
-- Path to whole-association scraping is open without redesign; decision gated on efficiency.
-- Enables cross-club and full-table queries naturally.
+- Scraping a whole association stays open without a redesign. Efficiency gates that decision.
+- Cross-club and full-table queries become straightforward.

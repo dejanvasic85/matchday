@@ -5,20 +5,21 @@
 
 ## Context
 
-The current pipeline captures enough to render fixtures, results, and tables: fixture
-date/time/round/venue/coordinates, both teams, scores, status, plus club metadata (logo,
-name, socials, address) and full table rows. It does not capture player-level match stats.
-For a shared service we want to be self-sufficient (not re-fetch Dribl to answer a query)
-without over-collecting data no one uses yet.
+The current pipeline captures enough to render fixtures, results and tables: a fixture's date,
+time, round, venue and coordinates, both teams, the scores and the status, plus club details
+(logo, name, socials, address) and full table rows. It captures no player-level match stats.
+
+For a shared service we want to be self-sufficient — able to answer a query without going back
+to Dribl — without collecting data nobody uses yet.
 
 ## Options
 
-- **Match current depth, promoted to first-class entities (recommended)** — same fields,
-  but competition/season/league become real entities rather than name strings.
-- **Minimal** — only scores + fixtures. Loses venue, coordinates, club branding; forces
+- **Keep the current depth, but promote to first-class entities (recommended)** — the same
+  fields, except competition, season and league become real entities instead of name strings.
+- **Minimal** — scores and fixtures only. Drops venue, coordinates and club branding, and forces
   extra lookups.
-- **Maximal (incl. player stats, lineups, events)** — richest, but Dribl coverage is
-  inconsistent and it's out of scope for v1 features.
+- **Maximal**, adding player stats, lineups and events — the richest option, but Dribl covers
+  these inconsistently and v1 does not need them.
 
 ## Recommendation
 
@@ -28,47 +29,50 @@ without over-collecting data no one uses yet.
 - **Club**: name, display name, logo, email, website, address, socials.
 - **Team**: name, competition membership.
 - **Competition/Season/League**: as entities with IDs (not just names).
-- **Table entry**: full rows (position, played, W/D/L, GF/GA/GD, points).
+- **Table entry**: full rows — position, played, won, drawn, lost, goals for, goals against, goal
+  difference, and points.
 
-Defer player-level match stats to a later ADR.
+A later ADR can add player-level match stats.
 
 ### Images / logos
 
-**Self-host logos** rather than hotlinking Dribl (`ocean.dribl.com`). On scrape, download
-each logo and store it in our own bucket — **Cloudflare R2** (S3-compatible, no egress fees,
-pairs with the Cloudflare edge in 0009). The entity stores our own asset URL; the original
-Dribl URL is retained on the `external_ref`/source record for re-fetch. Content-hash or
-entity-id keyed object names to allow idempotent re-upload only on change.
+**Self-host the logos** instead of hotlinking Dribl (`ocean.dribl.com`). As we scrape, download
+each logo into our own **Cloudflare R2** bucket. R2 is S3-compatible, charges no egress fees, and
+pairs with the Cloudflare edge we chose in 0009. The entity then stores our own asset URL, and
+the `external_ref` record keeps the original Dribl URL so we can re-fetch. Key object names on a
+content hash or an entity id, so a re-upload only writes when the logo actually changed.
 
 ### Raw response staging
 
-The current WSC crawler is two-stage: it writes each raw Dribl API response (fixtures/results
-paged per round, `api/ladders`) to local JSON chunk files, then a separate sync stage reads those
-chunks, transforms, dedupes, and writes final output. matchday keeps that two-stage shape, but
-since the target runtime (thanos/managed browser, per 0009) has no durable shared filesystem
-between the crawl and transform steps, the raw capture is persisted to **Cloudflare R2**
-instead of local disk — the same bucket family already used for logos.
+The WSC crawler runs in two stages. First it writes each raw Dribl API response — fixtures and
+results paged per round, plus `api/ladders` — to local JSON chunk files. Then a separate sync
+stage reads those chunks, transforms them, removes duplicates and writes the final output.
 
-- **Why keep a raw stage:** lets a bad transform/mapper be reprocessed without re-crawling
-  (another Cloudflare-bypass session); gives a concrete artifact to diagnose Dribl response
-  changes or crawl failures against.
-- **Storage:** R2, one object per API response, keyed by something like
-  `raw/{tracked_competition_id}/{crawl_run_id}/{endpoint}-{round}.json` (mirrors WSC's
-  per-round chunking, just in R2 instead of `data/external/`).
-- **Lifecycle:** bucket lifecycle rule, **7-day expiry** — enough runway to diagnose a bad
-  crawl or re-run a transform, cheap enough not to manage manually.
-- **Pipeline is three steps, not two:** crawl (writes raw responses to R2) → transform (reads
-  raw from R2, maps to domain via the Zod mappers in `packages/domain`) → upsert (writes to
-  Postgres via `external_ref`, per 0006). Crawl and transform can run in the same job
-  invocation to start — no need to force an async boundary yet — but the raw artifact still
-  lands in R2 either way, so splitting them later is a scheduling change, not a rewrite.
+matchday keeps that two-stage shape, but writes the raw capture to **Cloudflare R2** rather than
+local disk, in the same bucket family we already use for logos. We do that because the crawl and
+transform steps share no durable filesystem on the runtime we target in 0009.
+
+- **Why keep a raw stage.** We can reprocess a bad mapper without crawling again, which would
+  cost another Cloudflare-bypass session. It also gives us a concrete artifact to diagnose crawl
+  failures and Dribl response changes against.
+- **Storage.** R2, one object per API response, keyed roughly as
+  `raw/{tracked_competition_id}/{crawl_run_id}/{endpoint}-{round}.json`. That mirrors WSC's
+  per-round chunking, in R2 rather than `data/external/`.
+- **Lifecycle.** A bucket lifecycle rule expires objects after **7 days** — long enough to
+  diagnose a bad crawl or re-run a transform, and cheap enough that nobody has to manage it.
+- **The pipeline has three steps, not two.** Crawl writes raw responses to R2. Transform reads
+  them back and maps them to the domain through the Zod mappers. Upsert writes to Postgres
+  through `external_ref`, per 0006. Crawl and transform can share one job invocation at first,
+  since we need no async boundary yet. The raw artifact lands in R2 either way, so splitting them
+  later is a scheduling change rather than a rewrite.
 
 ## Consequences
 
-- Schema models competition/season/league explicitly — enables 0006's relational joins.
-- Slightly more transform work than today's flat records.
-- Player stats can be added later without reworking core entities.
-- Scraper gains an image-mirroring step to Cloudflare R2; adds R2 to the infra in 0009.
-- Independent of Dribl CDN uptime for serving branding.
-- Scraper also writes raw API responses to R2 before transforming, with a 7-day expiry —
-  adds an R2 write path (beyond logos) to the crawler, and a read path to the transform step.
+- The schema models competition, season and league explicitly, which enables 0006's relational
+  joins.
+- Transforming takes slightly more work than today's flat records.
+- We can add player stats later without reworking the core entities.
+- The scraper gains a step that mirrors images to Cloudflare R2, so 0009 must include R2.
+- Serving club branding no longer depends on Dribl's CDN staying up.
+- The scraper also writes raw API responses to R2 before transforming, expiring after 7 days.
+  That adds an R2 write path to the crawler beyond logos, and a read path to the transform step.
