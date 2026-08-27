@@ -1,34 +1,41 @@
 # Architecture Decision Records
 
-Lightweight ADRs tracking direction for `matchday`. Each records the context, the options
-considered, the recommendation, and the consequences. Status is `proposed` until confirmed,
-then `decided`.
+Lightweight architecture decision records (ADRs) tracking direction for `matchday`. Each one
+records the context, the options we considered, what we chose, and what follows from it.
 
-| #    | Decision                                                                   | Status             | Summary of recommendation                                                                                                                                                                             |
-| ---- | -------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0001 | [Naming](0001-naming.md)                                                   | decided            | `matchday`, single monorepo (scraper + API + infra)                                                                                                                                                   |
-| 0002 | [Scraping scope](0002-scraping-scope.md)                                   | superseded by 0012 | Crawl by competition (dedup intrinsic); registry seeded from tenants, scales to whole association                                                                                                     |
-| 0003 | [Scraping cadence](0003-scraping-cadence.md)                               | decided            | Two jobs: clubs daily; competition crawl fixture-derived (30-min match window, daily, weekly off-season)                                                                                              |
-| 0004 | [Scraping depth](0004-scraping-depth.md)                                   | decided            | Self-sufficient fixture + club + table; logos self-hosted on R2; no player stats v1                                                                                                                   |
-| 0005 | [Identifiers](0005-identifiers.md)                                         | decided            | Prefixed-nanoid own IDs (`clb_…`) + external Dribl ref mapping                                                                                                                                        |
-| 0006 | [Datastore](0006-datastore.md)                                             | decided            | Relational Postgres                                                                                                                                                                                   |
-| 0007 | [API style](0007-api-style.md)                                             | decided            | REST + OpenAPI (Hono on CF Workers); generated typed clients                                                                                                                                          |
-| 0008 | [Language / runtime](0008-language-runtime.md)                             | decided            | TypeScript                                                                                                                                                                                            |
-| 0009 | [Hosting](0009-hosting.md)                                                 | decided            | CF Workers API + R2 + edge; Neon Postgres; scraper on thanos (managed browser fallback); per-job cron open                                                                                            |
-| 0010 | [Monorepo tooling](0010-monorepo-tooling.md)                               | decided            | pnpm workspaces + Vite+ (`vp`); apps/ + packages/ layout                                                                                                                                              |
-| 0011 | [Data model & schema](0011-data-model.md)                                  | decided            | 9 tables (Drizzle/Neon neon-http); prefixed-nanoid PKs; polymorphic `external_ref`; league first-class (reshaped by 0012)                                                                             |
-| 0012 | [Subscriptions & multi-source](0012-subscription-multisource.md)           | decided            | League-focused subscriptions `(source, year, competition, league)`; catalog vs deep crawl; multi-source; clubs/teams discovered (team by `team_hash_id`, club by `club_code`); `team.clubId` nullable |
-| 0013 | [API auth](0013-api-auth.md)                                               | proposed           | New `client` entity; per-client bearer API tokens, hashed at rest; multiple active tokens per client for rotation                                                                                     |
-| 0014 | [Operator & consumer interfaces](0014-operator-and-consumer-interfaces.md) | proposed           | `mday` CLI is the admin surface (grow it, no admin MCP); a future MCP server is read-only, consumer-facing, and a client of the API                                                                   |
+**Read the relevant ADR before you change the area it covers.** These records are the source of
+truth for direction. Where an ADR and the code disagree, one of them is wrong — say so rather
+than quietly following either.
+
+A record is `proposed` until we confirm it, then `decided`. A later record can **supersede** an
+earlier one, or **reshape** it (change part of it without replacing it). The superseded record
+stays in place, marked, so the history stays readable.
+
+| #    | Decision                                                                   | Status     | What we chose                                                                |
+| ---- | -------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------- |
+| 0001 | [Naming](0001-naming.md)                                                   | decided    | `matchday`; one monorepo for crawler, API and infra                          |
+| 0002 | [Scraping scope](0002-scraping-scope.md)                                   | superseded | Crawl by competition, so dedup is intrinsic — replaced by 0012               |
+| 0003 | [Scraping cadence](0003-scraping-cadence.md)                               | decided    | Two jobs: clubs daily; competition crawl at a fixture-derived cadence        |
+| 0004 | [Scraping depth](0004-scraping-depth.md)                                   | decided    | Self-sufficient fixture, club and table data; logos on R2; no player stats   |
+| 0005 | [Identifiers](0005-identifiers.md)                                         | decided    | Our own prefixed-nanoid ids (`clb_…`), plus an external-reference mapping    |
+| 0006 | [Datastore](0006-datastore.md)                                             | decided    | Relational Postgres                                                          |
+| 0007 | [API style](0007-api-style.md)                                             | decided    | REST and OpenAPI on Hono/Workers; consumers generate typed clients           |
+| 0008 | [Language / runtime](0008-language-runtime.md)                             | decided    | TypeScript everywhere                                                        |
+| 0009 | [Hosting](0009-hosting.md)                                                 | decided    | Workers, R2 and edge on Cloudflare; Neon Postgres; crawler on GitHub Actions |
+| 0010 | [Monorepo tooling](0010-monorepo-tooling.md)                               | decided    | pnpm workspaces plus Vite+ (`vp`); `apps/` and `packages/` layout            |
+| 0011 | [Data model & schema](0011-data-model.md)                                  | decided    | The Drizzle schema, prefixed-nanoid keys, polymorphic `external_ref`         |
+| 0012 | [Subscriptions & multi-source](0012-subscription-multisource.md)           | decided    | Subscribe a client to a league; split catalog from deep crawl; many sources  |
+| 0013 | [API auth](0013-api-auth.md)                                               | proposed   | A `client` entity, with per-client bearer tokens hashed at rest              |
+| 0014 | [Operator & consumer interfaces](0014-operator-and-consumer-interfaces.md) | proposed   | `mday` is the admin surface; any future MCP server is read-only              |
 
 ## Format
 
-Each ADR follows:
+Each ADR follows this shape:
 
 ```markdown
 # NNNN. Title
 
-- Status: proposed | decided
+- Status: proposed | decided | superseded
 - Date: YYYY-MM-DD
 
 ## Context
@@ -39,3 +46,10 @@ Each ADR follows:
 
 ## Consequences
 ```
+
+Write them in plain language, per ISO 24495-1:2023 — see the Communication style section of
+`AGENTS.md`. Say what you chose and why in short, active sentences. A reader who was not in the
+discussion should be able to act on the record without asking you to explain it.
+
+Do not rewrite the substance of a `decided` record. If the decision changes, add a new ADR that
+supersedes or reshapes it, and link the two.

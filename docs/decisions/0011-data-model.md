@@ -15,55 +15,56 @@
 
 ## Context
 
-The prior ADRs settle the direction — relational Postgres (0006), app-owned prefixed-nanoid IDs
+The earlier ADRs settle the direction: relational Postgres (0006), our own prefixed-nanoid IDs
 with an external-reference mapping (0005), self-sufficient capture depth (0004), and
-competition-keyed crawling driven by a tracked-competition registry (0002) — but none of them
-pins the actual schema: the concrete tables, columns, foreign keys, finalised ID prefixes, and
-the migration/ORM tooling. This ADR does that. It is the keystone of Phase 1: every later phase
-(domain Zod types, scraper upserts, API resources) builds on the shape defined here.
+competition-keyed crawling driven by a tracked-competition registry (0002). None of them pins the
+actual schema — the concrete tables, columns, foreign keys, final ID prefixes, and the tooling for
+migrations.
 
-Two things the earlier ADRs deliberately left open are decided here:
+This ADR does that. It is the keystone of Phase 1, because every later phase builds on the shape
+defined here: the domain Zod types, the scraper's upserts, and the API resources.
 
-- **ID prefixes** for `league`, `external_ref`, and `tracked_competition` (0005 finalised only
-  `clb_`/`tea_`/`cmp_`/`sea_`/`mtc_`/`lad_` and said "finalise during schema design").
-- **Schema/migration tooling** — 0006/0009 said "Postgres + migrations tooling" generically.
-  `AGENTS.md` and `docs/todo.md` already target Drizzle; this ADR makes it the recorded decision.
+It also closes two things the earlier ADRs deliberately left open:
+
+- **ID prefixes** for `league`, `external_ref` and `tracked_competition`. 0005 settled only
+  `clb_`, `tea_`, `cmp_`, `sea_`, `mtc_` and `lad_`, and left the rest to schema design.
+- **Schema and migration tooling.** 0006 and 0009 said only "Postgres and migrations tooling".
+  `AGENTS.md` already targets Drizzle, and this ADR makes that the recorded decision.
 
 ## Options
 
-Schema shape is largely dictated by 0004/0005/0006; the genuine choices were:
+0004, 0005 and 0006 dictate most of the schema shape. These were the real choices:
 
-- **`external_ref` as one polymorphic mapping table** vs per-entity `external_id` columns. A
-  single table centralises source-identity resolution and generalises to future sources; per-entity
-  columns would duplicate the upsert-by-`(source, source_id)` logic on every table.
-- **`league` as its own entity** vs collapsing it into `competition`. 0004 lists
-  "Competition/Season/League" as first-class entities and the Dribl API exposes a distinct
-  `list/leagues` endpoint keyed by competition+season, so a `league` table matches the source.
-- **`status` (and similar constrained fields) as `text` + a TS/Zod union** vs a Postgres `enum`.
-  A DB enum enforces values but needs an `ALTER TYPE` migration to change; `text` validated at the
-  Zod boundary evolves with a code change only.
-- **Drizzle + neon-http** vs other Postgres tooling — chosen for edge/isolate safety and to match
-  the already-declared stack.
+- **One polymorphic `external_ref` table, or an `external_id` column on every entity.** A single
+  table keeps source-identity resolution in one place and generalises to future sources.
+  Per-entity columns would repeat the upsert-by-`(source, source_id)` logic on every table.
+- **`league` as its own entity, or folded into `competition`.** 0004 names competition, season
+  and league as first-class entities, and Dribl exposes a separate `list/leagues` endpoint keyed
+  by competition and season. A `league` table therefore matches the source.
+- **`status` and similar constrained fields as `text` plus a Zod union, or as a Postgres enum.** A
+  database enum enforces its values, but changing it needs an `ALTER TYPE` migration. Validating
+  `text` at the Zod boundary lets the values change with a code change alone.
+- **Drizzle with the neon-http driver, or other Postgres tooling.** We chose Drizzle because it
+  is safe inside a V8 isolate and matches the stack we had already declared.
 
 ## Recommendation
 
 ### Tooling
 
-**Drizzle ORM + drizzle-kit** for schema and migrations, with **`@neondatabase/serverless`
-(neon-http driver)** as the connection driver — HTTP-based and safe inside a V8 isolate, per 0009
-("never a raw `pg` TCP connection from a Worker"). The client is built by an injectable
-`createDbClient(connectionString)` factory so services and jobs receive it by argument (DI, per
-`AGENTS.md`).
+Use **Drizzle and drizzle-kit** for the schema and migrations, and **`@neondatabase/serverless`**
+— the neon-http driver — to connect. That driver speaks HTTP and is safe inside a V8 isolate,
+which 0009 requires: never open a raw `pg` TCP connection from a Worker. A
+`createDbClient(connectionString)` factory builds the client, so services and jobs receive it by
+argument rather than importing it, per `AGENTS.md`.
 
-**Caveat:** the neon-http driver supports single-shot and batched queries but **not interactive
-transactions**. This suits upsert-based ingest and the read-mostly API. A future need for
-interactive transactions switches that path to the WebSocket `Pool` driver without touching the
-schema.
+**One caveat.** The neon-http driver runs single-shot and batched queries, but **not interactive
+transactions**. That suits upsert-based ingest and a read-mostly API. If we ever need interactive
+transactions, we switch that path to the WebSocket `Pool` driver, and the schema stays as it is.
 
 ### Identifiers
 
-App-owned prefixed-nanoid primary keys, stored as `text` (generation lives in `packages/domain`,
-Phase 2). Finalised prefixes:
+We own the primary keys: prefixed nanoids, stored as `text`. `packages/domain` generates them, in
+Phase 2. The final prefixes:
 
 | Prefix | Entity              |
 | ------ | ------------------- |
@@ -80,8 +81,9 @@ Phase 2). Finalised prefixes:
 
 ### Entities
 
-Every entity table carries `created_at`/`updated_at` (`timestamptz`, default `now()`). Columns are
-written camelCase in Drizzle and mapped to snake_case in Postgres via `casing: "snake_case"`.
+Every entity table carries `created_at` and `updated_at` — both `timestamptz`, defaulting to
+`now()`. We write columns in camelCase in Drizzle, and `casing: "snake_case"` maps them to
+snake_case in Postgres.
 
 - **club** — id; `name`, `displayName`, `logoUrl` (our own R2 URL, nullable), `email`, `website`,
   `address`, `socials` (`jsonb`, nullable).
@@ -113,24 +115,28 @@ written camelCase in Drizzle and mapped to snake_case in Postgres via `casing: "
   (`boolean`, default true). Unique `(competitionId, seasonId)`. The registry the crawler iterates
   (0002).
 
-### Column-type decisions
+### Column types, and why
 
-- Prefixed-nanoid PKs → `text` (not `uuid`/`varchar(n)`).
-- Fixture time → one `timestamptz` (`kickoffAt`), not split `date`+`time` — avoids timezone bugs;
-  the Phase 2 mapper combines Dribl's date+time into one UTC instant.
-- Coordinates → two `numeric(9,6)` columns, not PostGIS `point` (no spatial queries; avoids an
-  extension dependency).
-- `socials`/`address` open-ended shape → `jsonb`, typed with Drizzle `.$type<…>()` and validated
-  by Zod at the mapper boundary.
-- Scores → nullable `integer` (null pre-match / on bye).
-- `status` → `text` validated against an `as const`/Zod union in a co-located `constants.ts`, not a
-  DB enum.
+- **Primary keys → `text`**, not `uuid` or `varchar(n)`, because they are prefixed nanoids.
+- **Fixture time → one `timestamptz`** called `kickoffAt`, rather than separate `date` and `time`
+  columns. One instant avoids timezone bugs, and the Phase 2 mapper combines Dribl's date and
+  time into a single UTC instant.
+- **Coordinates → two `numeric(9,6)` columns**, not a PostGIS `point`. We run no spatial queries,
+  so this avoids depending on an extension.
+- **`socials` and `address` → `jsonb`**, because their shape is open-ended. Drizzle types them
+  with `.$type<…>()`, and Zod validates them at the mapper boundary.
+- **Scores → nullable `integer`**, since they are null before a match and on a bye.
+- **`status` → `text`**, validated against an `as const` Zod union in a co-located `constants.ts`
+  rather than a database enum.
 
 ## Consequences
 
-- Introduces Drizzle schema + drizzle-kit migrations in `packages/db`; migrations are committed.
-- Ingest becomes upserts keyed on `external_ref (source, source_id)` (idempotent re-scraping, 0005).
-- The Phase 2 ID service must emit exactly these nine prefixes; branded ID types map to them.
-- `league` is a first-class entity, so fixtures and table entries carry a `leagueId` FK.
-- Worker → Neon uses the neon-http driver (isolate-safe); no interactive transactions on that path.
-- Player-level stats remain deferred (0004); adding them later does not rework these tables.
+- We add a Drizzle schema and drizzle-kit migrations in `packages/db`, and commit the migrations.
+- Ingest becomes upserts keyed on `external_ref (source, source_id)`, so re-scraping is idempotent
+  (0005).
+- The Phase 2 ID service must emit exactly the prefixes in the table above, and the branded ID
+  types map to them.
+- `league` is a first-class entity, so fixtures and table entries carry a `leagueId` foreign key.
+- The Worker reaches Neon through the neon-http driver, which is isolate-safe. That path runs no
+  interactive transactions.
+- Player-level stats stay deferred (0004). Adding them later reworks none of these tables.

@@ -2,12 +2,19 @@
 
 - Status: decided
 - Date: 2026-07-12
+- Reshaped by: [0009](0009-hosting.md) — the crawl runs on GitHub Actions scheduled workflows.
+  We considered the fixture-derived match window below and **decided against it for now**, in
+  favour of a fixed hourly schedule across plausible game windows.
+- Reshaped by: [0012](0012-subscription-multisource.md) — the jobs are now a source-wide catalog
+  crawl and a subscription-driven deep crawl. Club enrichment replaced the standalone
+  `clubs-sync` job, and subscriptions replaced the tracked-competition registry.
 
 ## Context
 
-Fixtures, results, and tables change at different rates. Schedules are set well ahead
-and rarely move; results and tables only change when matches are played (mostly weekends in
-season). Over-scraping wastes resources and load on Dribl; under-scraping means stale scores.
+Fixtures, results and tables change at different rates. Clubs set schedules well ahead and rarely
+move them. Results and tables change only when teams play, which in season mostly means weekends.
+Scraping too often wastes our resources and loads Dribl for nothing; scraping too rarely leaves
+stale scores on the site.
 
 ## Options
 
@@ -29,14 +36,14 @@ Trigger for the frequent (match-window) cadence:
 
 ### 1. Clubs sync (independent)
 
-A full club-directory crawl (`list/clubs`) — needed even when targeting one club, because its
-teams play opponents whose club info (name, logo, socials, address) we must have. Not tied to
-any competition. **Runs daily** (matches current behaviour).
+A full club-directory crawl (`list/clubs`). We need it even when we target a single club, because
+that club's teams play opponents whose name, logo, socials and address we must also hold. It is
+tied to no competition. **Runs daily**, which matches what we do today.
 
 ### 2. Competition crawl (fixtures + results + tables in one pass)
 
-Competition-keyed (per 0002); a single crawl pass fetches fixtures, results, and tables
-together — one Cloudflare-bypass session per run. Runs at **two frequencies**:
+Keyed on competition, per 0002. One crawl pass fetches fixtures, results and tables together, so
+each run needs only one Cloudflare-bypass session. It runs at **two frequencies**:
 
 | Phase                       | Cadence      |
 | --------------------------- | ------------ |
@@ -44,18 +51,18 @@ together — one Cloudflare-bypass session per run. Runs at **two frequencies**:
 | Otherwise, in season        | daily        |
 | Off-season                  | weekly       |
 
-**Match-window triggering is derived from fixture data**, not hard-coded weekend windows: the
-scheduler inspects upcoming fixture dates/times and runs the frequent cadence around them,
-falling back to daily otherwise. This self-adjusts to midweek games and any competition/timezone
-with no manual config.
+**Fixture data decides the match window**, not hard-coded weekend windows. The scheduler reads
+upcoming fixture dates and times, runs the frequent cadence around them, and falls back to daily
+otherwise. That adjusts itself to midweek games and to any competition or timezone, with no
+manual config.
 
 ## Consequences
 
-- Two jobs: `clubs-sync` (daily) and `competition-crawl` (fixture-derived frequency).
-- Fixtures/results/tables share one crawl pass — fewer Cloudflare-bypass sessions.
-- Scheduler reads fixture data to decide match windows — depends on having fixtures already
-  scraped (bootstrap: run daily until first fixtures land, then match-window logic engages).
-- Frequent match-day scraping needs the scraper runtime to handle Cloudflare bypass reliably
-  at cadence (see 0009 hosting).
-- 30-min match-window interval chosen for amateur fixtures where results post after full time,
-  not live; revisit if faster freshness is needed.
+- Two jobs: `clubs-sync` daily, and `competition-crawl` at a fixture-derived frequency.
+- Fixtures, results and tables share one crawl pass, so we open fewer Cloudflare-bypass sessions.
+- The scheduler reads fixture data to find match windows, so it needs fixtures already scraped.
+  To bootstrap, run daily until the first fixtures land, then the match-window logic takes over.
+- Frequent match-day scraping needs a runtime that clears Cloudflare reliably at that cadence.
+  See 0009.
+- We chose a 30-minute match window because these are amateur fixtures, where results post after
+  full time rather than live. Revisit it if we need fresher scores.
