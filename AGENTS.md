@@ -10,6 +10,20 @@ In any discussion, add humour and funny memes to lighten the mood.
 Always be succinct, never repeat yourself and keep it brief please.
 Use dot points where possible.
 
+**Always write in plain language, per ISO 24495-1:2023.** The reader must be able to find what
+they need, understand it, and use it — first time through. In practice:
+
+- **Relevant** — write for the reader who has to act; cut anything they don't need.
+- **Findable** — lead with the answer, then the detail. Headings and dot points, not walls of text.
+- **Understandable** — short sentences, everyday words, active voice ("the crawler upserts the
+  club", not "clubs are upserted"). Expand a term or acronym the first time it appears.
+- **Usable** — say exactly what to do and in what order; no vague "consider" or "it may be
+  possible".
+
+This governs prose — chat replies, PR descriptions, commit messages, docs, ADRs, `--help` text and
+error messages. Domain terms (`external_ref`, upsert, Hyperdrive) stay as they are; plain language
+means plain phrasing, not dumbed-down technical accuracy.
+
 ## Project context
 
 matchday is a **multi-tenant sports competition data service** — it scrapes Dribl fixtures,
