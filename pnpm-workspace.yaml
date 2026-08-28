@@ -6,7 +6,7 @@ packages:
 catalogMode: prefer
 
 catalog:
-  "@cloudflare/workers-types": 5.20260825.1
+  "@cloudflare/workers-types": 5.20260827.1
   "@hono/zod-openapi": 1.6.1
   "@neondatabase/serverless": 1.1.0
   "@sentry/cloudflare": 10.71.0
@@ -16,8 +16,8 @@ catalog:
   commander: 15.0.0
   drizzle-kit: 0.31.10
   drizzle-orm: 0.45.2
-  fallow: 3.18.0
-  hono: 4.13.4
+  fallow: 3.19.0
+  hono: 4.13.5
   nanoid: 6.0.1
   playwright-core: 1.62.1
   typescript: 6.0.3
