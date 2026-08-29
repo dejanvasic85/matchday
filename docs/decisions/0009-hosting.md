@@ -68,7 +68,7 @@ job shapes.
 
 - **Catalog and club enrichment** run weekly on one cron, sequenced inside a single workflow:
   `crawl-catalog.yml`, where club enrichment declares `needs: catalog`.
-- **Deep crawl** runs on its own workflow, `crawl-deep.yml`, hourly through the hours when games
+- **Deep crawl** runs on its own workflow, `crawl-leagues.yml`, hourly through the hours when games
   plausibly happen — weekday evenings, and weekend daytime and evening, Australian Eastern time.
 
 We considered the fixture-derived cadence from 0003, which would skip a league entirely when it

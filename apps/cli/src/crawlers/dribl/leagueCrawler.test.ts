@@ -3,7 +3,7 @@ import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDep
 import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import { makeQueuedFakePage } from "#test/fixtures/fakePage.ts";
 import { makeFakeRawStorage } from "#test/fixtures/rawStorage.ts";
-import { deepCrawlLeague } from "#crawlers/dribl/leagueDeepCrawler.ts";
+import { crawlLeague } from "#crawlers/dribl/leagueCrawler.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 const leagueId = "lea_abc123" as const;
@@ -115,7 +115,7 @@ function makeHappyPathDeps() {
   });
 }
 
-describe("deepCrawlLeague", () => {
+describe("crawlLeague", () => {
   it("crawls and persists a league's fixtures and table", async () => {
     const page = makeQueuedFakePage([
       makeFixtureResponse(1),
@@ -126,7 +126,7 @@ describe("deepCrawlLeague", () => {
     const rawStorage = makeFakeRawStorage();
     const deps = makeHappyPathDeps();
 
-    const result = await deepCrawlLeague({
+    const result = await crawlLeague({
       page,
       rawStorage,
       logger: makeFakeLogger(),
@@ -156,7 +156,7 @@ describe("deepCrawlLeague", () => {
     const rawStorage = makeFakeRawStorage();
     const deps = makeHappyPathDeps();
 
-    const result = await deepCrawlLeague({
+    const result = await crawlLeague({
       page,
       rawStorage,
       logger: makeFakeLogger(),
@@ -180,7 +180,7 @@ describe("deepCrawlLeague", () => {
     const page = makeQueuedFakePage([]);
     const rawStorage = makeFakeRawStorage();
 
-    const result = await deepCrawlLeague({
+    const result = await crawlLeague({
       page,
       rawStorage,
       logger: makeFakeLogger(),
@@ -200,7 +200,7 @@ describe("deepCrawlLeague", () => {
     const rawStorage = makeFakeRawStorage();
     const deps = makeHappyPathDeps();
 
-    const result = await deepCrawlLeague({
+    const result = await crawlLeague({
       page,
       rawStorage,
       logger: makeFakeLogger(),

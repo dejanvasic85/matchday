@@ -1,4 +1,4 @@
-// Source-adapter contract: a source owns its session lifecycle plus catalog/deep-crawl/club-enrichment.
+// Source-adapter contract: a source owns its session lifecycle plus catalog/league-crawl/club-enrichment.
 // Jobs are source-agnostic dispatchers; a new source is just a new adapter in sourceRegistry.ts.
 
 import type { LeagueId, Logger, Result } from "@matchday/domain";
@@ -41,7 +41,7 @@ export type CountCatalogLeaguesSummary = {
   total: number;
 };
 
-export type DeepCrawlParams = {
+export type CrawlLeagueParams = {
   deps: EntityResolutionDeps;
   rawStorage: RawStorage;
   logger: Logger;
@@ -49,7 +49,7 @@ export type DeepCrawlParams = {
   dryRun: boolean;
 };
 
-export type DeepCrawlSummary = {
+export type CrawlLeagueSummary = {
   fixtures: number;
   tableEntries: number;
 };
@@ -77,7 +77,7 @@ export type SourceSession = {
   countCatalogLeagues(
     params: CountCatalogLeaguesParams,
   ): Promise<Result<CountCatalogLeaguesSummary>>;
-  deepCrawlLeague(params: DeepCrawlParams): Promise<Result<DeepCrawlSummary>>;
+  crawlLeague(params: CrawlLeagueParams): Promise<Result<CrawlLeagueSummary>>;
   crawlClubEnrichment(
     params: CrawlClubEnrichmentParams,
   ): Promise<Result<CrawlClubEnrichmentSummary>>;

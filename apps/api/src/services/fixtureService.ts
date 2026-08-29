@@ -1,5 +1,5 @@
 // Fixture service: maps DB rows to the wire shape. Catalog data, open to any authenticated
-// client — subscriptions only gate which leagues get deep-crawled, not who can read.
+// client — subscriptions only gate which leagues get crawled, not who can read.
 
 import { mapResult, type Result } from "@matchday/domain";
 import { listFixturesByLeagueId, type Db, type schema } from "@matchday/db";

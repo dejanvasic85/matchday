@@ -1,4 +1,4 @@
-// Persists one league's deep crawl. Sequential, aborting on the first `err`: every step is
+// Persists one league's crawl. Sequential, aborting on the first `err`: every step is
 // idempotent, so a partial run is safe to retry rather than persisting a half-mapped league.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
@@ -7,26 +7,26 @@ import type { DriblFixturesApiResponse } from "#crawlers/dribl/external/driblFix
 import type { DriblTableApiResponse } from "#crawlers/dribl/external/driblTableEntry.ts";
 import { mapDriblFixture } from "#crawlers/dribl/mappers/mapDriblFixture.ts";
 import { mapDriblTableEntry } from "#crawlers/dribl/mappers/mapDriblTableEntry.ts";
-import type { DeepCrawlLeagueContext } from "#crawlers/dribl/driblLeagueIdResolver.ts";
+import type { LeagueCrawlContext } from "#crawlers/dribl/driblLeagueIdResolver.ts";
 import { resolveFixtureEntities } from "#crawlers/dribl/fixtureEntityResolver.ts";
 import { resolveTableEntryEntities } from "#crawlers/dribl/tableEntryEntityResolver.ts";
 
-export type DeepCrawlPersistInput = {
+export type PersistLeagueCrawlInput = {
   deps: EntityResolutionDeps;
   logger: Logger;
-  context: DeepCrawlLeagueContext;
+  context: LeagueCrawlContext;
   fixtureResponses: DriblFixturesApiResponse[];
   tableResponse: DriblTableApiResponse | undefined;
 };
 
-export type DeepCrawlPersistSummary = {
+export type PersistLeagueCrawlSummary = {
   fixtures: number;
   tableEntries: number;
 };
 
-export async function deepCrawlPersist(
-  input: DeepCrawlPersistInput,
-): Promise<Result<DeepCrawlPersistSummary>> {
+export async function persistLeagueCrawl(
+  input: PersistLeagueCrawlInput,
+): Promise<Result<PersistLeagueCrawlSummary>> {
   const { deps, logger, context, fixtureResponses, tableResponse } = input;
 
   let fixtureCount = 0;
@@ -51,7 +51,7 @@ export async function deepCrawlPersist(
     tableEntryCount += 1;
   }
 
-  logger.info("deepcrawl.persist.league", "persisted league", {
+  logger.info("crawl.league.persisted", "persisted league", {
     leagueId: context.leagueId,
     fixtures: fixtureCount,
     tableEntries: tableEntryCount,
