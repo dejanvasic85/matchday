@@ -1,9 +1,9 @@
-// Catalog crawl: `offset`/`limit` window the flat league queue so crawl-catalog.yml can split
-// one crawl into parallel legs. Table-less leagues (e.g. MiniRoos) fall back to fixtures for teams.
+// Catalog crawl: `offset`/`limit` window the flat league queue so crawl-catalog.yml can split one
+// crawl into parallel legs. Table-less leagues (e.g. MiniRoos) fall back to current fixtures for
+// teams.
 
 import { notFound, ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
-import { crawlerConfigValue } from "#crawlers/dribl/constants.ts";
 import { buildDriblApiUrl, type DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
 import { driblFixturesApiResponseSchema } from "#crawlers/dribl/external/driblFixture.ts";
 import type { DriblListItem } from "#crawlers/dribl/external/driblListEndpoints.ts";
@@ -75,10 +75,9 @@ export type CatalogFixtureTeam = {
   logoUrl: string | null;
 };
 
-/** Records one round's sighting of a fixture team, keyed by source id across rounds. A later
- * round's null logo (e.g. a fixture where Dribl simply didn't populate it) must not clobber an
- * earlier round's real one — the club-bridge match (resolveTeamForFixture) needs whichever logo
- * this team has ever shown, not just the most recent round's. */
+/** Records a fixture team sighting, keyed by source id. A null logo on one sighting (e.g. a
+ * fixture where Dribl didn't populate it) must not clobber a real logo from another — the
+ * club-bridge match needs whichever logo this team has shown. */
 function recordFixtureTeamSighting(
   teamsBySourceId: Map<string, { name: string; logoUrl: string | null }>,
   sourceId: string,
@@ -89,44 +88,43 @@ function recordFixtureTeamSighting(
   teamsBySourceId.set(sourceId, { name, logoUrl: logoUrl ?? existing?.logoUrl ?? null });
 }
 
-/** Discovers teams from a few rounds of fixtures — the fallback for a league with no table (see
- * file header). Dedupes by team source id since the same team appears across multiple rounds. */
+/** Discovers teams from a league's current fixtures — the fallback for a league with no table.
+ * Omitting `round` asks Dribl for its current window, same as the site's default view. A team on
+ * a bye right now is still missed, but self-heals on the next weekly crawl once it plays. */
 async function discoverTeamsFromFixtures(
   page: FetchPage,
   ids: DriblLeagueIds,
 ): Promise<Result<CatalogFixtureTeam[]>> {
   const teamsBySourceId = new Map<string, { name: string; logoUrl: string | null }>();
 
-  for (let round = 1; round <= crawlerConfigValue.catalogFixtureFallbackRounds; round++) {
-    const url = buildDriblApiUrl("fixtures", ids, { round: String(round) });
-    const fetched = await browserFetch(page, url);
-    if (!fetched.ok) {
-      return fetched;
-    }
+  const url = buildDriblApiUrl("fixtures", ids);
+  const fetched = await browserFetch(page, url);
+  if (!fetched.ok) {
+    return fetched;
+  }
 
-    const parsed = driblFixturesApiResponseSchema.safeParse(fetched.value);
-    if (!parsed.success) {
-      return serverError(`Failed to validate fixtures response for round ${round}`, parsed.error);
-    }
+  const parsed = driblFixturesApiResponseSchema.safeParse(fetched.value);
+  if (!parsed.success) {
+    return serverError("Failed to validate fixtures response", parsed.error);
+  }
 
-    for (const fixture of parsed.data.data) {
-      const mapped = mapDriblFixture(fixture);
-      if (mapped.homeTeamSourceId !== null && mapped.homeTeamName !== null) {
-        recordFixtureTeamSighting(
-          teamsBySourceId,
-          mapped.homeTeamSourceId,
-          mapped.homeTeamName,
-          mapped.homeTeamLogoUrl,
-        );
-      }
-      if (mapped.awayTeamSourceId !== null && mapped.awayTeamName !== null) {
-        recordFixtureTeamSighting(
-          teamsBySourceId,
-          mapped.awayTeamSourceId,
-          mapped.awayTeamName,
-          mapped.awayTeamLogoUrl,
-        );
-      }
+  for (const fixture of parsed.data.data) {
+    const mapped = mapDriblFixture(fixture);
+    if (mapped.homeTeamSourceId !== null && mapped.homeTeamName !== null) {
+      recordFixtureTeamSighting(
+        teamsBySourceId,
+        mapped.homeTeamSourceId,
+        mapped.homeTeamName,
+        mapped.homeTeamLogoUrl,
+      );
+    }
+    if (mapped.awayTeamSourceId !== null && mapped.awayTeamName !== null) {
+      recordFixtureTeamSighting(
+        teamsBySourceId,
+        mapped.awayTeamSourceId,
+        mapped.awayTeamName,
+        mapped.awayTeamLogoUrl,
+      );
     }
   }
 
