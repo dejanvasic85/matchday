@@ -40,6 +40,9 @@ const driblFixtureSchema = z.object({
 
 export const driblFixturesApiResponseSchema = z.object({
   data: z.array(driblFixtureSchema),
+  // Cursor pagination, 30 fixtures a page. Optional: a caller that already read every page has
+  // no cursor left, and re-parsing a staged page must not depend on it.
+  meta: z.object({ next_cursor: z.string().nullable() }).optional(),
 });
 
 export type DriblFixtureAttributes = z.infer<typeof driblFixtureAttributesSchema>;

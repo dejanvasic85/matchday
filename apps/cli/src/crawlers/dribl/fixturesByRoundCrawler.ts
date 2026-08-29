@@ -1,17 +1,15 @@
 // Fixture crawl: iterating round=1..N is deterministic, unlike the SPA's date-windowed views, so
 // tabled leagues are crawled round by round. Table-less leagues (e.g. MiniRoos) don't follow
 // sequential round numbering, so they fall back to Dribl's current fixture window instead - same
-// technique as the catalog crawl's team discovery. Each non-empty response is staged to R2 before
-// mapping for reprocessing.
+// technique as the catalog crawl's team discovery. Either way the request is cursor-paginated, so
+// each page is staged to R2 separately before mapping, for reprocessing.
 
-import { ok, serverError, type Logger, type Result } from "@matchday/domain";
-import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
-import { buildDriblApiUrl, type DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
-import {
-  driblFixturesApiResponseSchema,
-  type DriblFixturesApiResponse,
-} from "#crawlers/dribl/external/driblFixture.ts";
-import { buildRawFixturesKey } from "#crawlers/dribl/rawStorageKey.ts";
+import { ok, type Logger, type Result } from "@matchday/domain";
+import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";
+import type { DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
+import { listFixturePages } from "#crawlers/dribl/driblFixturesApi.ts";
+import type { DriblFixturesApiResponse } from "#crawlers/dribl/external/driblFixture.ts";
+import { buildRawFixturesKey, buildRawFixtureWindowKey } from "#crawlers/dribl/rawStorageKey.ts";
 import type { RawStorage } from "#storage/rawStorage.ts";
 
 const maxConsecutiveEmptyRounds = 2;
@@ -30,7 +28,29 @@ export type CrawlFixturesByRoundInput = {
   hasTable: boolean;
 };
 
-async function fetchCurrentFixtureWindow(
+async function stagePages(
+  rawStorage: RawStorage,
+  logger: Logger,
+  responses: DriblFixturesApiResponse[],
+  label: string,
+  buildKey: (pageNumber: number) => string,
+): Promise<Result<void>> {
+  for (const [index, response] of responses.entries()) {
+    const key = buildKey(index + 1);
+    const staged = await rawStorage.putJson(key, response);
+    if (!staged.ok) {
+      return staged;
+    }
+    logger.info("crawl.fixturesRound", "fixture page staged", {
+      label,
+      fixtures: response.data.length,
+      key,
+    });
+  }
+  return ok(undefined);
+}
+
+async function crawlCurrentFixtureWindow(
   page: FetchPage,
   rawStorage: RawStorage,
   logger: Logger,
@@ -38,37 +58,28 @@ async function fetchCurrentFixtureWindow(
   leagueId: string,
   crawlRunId: string,
 ): Promise<Result<DriblFixturesApiResponse[]>> {
-  const url = buildDriblApiUrl("fixtures", ids);
-  const fetched = await browserFetch(page, url);
-  if (!fetched.ok) {
-    return fetched;
+  const label = "current window";
+  const pages = await listFixturePages({ page, logger, ids, label });
+  if (!pages.ok) {
+    return pages;
   }
 
-  const parsed = driblFixturesApiResponseSchema.safeParse(fetched.value);
-  if (!parsed.success) {
-    return serverError("Failed to validate fixtures response for current window", parsed.error);
-  }
-
-  if (parsed.data.data.length === 0) {
+  if (pages.value.length === 0) {
     logger.debug("crawl.fixturesRound", "current window empty", {});
     return ok([]);
   }
 
-  const key = buildRawFixturesKey(leagueId, crawlRunId, 1);
-  const staged = await rawStorage.putJson(key, parsed.data);
+  const staged = await stagePages(rawStorage, logger, pages.value, label, (pageNumber) =>
+    buildRawFixtureWindowKey(leagueId, crawlRunId, pageNumber),
+  );
   if (!staged.ok) {
     return staged;
   }
 
-  logger.info("crawl.fixturesRound", "current window staged", {
-    fixtures: parsed.data.data.length,
-    key,
-  });
-
-  return ok([parsed.data]);
+  return ok(pages.value);
 }
 
-/** One raw response per non-empty round, in round order. */
+/** One raw response per page of each non-empty round, in round order. */
 async function crawlFixturesBySequentialRound(
   page: FetchPage,
   rawStorage: RawStorage,
@@ -83,18 +94,19 @@ async function crawlFixturesBySequentialRound(
 
   for (let round = 1; round <= maxRounds; round++) {
     lastRound = round;
-    const url = buildDriblApiUrl("fixtures", ids, { round: String(round) });
-    const fetched = await browserFetch(page, url);
-    if (!fetched.ok) {
-      return fetched;
+    const label = `round ${round}`;
+    const pages = await listFixturePages({
+      page,
+      logger,
+      ids,
+      params: { round: String(round) },
+      label,
+    });
+    if (!pages.ok) {
+      return pages;
     }
 
-    const parsed = driblFixturesApiResponseSchema.safeParse(fetched.value);
-    if (!parsed.success) {
-      return serverError(`Failed to validate fixtures response for round ${round}`, parsed.error);
-    }
-
-    if (parsed.data.data.length === 0) {
+    if (pages.value.length === 0) {
       emptyStreak++;
       logger.debug("crawl.fixturesRound", "empty round", { round, emptyStreak });
       if (emptyStreak >= maxConsecutiveEmptyRounds) {
@@ -105,18 +117,14 @@ async function crawlFixturesBySequentialRound(
     }
 
     emptyStreak = 0;
-    const key = buildRawFixturesKey(leagueId, crawlRunId, round);
-    const staged = await rawStorage.putJson(key, parsed.data);
+    const staged = await stagePages(rawStorage, logger, pages.value, label, (pageNumber) =>
+      buildRawFixturesKey(leagueId, crawlRunId, round, pageNumber),
+    );
     if (!staged.ok) {
       return staged;
     }
 
-    rawResponses.push(parsed.data);
-    logger.info("crawl.fixturesRound", "round staged", {
-      round,
-      fixtures: parsed.data.data.length,
-      key,
-    });
+    rawResponses.push(...pages.value);
   }
 
   if (lastRound === maxRounds) {
@@ -134,7 +142,7 @@ export async function crawlFixturesByRound(
   const { page, rawStorage, logger, ids, leagueId, crawlRunId, hasTable } = input;
 
   if (!hasTable) {
-    return fetchCurrentFixtureWindow(page, rawStorage, logger, ids, leagueId, crawlRunId);
+    return crawlCurrentFixtureWindow(page, rawStorage, logger, ids, leagueId, crawlRunId);
   }
 
   return crawlFixturesBySequentialRound(page, rawStorage, logger, ids, leagueId, crawlRunId);
