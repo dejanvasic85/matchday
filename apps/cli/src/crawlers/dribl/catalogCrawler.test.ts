@@ -265,8 +265,6 @@ describe("crawlCatalog", () => {
           awayId: "away-1",
         },
       ]),
-      { data: [] },
-      { data: [] },
     ]);
 
     const result = await crawlCatalog({
@@ -288,7 +286,7 @@ describe("crawlCatalog", () => {
     );
   });
 
-  it("dedupes a team seen across multiple fixture-fallback rounds", async () => {
+  it("dedupes a team seen across multiple fixtures in the current window", async () => {
     const page = makeQueuedFakePage([
       tenantResponse,
       seasonsResponse,
@@ -303,8 +301,6 @@ describe("crawlCatalog", () => {
           awayName: "Away Team",
           awayId: "away-1",
         },
-      ]),
-      makeFixtureResponse([
         {
           hashId: "fix-2",
           homeName: "Home Team",
@@ -313,7 +309,6 @@ describe("crawlCatalog", () => {
           awayId: "bye-1",
         },
       ]),
-      { data: [] },
     ]);
 
     const result = await crawlCatalog({
@@ -329,7 +324,7 @@ describe("crawlCatalog", () => {
     expect(result.value[0]?.fixtureTeams).toHaveLength(3);
   });
 
-  it("keeps an earlier round's logo instead of letting a later null round clobber it", async () => {
+  it("keeps a team's known logo instead of letting a logo-less sighting clobber it", async () => {
     const page = makeQueuedFakePage([
       tenantResponse,
       seasonsResponse,
@@ -345,8 +340,6 @@ describe("crawlCatalog", () => {
           awayId: "away-1",
           homeLogo: "https://ocean.dribl.com/home-logo",
         },
-      ]),
-      makeFixtureResponse([
         {
           hashId: "fix-2",
           homeName: "Home Team",
@@ -356,7 +349,6 @@ describe("crawlCatalog", () => {
           homeLogo: null,
         },
       ]),
-      { data: [] },
     ]);
 
     const result = await crawlCatalog({

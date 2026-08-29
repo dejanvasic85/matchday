@@ -154,6 +154,26 @@ async function crawlTeamByRounds(page, team, ids) {
 }
 ```
 
+## Discovering teams in a table-less league
+
+Some leagues (junior/MiniRoos age groups) never publish a table. To find out which teams play in
+one, don't round-walk — call `api/fixtures` with **no `round` param**. Dribl then returns its
+current window, the same fixtures the site shows by default:
+
+```typescript
+async function discoverCurrentTeams(page, ids) {
+  const url = buildApiUrl("fixtures", ids); // no round param
+  const json = await browserFetch(page, url);
+  const validated = externalFixturesApiResponseSchema.parse(json);
+  return validated.data; // home/away teams currently playing this league
+}
+```
+
+This is one call, not a walk, and — unlike sampling a fixed early round window — it never goes
+stale: a team that starts mid-season shows up here as soon as it plays, on the next crawl. A team
+on a bye right now is still missed, but self-heals next time round. This is discovery only; it's
+not a substitute for the round-walk above when you need a team's full fixture history.
+
 ## Table extraction
 
 After the round crawl, hit `api/ladders` (Dribl's table endpoint) directly with the same IDs — no
