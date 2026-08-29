@@ -10,27 +10,14 @@ import { leagueResponseSchema } from "#schemas/leagueSchema.ts";
 import { pagedSchema, pagingQuerySchema } from "#schemas/pagedSchema.ts";
 import { tableEntryResponseSchema } from "#schemas/tableEntrySchema.ts";
 import { teamResponseSchema } from "#schemas/teamSchema.ts";
-import {
-  createFixtureServiceDeps,
-  listLeagueFixtures,
-} from "#services/fixtureService.ts";
+import { createFixtureServiceDeps, listLeagueFixtures } from "#services/fixtureService.ts";
 import {
   createLeagueOverviewServiceDeps,
   getLeagueOverview,
 } from "#services/leagueOverviewService.ts";
-import {
-  createLeagueServiceDeps,
-  getLeague,
-  listAllLeagues,
-} from "#services/leagueService.ts";
-import {
-  createTableEntryServiceDeps,
-  listLeagueTable,
-} from "#services/tableEntryService.ts";
-import {
-  createTeamServiceDeps,
-  listLeagueTeams,
-} from "#services/teamService.ts";
+import { createLeagueServiceDeps, getLeague, listAllLeagues } from "#services/leagueService.ts";
+import { createTableEntryServiceDeps, listLeagueTable } from "#services/tableEntryService.ts";
+import { createTeamServiceDeps, listLeagueTeams } from "#services/teamService.ts";
 
 export const leagueRoute = new OpenAPIHono<{
   Bindings: ApiBindings;
@@ -41,8 +28,7 @@ const listLeaguesRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["Leagues"],
-  summary:
-    "List leagues, optionally filtered by competition, season, and/or club",
+  summary: "List leagues, optionally filtered by competition, season, and/or club",
   request: {
     query: pagingQuerySchema.extend({
       competitionId: z
@@ -88,14 +74,10 @@ const listLeaguesRoute = createRoute({
 
 leagueRoute.openapi(listLeaguesRoute, async (c) => {
   const { limit, cursor, ...filter } = c.req.valid("query");
-  const result = await listAllLeagues(
-    createLeagueServiceDeps(c.get("db")),
-    filter,
-    {
-      limit,
-      cursor,
-    },
-  );
+  const result = await listAllLeagues(createLeagueServiceDeps(c.get("db")), filter, {
+    limit,
+    cursor,
+  });
   return jsonResult(c, result, "api.league.list.failed");
 });
 
@@ -141,10 +123,7 @@ const getLeagueOverviewRoute = createRoute({
 
 leagueRoute.openapi(getLeagueOverviewRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const result = await getLeagueOverview(
-    createLeagueOverviewServiceDeps(c.get("db")),
-    id,
-  );
+  const result = await getLeagueOverview(createLeagueOverviewServiceDeps(c.get("db")), id);
   return jsonResult(c, result, "api.league.overview.failed");
 });
 
@@ -167,10 +146,7 @@ const listLeagueFixturesRoute = createRoute({
 
 leagueRoute.openapi(listLeagueFixturesRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const result = await listLeagueFixtures(
-    createFixtureServiceDeps(c.get("db")),
-    id,
-  );
+  const result = await listLeagueFixtures(createFixtureServiceDeps(c.get("db")), id);
   return jsonResult(c, result, "api.league.fixtures.failed");
 });
 
@@ -193,10 +169,7 @@ const listLeagueTableRoute = createRoute({
 
 leagueRoute.openapi(listLeagueTableRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const result = await listLeagueTable(
-    createTableEntryServiceDeps(c.get("db")),
-    id,
-  );
+  const result = await listLeagueTable(createTableEntryServiceDeps(c.get("db")), id);
   return jsonResult(c, result, "api.league.table.failed");
 });
 
