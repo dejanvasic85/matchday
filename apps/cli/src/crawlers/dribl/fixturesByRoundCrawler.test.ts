@@ -1,6 +1,7 @@
 import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import { makeQueuedFakePage } from "#test/fixtures/fakePage.ts";
 import { makeFakeRawStorage } from "#test/fixtures/rawStorage.ts";
+import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";
 import type { DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
 import type { DriblFixtureAttributes } from "#crawlers/dribl/external/driblFixture.ts";
 import { crawlFixturesByRound } from "#crawlers/dribl/fixturesByRoundCrawler.ts";
@@ -48,115 +49,189 @@ function makeFixtureResponse(count: number) {
 const emptyResponse = { data: [] };
 
 describe("crawlFixturesByRound", () => {
-  it("stages each non-empty round to R2 and stops after two consecutive empty rounds", async () => {
-    const page = makeQueuedFakePage([
-      makeFixtureResponse(2),
-      makeFixtureResponse(1),
-      emptyResponse,
-      emptyResponse,
-    ]);
-    const rawStorage = makeFakeRawStorage();
+  describe("tabled leagues (sequential round scan)", () => {
+    it("stages each non-empty round to R2 and stops after two consecutive empty rounds", async () => {
+      const page = makeQueuedFakePage([
+        makeFixtureResponse(2),
+        makeFixtureResponse(1),
+        emptyResponse,
+        emptyResponse,
+      ]);
+      const rawStorage = makeFakeRawStorage();
 
-    const result = await crawlFixturesByRound({
-      page,
-      rawStorage,
-      logger: makeFakeLogger(),
-      ids,
-      leagueId: "lea_abc123",
-      crawlRunId: "run_1",
+      const result = await crawlFixturesByRound({
+        page,
+        rawStorage,
+        logger: makeFakeLogger(),
+        ids,
+        leagueId: "lea_abc123",
+        crawlRunId: "run_1",
+        hasTable: true,
+      });
+
+      assert(result.ok);
+      expect(rawStorage.puts).toHaveLength(2);
+      expect(rawStorage.puts[0]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-1.json");
+      expect(rawStorage.puts[1]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-2.json");
     });
 
-    assert(result.ok);
-    expect(rawStorage.puts).toHaveLength(2);
-    expect(rawStorage.puts[0]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-1.json");
-    expect(rawStorage.puts[1]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-2.json");
-  });
+    it("continues past a single empty round (scheduling gap, not season end)", async () => {
+      const page = makeQueuedFakePage([
+        makeFixtureResponse(1),
+        emptyResponse,
+        makeFixtureResponse(1),
+        emptyResponse,
+        emptyResponse,
+      ]);
+      const rawStorage = makeFakeRawStorage();
 
-  it("continues past a single empty round (scheduling gap, not season end)", async () => {
-    const page = makeQueuedFakePage([
-      makeFixtureResponse(1),
-      emptyResponse,
-      makeFixtureResponse(1),
-      emptyResponse,
-      emptyResponse,
-    ]);
-    const rawStorage = makeFakeRawStorage();
+      const result = await crawlFixturesByRound({
+        page,
+        rawStorage,
+        logger: makeFakeLogger(),
+        ids,
+        leagueId: "lea_abc123",
+        crawlRunId: "run_1",
+        hasTable: true,
+      });
 
-    const result = await crawlFixturesByRound({
-      page,
-      rawStorage,
-      logger: makeFakeLogger(),
-      ids,
-      leagueId: "lea_abc123",
-      crawlRunId: "run_1",
+      assert(result.ok);
+      expect(rawStorage.puts).toHaveLength(2);
     });
 
-    assert(result.ok);
-    expect(rawStorage.puts).toHaveLength(2);
+    it("stages a round containing an unstructured placeholder fixture (null name)", async () => {
+      const response = {
+        data: [
+          {
+            type: "fixtures" as const,
+            hash_id: "fixture-0",
+            attributes: makeFixtureAttributes({ name: null }),
+          },
+        ],
+      };
+      const page = makeQueuedFakePage([response, emptyResponse, emptyResponse]);
+      const rawStorage = makeFakeRawStorage();
+
+      const result = await crawlFixturesByRound({
+        page,
+        rawStorage,
+        logger: makeFakeLogger(),
+        ids,
+        leagueId: "lea_abc123",
+        crawlRunId: "run_1",
+        hasTable: true,
+      });
+
+      assert(result.ok);
+      expect(rawStorage.puts).toHaveLength(1);
+    });
+
+    it("returns err when a round's response fails schema validation", async () => {
+      const page = makeQueuedFakePage([{ data: [{ bad: "shape" }] }]);
+      const rawStorage = makeFakeRawStorage();
+
+      const result = await crawlFixturesByRound({
+        page,
+        rawStorage,
+        logger: makeFakeLogger(),
+        ids,
+        leagueId: "lea_abc123",
+        crawlRunId: "run_1",
+        hasTable: true,
+      });
+
+      assert(!result.ok);
+      expect(rawStorage.puts).toHaveLength(0);
+    });
+
+    it("warns when the crawl hits the maxRounds safety cap without a natural stop", async () => {
+      const page = makeQueuedFakePage(Array.from({ length: 40 }, () => makeFixtureResponse(1)));
+      const rawStorage = makeFakeRawStorage();
+      const logger = makeFakeLogger();
+
+      const result = await crawlFixturesByRound({
+        page,
+        rawStorage,
+        logger,
+        ids,
+        leagueId: "lea_abc123",
+        crawlRunId: "run_1",
+        hasTable: true,
+      });
+
+      assert(result.ok);
+      expect(logger.warn).toHaveBeenCalledWith(
+        "crawl.fixturesRound",
+        "hit maxRounds safety cap without a natural stop",
+        { maxRounds: 40 },
+      );
+    });
   });
 
-  it("stages a round containing an unstructured placeholder fixture (null name)", async () => {
-    const response = {
-      data: [
-        {
-          type: "fixtures" as const,
-          hash_id: "fixture-0",
-          attributes: makeFixtureAttributes({ name: null }),
+  describe("table-less leagues (current fixture window)", () => {
+    it("fetches fixtures with no round filter and stages a single response", async () => {
+      const requestedUrls: string[] = [];
+      const page: FetchPage = {
+        evaluate: (_fn, arg) => {
+          requestedUrls.push(arg);
+          return Promise.resolve(JSON.stringify(makeFixtureResponse(3)));
         },
-      ],
-    };
-    const page = makeQueuedFakePage([response, emptyResponse, emptyResponse]);
-    const rawStorage = makeFakeRawStorage();
+      };
+      const rawStorage = makeFakeRawStorage();
 
-    const result = await crawlFixturesByRound({
-      page,
-      rawStorage,
-      logger: makeFakeLogger(),
-      ids,
-      leagueId: "lea_abc123",
-      crawlRunId: "run_1",
+      const result = await crawlFixturesByRound({
+        page,
+        rawStorage,
+        logger: makeFakeLogger(),
+        ids,
+        leagueId: "lea_abc123",
+        crawlRunId: "run_1",
+        hasTable: false,
+      });
+
+      assert(result.ok);
+      expect(result.value).toHaveLength(1);
+      expect(result.value[0]?.data).toHaveLength(3);
+      expect(rawStorage.puts).toHaveLength(1);
+      expect(rawStorage.puts[0]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-1.json");
+      expect(requestedUrls.some((url) => url.includes("round="))).toBe(false);
     });
 
-    assert(result.ok);
-    expect(rawStorage.puts).toHaveLength(1);
-  });
+    it("returns an empty array without staging when the current window has no fixtures", async () => {
+      const page = makeQueuedFakePage([emptyResponse]);
+      const rawStorage = makeFakeRawStorage();
 
-  it("returns err when a round's response fails schema validation", async () => {
-    const page = makeQueuedFakePage([{ data: [{ bad: "shape" }] }]);
-    const rawStorage = makeFakeRawStorage();
+      const result = await crawlFixturesByRound({
+        page,
+        rawStorage,
+        logger: makeFakeLogger(),
+        ids,
+        leagueId: "lea_abc123",
+        crawlRunId: "run_1",
+        hasTable: false,
+      });
 
-    const result = await crawlFixturesByRound({
-      page,
-      rawStorage,
-      logger: makeFakeLogger(),
-      ids,
-      leagueId: "lea_abc123",
-      crawlRunId: "run_1",
+      assert(result.ok);
+      expect(result.value).toHaveLength(0);
+      expect(rawStorage.puts).toHaveLength(0);
     });
 
-    assert(!result.ok);
-    expect(rawStorage.puts).toHaveLength(0);
-  });
+    it("returns err when the current window's response fails schema validation", async () => {
+      const page = makeQueuedFakePage([{ data: [{ bad: "shape" }] }]);
+      const rawStorage = makeFakeRawStorage();
 
-  it("warns when the crawl hits the maxRounds safety cap without a natural stop", async () => {
-    const page = makeQueuedFakePage(Array.from({ length: 40 }, () => makeFixtureResponse(1)));
-    const rawStorage = makeFakeRawStorage();
-    const logger = makeFakeLogger();
+      const result = await crawlFixturesByRound({
+        page,
+        rawStorage,
+        logger: makeFakeLogger(),
+        ids,
+        leagueId: "lea_abc123",
+        crawlRunId: "run_1",
+        hasTable: false,
+      });
 
-    const result = await crawlFixturesByRound({
-      page,
-      rawStorage,
-      logger,
-      ids,
-      leagueId: "lea_abc123",
-      crawlRunId: "run_1",
+      assert(!result.ok);
+      expect(rawStorage.puts).toHaveLength(0);
     });
-
-    assert(result.ok);
-    expect(logger.warn).toHaveBeenCalledWith(
-      "crawl.fixturesRound",
-      "hit maxRounds safety cap without a natural stop",
-      { maxRounds: 40 },
-    );
   });
 });
