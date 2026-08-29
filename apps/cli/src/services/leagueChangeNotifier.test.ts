@@ -4,7 +4,7 @@ import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import {
   withLeagueChangeNotification,
   type LeagueWebhookNotifierDeps,
-} from "#services/deepCrawlWebhookNotifier.ts";
+} from "#services/leagueChangeNotifier.ts";
 
 type FixtureRow = typeof schema.fixture.$inferSelect;
 

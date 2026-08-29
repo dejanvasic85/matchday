@@ -9,8 +9,8 @@ import type {
   CrawlCatalogSummary,
   CrawlClubEnrichmentParams,
   CrawlClubEnrichmentSummary,
-  DeepCrawlParams,
-  DeepCrawlSummary,
+  CrawlLeagueParams,
+  CrawlLeagueSummary,
   SourceAdapter,
 } from "#crawlers/sourceAdapter.ts";
 import { crawlSourceValue } from "#crawlers/constants.ts";
@@ -28,7 +28,7 @@ import { logClubEnrichmentDryRun } from "#crawlers/dribl/clubEnrichmentDryRunLog
 import { persistClubEnrichment } from "#crawlers/dribl/clubEnrichmentPersistence.ts";
 import { crawlerConfigValue } from "#crawlers/dribl/constants.ts";
 import { resolveTenantId } from "#crawlers/dribl/driblCatalogApi.ts";
-import { deepCrawlLeague } from "#crawlers/dribl/leagueDeepCrawler.ts";
+import { crawlLeague } from "#crawlers/dribl/leagueCrawler.ts";
 
 type TenantContext = {
   page: FetchPage;
@@ -162,9 +162,9 @@ async function runCountCatalogLeagues(
   return ok({ total: countResult.value });
 }
 
-async function runDeepCrawl(
-  input: TenantContext & DeepCrawlParams,
-): Promise<Result<DeepCrawlSummary>> {
+async function runLeagueCrawl(
+  input: TenantContext & CrawlLeagueParams,
+): Promise<Result<CrawlLeagueSummary>> {
   const { page, tenantHost, tenantSlug, leagueId, dryRun, deps, rawStorage, logger } = input;
 
   const tenantResult = await resolveTenantId(page, tenantHost, tenantSlug);
@@ -172,7 +172,7 @@ async function runDeepCrawl(
     return tenantResult;
   }
 
-  return deepCrawlLeague({
+  return crawlLeague({
     page,
     rawStorage,
     logger,
@@ -271,7 +271,7 @@ export const driblAdapter: SourceAdapter = {
       crawlCatalog: (params) => runCatalogCrawl({ page, tenantHost, tenantSlug, ...params }),
       countCatalogLeagues: (params) =>
         runCountCatalogLeagues({ page, tenantHost, tenantSlug, ...params }),
-      deepCrawlLeague: (params) => runDeepCrawl({ page, tenantHost, tenantSlug, ...params }),
+      crawlLeague: (params) => runLeagueCrawl({ page, tenantHost, tenantSlug, ...params }),
       crawlClubEnrichment: (params) =>
         runClubEnrichmentCrawl({ page, tenantHost, tenantSlug, ...params }),
     });

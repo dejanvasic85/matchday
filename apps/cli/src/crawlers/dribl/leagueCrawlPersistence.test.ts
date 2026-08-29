@@ -3,8 +3,8 @@ import type { DriblFixturesApiResponse } from "#crawlers/dribl/external/driblFix
 import type { DriblTableApiResponse } from "#crawlers/dribl/external/driblTableEntry.ts";
 import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
 import { makeFakeLogger } from "#test/fixtures/logger.ts";
-import { deepCrawlPersist } from "#crawlers/dribl/deepCrawlPersistence.ts";
-import type { DeepCrawlLeagueContext } from "#crawlers/dribl/driblLeagueIdResolver.ts";
+import { persistLeagueCrawl } from "#crawlers/dribl/leagueCrawlPersistence.ts";
+import type { LeagueCrawlContext } from "#crawlers/dribl/driblLeagueIdResolver.ts";
 
 function makeFixtureResponse(hashId: string): DriblFixturesApiResponse {
   return {
@@ -68,7 +68,7 @@ function makeTableResponse(): DriblTableApiResponse {
   };
 }
 
-const context: DeepCrawlLeagueContext = {
+const context: LeagueCrawlContext = {
   competitionId: "cmp_abc123",
   seasonId: "sea_abc123",
   leagueId: "lea_abc123",
@@ -90,11 +90,11 @@ function makeHappyPathDeps() {
   });
 }
 
-describe("deepCrawlPersist", () => {
+describe("persistLeagueCrawl", () => {
   it("persists every fixture and table entry, returning a count summary", async () => {
     const deps = makeHappyPathDeps();
 
-    const result = await deepCrawlPersist({
+    const result = await persistLeagueCrawl({
       deps,
       logger: makeFakeLogger(),
       context,
@@ -110,7 +110,7 @@ describe("deepCrawlPersist", () => {
   it("treats an undefined table response (no table) as zero table entries", async () => {
     const deps = makeHappyPathDeps();
 
-    const result = await deepCrawlPersist({
+    const result = await persistLeagueCrawl({
       deps,
       logger: makeFakeLogger(),
       context,
@@ -126,7 +126,7 @@ describe("deepCrawlPersist", () => {
     const deps = makeHappyPathDeps();
     deps.upsertFixture = vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } });
 
-    const result = await deepCrawlPersist({
+    const result = await persistLeagueCrawl({
       deps,
       logger: makeFakeLogger(),
       context,
@@ -142,7 +142,7 @@ describe("deepCrawlPersist", () => {
     const deps = makeHappyPathDeps();
     deps.upsertTableEntry = vi.fn().mockResolvedValue({ ok: false, error: { message: "db down" } });
 
-    const result = await deepCrawlPersist({
+    const result = await persistLeagueCrawl({
       deps,
       logger: makeFakeLogger(),
       context,

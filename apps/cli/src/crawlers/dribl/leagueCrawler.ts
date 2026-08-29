@@ -1,16 +1,16 @@
 // Crawls + persists fixtures and the table for one subscribed league. One invocation = one
-// league — see docs/plans/2026-07-18-deep-crawl.md for why leagues crawl independently.
+// league, so leagues crawl independently and a failure in one never blocks another.
 
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";
 import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";
 import { crawlFixturesByRound } from "#crawlers/dribl/fixturesByRoundCrawler.ts";
 import { crawlTable } from "#crawlers/dribl/tableCrawler.ts";
-import { deepCrawlPersist } from "#crawlers/dribl/deepCrawlPersistence.ts";
+import { persistLeagueCrawl } from "#crawlers/dribl/leagueCrawlPersistence.ts";
 import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 import type { RawStorage } from "#storage/rawStorage.ts";
 import { resolveDriblLeagueIds } from "#crawlers/dribl/driblLeagueIdResolver.ts";
 
-export type DeepCrawlLeagueInput = {
+export type CrawlLeagueInput = {
   page: FetchPage;
   rawStorage: RawStorage;
   logger: Logger;
@@ -22,14 +22,12 @@ export type DeepCrawlLeagueInput = {
   generateCrawlRunId: () => string;
 };
 
-export type DeepCrawlLeagueSummary = {
+export type LeagueCrawlSummary = {
   fixtures: number;
   tableEntries: number;
 };
 
-export async function deepCrawlLeague(
-  input: DeepCrawlLeagueInput,
-): Promise<Result<DeepCrawlLeagueSummary>> {
+export async function crawlLeague(input: CrawlLeagueInput): Promise<Result<LeagueCrawlSummary>> {
   const { page, rawStorage, logger, deps, leagueId, tenantId, dryRun, generateCrawlRunId } = input;
 
   const resolved = await resolveDriblLeagueIds({ deps, leagueId });
@@ -65,7 +63,7 @@ export async function deepCrawlLeague(
   const tableEntryCount = tableResult.value?.data.length ?? 0;
 
   if (dryRun) {
-    logger.info("deepcrawl.league.dryRun", "crawl complete (dry run, not persisted)", {
+    logger.info("crawl.league.dryRun", "crawl complete (dry run, not persisted)", {
       leagueId,
       fixtures: fixtureCount,
       tableEntries: tableEntryCount,
@@ -73,7 +71,7 @@ export async function deepCrawlLeague(
     return ok({ fixtures: fixtureCount, tableEntries: tableEntryCount });
   }
 
-  return deepCrawlPersist({
+  return persistLeagueCrawl({
     deps,
     logger,
     context,

@@ -1,4 +1,4 @@
-name: Crawl deep
+name: Crawl leagues
 
 on:
   schedule:
@@ -52,8 +52,8 @@ jobs:
           echo "leagues=$leagues" >> "$GITHUB_OUTPUT"
           echo "Subscribed leagues: $leagues"
 
-  deep-crawl:
-    name: Deep crawl
+  crawl-leagues:
+    name: Crawl subscribed leagues
     needs: setup
     if: needs.setup.outputs.leagues != '[]'
     runs-on: ubuntu-latest
@@ -107,5 +107,5 @@ jobs:
           echo "::error::Chrome install failed after 2 attempts"
           exit 1
 
-      - name: Run deep crawl
-        run: vp run --filter @matchday/cli mday deep-crawl --league ${{ matrix.league }}
+      - name: Run league crawl
+        run: vp run --filter @matchday/cli mday crawl-leagues --league ${{ matrix.league }}

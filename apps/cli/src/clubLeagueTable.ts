@@ -19,7 +19,7 @@ export function renderClubLeagueTable(clubLeagues: ClubLeagues): string {
   if (leagues.length === 0) {
     return (
       `${header}\n` +
-      "No leagues found — the deep crawl hasn't run for any of this club's leagues yet."
+      "No leagues found — the league crawl hasn't run for any of this club's leagues yet."
     );
   }
 

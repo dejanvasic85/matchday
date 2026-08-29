@@ -10,7 +10,7 @@ Two different audiences reach matchday's data, and we have been conflating them.
 **Operators** — today just the maintainer — run administration: onboard a client, subscribe it to
 leagues, issue and revoke API tokens, and trigger crawls. This work writes a lot, occasionally
 destroys something, and runs partly unattended. `.github/workflows/crawl-catalog.yml` and
-`crawl-deep.yml` already invoke `mday` headless.
+`crawl-leagues.yml` already invoke `mday` headless.
 
 **Consumers** — today williamstownsc, later other clubs — read their own data. This work is read
 only, scoped to one tenant, and increasingly likely to arrive as a conversation ("when is the

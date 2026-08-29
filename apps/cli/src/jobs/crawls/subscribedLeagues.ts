@@ -1,4 +1,4 @@
-// Subscribed leagues: distinct league ids with >=1 subscription — scopes the deep-crawl
+// Subscribed leagues: distinct league ids with >=1 subscription — scopes the crawl-leagues
 // GitHub Actions matrix. Dedup across clients already happens in SQL.
 
 import { ok, type Logger, type Result } from "@matchday/domain";

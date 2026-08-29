@@ -34,10 +34,10 @@ describe("renderClubLeagueTable", () => {
     expect(lines[3]).toContain("Div 2 South");
   });
 
-  it("explains the deep-crawl dependency instead of printing an empty table", () => {
+  it("explains the league-crawl dependency instead of printing an empty table", () => {
     const output = renderClubLeagueTable(makeClubLeagues({ leagues: [] }));
 
-    expect(output).toContain("deep crawl hasn't run");
+    expect(output).toContain("league crawl hasn't run");
   });
 
   it("aligns the league id column across differing name lengths", () => {

@@ -119,10 +119,10 @@ export async function findClubsByName(db: Db, query: string): Promise<Result<Clu
  * id is already known. The entity-resolution service (Phase 3) generates the id up front so it
  * can also write the matching `external_ref` row in the same call.
  *
- * `name`/`displayName` are always overwritten (deep-crawl-owned). `logoUrl`/`email`/`website`/
+ * `name`/`displayName` are always overwritten (league-crawl-owned). `logoUrl`/`email`/`website`/
  * `address`/`socials` use SQL `COALESCE` on the update branch instead: a caller passes `null` to
  * mean "I have nothing better, leave the existing value alone" rather than clobbering curated
- * data. resolveClub (deep crawl) relies on exactly this — it passes `null` logoUrl once a club is
+ * data. resolveClub (league crawl) relies on exactly this — it passes `null` logoUrl once a club is
  * already identity-resolved, so the club-enrichment job's R2-mirrored logo (and its
  * email/website/address/socials) survive subsequent re-crawls instead of being wiped every time.
  */

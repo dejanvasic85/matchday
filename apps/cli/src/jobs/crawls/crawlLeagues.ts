@@ -1,4 +1,4 @@
-// Deep crawl: fixtures + table for exactly one league, discovering clubs/teams as it goes.
+// Crawls fixtures + table for exactly one subscribed league, discovering clubs/teams as it goes.
 // Transport glue that wires the real DB/R2 clients and wraps the crawl with `withLeagueChangeNotification`.
 
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";
@@ -12,11 +12,11 @@ import type { CliConfig } from "#config.ts";
 import type { CrawlSource } from "#crawlers/constants.ts";
 import { createEntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
 import { getSourceAdapter } from "#crawlers/sourceRegistry.ts";
-import { withLeagueChangeNotification } from "#services/deepCrawlWebhookNotifier.ts";
+import { withLeagueChangeNotification } from "#services/leagueChangeNotifier.ts";
 import { createR2RawStorage } from "#storage/rawStorage.ts";
 import { sendWebhook } from "#webhookSender.ts";
 
-export type RunDeepCrawlJobInput = {
+export type RunCrawlLeaguesJobInput = {
   logger: Logger;
   config: CliConfig;
   source: CrawlSource;
@@ -24,7 +24,7 @@ export type RunDeepCrawlJobInput = {
   dryRun: boolean;
 };
 
-export async function runDeepCrawlJob(input: RunDeepCrawlJobInput): Promise<Result<void>> {
+export async function runCrawlLeaguesJob(input: RunCrawlLeaguesJobInput): Promise<Result<void>> {
   const { logger, config, source, leagueId, dryRun } = input;
 
   const adapter = getSourceAdapter(source);
@@ -55,13 +55,13 @@ export async function runDeepCrawlJob(input: RunDeepCrawlJobInput): Promise<Resu
         now: () => new Date(),
       },
       { leagueId, dryRun },
-      () => session.deepCrawlLeague({ deps, rawStorage, logger, leagueId, dryRun }),
+      () => session.crawlLeague({ deps, rawStorage, logger, leagueId, dryRun }),
     );
     if (!result.ok) {
       return result;
     }
 
-    logger.info("deepcrawl.result", "deep crawl complete", {
+    logger.info("crawlleagues.result", "league crawl complete", {
       source,
       leagueId,
       dryRun,

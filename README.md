@@ -35,7 +35,7 @@ vp run --filter @matchday/api dev
 
 `mday` is the crawler and administration CLI ([apps/cli](apps/cli/src/cli.ts)). It drives a real
 Chrome through playwright-core to clear Dribl's Cloudflare, then calls `mc-api.dribl.com`
-directly. In production it runs on GitHub Actions (`crawl-catalog.yml` and `crawl-deep.yml`). The
+directly. In production it runs on GitHub Actions (`crawl-catalog.yml` and `crawl-leagues.yml`). The
 steps below cover running it locally.
 
 **1. Configure the environment.** The CLI loads [apps/cli/.env.local](apps/cli/.env.example)
@@ -70,7 +70,7 @@ every database write.
 
 Crawls every competition, league and team (with their clubs) for one source and season, then
 upserts the catalog behind the onboarding dropdowns. **Run this first.** It creates the `league`
-rows, and their `lea_` ids, that a deep crawl needs.
+rows, and their `lea_` ids, that a league crawl needs.
 
 ```sh
 # Catalog the current season (writes to the DB)
@@ -87,17 +87,17 @@ pnpm mday catalog --offset 30 --limit 30
 pnpm mday catalog --count
 ```
 
-### `deep-crawl` — expensive, one league
+### `crawl-leagues` — expensive, one league
 
 Crawls the fixtures and the table for **exactly one league**. It discovers the clubs and teams as
 it goes, and resolves them to entities before saving. Give it one of our internal `lea_` league
 ids, not a Dribl id:
 
 ```sh
-pnpm mday deep-crawl --league lea_xxxxxxxxxxxx
+pnpm mday crawl-leagues --league lea_xxxxxxxxxxxx
 
 # Stage raw + log a summary without writing to the DB
-pnpm mday deep-crawl --league lea_xxxxxxxxxxxx --dry-run
+pnpm mday crawl-leagues --league lea_xxxxxxxxxxxx --dry-run
 ```
 
 To find a `lea_` id, run `catalog` first to populate the leagues, then ask the CLI for the leagues
@@ -112,14 +112,14 @@ wrong league by accident.
 
 ### `client` — onboarding an API consumer
 
-A client is an API consumer. Its **subscriptions** decide which leagues the deep crawl visits, and
+A client is an API consumer. Its **subscriptions** decide which leagues the league crawl visits, and
 its **tokens** authenticate its requests. Onboarding one takes four commands:
 
 ```sh
 # 1. Create the client (idempotent — prints its cli_ id)
 pnpm mday client add "Williamstown SC"
 
-# 2. Subscribe it to a league, putting that league in the deep crawl's scope
+# 2. Subscribe it to a league, putting that league in the league crawl's scope
 pnpm mday client add-subscription --client "Williamstown SC" --league lea_xxxxxxxxxxxx
 
 # 3. Issue a bearer token — shown once, never recoverable, only rotatable
@@ -154,7 +154,7 @@ silent tenant holding its own tokens. Only `client add` creates a client.
 ### Other commands
 
 The CLI covers more than the above — `club-enrichment` fetches richer club detail and mirrors
-logos to R2, `subscribed-leagues` prints the deep crawl's scope, and `league-team` maintains the
+logos to R2, `subscribed-leagues` prints the league crawl's scope, and `league-team` maintains the
 membership table. Run `pnpm mday --help`, then `pnpm mday <command> --help`, for the current set.
 
 ## License

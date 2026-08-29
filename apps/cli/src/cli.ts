@@ -23,7 +23,7 @@ import { runCreateApiTokenJob } from "#jobs/clients/createApiToken.ts";
 import { runCreateClientJob } from "#jobs/clients/createClient.ts";
 import { runCreateSubscriptionJob } from "#jobs/clients/createSubscription.ts";
 import { runCreateSubscriptionsForClubJob } from "#jobs/clients/createSubscriptionsForClub.ts";
-import { runDeepCrawlJob } from "#jobs/crawls/deepCrawl.ts";
+import { runCrawlLeaguesJob } from "#jobs/crawls/crawlLeagues.ts";
 import { runListClientsJob } from "#jobs/clients/listClients.ts";
 import { runBackfillLeagueTeamsJob } from "#jobs/maintenance/backfillLeagueTeams.ts";
 import { runRemoveSubscriptionJob } from "#jobs/clients/removeSubscription.ts";
@@ -176,7 +176,7 @@ export function createCli(): Command {
     .command("subscribed-leagues")
     .description(
       "List the distinct set of league ids with >=1 subscription, as JSON — the scope the " +
-        "deep-crawl GitHub Actions matrix crawls each run.",
+        "crawl-leagues GitHub Actions matrix crawls each run.",
     )
     .action(async () => {
       const config = getCliConfig();
@@ -191,10 +191,10 @@ export function createCli(): Command {
     });
 
   program
-    .command("deep-crawl")
+    .command("crawl-leagues")
     .description(
-      "Crawl fixtures + table for one league, discovering clubs/teams and persisting via " +
-        "entity resolution. Expensive; run at a cadence derived from fixture dates.",
+      "Crawl fixtures + table for one subscribed league, discovering clubs/teams and persisting " +
+        "via entity resolution. Expensive; run at a cadence derived from fixture dates.",
     )
     .option(
       "--source <name>",
@@ -211,7 +211,7 @@ export function createCli(): Command {
     .action(async (options: { source: CrawlSource; league: LeagueId; dryRun: boolean }) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
-      const result = await runDeepCrawlJob({
+      const result = await runCrawlLeaguesJob({
         logger,
         config,
         source: options.source,
@@ -219,7 +219,7 @@ export function createCli(): Command {
         dryRun: options.dryRun,
       });
       if (!result.ok) {
-        logger.error("deepcrawl.failed", result.error.message, { cause: result.error.cause });
+        logger.error("crawlleagues.failed", result.error.message, { cause: result.error.cause });
         process.exitCode = 1;
       }
     });

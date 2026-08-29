@@ -21,7 +21,7 @@ export type DriblLeagueHashes = {
   league: string;
 };
 
-export type DeepCrawlLeagueContext = {
+export type LeagueCrawlContext = {
   competitionId: CompetitionId;
   seasonId: SeasonId;
   leagueId: LeagueId;
@@ -35,7 +35,7 @@ export type ResolveDriblLeagueIdsInput = {
 
 export type ResolveDriblLeagueIdsResult = {
   hashes: DriblLeagueHashes;
-  context: DeepCrawlLeagueContext;
+  context: LeagueCrawlContext;
 };
 
 async function resolveHash(
