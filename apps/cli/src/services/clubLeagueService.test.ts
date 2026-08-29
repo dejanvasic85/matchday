@@ -25,7 +25,15 @@ describe("listLeaguesForClub", () => {
         leagues: [{ id: "lea_div1north", name: "Div 1 North" }],
       }),
     );
-    expect(deps.listLeaguesByClubId).toHaveBeenCalledWith("clb_existing000");
+    expect(deps.listLeaguesByClubId).toHaveBeenCalledWith("clb_existing000", undefined);
+  });
+
+  it("passes the season through so callers can scope a club to one season", async () => {
+    const deps = makeDeps();
+
+    await listLeaguesForClub(deps, "Williamstown", "sea_2026000000");
+
+    expect(deps.listLeaguesByClubId).toHaveBeenCalledWith("clb_existing000", "sea_2026000000");
   });
 
   it("dedupes leagues shared by more than one team (19 teams, 18 distinct leagues)", async () => {

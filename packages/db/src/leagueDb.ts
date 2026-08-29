@@ -105,11 +105,21 @@ export async function listLeagues(
  *
  * Depends on the catalog crawl having already run for a league before it's discoverable here: fine
  * for onboarding a club into an existing dataset, circular for a brand-new league.
+ *
+ * `seasonId` scopes the result to one season. Callers that subscribe a client should always pass
+ * it: a club keeps its `league_team` rows from every season it has ever played, so an unscoped
+ * call would subscribe the client to finished seasons alongside the current one.
  */
 export async function listLeaguesByClubId(
   db: Db,
   clubId: string,
+  seasonId?: string,
 ): Promise<Result<LeagueWithRefs[]>> {
+  const conditions = [
+    eq(team.clubId, clubId),
+    seasonId === undefined ? undefined : eq(league.seasonId, seasonId),
+  ].filter((condition) => condition !== undefined);
+
   return runQuery(
     () =>
       db
@@ -119,7 +129,7 @@ export async function listLeaguesByClubId(
         .innerJoin(season, eq(season.id, league.seasonId))
         .innerJoin(leagueTeam, eq(leagueTeam.leagueId, league.id))
         .innerJoin(team, eq(team.id, leagueTeam.teamId))
-        .where(eq(team.clubId, clubId))
+        .where(and(...conditions))
         .orderBy(asc(league.name)),
     "Failed to list leagues by club id",
   );

@@ -2,9 +2,7 @@
 // exists, mints the id, and delegates the write to data-access.
 
 import {
-  badRequest,
   generateId,
-  generateWebhookSecret,
   notFound,
   ok,
   parseId,
@@ -14,10 +12,9 @@ import {
   type SubscriptionId,
 } from "@matchday/domain";
 import type {
-  clearSubscriptionWebhook as clearSubscriptionWebhookDb,
   deleteSubscription,
   getLeagueById,
-  setSubscriptionWebhook as setSubscriptionWebhookDb,
+  upsertClientClub,
   upsertSubscription,
 } from "@matchday/db";
 import {
@@ -26,18 +23,19 @@ import {
   type ClubLeagues,
 } from "#services/clubLeagueService.ts";
 import { resolveClient, type ClientResolverDeps } from "#services/clientResolver.ts";
+import { resolveSeason, type SeasonResolverDeps } from "#services/seasonResolver.ts";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
   : never;
 
 export type SubscriptionServiceDeps = ClientResolverDeps &
-  ClubLeagueServiceDeps & {
+  ClubLeagueServiceDeps &
+  SeasonResolverDeps & {
     getLeagueById: WithoutDb<typeof getLeagueById>;
     upsertSubscription: WithoutDb<typeof upsertSubscription>;
     deleteSubscription: WithoutDb<typeof deleteSubscription>;
-    setSubscriptionWebhook: WithoutDb<typeof setSubscriptionWebhookDb>;
-    clearSubscriptionWebhook: WithoutDb<typeof clearSubscriptionWebhookDb>;
+    upsertClientClub: WithoutDb<typeof upsertClientClub>;
   };
 
 function toSubscriptionId(id: string): Result<SubscriptionId> {
@@ -86,30 +84,45 @@ export async function createSubscription(
 export type CreateSubscriptionsForClubInput = {
   deps: Pick<
     SubscriptionServiceDeps,
-    "findClientByName" | "findClubsByName" | "listLeaguesByClubId" | "upsertSubscription"
+    | "findClientByName"
+    | "findClubsByName"
+    | "findLatestSeason"
+    | "findSeasonByName"
+    | "listLeaguesByClubId"
+    | "upsertClientClub"
+    | "upsertSubscription"
   >;
   clientName: string;
   clubName: string;
-  /** Resolve the club and its leagues without writing any subscriptions — the safe-by-default
-   * habit for a fuzzy club match: a typo'd `--club` is a prod-data event otherwise. */
+  /** Season year to subscribe for; defaults to the latest season we hold. */
+  seasonName?: string;
+  /** Resolve the club and its leagues without writing anything — the safe-by-default habit for a
+   * fuzzy club match: a typo'd `--club` is a prod-data event otherwise. */
   dryRun: boolean;
 };
 
 export type ClubSubscriptionResult = ClubLeagues & {
+  season: { id: string; name: string };
   /** Empty on a dry run — nothing was written. */
   subscriptionIds: SubscriptionId[];
 };
 
-/** Subscribe a client to every league resolved for a club — onboarding a real club is one
- * call instead of one `add-subscription` per league. Resolves the club/leagues before the client
- * so an ambiguous or typo'd `--club` fails before any subscription write is attempted, dry run
- * or not. */
+/** Subscribe a client to every league a club plays in *this season*, and record that the client
+ * follows the club so a later `sync-subscriptions` can re-derive the same set for a new season.
+ * Resolves the club and season before the client, so an ambiguous or typo'd `--club` fails before
+ * any write is attempted, dry run or not. */
 export async function createSubscriptionsForClub(
   input: CreateSubscriptionsForClubInput,
 ): Promise<Result<ClubSubscriptionResult>> {
-  const { deps, clientName, clubName, dryRun } = input;
+  const { deps, clientName, clubName, seasonName, dryRun } = input;
 
-  const clubLeaguesResult = await listLeaguesForClub(deps, clubName);
+  const seasonResult = await resolveSeason(deps, seasonName);
+  if (!seasonResult.ok) {
+    return seasonResult;
+  }
+  const season = seasonResult.value;
+
+  const clubLeaguesResult = await listLeaguesForClub(deps, clubName, season.id);
   if (!clubLeaguesResult.ok) {
     return clubLeaguesResult;
   }
@@ -121,7 +134,18 @@ export async function createSubscriptionsForClub(
   }
 
   if (dryRun) {
-    return ok({ club, leagues, subscriptionIds: [] });
+    return ok({ club, leagues, season, subscriptionIds: [] });
+  }
+
+  // Record the follow first: if a later upsert fails, the provenance is still there and a
+  // `sync-subscriptions` finishes the job.
+  const followed = await deps.upsertClientClub({
+    id: generateId("clientClub"),
+    clientId: clientResult.value,
+    clubId: club.id,
+  });
+  if (!followed.ok) {
+    return followed;
   }
 
   const subscriptionIds: SubscriptionId[] = [];
@@ -144,7 +168,7 @@ export async function createSubscriptionsForClub(
     subscriptionIds.push(subscriptionId.value);
   }
 
-  return ok({ club, leagues, subscriptionIds });
+  return ok({ club, leagues, season, subscriptionIds });
 }
 
 /** Soft-delete a subscription, narrowing an unknown (or already-removed) id to a `notFound`
@@ -158,64 +182,6 @@ export async function removeSubscription(
     return deleted;
   }
   if (deleted.value === null) {
-    return notFound(`Subscription not found: ${id}`);
-  }
-  return ok(undefined);
-}
-
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-export type ConfiguredWebhook = {
-  webhookUrl: string;
-  /** Shown once here, like `createApiToken`'s plaintext token — only its value in the response is
-   * ever available; the persisted row is opaque after this call returns. */
-  webhookSecret: string;
-};
-
-/**
- * Configure (or replace) a subscription's webhook: validates the URL, mints a fresh
- * signing secret, and persists both. Re-running this on an already-configured subscription
- * rotates the secret — there's no "keep the old secret" path, matching how `create-token` always
- * mints a new token rather than exposing an existing one.
- */
-export async function setSubscriptionWebhook(
-  deps: Pick<SubscriptionServiceDeps, "setSubscriptionWebhook">,
-  id: SubscriptionId,
-  webhookUrl: string,
-): Promise<Result<ConfiguredWebhook>> {
-  if (!isHttpUrl(webhookUrl)) {
-    return badRequest(`Webhook URL must be a valid http(s) URL: ${webhookUrl}`);
-  }
-
-  const webhookSecret = generateWebhookSecret();
-  const updated = await deps.setSubscriptionWebhook(id, webhookUrl, webhookSecret);
-  if (!updated.ok) {
-    return updated;
-  }
-  if (updated.value === null) {
-    return notFound(`Subscription not found: ${id}`);
-  }
-  return ok({ webhookUrl, webhookSecret });
-}
-
-/** Clear a subscription's webhook, narrowing an unknown (or already-webhook-less)
- * subscription id to a `notFound` outcome, matching `removeSubscription`'s error shape. */
-export async function clearSubscriptionWebhook(
-  deps: Pick<SubscriptionServiceDeps, "clearSubscriptionWebhook">,
-  id: SubscriptionId,
-): Promise<Result<void>> {
-  const updated = await deps.clearSubscriptionWebhook(id);
-  if (!updated.ok) {
-    return updated;
-  }
-  if (updated.value === null) {
     return notFound(`Subscription not found: ${id}`);
   }
   return ok(undefined);

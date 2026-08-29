@@ -27,6 +27,7 @@ export {
   isIdOfType,
   parseId,
   type ApiTokenId,
+  type ClientClubId,
   type ClientId,
   type ClubId,
   type CompetitionId,

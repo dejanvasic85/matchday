@@ -7,6 +7,16 @@
   `league_team` table after all. Deriving membership from `table_entry`, as this ADR proposes
   below, silently misses divisions that publish fixtures but no ladder, such as MiniRoos age
   groups. `league_team` records every discovered team regardless. The rest of this ADR stands.
+- Reshaped by: [#202](https://github.com/dejanvasic85/matchday/issues/202) — a subscription alone
+  can't survive a season boundary. Because a `league` is scoped to one season, every subscription
+  dies with that season, and this ADR records no provenance to re-derive the next one from. We
+  therefore added `client_club`: a client **follows a club**, and subscriptions become derived
+  state that `mday client sync-subscriptions` reconciles per season. Two consequences for the text
+  below. The webhook moved from `client_subscription` onto `client_club`, so it outlives any one
+  season rather than being reconfigured every year. And "current season" is **derived, not
+  flagged** — season names are the source's own years, so the current season is the latest row,
+  overridable with `--season`. The subscription remains the crawl-scope primitive and still keys on
+  our internal `lea_` id, so the rest of this ADR stands.
 - Input: the Dribl identity investigation of 2026-07-15. That plan document is no longer in the
   repo; its findings are summarised in the Context below.
 

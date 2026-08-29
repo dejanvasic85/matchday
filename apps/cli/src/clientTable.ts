@@ -13,23 +13,39 @@ function padRow(cells: string[], widths: number[]): string {
     .trimEnd();
 }
 
-function webhookCell(subscription: { hasWebhook: boolean }): string {
-  return subscription.hasWebhook ? "yes" : emptyCell;
+/** Subscriptions counted per season rather than listed: a client holds dozens, and the roster's
+ * job is to make a leftover season obvious ("2025: 18") — `client list-subscriptions` is where
+ * the individual rows live. */
+function subscriptionCell(client: ClientSummary): string {
+  const countsBySeason = new Map<string, number>();
+  for (const subscription of client.subscriptions) {
+    countsBySeason.set(
+      subscription.seasonName,
+      (countsBySeason.get(subscription.seasonName) ?? 0) + 1,
+    );
+  }
+  if (countsBySeason.size === 0) {
+    return emptyCell;
+  }
+  return [...countsBySeason.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([season, count]) => `${season}: ${count}`)
+    .join(", ");
 }
 
-/** One line per subscription so ids stay copy-pasteable into `client remove-subscription`/
- * `client set-webhook`; a client's id/name/token count is printed on its first line only, blank
- * on continuation lines. */
+/** One line per followed club so the webhook column is per-club; a client's id/name/tokens and
+ * subscription summary are printed on its first line only, blank on continuation lines. */
 function toRows(clients: ClientSummary[]): string[][] {
   return clients.flatMap((client) => {
     const summary = [client.id, client.name, String(client.activeTokenCount)];
-    if (client.subscriptions.length === 0) {
-      return [[...summary, emptyCell, emptyCell, emptyCell]];
+    const subscriptions = subscriptionCell(client);
+    if (client.clubs.length === 0) {
+      return [[...summary, emptyCell, emptyCell, subscriptions]];
     }
-    return client.subscriptions.map((subscription, index) =>
+    return client.clubs.map((club, index) =>
       index === 0
-        ? [...summary, subscription.id, subscription.leagueName, webhookCell(subscription)]
-        : ["", "", "", subscription.id, subscription.leagueName, webhookCell(subscription)],
+        ? [...summary, club.clubName, club.hasWebhook ? "yes" : emptyCell, subscriptions]
+        : ["", "", "", club.clubName, club.hasWebhook ? "yes" : emptyCell, ""],
     );
   });
 }
@@ -39,7 +55,7 @@ export function renderClientTable(clients: ClientSummary[]): string {
     return 'No clients yet — create one with "mday client add <name>".';
   }
 
-  const header = ["CLIENT ID", "NAME", "TOKENS", "SUBSCRIPTION ID", "LEAGUE", "WEBHOOK"];
+  const header = ["CLIENT ID", "NAME", "TOKENS", "FOLLOWED CLUB", "WEBHOOK", "SUBSCRIPTIONS"];
   const rows = [header, ...toRows(clients)];
   const widths = header.map((_, index) =>
     Math.max(...rows.map((row) => (row[index] ?? "").length)),

@@ -11,6 +11,7 @@ import {
 } from "@matchday/domain";
 import { Command, InvalidArgumentError, Option } from "commander";
 import { renderClientTable } from "#clientTable.ts";
+import { renderSubscriptionTable, renderSyncPlan } from "#subscriptionTable.ts";
 import { renderClubLeagueTable } from "#clubLeagueTable.ts";
 import { getCliConfig } from "#config.ts";
 import { crawlSourceValue, type CrawlSource } from "#crawlers/constants.ts";
@@ -18,17 +19,22 @@ import { runCatalogJob } from "#jobs/crawls/catalog.ts";
 import { runCountCatalogLeaguesJob } from "#jobs/crawls/countCatalogLeagues.ts";
 import { runClubEnrichmentJob } from "#jobs/clubs/enrichClubs.ts";
 import { runListClubLeaguesJob } from "#jobs/clubs/listClubLeagues.ts";
-import { runClearSubscriptionWebhookJob } from "#jobs/clients/clearSubscriptionWebhook.ts";
 import { runCreateApiTokenJob } from "#jobs/clients/createApiToken.ts";
 import { runCreateClientJob } from "#jobs/clients/createClient.ts";
 import { runCreateSubscriptionJob } from "#jobs/clients/createSubscription.ts";
 import { runCreateSubscriptionsForClubJob } from "#jobs/clients/createSubscriptionsForClub.ts";
+import {
+  runClearClientClubWebhookJob,
+  runSetClientClubWebhookJob,
+} from "#jobs/clients/clientClubWebhook.ts";
+import { runFollowClubJob, runUnfollowClubJob } from "#jobs/clients/followClub.ts";
+import { runListSubscriptionsJob } from "#jobs/clients/listSubscriptions.ts";
+import { runSyncSubscriptionsJob } from "#jobs/clients/syncSubscriptions.ts";
 import { runCrawlLeaguesJob } from "#jobs/crawls/crawlLeagues.ts";
 import { runListClientsJob } from "#jobs/clients/listClients.ts";
 import { runBackfillLeagueTeamsJob } from "#jobs/maintenance/backfillLeagueTeams.ts";
 import { runRemoveSubscriptionJob } from "#jobs/clients/removeSubscription.ts";
 import { runRevokeApiTokenJob } from "#jobs/clients/revokeApiToken.ts";
-import { runSetSubscriptionWebhookJob } from "#jobs/clients/setSubscriptionWebhook.ts";
 import { runSubscribedLeaguesJob } from "#jobs/crawls/subscribedLeagues.ts";
 
 const currentYear = new Date().getFullYear().toString();
@@ -271,11 +277,16 @@ export function createCli(): Command {
         "A name matching more than one club fails listing every candidate rather than guessing.",
     )
     .argument("<name>", "a club name, or a fragment of one")
+    .option("--season <year>", "only show leagues in this season (default: all seasons)")
     .option("--json", "print the result as JSON instead of a table", false)
-    .action(async (name: string, options: { json: boolean }) => {
+    .action(async (name: string, options: { season?: string; json: boolean }) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
-      const result = await runListClubLeaguesJob({ config, clubName: name });
+      const result = await runListClubLeaguesJob({
+        config,
+        clubName: name,
+        seasonName: options.season,
+      });
       if (!result.ok) {
         logger.error("club.leaguesfailed", result.error.message, { cause: result.error.cause });
         process.exitCode = 1;
@@ -290,16 +301,17 @@ export function createCli(): Command {
   const client = program
     .command("client")
     .description(
-      "Manage API consumers: the clients themselves, their league subscriptions " +
-        "(which drive the deep crawl's scope), their bearer tokens, and each subscription's " +
-        "optional post-crawl webhook.",
+      "Manage API consumers: the clients themselves, the clubs they follow, the league " +
+        "subscriptions derived from those clubs (which drive the crawl's scope), their bearer " +
+        "tokens, and each followed club's optional post-crawl webhook.",
     );
 
   client
     .command("list")
     .description(
-      "List every client with its active token count and league subscriptions. Use it to find " +
-        "the sub_ id that remove-subscription takes.",
+      "List every client with its active token count, followed clubs (and whether each has a " +
+        "webhook), and a per-season subscription count. Run `client list-subscriptions` for the " +
+        "individual rows and their sub_ ids.",
     )
     .option("--json", "print the roster as JSON instead of a table", false)
     .action(async (options: { json: boolean }) => {
@@ -377,13 +389,142 @@ export function createCli(): Command {
     });
 
   client
+    .command("follow-club")
+    .description(
+      "Record that a client follows a club. This is the provenance `sync-subscriptions` " +
+        "re-derives from at a season rollover, and it owns the webhook — so both survive the " +
+        "season the subscriptions were created in. Writes no subscriptions itself: run " +
+        "`client sync-subscriptions` to see the diff and apply it.",
+    )
+    .requiredOption("--client <name>", "the client name")
+    .requiredOption("--club <name>", "the club name, or an unambiguous fragment of one")
+    .action(async (options: { client: string; club: string }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runFollowClubJob({
+        logger,
+        config,
+        clientName: options.client,
+        clubName: options.club,
+      });
+      if (!result.ok) {
+        logger.error("clientclub.followfailed", result.error.message, {
+          cause: result.error.cause,
+        });
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(
+        `"${options.client}" now follows ${result.value.club.name} (${result.value.club.id})\n`,
+      );
+      process.stdout.write("Run `mday client sync-subscriptions` to subscribe to its leagues.\n");
+    });
+
+  client
+    .command("unfollow-club")
+    .description(
+      "Stop a client following a club. Existing subscriptions stay active until the next " +
+        "`sync-subscriptions` prunes them, so this never silently drops a league mid-season.",
+    )
+    .requiredOption("--client <name>", "the client name")
+    .requiredOption("--club <name>", "the club name, or an unambiguous fragment of one")
+    .action(async (options: { client: string; club: string }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runUnfollowClubJob({
+        logger,
+        config,
+        clientName: options.client,
+        clubName: options.club,
+      });
+      if (!result.ok) {
+        logger.error("clientclub.unfollowfailed", result.error.message, {
+          cause: result.error.cause,
+        });
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(
+        `"${options.client}" no longer follows ${result.value.club.name} (${result.value.club.id})\n`,
+      );
+    });
+
+  client
+    .command("sync-subscriptions")
+    .description(
+      "Reconcile a client's subscriptions against the clubs it follows, for one season. Adds " +
+        "every league a followed club plays in this season that isn't subscribed yet, and " +
+        "removes subscriptions belonging to *older* seasons — so a season rollover is this one " +
+        "command. Prints the diff and writes nothing unless --apply is passed. Requires the " +
+        "catalog crawl to have run for the target season first.",
+    )
+    .requiredOption("--client <name>", "the client name")
+    .option("--season <year>", "season to sync to (default: the latest season we hold)")
+    .option("--apply", "write the diff instead of only printing it", false)
+    .option("--json", "print the plan as JSON instead of a table", false)
+    .action(async (options: { client: string; season?: string; apply: boolean; json: boolean }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runSyncSubscriptionsJob({
+        logger,
+        config,
+        clientName: options.client,
+        seasonName: options.season,
+        apply: options.apply,
+      });
+      if (!result.ok) {
+        logger.error("subscription.syncfailed", result.error.message, {
+          cause: result.error.cause,
+        });
+        process.exitCode = 1;
+        return;
+      }
+      const output = options.json
+        ? JSON.stringify(result.value, null, 2)
+        : renderSyncPlan(result.value);
+      process.stdout.write(`${output}\n`);
+    });
+
+  client
+    .command("list-subscriptions")
+    .description(
+      "List one client's active subscriptions with the season each league belongs to, so " +
+        "subscriptions left behind by a finished season are obvious. Filtered server-side; " +
+        "--json prints the rows alone for piping into jq.",
+    )
+    .requiredOption("--client <name>", "the client name")
+    .option("--season <year>", "only show subscriptions in this season (default: all seasons)")
+    .option("--json", "print the rows as JSON instead of a table", false)
+    .action(async (options: { client: string; season?: string; json: boolean }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runListSubscriptionsJob({
+        config,
+        clientName: options.client,
+        seasonName: options.season,
+      });
+      if (!result.ok) {
+        logger.error("subscription.listfailed", result.error.message, {
+          cause: result.error.cause,
+        });
+        process.exitCode = 1;
+        return;
+      }
+      const output = options.json
+        ? JSON.stringify(result.value, null, 2)
+        : renderSubscriptionTable(result.value);
+      process.stdout.write(`${output}\n`);
+    });
+
+  client
     .command("add-subscription")
     .description(
-      "Subscribe an existing client to a league, or to every league a club's teams play " +
-        "in — exactly one of --league/--club. --club resolves via league_team, only " +
-        "discoverable once the catalog crawl has run for a league at least once; run `club " +
-        "leagues <name>` or pass --dry-run first to preview before writing N subscription rows " +
-        "off a single fuzzy name match.",
+      "Subscribe an existing client to a league, or to every league a club's teams play in " +
+        "this season — exactly one of --league/--club. --club also records the follow, so a " +
+        "later `sync-subscriptions` can re-derive the same set for a new season. --club resolves " +
+        "via league_team, only discoverable once the catalog crawl has run for a league at least " +
+        "once; run `club leagues <name>` or pass --dry-run first to preview before writing N " +
+        "subscription rows off a single fuzzy name match.",
     )
     .requiredOption("--client <name>", "the client name")
     .addOption(
@@ -399,12 +540,22 @@ export function createCli(): Command {
       ).conflicts("league"),
     )
     .option(
+      "--season <year>",
+      "with --club, the season to subscribe for (default: the latest season we hold)",
+    )
+    .option(
       "--dry-run",
       "with --club, resolve and print the club + leagues without subscribing to anything",
       false,
     )
     .action(
-      async (options: { client: string; league?: LeagueId; club?: string; dryRun: boolean }) => {
+      async (options: {
+        client: string;
+        league?: LeagueId;
+        club?: string;
+        season?: string;
+        dryRun: boolean;
+      }) => {
         const logger = createConsoleLogger();
 
         if (options.league === undefined && options.club === undefined) {
@@ -415,6 +566,12 @@ export function createCli(): Command {
 
         if (options.dryRun && options.league !== undefined) {
           logger.error("subscription.failed", "--dry-run only applies to --club, not --league");
+          process.exitCode = 1;
+          return;
+        }
+
+        if (options.season !== undefined && options.league !== undefined) {
+          logger.error("subscription.failed", "--season only applies to --club, not --league");
           process.exitCode = 1;
           return;
         }
@@ -453,6 +610,7 @@ export function createCli(): Command {
           config,
           clientName: options.client,
           clubName,
+          seasonName: options.season,
           dryRun: options.dryRun,
         });
         if (!result.ok) {
@@ -463,8 +621,9 @@ export function createCli(): Command {
           return;
         }
 
-        const { club: matchedClub, leagues, subscriptionIds } = result.value;
+        const { club: matchedClub, leagues, season, subscriptionIds } = result.value;
         process.stdout.write(`Club: ${matchedClub.name} (${matchedClub.id})\n`);
+        process.stdout.write(`Season: ${season.name}\n`);
         if (options.dryRun) {
           process.stdout.write(
             `Dry run — would subscribe "${options.client}" to ${leagues.length} league(s):\n`,
@@ -486,8 +645,9 @@ export function createCli(): Command {
   client
     .command("remove-subscription")
     .description(
-      "Unsubscribe a client from a league by subscription id (find it via `client list`). The " +
-        "league leaves the deep crawl's scope once no client subscribes to it.",
+      "Unsubscribe a client from a league by subscription id (find it via " +
+        "`client list-subscriptions`). The league leaves the crawl's scope once no client " +
+        "subscribes to it.",
     )
     .argument("<sub_id>", "the subscription id to remove", parseSubscriptionId)
     .action(async (id: SubscriptionId) => {
@@ -507,29 +667,34 @@ export function createCli(): Command {
   client
     .command("set-webhook")
     .description(
-      "Configure (or rotate) a subscription's webhook: after each deep crawl of its " +
-        "league, matchday POSTs { leagueId, hasChanges, crawledAt } to this URL, signed with a " +
-        "freshly minted secret (X-Matchday-Signature: sha256=<hex>). The secret is shown once " +
-        "here and never recoverable again — re-running this rotates it.",
+      "Configure (or rotate) a followed club's webhook: after each crawl of a league that " +
+        "club plays in and the client subscribes to, matchday POSTs " +
+        "{ leagueId, hasChanges, crawledAt } to this URL, signed with a freshly minted secret " +
+        "(X-Matchday-Signature: sha256=<hex>). Verify the signature over the raw body and read " +
+        "leagueId from it. The secret is shown once here and never recoverable again — " +
+        "re-running this rotates it. The client must already follow the club.",
     )
-    .argument("<sub_id>", "the subscription id to configure", parseSubscriptionId)
+    .requiredOption("--client <name>", "the client name")
+    .requiredOption("--club <name>", "the followed club to configure the webhook for")
     .requiredOption("--url <url>", "the http(s) endpoint to POST deliveries to")
-    .action(async (id: SubscriptionId, options: { url: string }) => {
+    .action(async (options: { client: string; club: string; url: string }) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
-      const result = await runSetSubscriptionWebhookJob({
+      const result = await runSetClientClubWebhookJob({
         logger,
         config,
-        id,
+        clientName: options.client,
+        clubName: options.club,
         webhookUrl: options.url,
       });
       if (!result.ok) {
-        logger.error("subscription.webhookfailed", result.error.message, {
+        logger.error("clientclub.webhookfailed", result.error.message, {
           cause: result.error.cause,
         });
         process.exitCode = 1;
         return;
       }
+      process.stdout.write(`Club: ${result.value.club.name} (${result.value.club.id})\n`);
       process.stdout.write(`Webhook URL: ${result.value.webhookUrl}\n`);
       process.stdout.write(`Webhook secret: ${result.value.webhookSecret}\n`);
       process.stdout.write("Store this secret now — it will not be shown again.\n");
@@ -537,20 +702,26 @@ export function createCli(): Command {
 
   client
     .command("clear-webhook")
-    .description("Remove a subscription's webhook so no further deliveries are sent for it.")
-    .argument("<sub_id>", "the subscription id to clear", parseSubscriptionId)
-    .action(async (id: SubscriptionId) => {
+    .description("Remove a followed club's webhook so no further deliveries are sent for it.")
+    .requiredOption("--client <name>", "the client name")
+    .requiredOption("--club <name>", "the followed club to clear the webhook for")
+    .action(async (options: { client: string; club: string }) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
-      const result = await runClearSubscriptionWebhookJob({ logger, config, id });
+      const result = await runClearClientClubWebhookJob({
+        logger,
+        config,
+        clientName: options.client,
+        clubName: options.club,
+      });
       if (!result.ok) {
-        logger.error("subscription.webhookclearfailed", result.error.message, {
+        logger.error("clientclub.webhookclearfailed", result.error.message, {
           cause: result.error.cause,
         });
         process.exitCode = 1;
         return;
       }
-      process.stdout.write(`Cleared webhook for subscription: ${id}\n`);
+      process.stdout.write(`Cleared webhook for club: ${result.value.name}\n`);
     });
 
   const leagueTeam = program

@@ -1,10 +1,8 @@
 import { badRequest, notFound, ok, serverError } from "@matchday/domain";
 import {
-  clearSubscriptionWebhook,
   createSubscription,
   createSubscriptionsForClub,
   removeSubscription,
-  setSubscriptionWebhook,
   type SubscriptionServiceDeps,
 } from "#services/subscriptionService.ts";
 
@@ -13,8 +11,9 @@ function makeDeps(overrides: Partial<SubscriptionServiceDeps> = {}): Subscriptio
     getLeagueById: vi.fn().mockResolvedValue(ok({ id: "lea_abc123" })),
     upsertSubscription: vi.fn().mockResolvedValue(ok({ id: "sub_generated" })),
     deleteSubscription: vi.fn().mockResolvedValue(ok({ id: "sub_existing00" })),
-    setSubscriptionWebhook: vi.fn().mockResolvedValue(ok({ id: "sub_existing00" })),
-    clearSubscriptionWebhook: vi.fn().mockResolvedValue(ok({ id: "sub_existing00" })),
+    upsertClientClub: vi.fn().mockResolvedValue(ok({ id: "ccl_existing00" })),
+    findLatestSeason: vi.fn().mockResolvedValue(ok({ id: "sea_2026000000", name: "2026" })),
+    findSeasonByName: vi.fn().mockResolvedValue(ok({ id: "sea_2026000000", name: "2026" })),
     findClientByName: vi
       .fn()
       .mockResolvedValue(ok({ id: "cli_existing000", name: "Williamstown SC" })),
@@ -170,6 +169,7 @@ describe("createSubscriptionsForClub", () => {
           { id: "lea_div1north", name: "Div 1 North" },
           { id: "lea_div2south", name: "Div 2 South" },
         ],
+        season: { id: "sea_2026000000", name: "2026" },
         subscriptionIds: ["sub_generated01", "sub_generated02"],
       }),
     );
@@ -201,6 +201,7 @@ describe("createSubscriptionsForClub", () => {
           { id: "lea_div1north", name: "Div 1 North" },
           { id: "lea_div2south", name: "Div 2 South" },
         ],
+        season: { id: "sea_2026000000", name: "2026" },
         subscriptionIds: [],
       }),
     );
@@ -221,6 +222,7 @@ describe("createSubscriptionsForClub", () => {
       ok({
         club: { id: "clb_existing000", name: "Williamstown SC" },
         leagues: [],
+        season: { id: "sea_2026000000", name: "2026" },
         subscriptionIds: [],
       }),
     );
@@ -282,6 +284,62 @@ describe("createSubscriptionsForClub", () => {
     expect(deps.upsertSubscription).not.toHaveBeenCalled();
   });
 
+  it("scopes the club's leagues to the resolved season", async () => {
+    const deps = makeDeps();
+
+    await createSubscriptionsForClub({
+      deps,
+      clientName: "Williamstown SC",
+      clubName: "Williamstown",
+      dryRun: false,
+    });
+
+    expect(deps.listLeaguesByClubId).toHaveBeenCalledWith("clb_existing000", "sea_2026000000");
+  });
+
+  it("records the follow so a later sync can re-derive the same leagues", async () => {
+    const deps = makeDeps();
+
+    await createSubscriptionsForClub({
+      deps,
+      clientName: "Williamstown SC",
+      clubName: "Williamstown",
+      dryRun: false,
+    });
+
+    expect(deps.upsertClientClub).toHaveBeenCalledWith(
+      expect.objectContaining({ clientId: "cli_existing000", clubId: "clb_existing000" }),
+    );
+  });
+
+  it("records no follow on a dry run", async () => {
+    const deps = makeDeps();
+
+    await createSubscriptionsForClub({
+      deps,
+      clientName: "Williamstown SC",
+      clubName: "Williamstown",
+      dryRun: true,
+    });
+
+    expect(deps.upsertClientClub).not.toHaveBeenCalled();
+  });
+
+  it("errors without writing when the named season hasn't been crawled", async () => {
+    const deps = makeDeps({ findSeasonByName: vi.fn().mockResolvedValue(ok(null)) });
+
+    const result = await createSubscriptionsForClub({
+      deps,
+      clientName: "Williamstown SC",
+      clubName: "Williamstown",
+      seasonName: "2027",
+      dryRun: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(deps.upsertSubscription).not.toHaveBeenCalled();
+  });
+
   it("stops at the first upsert failure instead of subscribing the remaining leagues", async () => {
     const upsertError = serverError("Failed to upsert subscription");
     const deps = makeDeps({
@@ -328,90 +386,5 @@ describe("removeSubscription", () => {
     const result = await removeSubscription(deps, "sub_existing00");
 
     expect(result).toEqual(deleteError);
-  });
-});
-
-describe("setSubscriptionWebhook", () => {
-  it("mints a secret and persists it with the url when the subscription exists", async () => {
-    const deps = makeDeps();
-
-    const result = await setSubscriptionWebhook(
-      deps,
-      "sub_existing00",
-      "https://example.com/webhooks/matchday",
-    );
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value.webhookUrl).toEqual("https://example.com/webhooks/matchday");
-      expect(result.value.webhookSecret.startsWith("whsec_")).toBe(true);
-      expect(deps.setSubscriptionWebhook).toHaveBeenCalledWith(
-        "sub_existing00",
-        "https://example.com/webhooks/matchday",
-        result.value.webhookSecret,
-      );
-    }
-  });
-
-  it("rejects a non-http(s) url without touching the database", async () => {
-    const deps = makeDeps();
-
-    const result = await setSubscriptionWebhook(deps, "sub_existing00", "not-a-url");
-
-    expect(result).toEqual(badRequest("Webhook URL must be a valid http(s) URL: not-a-url"));
-    expect(deps.setSubscriptionWebhook).not.toHaveBeenCalled();
-  });
-
-  it("errors when the subscription id doesn't exist", async () => {
-    const deps = makeDeps({ setSubscriptionWebhook: vi.fn().mockResolvedValue(ok(null)) });
-
-    const result = await setSubscriptionWebhook(
-      deps,
-      "sub_missing000",
-      "https://example.com/webhooks/matchday",
-    );
-
-    expect(result).toEqual(notFound("Subscription not found: sub_missing000"));
-  });
-
-  it("propagates a persistence failure", async () => {
-    const setError = serverError("Failed to set subscription webhook");
-    const deps = makeDeps({ setSubscriptionWebhook: vi.fn().mockResolvedValue(setError) });
-
-    const result = await setSubscriptionWebhook(
-      deps,
-      "sub_existing00",
-      "https://example.com/webhooks/matchday",
-    );
-
-    expect(result).toEqual(setError);
-  });
-});
-
-describe("clearSubscriptionWebhook", () => {
-  it("succeeds when the subscription exists", async () => {
-    const deps = makeDeps();
-
-    const result = await clearSubscriptionWebhook(deps, "sub_existing00");
-
-    expect(result).toEqual(ok(undefined));
-    expect(deps.clearSubscriptionWebhook).toHaveBeenCalledWith("sub_existing00");
-  });
-
-  it("errors when the subscription id doesn't exist", async () => {
-    const deps = makeDeps({ clearSubscriptionWebhook: vi.fn().mockResolvedValue(ok(null)) });
-
-    const result = await clearSubscriptionWebhook(deps, "sub_missing000");
-
-    expect(result).toEqual(notFound("Subscription not found: sub_missing000"));
-  });
-
-  it("propagates a clear failure", async () => {
-    const clearError = serverError("Failed to clear subscription webhook");
-    const deps = makeDeps({ clearSubscriptionWebhook: vi.fn().mockResolvedValue(clearError) });
-
-    const result = await clearSubscriptionWebhook(deps, "sub_existing00");
-
-    expect(result).toEqual(clearError);
   });
 });

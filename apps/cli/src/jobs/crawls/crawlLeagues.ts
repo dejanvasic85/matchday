@@ -4,8 +4,10 @@
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";
 import {
   createDbClient,
-  listActiveSubscriptionsForLeagueWithWebhook,
+  listClientClubWebhooksForClubIds,
+  listClubIdsByLeagueId,
   listFixturesByLeagueId,
+  listSubscriptionsWithLeague,
   listTableEntriesByLeagueId,
 } from "@matchday/db";
 import type { CliConfig } from "#config.ts";
@@ -46,8 +48,10 @@ export async function runCrawlLeaguesJob(input: RunCrawlLeaguesJobInput): Promis
 
     const result = await withLeagueChangeNotification(
       {
-        listActiveSubscriptionsForLeagueWithWebhook: (id) =>
-          listActiveSubscriptionsForLeagueWithWebhook(db, id),
+        listClubIdsByLeagueId: (id) => listClubIdsByLeagueId(db, id),
+        listClientClubWebhooksForClubIds: (clubIds) =>
+          listClientClubWebhooksForClubIds(db, clubIds),
+        listSubscriptionsWithLeague: (filter) => listSubscriptionsWithLeague(db, filter),
         listFixturesByLeagueId: (id) => listFixturesByLeagueId(db, id),
         listTableEntriesByLeagueId: (id) => listTableEntriesByLeagueId(db, id),
         sendWebhook,
