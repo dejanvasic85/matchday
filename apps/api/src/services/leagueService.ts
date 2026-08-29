@@ -35,8 +35,11 @@ export function createLeagueServiceDeps(db: Db): LeagueServiceDeps {
 export type LeagueRefSummaryResponse = { id: string; name: string };
 
 /** `Pick`, not `Omit`, so a new `league` column stays off the wire until it's added here
- * deliberately — and mapped field-by-field below, since a spread would leak it regardless. */
+ * deliberately — and mapped field-by-field below, since a spread would leak it regardless.
+ * `hasTable` is nullable in the DB (leagues written before the column existed) but never on the
+ * wire — null reads as false below, so a consumer only ever sees true/false. */
 export type LeagueResponse = Pick<LeagueWithRefs, "id" | "name" | "competitionId" | "seasonId"> & {
+  hasTable: boolean;
   competition: LeagueRefSummaryResponse;
   season: LeagueRefSummaryResponse;
   createdAt: string;
@@ -49,6 +52,7 @@ function mapToLeagueResponse(league: LeagueWithRefs): LeagueResponse {
     name: league.name,
     competitionId: league.competitionId,
     seasonId: league.seasonId,
+    hasTable: league.hasTable ?? false,
     competition: { id: league.competition.id, name: league.competition.name },
     season: { id: league.season.id, name: league.season.name },
     createdAt: league.createdAt.toISOString(),

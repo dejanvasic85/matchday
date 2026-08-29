@@ -26,6 +26,7 @@ const leagueSelection = {
   name: league.name,
   competitionId: league.competitionId,
   seasonId: league.seasonId,
+  hasTable: league.hasTable,
   createdAt: league.createdAt,
   updatedAt: league.updatedAt,
   competition,
@@ -136,6 +137,7 @@ export async function upsertLeague(db: Db, values: LeagueInsert): Promise<Result
             name: values.name,
             competitionId: values.competitionId,
             seasonId: values.seasonId,
+            hasTable: values.hasTable,
             updatedAt: new Date(),
           },
         })

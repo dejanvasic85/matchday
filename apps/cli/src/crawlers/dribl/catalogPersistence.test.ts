@@ -80,6 +80,7 @@ describe("persistCatalog", () => {
         name: "NPL VIC Men",
         competitionId: expect.stringMatching(/^cmp_/),
         seasonId: expect.stringMatching(/^sea_/),
+        hasTable: true,
       }),
     );
     expect(deps.upsertTableEntry).toHaveBeenCalledWith(
@@ -144,6 +145,7 @@ describe("persistCatalog", () => {
     });
 
     expect(result).toEqual(ok({ leagues: 1, tableEntries: 0, fixtureTeams: 2 }));
+    expect(deps.upsertLeague).toHaveBeenCalledWith(expect.objectContaining({ hasTable: false }));
     expect(deps.upsertTeam).toHaveBeenCalledWith(
       expect.objectContaining({ clubId: null, name: "Under 9 Boys Joeys - Dragan/Cian" }),
     );
