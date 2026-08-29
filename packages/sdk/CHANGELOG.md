@@ -1,5 +1,13 @@
 # @dejanvasic85/matchday-sdk
 
+## 2.2.0
+
+### Minor Changes
+
+- 2393202: Add `hasTable` to the league response. Indicates whether a league publishes a ladder/table on
+  Dribl — some junior leagues (e.g. MiniRoos age groups) never do. `false` for leagues crawled
+  before this field existed, until the next catalog crawl sets it explicitly.
+
 ## 2.1.1
 
 ### Patch Changes
