@@ -1,6 +1,7 @@
 name: Crawl leagues
 
 on:
+  # Touch to nudge GitHub into re-registering the cron schedule after the crawl-deep -> crawl-leagues rename.
   schedule:
     # Weekday evenings, hourly, 6pm-11pm AEST (game evenings). UTC = AEST-10, no DST adjustment.
     - cron: "0 8-13 * * 1-5"
