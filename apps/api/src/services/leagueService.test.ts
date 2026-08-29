@@ -29,6 +29,7 @@ function makeLeagueRow(overrides: Record<string, unknown> = {}) {
     name: "Division 1",
     competitionId: "cmp_abc123",
     seasonId: "sea_abc123",
+    hasTable: true,
     competition: makeCompetitionRow(),
     season: makeSeasonRow(),
     createdAt: epoch,
@@ -56,6 +57,34 @@ describe("listAllLeagues", () => {
         data: [expect.objectContaining({ id: "lea_abc123", createdAt: epoch.toISOString() })],
         nextCursor: null,
       }),
+    );
+  });
+
+  it("carries hasTable through to the response", async () => {
+    const deps = makeDeps({
+      listLeagues: vi
+        .fn()
+        .mockResolvedValue(ok({ rows: [makeLeagueRow({ hasTable: false })], nextCursor: null })),
+    });
+
+    const result = await listAllLeagues(deps);
+
+    expect(result).toEqual(
+      ok({ data: [expect.objectContaining({ hasTable: false })], nextCursor: null }),
+    );
+  });
+
+  it("maps a null hasTable (pre-column league) to false on the wire", async () => {
+    const deps = makeDeps({
+      listLeagues: vi
+        .fn()
+        .mockResolvedValue(ok({ rows: [makeLeagueRow({ hasTable: null })], nextCursor: null })),
+    });
+
+    const result = await listAllLeagues(deps);
+
+    expect(result).toEqual(
+      ok({ data: [expect.objectContaining({ hasTable: false })], nextCursor: null }),
     );
   });
 
