@@ -11,8 +11,10 @@ const driblFixtureAttributesSchema = z.object({
   round: z.string(),
   full_round: z.string(),
   ground_name: z.string().nullable(),
-  ground_latitude: z.number().nullable(),
-  ground_longitude: z.number().nullable(),
+  // Dribl sends these as a number or a numeric string depending on the fixture; coerce either
+  // to a number rather than reject the string form.
+  ground_latitude: z.coerce.number().nullable(),
+  ground_longitude: z.coerce.number().nullable(),
   field_name: z.string().nullable(),
   home_team_name: z.string().nullable(),
   home_team_hash_id: z.string().nullable(),
