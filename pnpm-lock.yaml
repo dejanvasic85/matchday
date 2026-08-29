@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@cloudflare/workers-types':
-      specifier: 5.20260827.1
-      version: 5.20260827.1
+      specifier: 5.20260828.1
+      version: 5.20260828.1
     '@hono/zod-openapi':
       specifier: 1.6.1
       version: 1.6.1
@@ -16,11 +16,11 @@ catalogs:
       specifier: 1.1.0
       version: 1.1.0
     '@sentry/cloudflare':
-      specifier: 10.71.0
-      version: 10.71.0
+      specifier: 10.72.0
+      version: 10.72.0
     '@sentry/hono':
-      specifier: 10.71.0
-      version: 10.71.0
+      specifier: 10.72.0
+      version: 10.72.0
     '@types/node':
       specifier: ^26.0.0
       version: 26.4.0
@@ -37,8 +37,8 @@ catalogs:
       specifier: 0.45.2
       version: 0.45.2
     fallow:
-      specifier: 3.19.0
-      version: 3.19.0
+      specifier: 3.20.0
+      version: 3.20.0
     hono:
       specifier: 4.13.5
       version: 4.13.5
@@ -52,11 +52,11 @@ catalogs:
       specifier: 6.0.3
       version: 6.0.3
     wrangler:
-      specifier: 4.127.0
-      version: 4.127.0
+      specifier: 4.127.1
+      version: 4.127.1
     zod:
-      specifier: 4.4.3
-      version: 4.4.3
+      specifier: 4.5.1
+      version: 4.5.1
 
 overrides:
   vite: npm:@voidzero-dev/vite-plus-core@0.3.0
@@ -73,7 +73,7 @@ importers:
         version: 4.1.11(@vitest/browser@4.1.11)(vitest@4.1.11)
       fallow:
         specifier: 'catalog:'
-        version: 3.19.0
+        version: 3.20.0
       node:
         specifier: runtime:24.18.0
         version: runtime:24.18.0
@@ -91,7 +91,7 @@ importers:
     dependencies:
       '@hono/zod-openapi':
         specifier: 'catalog:'
-        version: 1.6.1(hono@4.13.5)(zod@4.4.3)
+        version: 1.6.1(hono@4.13.5)(zod@4.5.1)
       '@matchday/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -100,20 +100,20 @@ importers:
         version: link:../../packages/domain
       '@sentry/cloudflare':
         specifier: 'catalog:'
-        version: 10.71.0(@cloudflare/workers-types@5.20260827.1)(supports-color@10.2.2)(wrangler@4.127.0(@cloudflare/workers-types@5.20260827.1))
+        version: 10.72.0(@cloudflare/workers-types@5.20260828.1)(wrangler@4.127.1(@cloudflare/workers-types@5.20260828.1))
       '@sentry/hono':
         specifier: 'catalog:'
-        version: 10.71.0(@cloudflare/workers-types@5.20260827.1)(@sentry/cloudflare@10.71.0(@cloudflare/workers-types@5.20260827.1)(supports-color@10.2.2)(wrangler@4.127.0(@cloudflare/workers-types@5.20260827.1)))(hono@4.13.5)
+        version: 10.72.0(@cloudflare/workers-types@5.20260828.1)(@sentry/cloudflare@10.72.0(@cloudflare/workers-types@5.20260828.1)(wrangler@4.127.1(@cloudflare/workers-types@5.20260828.1)))(hono@4.13.5)
       hono:
         specifier: 'catalog:'
         version: 4.13.5
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.5.1
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 'catalog:'
-        version: 5.20260827.1
+        version: 5.20260828.1
       '@types/node':
         specifier: 'catalog:'
         version: 26.4.0
@@ -125,7 +125,7 @@ importers:
         version: 0.3.0(@opentelemetry/api@1.9.1)(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(@voidzero-dev/vite-plus-core@0.3.0(@types/node@26.4.0)(esbuild@0.28.1)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.1)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
       wrangler:
         specifier: 'catalog:'
-        version: 4.127.0(@cloudflare/workers-types@5.20260827.1)
+        version: 4.127.1(@cloudflare/workers-types@5.20260828.1)
 
   apps/cli:
     dependencies:
@@ -146,7 +146,7 @@ importers:
         version: 1.62.1
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.5.1
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -168,10 +168,10 @@ importers:
         version: 1.1.0
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.2(@cloudflare/workers-types@5.20260827.1)(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)
+        version: 0.45.2(@cloudflare/workers-types@5.20260828.1)(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.5.1
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -193,7 +193,7 @@ importers:
         version: 6.0.1
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.5.1
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -228,17 +228,6 @@ importers:
         version: 0.3.0(@opentelemetry/api@1.9.1)(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(@voidzero-dev/vite-plus-core@0.3.0(@types/node@26.4.0)(esbuild@0.28.1)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0))(esbuild@0.28.1)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.9.0)
 
 packages:
-
-  '@apm-js-collab/code-transformer-bundler-plugins@0.7.4':
-    resolution: {integrity: sha512-nAfOeZPSUAQvJa1iFT/5oCrTm5YQhMMrfCNthNnaXHZiOQhu1KGuLoIx7HtbAi3wfwaBYLaICPIeenIaEwcXIg==}
-    engines: {node: '>=18.0.0'}
-
-  '@apm-js-collab/code-transformer@0.18.1':
-    resolution: {integrity: sha512-u1Hb6bHjWtkSpiprwVP6YaHC1DTN4RAU3zYkUDUe7WMnJwdyU1pwTL9dFKiSJB9IiLue/EQovmyx6xhU7FFtAQ==}
-    hasBin: true
-
-  '@apm-js-collab/tracing-hooks@0.13.0':
-    resolution: {integrity: sha512-mTvWz9rnQwx1U3h0XPTHaX7bgfkpipLLTQyjlC2cdhQpQEuoLT0AGzoydeoq2NxfEVv6fWOOETcSbb2nptleyw==}
 
   '@asteasolutions/zod-to-openapi@9.1.0':
     resolution: {integrity: sha512-pLMeRgRYS7/vZIgAAkOe2P6+XGTifR1MT9pqDoxZ11EmcJJ+DPmdPqLN8ZZF4U8R9KHCCQCS9c2wtuE8wSrfkw==}
@@ -359,38 +348,38 @@ packages:
       workerd:
         optional: true
 
-  '@cloudflare/workerd-darwin-64@1.20260826.1':
-    resolution: {integrity: sha512-8UsGGY8ZUiYHOWdsxBlNsGmaHBGArVwJ3CM4nWpfBhthjjYe4M/OqrTpqKF7NNWb63qQiv1d8Z+Z6/hmUqNKIQ==}
+  '@cloudflare/workerd-darwin-64@1.20260828.1':
+    resolution: {integrity: sha512-CVd+xPhqUESg8Xhq09TZx0wl4FSirfJGOzvbPz2yHhBIvmNHFFQkSN3rkd7wEwnhQQk37Xi0/aD6ykPLJbmGiQ==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [darwin]
 
-  '@cloudflare/workerd-darwin-arm64@1.20260826.1':
-    resolution: {integrity: sha512-0bLqVQYsQ3v3FdYGmzh23vi9fJeYTBx19o4LUySIsRcgBggGSlR39ml162vTXvZzUISOjVW2qfL7Y+SMrrfXmQ==}
+  '@cloudflare/workerd-darwin-arm64@1.20260828.1':
+    resolution: {integrity: sha512-5HDPXRM152vU5JveByGFk34X57TVyIsfp4cabepAf45DC0MKvm52ucJqAjW1h8bvW4X+zRw9GU35OHF9FEC9Ww==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [darwin]
 
-  '@cloudflare/workerd-linux-64@1.20260826.1':
-    resolution: {integrity: sha512-DTC0yWzybX4gUH5Q1pJo3UwEQjp0Gmz0Q71I+39xT9SXBesX5QndOIQv45yHQ86Z84EzK2WwaENdlpmDSvJKmw==}
+  '@cloudflare/workerd-linux-64@1.20260828.1':
+    resolution: {integrity: sha512-MQ1Ll9P7F72HHUKizbb7BlDfbY8fRoNMpbIpZoU6uKsSkneFICWSKv6UlgU9EQZ+w0i7TMa12iUgJ8l29eRI9A==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [linux]
 
-  '@cloudflare/workerd-linux-arm64@1.20260826.1':
-    resolution: {integrity: sha512-PFerWi+DP2Ckc6eATAS4dhotBt8IeXJjTzIgy18H+uqsswlXc7A8HsnAunHL9v/7/BjCgq46iMo2g4iUAsEpDw==}
+  '@cloudflare/workerd-linux-arm64@1.20260828.1':
+    resolution: {integrity: sha512-FBTaUQ1xcU9jcp4OyBPcH8x0QiFvc1iuZL2GkD8zp2q1WyTVHYOptRDQUU+cuHjt0rQ2EIKVPBjahPxfa0joBw==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [linux]
 
-  '@cloudflare/workerd-windows-64@1.20260826.1':
-    resolution: {integrity: sha512-X26hulrG2MSSfpRmjZbCq98LNaZnrRqbmGcgo7g1U/U0nJ5npYruPm3fAyZ2y6VDr5CmQo9BLCahxP8VB/QR6A==}
+  '@cloudflare/workerd-windows-64@1.20260828.1':
+    resolution: {integrity: sha512-yvr77hC7dUbvK5K+SCg062kkPq3sx+drV1PcgHslzHDYcJBtT0V3X80qLE49LW1vq2svaeNmsVQS+vHsqWu8cQ==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
 
-  '@cloudflare/workers-types@5.20260827.1':
-    resolution: {integrity: sha512-L5wIIHcgy67AAfe8nNmfcRHLBtO+2jva14zx1HxH2tunlteNmQvo4nYtcfef1n1MKXu3Z3xB98Fvl1BorkjFtg==}
+  '@cloudflare/workers-types@5.20260828.1':
+    resolution: {integrity: sha512-Ce0QfghuAK9v821gER8rFPR3rMeC+5puTgTzCu4UrG1Zg967Z5Aa+2uZVciIyfCAdGssyh+sLEC6rMjN/YBQwA==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -854,43 +843,43 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@fallow-cli/darwin-arm64@3.19.0':
-    resolution: {integrity: sha512-jMKEAov6FOdKxoBjjn3UWwX2AqLwH+k7WNgw1AH0h/5N7rRUb6zTSInJi7egh35y99xe8BA2XwjYNmTrQRINyw==}
+  '@fallow-cli/darwin-arm64@3.20.0':
+    resolution: {integrity: sha512-vGQKlYU9BgnaQlmw5yF2Oe2dgylpOAVL93Ds+MEjxF7pvhdJDmg7ZjqF5fRikk8KIhm6PWkMNNamz4BKytzJOQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@fallow-cli/darwin-x64@3.19.0':
-    resolution: {integrity: sha512-3z9wemsC3TRdPA6TtbIafLyWUHgOCeWBbileojpOk7OvmrHXo7DtemhxpNK0lMBN3hrIpzpmteFpI+mXiEz8XA==}
+  '@fallow-cli/darwin-x64@3.20.0':
+    resolution: {integrity: sha512-Yeb9ekMCHRRefyOB/EE0i68EoqsgLjsZNf1fi6lEglmKHf/eVr2N1ejR8X/UPjUe5h3/b2pJdSZxmkkKqghpdw==}
     cpu: [x64]
     os: [darwin]
 
-  '@fallow-cli/linux-arm64-gnu@3.19.0':
-    resolution: {integrity: sha512-I8H7HPQSQvmFI1CK8h10qxbYUyIl3gMFsNv1p2+NdfllLMcv26aQGrWkA3wlV9yA2v8AEH8ReDDAwHME9PEh1A==}
+  '@fallow-cli/linux-arm64-gnu@3.20.0':
+    resolution: {integrity: sha512-Z4YgFTi+UMEEAl8qt5uOpFVEB8b98nwEhHzTNUM1rTb++9K+cuzeYoL9SaHaMkTEUWAKZIGSNlTu2lsSeiAw4Q==}
     cpu: [arm64]
     os: [linux]
 
-  '@fallow-cli/linux-arm64-musl@3.19.0':
-    resolution: {integrity: sha512-zcEehLVdrVII75MLjO6jq1gbnSrtFVrjq+7u3gH1PjX8laeiIP2xVk3yGW/Qp3kV72k6375Dbqo8EiHxSCvC9A==}
+  '@fallow-cli/linux-arm64-musl@3.20.0':
+    resolution: {integrity: sha512-gh2tmc9QDMA01jSLe53Oe/RcuDLPrrMs6m+ZCIvYNwDGPn4Daj1QZ1ZGZAWLmNuPr2rxK0DuR4Ft/wNkYcmAiw==}
     cpu: [arm64]
     os: [linux]
 
-  '@fallow-cli/linux-x64-gnu@3.19.0':
-    resolution: {integrity: sha512-CkvQz9l4TwVGQkmlFqOJlPVR9bK6UPgyIaz/kuh4f7xfYoxgjQpI1Kv7eyInP8u9m8ZhreVlhX/GsL1zedw40Q==}
+  '@fallow-cli/linux-x64-gnu@3.20.0':
+    resolution: {integrity: sha512-rCcHnw5Rq+RtSdADL6u0dQrC4Lxa3AMZxLoQjnJtMFZLKYw/nGTPx8KU7WRMMAIH5kP+WssYIHtMpMyTkP92JQ==}
     cpu: [x64]
     os: [linux]
 
-  '@fallow-cli/linux-x64-musl@3.19.0':
-    resolution: {integrity: sha512-EMlGT90rgbpjkp31w8BhbeSOsQxXFShDVy6zeEIPUA85h+HJCAztiDqs+joLB6J1rw4nINfxJKJDT6un+qiajA==}
+  '@fallow-cli/linux-x64-musl@3.20.0':
+    resolution: {integrity: sha512-hZlCGMQVctrr9e1K8iDQ6hz4o+eRIRNlzeo1EL2KA8dxujPQV7RTm/GAEa+m9WKXZ2C4BNq9mr9WFs1dS8t+Mg==}
     cpu: [x64]
     os: [linux]
 
-  '@fallow-cli/win32-arm64-msvc@3.19.0':
-    resolution: {integrity: sha512-Pno7H0ylKb7Bxcqc5IxmGB8eTvplJT383qPW16QvJ8hMTiS88rdrZ8WxM3OludRBIMHQU3/QEMPbLBVr5d1uDA==}
+  '@fallow-cli/win32-arm64-msvc@3.20.0':
+    resolution: {integrity: sha512-WPqYbUJsKsoC9O3vP2hwGrc4WCI9vhDmy6V4DVW/KupH+G/knO2yM6vDdRskR0JUUEgIUAIGOysVtsyQnjBRDA==}
     cpu: [arm64]
     os: [win32]
 
-  '@fallow-cli/win32-x64-msvc@3.19.0':
-    resolution: {integrity: sha512-N9Hwxylu6kq+mCs1lvAlC02L5wIiOddXh8dnUT5hoC6irwssAX0w3DXwIgC82N1KyX+9KA5n5Cxxgwuh9ptepw==}
+  '@fallow-cli/win32-x64-msvc@3.20.0':
+    resolution: {integrity: sha512-OUU2fsFcLLwFznGAFzPaCa6Mi1HCtLCVDrVifk5d0mntXf0js6vdwWYyVGBamG/qc70MLhK41twTMDVwoI9kxg==}
     cpu: [x64]
     os: [win32]
 
@@ -1413,8 +1402,8 @@ packages:
     resolution: {integrity: sha512-UyKIm0wTPw5BcY7Z2PkbK1Ma260um96LSBWXHrdSMe+ZV0EPMyDfAcUcjjm3qEiGST9OK/1TriekdPCZkn4Q3A==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
-  '@sentry/cloudflare@10.71.0':
-    resolution: {integrity: sha512-bwqO9nKBPyvfon8DXKbv+ONg9Dcei47ppymbDkkVziG60LxF7mmYqMIz6j3m5oqldZAO4mvNoC+Jfc/qKaI/4A==}
+  '@sentry/cloudflare@10.72.0':
+    resolution: {integrity: sha512-fRMlu916jqB5iYSfJlV1MVsM76nLVG1KxkQHmqD/Bg+DyqxiY/ETsP2mL0rscxSuznR3Kjh4fh76PZ+KiGclIw==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cloudflare/workers-types': ^4.x || ^5.x
@@ -1429,20 +1418,20 @@ packages:
     resolution: {integrity: sha512-fO9PLmHdVURcSPUpWCItWAtgKiMwGdJHbovoSEyLplX5sxs2ugvI4CBPTrkkgqhObnZOD0CnWBKDzSVQYBKEyQ==}
     engines: {node: '>=14'}
 
-  '@sentry/core@10.71.0':
-    resolution: {integrity: sha512-OIjT7rzcWJjUC6r3eBT3Td1j0afDBMkbbx9jTocSD+ZSfc25eEU7hoIPS0WvfeIOTIN3y8bfQnXavwMReaNVHQ==}
+  '@sentry/core@10.72.0':
+    resolution: {integrity: sha512-UJMHZfbjP4qk+g4AQhZmzosMdICC2D9p0/hLrm1LofPsp+WBfcSnv9jsY1a9TfmpS4WCAmTx8nANYTIXifcBjA==}
     engines: {node: '>=18'}
 
-  '@sentry/hono@10.71.0':
-    resolution: {integrity: sha512-5eBnnAeqjV4zdwTGTxYgADwRNSwp/K3kO76L9mwziQNlRLJ/Cr87py1WIaxXjiZgiTvqxHfzMOqRdkeoAVkV9g==}
+  '@sentry/hono@10.72.0':
+    resolution: {integrity: sha512-dSEN829pD7SAbvbPPNcF7uNUGEaMRXNxuxWn6dQdTuVY8vDEPFPMDybuVC05pzvbaXOs/jBjHXFFP+/r36UwTg==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cloudflare/workers-types': ^4.x
       '@hono/node-server': ^1.x || ^2.x
-      '@sentry/bun': 10.71.0
-      '@sentry/cloudflare': 10.71.0
-      '@sentry/deno': 10.71.0
-      '@sentry/node': 10.71.0
+      '@sentry/bun': 10.72.0
+      '@sentry/cloudflare': 10.72.0
+      '@sentry/deno': 10.72.0
+      '@sentry/node': 10.72.0
       hono: ^4.x
     peerDependenciesMeta:
       '@cloudflare/workers-types':
@@ -1458,8 +1447,8 @@ packages:
       '@sentry/node':
         optional: true
 
-  '@sentry/server-utils@10.71.0':
-    resolution: {integrity: sha512-zdyShKNsghzPGVWVRzc7oybYTsRZdKgdPtq+dsksImo1b6n7ILlD7eYx1Q0eAOZoWkDqDmm+Ml6MQb76IT1eTA==}
+  '@sentry/server-utils@10.72.0':
+    resolution: {integrity: sha512-CWpHMYW81RDBSVBdnxulGUvvBhkBb/OpSr72ubSe1UkKTcgT0NDMCWxE3dLFXqSxzT4DaF5UlUVv9ii5Sse53w==}
     engines: {node: '>=18'}
 
   '@sindresorhus/is@7.2.0':
@@ -1928,10 +1917,6 @@ packages:
   ast-v8-to-istanbul@1.0.4:
     resolution: {integrity: sha512-0bC0/4bTSrnwdhU3IsZDwEdojvuPrSg59OYZfKsLRtJZ0u8VBx9DebfqqG8bRdCC0I7vjgxmPi41P0lpkhJHtA==}
 
-  astring@1.9.0:
-    resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
-    hasBin: true
-
   aws4fetch@1.0.20:
     resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
 
@@ -2109,14 +2094,6 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  esquery@1.7.0:
-    resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
-    engines: {node: '>=0.10'}
-
-  estraverse@5.3.0:
-    resolution: {integrity: sha512-MMdARuVEQziNTeJD8DgMqmhwR11BRQ/cBP+pLtYdSTnf3MIO8fFeiINEbX36ZdNlfU/7A9f3gUw49B3oQsvwBA==}
-    engines: {node: '>=4.0'}
-
   estree-walker@3.0.3:
     resolution: {integrity: sha512-7RUKfXgSMMkzt6ZuXmqapOurLGPPfgj6l9uRZ7lRGolvk0y2yocc35LdcxKC5PQZdn2DMqioAQ2NoWcrTKmm6g==}
 
@@ -2124,13 +2101,13 @@ packages:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
     engines: {node: '>=12.0.0'}
 
-  fallow-type-aware@3.19.0:
-    resolution: {integrity: sha512-/LlmR1qNNcNf8Vv1l3FmwkaenfJLd9PBcE1FCebf4MUWeyy+UTqZfc61139/EwgpuHzBdjOMVpyhgCSEjuHx8Q==}
+  fallow-type-aware@3.20.0:
+    resolution: {integrity: sha512-pxk6CKtDeVQSKsSWhDdJDmOj73p8Vfq2P31H5GHbcXBaP2x/jR2VYtQ/0s8z288Eqtln+FtWO2xV601o/xhJHA==}
     engines: {node: '>=20'}
     hasBin: true
 
-  fallow@3.19.0:
-    resolution: {integrity: sha512-iM44GldeupBOvJLR2BZSEridMVbsKJpjEfrYjzW7kpBZLRXLRQh/g7RoCseCMlWK+4hDIuQWu+lAmXe9MDllQQ==}
+  fallow@3.20.0:
+    resolution: {integrity: sha512-yREDhz0eDvwwVD9NgmBzxRlg9DX1g6sKsHBfGKL+XcyJPmT5SgUf80m2Vu3RKE+QnzA7w1ekpcnNqUUi4avCSA==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -2319,20 +2296,13 @@ packages:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
     engines: {node: '>=10'}
 
-  meriyah@6.1.4:
-    resolution: {integrity: sha512-Sz8FzjzI0kN13GK/6MVEsVzMZEPvOhnmmI1lU5+/1cGOiK3QUahntrNNtdVeihrO7t9JpoH75iMNXg6R6uWflQ==}
-    engines: {node: '>=18.0.0'}
-
-  miniflare@5.20260826.0-alpha:
-    resolution: {integrity: sha512-ZXR3Bieg+B5MK0T/zYIWaZiCGCb9Z3en4+/TleYKhIGPLx/e0cRcG/ZvvTviUapVBBK2zODB+aiypdIojU3x6Q==}
+  miniflare@5.20260828.0-alpha:
+    resolution: {integrity: sha512-6nbxhZEcz/UET3Y1OnYPsrAUjUmuFoib3ynUqteRdn1YnDxsLg8cwgZJZCk9QmtOmGzXwzXzgE/d/C0dJAPtVw==}
     engines: {node: '>=22.0.0'}
 
   minimatch@5.1.9:
     resolution: {integrity: sha512-7o1wEA2RyMP7Iu7GNba9vc0RWWGACJOCZBJX2GJWip0ikV+wcOsgVuY9uE8CPiyQhkGFSlhuSkZPavN7u1c2Fw==}
     engines: {node: '>=10'}
-
-  module-details-from-path@1.0.4:
-    resolution: {integrity: sha512-EGWKgxALGMgzvxYF1UyGTy0HXX/2vHLkw6+NvDKW2jypWbHpjQuj4UMcqQWXHERJhVGKikolT06G3bcKe4fi7w==}
 
   mrmime@2.0.1:
     resolution: {integrity: sha512-Y3wQdFg2Va6etvQ5I82yUhGdsKrcYox6p7FfL1LbK2J4V01F9TGlepTIhnK24t7koZibmg82KGglhA1XK5IsLQ==}
@@ -2572,9 +2542,6 @@ packages:
   resolve-pkg-maps@1.0.0:
     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
 
-  semifies@1.0.0:
-    resolution: {integrity: sha512-xXR3KGeoxTNWPD4aBvL5NUpMTT7WMANr3EWnaS190QVkY52lqqcVRD7Q05UVbBhiWDGWMlJEUam9m7uFFGVScw==}
-
   semver@7.8.5:
     resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
     engines: {node: '>=10'}
@@ -2740,17 +2707,17 @@ packages:
     engines: {node: '>=8'}
     hasBin: true
 
-  workerd@1.20260826.1:
-    resolution: {integrity: sha512-oTG9ot5zxO9OjjKCskt86+nVrBL0kiUqExHnYaTg4OCkHf/K4zr+9hYvgwmG8DdCWG0TQGErHzD+1h50TM5b+w==}
+  workerd@1.20260828.1:
+    resolution: {integrity: sha512-pB9yvt0kkwZDAGZHmpY59r0o3hM0DzdW6BJERqwZOhunZ3ssOyDSgQxOQer2cSZW4YCFeOTIQYN1qwhK5wv/Cw==}
     engines: {node: '>=16'}
     hasBin: true
 
-  wrangler@4.127.0:
-    resolution: {integrity: sha512-4dPqcBEMJfGeZeNnjHT7ThNJs+EiNYxUTg4ywqIdQubcXHBhFeVMQyHV4A9AOhZRFr83cckqdds034KGcr/dtw==}
+  wrangler@4.127.1:
+    resolution: {integrity: sha512-OzsiNgaI8i681L/+KnAKc+uEZ5D57xK5JuNvCOpRKICF4/5Q3Cu1oTGuUiT/f3GDUqQb3gzXNT0tfOHGMEtknw==}
     engines: {node: '>=22.0.0'}
     hasBin: true
     peerDependencies:
-      '@cloudflare/workers-types': ^5.20260826.1
+      '@cloudflare/workers-types': ^5.20260828.1
     peerDependenciesMeta:
       '@cloudflare/workers-types':
         optional: true
@@ -2791,39 +2758,15 @@ packages:
   yuku-parser@0.5.48:
     resolution: {integrity: sha512-OWBfhrpgK9+/4+IXG9oT8Bao4AhViQA7vdyNNH7EUg8dQYgwa70XtIBWTpCEme1P1ECyoDNYkn0wT63f8XRcVA==}
 
-  zod@4.4.3:
-    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+  zod@4.5.1:
+    resolution: {integrity: sha512-P3GqeAEOEDqKvafVGLezbg+39YW/ze4xrD4qdS0adOY8eoI3zfjv1PQM4UwQzgT8mZKXEbqtVt8K+ZKGqkMFKg==}
 
 snapshots:
 
-  '@apm-js-collab/code-transformer-bundler-plugins@0.7.4':
-    dependencies:
-      '@apm-js-collab/code-transformer': 0.18.1
-      es-module-lexer: 2.3.0
-      magic-string: 0.30.21
-      module-details-from-path: 1.0.4
-
-  '@apm-js-collab/code-transformer@0.18.1':
-    dependencies:
-      '@types/estree': 1.0.9
-      astring: 1.9.0
-      esquery: 1.7.0
-      meriyah: 6.1.4
-      semifies: 1.0.0
-      source-map: 0.6.1
-
-  '@apm-js-collab/tracing-hooks@0.13.0(supports-color@10.2.2)':
-    dependencies:
-      '@apm-js-collab/code-transformer': 0.18.1
-      debug: 4.4.3(supports-color@10.2.2)
-      module-details-from-path: 1.0.4
-    transitivePeerDependencies:
-      - supports-color
-
-  '@asteasolutions/zod-to-openapi@9.1.0(zod@4.4.3)':
+  '@asteasolutions/zod-to-openapi@9.1.0(zod@4.5.1)':
     dependencies:
       openapi3-ts: 4.6.1
-      zod: 4.4.3
+      zod: 4.5.1
 
   '@babel/code-frame@7.29.7':
     dependencies:
@@ -2968,28 +2911,28 @@ snapshots:
 
   '@cloudflare/kv-asset-handler@0.5.0': {}
 
-  '@cloudflare/unenv-preset@2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260826.1)':
+  '@cloudflare/unenv-preset@2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260828.1)':
     dependencies:
       unenv: 2.0.0-rc.24
     optionalDependencies:
-      workerd: 1.20260826.1
+      workerd: 1.20260828.1
 
-  '@cloudflare/workerd-darwin-64@1.20260826.1':
+  '@cloudflare/workerd-darwin-64@1.20260828.1':
     optional: true
 
-  '@cloudflare/workerd-darwin-arm64@1.20260826.1':
+  '@cloudflare/workerd-darwin-arm64@1.20260828.1':
     optional: true
 
-  '@cloudflare/workerd-linux-64@1.20260826.1':
+  '@cloudflare/workerd-linux-64@1.20260828.1':
     optional: true
 
-  '@cloudflare/workerd-linux-arm64@1.20260826.1':
+  '@cloudflare/workerd-linux-arm64@1.20260828.1':
     optional: true
 
-  '@cloudflare/workerd-windows-64@1.20260826.1':
+  '@cloudflare/workerd-windows-64@1.20260828.1':
     optional: true
 
-  '@cloudflare/workers-types@5.20260827.1': {}
+  '@cloudflare/workers-types@5.20260828.1': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
@@ -3234,42 +3177,42 @@ snapshots:
   '@esbuild/win32-x64@0.28.1':
     optional: true
 
-  '@fallow-cli/darwin-arm64@3.19.0':
+  '@fallow-cli/darwin-arm64@3.20.0':
     optional: true
 
-  '@fallow-cli/darwin-x64@3.19.0':
+  '@fallow-cli/darwin-x64@3.20.0':
     optional: true
 
-  '@fallow-cli/linux-arm64-gnu@3.19.0':
+  '@fallow-cli/linux-arm64-gnu@3.20.0':
     optional: true
 
-  '@fallow-cli/linux-arm64-musl@3.19.0':
+  '@fallow-cli/linux-arm64-musl@3.20.0':
     optional: true
 
-  '@fallow-cli/linux-x64-gnu@3.19.0':
+  '@fallow-cli/linux-x64-gnu@3.20.0':
     optional: true
 
-  '@fallow-cli/linux-x64-musl@3.19.0':
+  '@fallow-cli/linux-x64-musl@3.20.0':
     optional: true
 
-  '@fallow-cli/win32-arm64-msvc@3.19.0':
+  '@fallow-cli/win32-arm64-msvc@3.20.0':
     optional: true
 
-  '@fallow-cli/win32-x64-msvc@3.19.0':
+  '@fallow-cli/win32-x64-msvc@3.20.0':
     optional: true
 
-  '@hono/zod-openapi@1.6.1(hono@4.13.5)(zod@4.4.3)':
+  '@hono/zod-openapi@1.6.1(hono@4.13.5)(zod@4.5.1)':
     dependencies:
-      '@asteasolutions/zod-to-openapi': 9.1.0(zod@4.4.3)
-      '@hono/zod-validator': 0.9.0(hono@4.13.5)(zod@4.4.3)
+      '@asteasolutions/zod-to-openapi': 9.1.0(zod@4.5.1)
+      '@hono/zod-validator': 0.9.0(hono@4.13.5)(zod@4.5.1)
       hono: 4.13.5
       openapi3-ts: 4.6.1
-      zod: 4.4.3
+      zod: 4.5.1
 
-  '@hono/zod-validator@0.9.0(hono@4.13.5)(zod@4.4.3)':
+  '@hono/zod-validator@0.9.0(hono@4.13.5)(zod@4.5.1)':
     dependencies:
       hono: 4.13.5
-      zod: 4.4.3
+      zod: 4.5.1
 
   '@img/colour@1.1.0': {}
 
@@ -3587,43 +3530,36 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sentry/cloudflare@10.71.0(@cloudflare/workers-types@5.20260827.1)(supports-color@10.2.2)(wrangler@4.127.0(@cloudflare/workers-types@5.20260827.1))':
+  '@sentry/cloudflare@10.72.0(@cloudflare/workers-types@5.20260828.1)(wrangler@4.127.1(@cloudflare/workers-types@5.20260828.1))':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@sentry/core': 10.71.0
-      '@sentry/server-utils': 10.71.0(supports-color@10.2.2)
+      '@sentry/core': 10.72.0
+      '@sentry/server-utils': 10.72.0
       magic-string: 0.30.21
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260827.1
-      wrangler: 4.127.0(@cloudflare/workers-types@5.20260827.1)
-    transitivePeerDependencies:
-      - supports-color
+      '@cloudflare/workers-types': 5.20260828.1
+      wrangler: 4.127.1(@cloudflare/workers-types@5.20260828.1)
 
   '@sentry/conventions@0.16.0': {}
 
-  '@sentry/core@10.71.0':
+  '@sentry/core@10.72.0':
     dependencies:
       '@sentry/conventions': 0.16.0
 
-  '@sentry/hono@10.71.0(@cloudflare/workers-types@5.20260827.1)(@sentry/cloudflare@10.71.0(@cloudflare/workers-types@5.20260827.1)(supports-color@10.2.2)(wrangler@4.127.0(@cloudflare/workers-types@5.20260827.1)))(hono@4.13.5)':
+  '@sentry/hono@10.72.0(@cloudflare/workers-types@5.20260828.1)(@sentry/cloudflare@10.72.0(@cloudflare/workers-types@5.20260828.1)(wrangler@4.127.1(@cloudflare/workers-types@5.20260828.1)))(hono@4.13.5)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@sentry/conventions': 0.16.0
-      '@sentry/core': 10.71.0
+      '@sentry/core': 10.72.0
       hono: 4.13.5
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260827.1
-      '@sentry/cloudflare': 10.71.0(@cloudflare/workers-types@5.20260827.1)(supports-color@10.2.2)(wrangler@4.127.0(@cloudflare/workers-types@5.20260827.1))
+      '@cloudflare/workers-types': 5.20260828.1
+      '@sentry/cloudflare': 10.72.0(@cloudflare/workers-types@5.20260828.1)(wrangler@4.127.1(@cloudflare/workers-types@5.20260828.1))
 
-  '@sentry/server-utils@10.71.0(supports-color@10.2.2)':
+  '@sentry/server-utils@10.72.0':
     dependencies:
-      '@apm-js-collab/code-transformer-bundler-plugins': 0.7.4
-      '@apm-js-collab/tracing-hooks': 0.13.0(supports-color@10.2.2)
       '@sentry/conventions': 0.16.0
-      '@sentry/core': 10.71.0
-      meriyah: 6.1.4
-    transitivePeerDependencies:
-      - supports-color
+      '@sentry/core': 10.72.0
 
   '@sindresorhus/is@7.2.0': {}
 
@@ -4006,8 +3942,6 @@ snapshots:
       estree-walker: 3.0.3
       js-tokens: 10.0.0
 
-  astring@1.9.0: {}
-
   aws4fetch@1.0.20: {}
 
   balanced-match@1.0.2: {}
@@ -4053,9 +3987,9 @@ snapshots:
       esbuild: 0.25.12
       tsx: 4.23.0
 
-  drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260827.1)(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1):
+  drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260828.1)(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1):
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260827.1
+      '@cloudflare/workers-types': 5.20260828.1
       '@neondatabase/serverless': 1.1.0
       '@opentelemetry/api': 1.9.1
 
@@ -4146,36 +4080,30 @@ snapshots:
       '@esbuild/win32-ia32': 0.28.1
       '@esbuild/win32-x64': 0.28.1
 
-  esquery@1.7.0:
-    dependencies:
-      estraverse: 5.3.0
-
-  estraverse@5.3.0: {}
-
   estree-walker@3.0.3:
     dependencies:
       '@types/estree': 1.0.9
 
   expect-type@1.4.0: {}
 
-  fallow-type-aware@3.19.0:
+  fallow-type-aware@3.20.0:
     dependencies:
       typescript: 7.0.2
     optional: true
 
-  fallow@3.19.0:
+  fallow@3.20.0:
     dependencies:
       detect-libc: 2.1.2
     optionalDependencies:
-      '@fallow-cli/darwin-arm64': 3.19.0
-      '@fallow-cli/darwin-x64': 3.19.0
-      '@fallow-cli/linux-arm64-gnu': 3.19.0
-      '@fallow-cli/linux-arm64-musl': 3.19.0
-      '@fallow-cli/linux-x64-gnu': 3.19.0
-      '@fallow-cli/linux-x64-musl': 3.19.0
-      '@fallow-cli/win32-arm64-msvc': 3.19.0
-      '@fallow-cli/win32-x64-msvc': 3.19.0
-      fallow-type-aware: 3.19.0
+      '@fallow-cli/darwin-arm64': 3.20.0
+      '@fallow-cli/darwin-x64': 3.20.0
+      '@fallow-cli/linux-arm64-gnu': 3.20.0
+      '@fallow-cli/linux-arm64-musl': 3.20.0
+      '@fallow-cli/linux-x64-gnu': 3.20.0
+      '@fallow-cli/linux-x64-musl': 3.20.0
+      '@fallow-cli/win32-arm64-msvc': 3.20.0
+      '@fallow-cli/win32-x64-msvc': 3.20.0
+      fallow-type-aware: 3.20.0
 
   fast-deep-equal@3.1.3: {}
 
@@ -4320,14 +4248,12 @@ snapshots:
     dependencies:
       semver: 7.8.5
 
-  meriyah@6.1.4: {}
-
-  miniflare@5.20260826.0-alpha:
+  miniflare@5.20260828.0-alpha:
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       sharp: 0.35.2
       undici: 7.29.0
-      workerd: 1.20260826.1
+      workerd: 1.20260828.1
       ws: 8.21.0
       youch: 4.1.0-beta.10
     transitivePeerDependencies:
@@ -4337,8 +4263,6 @@ snapshots:
   minimatch@5.1.9:
     dependencies:
       brace-expansion: 2.1.4
-
-  module-details-from-path@1.0.4: {}
 
   mrmime@2.0.1: {}
 
@@ -4518,8 +4442,6 @@ snapshots:
   require-from-string@2.0.2: {}
 
   resolve-pkg-maps@1.0.0: {}
-
-  semifies@1.0.0: {}
 
   semver@7.8.5: {}
 
@@ -4829,26 +4751,26 @@ snapshots:
       siginfo: 2.0.0
       stackback: 0.0.2
 
-  workerd@1.20260826.1:
+  workerd@1.20260828.1:
     optionalDependencies:
-      '@cloudflare/workerd-darwin-64': 1.20260826.1
-      '@cloudflare/workerd-darwin-arm64': 1.20260826.1
-      '@cloudflare/workerd-linux-64': 1.20260826.1
-      '@cloudflare/workerd-linux-arm64': 1.20260826.1
-      '@cloudflare/workerd-windows-64': 1.20260826.1
+      '@cloudflare/workerd-darwin-64': 1.20260828.1
+      '@cloudflare/workerd-darwin-arm64': 1.20260828.1
+      '@cloudflare/workerd-linux-64': 1.20260828.1
+      '@cloudflare/workerd-linux-arm64': 1.20260828.1
+      '@cloudflare/workerd-windows-64': 1.20260828.1
 
-  wrangler@4.127.0(@cloudflare/workers-types@5.20260827.1):
+  wrangler@4.127.1(@cloudflare/workers-types@5.20260828.1):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
-      '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260826.1)
+      '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260828.1)
       blake3-wasm: 2.1.5
       esbuild: 0.28.1
-      miniflare: 5.20260826.0-alpha
+      miniflare: 5.20260828.0-alpha
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.24
-      workerd: 1.20260826.1
+      workerd: 1.20260828.1
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260827.1
+      '@cloudflare/workers-types': 5.20260828.1
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil
@@ -4907,4 +4829,4 @@ snapshots:
       '@yuku-parser/binding-win32-arm64': 0.5.48
       '@yuku-parser/binding-win32-x64': 0.5.48
 
-  zod@4.4.3: {}
+  zod@4.5.1: {}
