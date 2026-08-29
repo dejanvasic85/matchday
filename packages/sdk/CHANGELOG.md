@@ -1,5 +1,12 @@
 # @dejanvasic85/matchday-sdk
 
+## 2.3.1
+
+### Patch Changes
+
+- 518068a: Document that `leagueId` comes from the verified webhook body, and that matchday never appends it
+  to the delivery URL — so receivers route cache revalidation off signed data only.
+
 ## 2.3.0
 
 ### Minor Changes
