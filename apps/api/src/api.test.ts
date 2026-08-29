@@ -2,7 +2,7 @@
 // later (e.g. fixtures/table, #45) without each needing its own.
 
 import { z } from "zod";
-import app from "#index.ts";
+import app from "#api.ts";
 
 const testEnv = {
   DATABASE_URL: "postgres://user:pass@localhost:5432/db",

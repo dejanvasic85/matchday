@@ -8,7 +8,7 @@
     "#test/*": "./test/*"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/api.ts"
   },
   "scripts": {
     "test": "vp test run",

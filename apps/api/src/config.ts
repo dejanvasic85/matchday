@@ -10,8 +10,6 @@ import { z } from "zod";
 const apiEnvSchema = z.object({
   // Neon Postgres — reached via the serverless driver / Hyperdrive, never raw pg TCP.
   DATABASE_URL: z.url(),
-  // Comma-separated list of allowed origins for CORS; empty means same-origin only.
-  ALLOWED_ORIGINS: z.string().default(""),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   // Sentry DSN (optional — Sentry no-ops when unset, so local dev doesn't need an account).
   SENTRY_DSN: z.string().optional(),

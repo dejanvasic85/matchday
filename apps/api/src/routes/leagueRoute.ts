@@ -1,6 +1,3 @@
-// League routes (0045): thin transport glue. Fixtures/table nested under a league share the same
-// open-catalog access (ADR 0012: subscriptions only pick which leagues get deep-crawled).
-
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { ApiBindings } from "#config.ts";
 import type { DbVariables } from "#middleware/dbClient.ts";
@@ -22,7 +19,10 @@ import { createLeagueServiceDeps, getLeague, listAllLeagues } from "#services/le
 import { createTableEntryServiceDeps, listLeagueTable } from "#services/tableEntryService.ts";
 import { createTeamServiceDeps, listLeagueTeams } from "#services/teamService.ts";
 
-export const leagueRoute = new OpenAPIHono<{ Bindings: ApiBindings; Variables: DbVariables }>();
+export const leagueRoute = new OpenAPIHono<{
+  Bindings: ApiBindings;
+  Variables: DbVariables;
+}>();
 
 const listLeaguesRoute = createRoute({
   method: "get",
@@ -35,12 +35,18 @@ const listLeaguesRoute = createRoute({
         .string()
         .regex(/^cmp_/)
         .optional()
-        .openapi({ param: { name: "competitionId", in: "query" }, example: "cmp_V1StGXR8Z5" }),
+        .openapi({
+          param: { name: "competitionId", in: "query" },
+          example: "cmp_V1StGXR8Z5",
+        }),
       seasonId: z
         .string()
         .regex(/^sea_/)
         .optional()
-        .openapi({ param: { name: "seasonId", in: "query" }, example: "sea_V1StGXR8Z5" }),
+        .openapi({
+          param: { name: "seasonId", in: "query" },
+          example: "sea_V1StGXR8Z5",
+        }),
       clubId: z
         .string()
         .regex(/^clb_/)
@@ -56,7 +62,11 @@ const listLeaguesRoute = createRoute({
   responses: {
     200: {
       description: "A page of leagues; follow `nextCursor` until it is null",
-      content: { "application/json": { schema: pagedSchema(leagueResponseSchema, "LeaguePage") } },
+      content: {
+        "application/json": {
+          schema: pagedSchema(leagueResponseSchema, "LeaguePage"),
+        },
+      },
     },
     ...errorResponsesValue,
   },
@@ -126,7 +136,9 @@ const listLeagueFixturesRoute = createRoute({
   responses: {
     200: {
       description: "The league's fixtures, round- then kickoff-ordered",
-      content: { "application/json": { schema: fixtureResponseSchema.array() } },
+      content: {
+        "application/json": { schema: fixtureResponseSchema.array() },
+      },
     },
     ...errorResponsesValue,
   },
@@ -147,7 +159,9 @@ const listLeagueTableRoute = createRoute({
   responses: {
     200: {
       description: "The league's table, position-ordered",
-      content: { "application/json": { schema: tableEntryResponseSchema.array() } },
+      content: {
+        "application/json": { schema: tableEntryResponseSchema.array() },
+      },
     },
     ...errorResponsesValue,
   },
