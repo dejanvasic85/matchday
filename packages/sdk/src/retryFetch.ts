@@ -26,6 +26,18 @@ function withTimeout(signal: AbortSignal | null, timeoutMs: number): AbortSignal
   return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 
+/** `new Request(source, init)` clones only the standard `Request` fields — every getter defined on
+ * `Request.prototype` — because those are inherited, not own, properties. A custom field a caller
+ * or openapi-fetch attached (e.g. Next.js's `next`) lands as a plain own enumerable property, so
+ * `Object.keys` finds exactly those and nothing the constructor already copied. Framework-neutral:
+ * this never checks for `next` by name. */
+function withCustomProperties(source: Request, target: Request): Request {
+  for (const key of Object.keys(source)) {
+    Reflect.set(target, key, Reflect.get(source, key));
+  }
+  return target;
+}
+
 /** Retries only idempotent methods, and only on 5xx or a failed request — never on a 4xx, which
  * says the request itself was wrong and will stay wrong. A retried `Request` is rebuilt per
  * attempt because a consumed body can't be re-sent; safe here since only bodyless methods retry. */
@@ -43,9 +55,10 @@ export function createRetryFetch(options: RetryFetchOptions): FetchLike {
         await sleep(retryDelayMs * attempt);
       }
 
-      const attemptRequest = new Request(request, {
-        signal: withTimeout(request.signal, timeoutMs),
-      });
+      const attemptRequest = withCustomProperties(
+        request,
+        new Request(request, { signal: withTimeout(request.signal, timeoutMs) }),
+      );
 
       try {
         const response = await baseFetch(attemptRequest);

@@ -67,6 +67,30 @@ if (result.ok) {
 Use `getLeagueTeams` rather than `GET /teams` plus `GET /clubs`. The full catalog runs to roughly
 6,500 teams and 2.4 MB, which is a lot to download to resolve the handful in one league.
 
+### Framework-specific fetch options (Next.js `next`, etc.)
+
+`getLeagueOverview` and `getLeagueTeams` take an optional third argument typed as
+`MatchdayRequestInit` — `RequestInit` minus the fields the SDK already fixes for you (`method`,
+`body`, `headers`). Pass a standard field like `signal`, or anything a framework's own type
+augmentation adds:
+
+```ts
+import { getLeagueTeams } from "@dejanvasic85/matchday-sdk";
+
+// A Next.js app augments the global RequestInit type with `next`, so this needs no SDK-side
+// Next.js support — it's just RequestInit, and the SDK preserves whatever you put on it.
+await getLeagueTeams(client, leagueId, {
+  next: {
+    tags: [`matchday:league:${leagueId}`],
+    revalidate: 3600,
+  },
+});
+```
+
+The same applies to a raw `client.GET(...)` call. The retry layer forwards every attempt's custom
+properties, so caching metadata like `next` survives a retried request the same way it survives the
+first attempt.
+
 ### Auto-paging
 
 List routes return `{ data, nextCursor }`. The `listAll*` helpers follow `nextCursor` to the end
@@ -131,6 +155,41 @@ const clubs = unwrapOrThrow(await client.GET("/clubs"));
 ```
 
 `result.error.status` is the HTTP status, or `"timeout"` / `"network"` when no response arrived.
+
+### Verifying webhooks
+
+Every webhook delivery carries an `X-Matchday-Signature: sha256=<hex>` header — an HMAC-SHA256 of
+the exact request body, signed with the `whsec_...` secret from `mday client set-webhook`.
+`verifyWebhookSignature` checks that header against the secret using `crypto.subtle.verify`, so the
+comparison runs in constant time:
+
+```ts
+import { verifyWebhookSignature } from "@dejanvasic85/matchday-sdk";
+
+const isValid = await verifyWebhookSignature(
+  rawBody, // the exact bytes matchday sent — see below
+  request.headers.get("x-matchday-signature"),
+  process.env.MATCHDAY_WEBHOOK_SECRET,
+);
+
+if (!isValid) {
+  return new Response("Invalid signature", { status: 401 });
+}
+```
+
+**Pass the raw body, not a re-serialized one.** The signature covers the exact bytes matchday sent.
+Running the body through `JSON.parse` and back through `JSON.stringify` before verifying can
+reorder keys or reformat numbers, which changes the bytes and makes a genuine delivery fail
+verification. Read the request as text first, verify that string, and only then `JSON.parse` it:
+
+```ts
+const rawBody = await request.text();
+const isValid = await verifyWebhookSignature(rawBody, signatureHeader, secret);
+const payload = isValid ? JSON.parse(rawBody) : null;
+```
+
+`verifyWebhookSignature` returns `false` — never throws — for a missing header, an unrecognised
+scheme, a malformed hex value, or a signature that doesn't match.
 
 ## Releasing
 

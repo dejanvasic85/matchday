@@ -2,7 +2,7 @@
 // a full-catalog fetch-and-join to get data one league-scoped call already returns.
 
 import type { components, paths } from "#generated/schema.d.ts";
-import type { MatchdayClient } from "#client.ts";
+import type { MatchdayClient, MatchdayRequestInit } from "#client.ts";
 import { fetchAllPages, type PagingInit } from "#paging.ts";
 import { unwrap, type Result } from "#result.ts";
 
@@ -16,16 +16,23 @@ type League = components["schemas"]["League"];
 type LeagueOverview = components["schemas"]["LeagueOverview"];
 type Team = components["schemas"]["Team"];
 
-/** Everything one league page renders, in a single request — league, fixtures, table and teams. */
+/** Everything one league page renders, in a single request — league, fixtures, table and teams.
+ * `init` is spread before `params`/`headers`/`body`, so a caller can pass any standard or
+ * consumer-augmented `RequestInit` field (a `signal`, or Next.js's `next` cache-tag config) without
+ * being able to override the path, the client's `Authorization` header, or send a body — `init`'s
+ * type already excludes those, but pinning them here also closes it off for a caller who
+ * sidesteps the type (a widened variable rather than an object literal). */
 export async function getLeagueOverview(
   client: MatchdayClient,
   leagueId: string,
-  init?: { signal?: AbortSignal },
+  init?: MatchdayRequestInit,
 ): Promise<Result<LeagueOverview>> {
   return unwrap(
     await client.GET("/leagues/{id}/overview", {
+      ...init,
       params: { path: { id: leagueId } },
-      signal: init?.signal,
+      headers: undefined,
+      body: undefined,
     }),
   );
 }
@@ -35,12 +42,14 @@ export async function getLeagueOverview(
 export async function getLeagueTeams(
   client: MatchdayClient,
   leagueId: string,
-  init?: { signal?: AbortSignal },
+  init?: MatchdayRequestInit,
 ): Promise<Result<Team[]>> {
   return unwrap(
     await client.GET("/leagues/{id}/teams", {
+      ...init,
       params: { path: { id: leagueId } },
-      signal: init?.signal,
+      headers: undefined,
+      body: undefined,
     }),
   );
 }

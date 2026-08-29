@@ -28,6 +28,14 @@ export type MatchdayClientOptions = {
 
 export type MatchdayClient = Client<paths>;
 
+/**
+ * Standard `RequestInit` fields a caller may pass through a task helper (or `client.GET`) to the
+ * underlying fetch, minus the ones the SDK already fixes for that request. Deliberately just
+ * `RequestInit`, not a custom type: a consumer's own global augmentation of `RequestInit` (Next.js
+ * adding `next`, say) merges straight in, so the SDK never needs to know that field exists.
+ */
+export type MatchdayRequestInit = Omit<RequestInit, "method" | "body" | "headers">;
+
 /** Typed client for the matchday API — every protected route requires the bearer token this
  * pre-sets, so consumers never hand-roll the Authorization header. */
 export function createMatchdayClient(options: MatchdayClientOptions): MatchdayClient {
