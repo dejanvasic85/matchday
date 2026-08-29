@@ -21,7 +21,7 @@ catalog:
   nanoid: 6.0.1
   playwright-core: 1.62.1
   typescript: 6.0.3
-  wrangler: 4.126.0
+  wrangler: 4.127.0
   zod: 4.4.3
 
 overrides:
