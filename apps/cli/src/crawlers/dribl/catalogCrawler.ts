@@ -1,4 +1,4 @@
-// Catalog crawl (0012): `offset`/`limit` window the flat league queue so crawl-catalog.yml can split
+// Catalog crawl: `offset`/`limit` window the flat league queue so crawl-catalog.yml can split
 // one crawl into parallel legs. Table-less leagues (e.g. MiniRoos) fall back to fixtures for teams.
 
 import { notFound, ok, serverError, type Logger, type Result } from "@matchday/domain";

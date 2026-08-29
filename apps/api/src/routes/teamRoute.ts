@@ -1,4 +1,4 @@
-// Team routes (0045): thin transport glue (AGENTS.md) — OpenAPI validates params, the service
+// Team routes: thin transport glue (AGENTS.md) — OpenAPI validates params, the service
 // maps data-access results to the wire shape, this just picks the HTTP status.
 
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";

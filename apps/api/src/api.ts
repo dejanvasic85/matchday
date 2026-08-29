@@ -30,7 +30,7 @@ app.use("*", dbClientMiddleware);
 app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
   type: "http",
   scheme: "bearer",
-  description: "Per-client API token (ADR 0013), issued via `mday api-token-create`.",
+  description: "Per-client API token, issued via `mday api-token-create`.",
 });
 
 app.doc("/openapi.json", {
@@ -39,12 +39,12 @@ app.doc("/openapi.json", {
   security: [{ bearerAuth: [] }],
 });
 
-// /health and /openapi.json are public; every other route requires a bearer token (ADR 0013).
+// /health and /openapi.json are public; every other route requires a bearer token.
 // IMPORTANT: routes registered above app.use("*", authMiddleware) bypass auth.
 app.route("/health", healthRoute);
 app.use("*", apiTokenAuthMiddleware);
 
-// Cache TTLs follow each resource's crawl cadence (0003/0046). /leagues carries both: its own
+// Cache TTLs follow each resource's crawl cadence. /leagues carries both: its own
 // catalog data plus nested fixtures/table, so it takes the shorter match-data TTL.
 // Both forms per resource: Hono's `/clubs/*` matches `/clubs/{id}` but not the `/clubs` list.
 for (const path of ["/clubs", "/teams", "/competitions", "/seasons"]) {

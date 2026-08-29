@@ -1,4 +1,4 @@
-// Dribl-raw -> domain mapper (0004). Only names/hash IDs are available here, not matchday's real
+// Dribl-raw -> domain mapper. Only names/hash IDs are available here, not matchday's real
 // entity IDs; resolving those needs DB lookups, so this produces an intermediate shape for that.
 
 import { fixtureStatusValue, type FixtureStatus } from "@matchday/domain";

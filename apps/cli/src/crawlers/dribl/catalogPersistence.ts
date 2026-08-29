@@ -1,4 +1,4 @@
-// Persists a catalog crawl (0012): upserts competition/season/league via external_ref, then resolves each table entry's club/team.
+// Persists a catalog crawl: upserts competition/season/league via external_ref, then resolves each table entry's club/team.
 // `persistLeague` is called per-league so a DB failure surfaces early with prior leagues already committed.
 
 import {
@@ -104,7 +104,7 @@ export async function persistLeague(
     }
 
     // Table-less leagues (MiniRoos etc.) never get a table_entry row, so this is the only place
-    // membership is recorded for them (#142).
+    // membership is recorded for them.
     const membership = await deps.upsertLeagueTeam({
       id: generateId("leagueTeam"),
       leagueId: context.leagueId,

@@ -1,4 +1,4 @@
-// Webhook secret generation + HMAC signing (#105), stored in plaintext (unlike an API token —
+// Webhook secret generation + HMAC signing, stored in plaintext (unlike an API token —
 // we're the ones signing). Uses Web Crypto (not `node:crypto`) to run unmodified on Workers.
 
 const webhookSecretPrefixValue = "whsec_";

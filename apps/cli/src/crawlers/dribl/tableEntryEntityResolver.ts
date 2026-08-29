@@ -58,7 +58,7 @@ export async function resolveTableEntryEntities(
     return upserted;
   }
 
-  // Membership independent of the table row above (#142) — club/league lookups join on this
+  // Membership independent of the table row above — club/league lookups join on this
   // rather than table_entry, so they still work for leagues that lose their table later.
   const membership = await deps.upsertLeagueTeam({
     id: generateId("leagueTeam"),

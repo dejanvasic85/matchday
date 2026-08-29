@@ -1,4 +1,4 @@
-// Raw R2 object key layout (0004): one object per API response, keyed so a crawl run's objects
+// Raw R2 object key layout: one object per API response, keyed so a crawl run's objects
 // group together and the 7-day lifecycle rule can expire the whole prefix uniformly.
 
 export function buildRawFixturesKey(leagueId: string, crawlRunId: string, round: number): string {

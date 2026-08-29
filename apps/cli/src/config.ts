@@ -19,7 +19,7 @@ const cliEnvSchema = z.object({
   // Public base URL clubs' mirrored logos are served from (a custom domain or R2.dev subdomain
   // bound to R2_BUCKET_NAME) — distinct from the S3-compatible endpoint used to *write* objects.
   R2_PUBLIC_ASSETS_URL: z.url(),
-  // Cloudflare R2 for staging raw Dribl API responses pre-transform (0004); bucket has a
+  // Cloudflare R2 for staging raw Dribl API responses pre-transform; bucket has a
   // 7-day lifecycle expiry, separate from the (permanent) logos bucket above.
   R2_RAW_BUCKET_NAME: z.string().min(1),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),

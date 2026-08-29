@@ -1,4 +1,4 @@
-// Club -> league resolution (#85): listLeaguesByClubId returns one row per (team, league) pair,
+// Club -> league resolution: listLeaguesByClubId returns one row per (team, league) pair,
 // undeduplicated; dedup is a business rule so it lives here, not in a SQL DISTINCT.
 
 import { ok, type Result } from "@matchday/domain";
@@ -35,7 +35,7 @@ function dedupeLeagues(rows: LeagueSummary[]): LeagueSummary[] {
 }
 
 /** Resolve a club by name and list the distinct leagues its teams play in, via league_team
- * (#144, superseding table_entry — #85): a league is only discoverable once the catalog crawl has
+ * (which supersedes table_entry): a league is only discoverable once the catalog crawl has
  * run for it at least once. */
 export async function listLeaguesForClub(
   deps: ClubLeagueServiceDeps,

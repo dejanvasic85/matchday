@@ -1,7 +1,7 @@
 // Constrained string values for the schema: stored as `text` and validated at the Zod
-// boundary (ADR 0011) rather than as DB enums, so values can evolve without a migration.
+// boundary rather than as DB enums, so values can evolve without a migration.
 
-/** External identity sources (ADR 0005, 0012). */
+/** External identity sources. */
 export const sourceValue = {
   dribl: "dribl",
   driblClubCode: "dribl_club_code",

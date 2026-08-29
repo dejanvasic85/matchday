@@ -1,4 +1,4 @@
-// Client resolution (ADR 0013): resolve a client by name. Creation is deliberately its own
+// Client resolution: resolve a client by name. Creation is deliberately its own
 // explicit step (`mday client add`) — an implicit create would turn a name typo into a new tenant.
 
 import {

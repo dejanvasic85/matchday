@@ -1,5 +1,5 @@
 // Find-or-create via external_ref, then always upsert the entity (fields like score/status change on re-crawl).
-// external_ref is written before the entity row: no transaction (ADR 0011), so this order lets a partial failure self-heal on retry.
+// external_ref is written before the entity row: no transaction, so this order lets a partial failure self-heal on retry.
 
 import {
   generateId,

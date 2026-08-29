@@ -1,4 +1,4 @@
-// Dribl-raw -> domain mapper (0004: explicit named transform at the crawl boundary) for the
+// Dribl-raw -> domain mapper (explicit named transform at the crawl boundary) for the
 // richer `clubs/{id}` response — reuses mapDriblClub's address/socials formatting.
 
 import type { Ground, Socials } from "@matchday/domain";

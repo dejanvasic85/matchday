@@ -1,5 +1,5 @@
 // Team data access: build a query, execute it, return a `Result` of rows. No business rules here
-// (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
+// (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
 import { and, asc, eq, gt } from "drizzle-orm";
@@ -28,7 +28,7 @@ const teamColumns = {
 
 /** List teams, optionally narrowed to one club — the filter a club's roster page needs. Each
  * team's owning club is embedded (null if `clubId` is null) so a consumer can render a team
- * without a second request. Keyset-paged on `id` (#164): unscoped this is ~6500 rows / 2.4 MB. */
+ * without a second request. Keyset-paged on `id`: unscoped this is ~6500 rows / 2.4 MB. */
 export async function listTeams(
   db: Db,
   clubId?: string,
@@ -73,7 +73,7 @@ export async function getTeamById(db: Db, id: string): Promise<Result<TeamWithCl
   return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
-/** Every team in a league, via the `league_team` membership table (#141/#145) — works for
+/** Every team in a league, via the `league_team` membership table — works for
  * table-less leagues (e.g. MiniRoos) too, unlike deriving membership from `table_entry`. */
 export async function listTeamsByLeagueId(
   db: Db,

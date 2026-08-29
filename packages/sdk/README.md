@@ -1,8 +1,7 @@
 # @dejanvasic85/matchday-sdk
 
-A typed client for the matchday API, generated from its live OpenAPI spec (ADR 0007). Every
-protected route needs a per-client bearer token (ADR 0013), and `createMatchdayClient` sets that
-header for you.
+A typed client for the matchday API, generated from its live OpenAPI spec. Every protected route
+needs a per-client bearer token, and `createMatchdayClient` sets that header for you.
 
 ## Install
 

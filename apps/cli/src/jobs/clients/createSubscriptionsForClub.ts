@@ -1,4 +1,4 @@
-// Create-subscriptions-for-club job (#85): transport glue (AGENTS.md); onboarding a club is one
+// Create-subscriptions-for-club job: transport glue (AGENTS.md); onboarding a club is one
 // call instead of one `add-subscription` per league.
 
 import { type Logger, type Result } from "@matchday/domain";

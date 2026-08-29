@@ -1,4 +1,4 @@
-// Catalog crawl (0012): cheap, source-wide enumeration of competitions/leagues/teams/clubs for a
+// Catalog crawl: cheap, source-wide enumeration of competitions/leagues/teams/clubs for a
 // season, upserted via `external_ref`. Populates onboarding dropdowns; runs regardless of subs.
 
 import { ok, type Logger, type Result } from "@matchday/domain";

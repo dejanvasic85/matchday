@@ -1,4 +1,4 @@
-// Resolves a source id to an *existing* club row only — never creates one (ADR 0012). Returns
+// Resolves a source id to an *existing* club row only — never creates one. Returns
 // `null` (not an error) for admin pseudo-clubs or a row already claimed by a different source id.
 
 import {
@@ -77,8 +77,8 @@ export async function resolveClubForEnrichment(
     return ok(null);
   }
 
-  // Persist the bridge so future runs hit step 1 directly, and so ADR 0004's "original Dribl URL
-  // retained on the external_ref" requirement is satisfied for this club's logo.
+  // Persist the bridge so future runs hit step 1 directly, and so the original Dribl URL stays
+  // retained on the external_ref for this club's logo.
   const refUpserted = await deps.upsertExternalRef({
     id: generateId("externalRef"),
     entityType: externalRefEntityTypeValue.club,

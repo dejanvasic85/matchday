@@ -1,5 +1,5 @@
 // Competition data access: build a query, execute it, return a `Result` of rows. No business
-// rules here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
+// rules here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
 import { asc, eq, gt } from "drizzle-orm";
@@ -11,7 +11,7 @@ import { competition } from "#schema.ts";
 type Competition = typeof competition.$inferSelect;
 type CompetitionInsert = typeof competition.$inferInsert;
 
-/** Keyset-paged on `id` (#164): ordered by primary key, seeking past the cursor. */
+/** Keyset-paged on `id`: ordered by primary key, seeking past the cursor. */
 export async function listCompetitions(
   db: Db,
   page: PageRequest = {},

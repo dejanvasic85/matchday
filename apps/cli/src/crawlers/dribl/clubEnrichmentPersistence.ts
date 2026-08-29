@@ -1,4 +1,4 @@
-// Persists one crawled club: bridge-matches to an existing row (never creates, ADR 0012), mirrors
+// Persists one crawled club: bridge-matches to an existing row (never creates), mirrors
 // its logo to R2, writes curated fields. No match (admin pseudo-clubs) is skipped, not a failure.
 
 import { ok, type Logger, type Result } from "@matchday/domain";

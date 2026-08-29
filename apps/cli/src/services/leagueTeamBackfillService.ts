@@ -1,5 +1,5 @@
-// One-off league_team backfill (#143): populates league_team for leagues crawled before #142's
-// dual-write shipped. table_entry's unique index guarantees no dedup needed. Idempotent.
+// One-off league_team backfill: populates league_team for leagues crawled before the catalog crawl
+// started writing it directly. table_entry's unique index means no dedup is needed. Idempotent.
 
 import { generateId, ok, type Result } from "@matchday/domain";
 import type { listTableEntryTeamPairs, upsertLeagueTeam } from "@matchday/db";

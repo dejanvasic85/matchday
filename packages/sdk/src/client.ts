@@ -14,7 +14,7 @@ export const clientDefaultValue = {
 export type MatchdayClientOptions = {
   /** The matchday API's base URL, e.g. "https://api.matchday.example". */
   baseUrl: string;
-  /** A per-client API token issued via `mday api-token-create` (ADR 0013). */
+  /** A per-client API token issued via `mday api-token-create`. */
   apiToken: string;
   /** Abort a request after this long. Defaults to 30s. */
   timeoutMs?: number;
@@ -29,7 +29,7 @@ export type MatchdayClientOptions = {
 export type MatchdayClient = Client<paths>;
 
 /** Typed client for the matchday API — every protected route requires the bearer token this
- * pre-sets (ADR 0013), so consumers never hand-roll the Authorization header. */
+ * pre-sets, so consumers never hand-roll the Authorization header. */
 export function createMatchdayClient(options: MatchdayClientOptions): MatchdayClient {
   const {
     baseUrl,

@@ -1,4 +1,4 @@
-// Dribl-raw -> domain mapper (0004). Carries names/hash IDs only; resolving real entity IDs is a
+// Dribl-raw -> domain mapper. Carries names/hash IDs only; resolving real entity IDs is a
 // service concern, not this pure mapper's.
 
 import type { DriblTableEntry } from "#crawlers/dribl/external/driblTableEntry.ts";

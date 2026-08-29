@@ -1,5 +1,5 @@
 // League data access: build a query, execute it, return a `Result` of rows. No business rules
-// here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
+// here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
 import { and, asc, eq, gt } from "drizzle-orm";
@@ -34,7 +34,7 @@ const leagueSelection = {
 
 /**
  * List leagues, optionally narrowed to a competition, season, and/or club — the cascading-dropdown
- * filter (competition -> season -> league) onboarding needs (0012), plus `clubId` for "leagues
+ * filter (competition -> season -> league) onboarding needs, plus `clubId` for "leagues
  * this club's teams play in" (a consumer picking which league to bind a team page's display to).
  *
  * `clubId` isn't a column on `league` — it's derived via `team`/`league_team`, the same join
@@ -91,12 +91,12 @@ export async function listLeagues(
 }
 
 /**
- * Every league a club's teams play in, via `league_team` (#144) rather than `table_entry` or
+ * Every league a club's teams play in, via `league_team` rather than `table_entry` or
  * `fixture`. `table_entry` only exists for leagues with a published ladder — table-less divisions
  * (e.g. MiniRoos age groups, which publish fixtures but no standings) have no `table_entry` row,
  * so a club with MiniRoos teams was silently missing those leagues here. `fixture` under-subscribes
- * for a different reason (#85: the deep crawl's fixture backlog only covers a couple of leagues).
- * `league_team` (#141/#142) is written for every team the catalog crawl discovers regardless of
+ * for a different reason: the deep crawl's fixture backlog only covers a couple of leagues.
+ * `league_team` is written for every team the catalog crawl discovers regardless of
  * which path found it, so it has neither gap. One row per (team, league) pair — a club with two
  * teams in the same league returns that league twice, deliberately undeduplicated so the caller
  * (clubLeagueService, business logic) does the dedup and stays unit-testable rather than hiding

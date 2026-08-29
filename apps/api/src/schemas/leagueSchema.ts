@@ -9,7 +9,7 @@ function summarySchema(componentName: string, idExample: string) {
 }
 
 /** Wire shape of a league (mirrors @matchday/domain's leagueSchema, dates as ISO strings).
- * `competition`/`season` are embedded so labelling a league needs no follow-up requests (#162). */
+ * `competition`/`season` are embedded so labelling a league needs no follow-up requests. */
 export const leagueResponseSchema = z
   .object({
     id: z.string().openapi({ example: "lea_V1StGXR8Z5" }),

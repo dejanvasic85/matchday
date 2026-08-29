@@ -1,4 +1,4 @@
-// Team service (0045): maps DB rows to the wire shape. A nullable club link (unbridged
+// Team service: maps DB rows to the wire shape. A nullable club link (unbridged
 // fixture-discovered team) is exposed as a `type: "club" | "unaffiliated"` union, null-check-free.
 
 import { mapResult, requireFound, type Result } from "@matchday/domain";
@@ -90,7 +90,7 @@ export async function getTeam(
   return requireFound(result, mapToTeamResponse, "Team not found");
 }
 
-/** A league's teams, via `league_team` (#141/#145) — works for table-less leagues (e.g. MiniRoos)
+/** A league's teams, via `league_team` — works for table-less leagues (e.g. MiniRoos)
  * too, unlike deriving membership from `table_entry`. */
 export async function listLeagueTeams(
   deps: Pick<TeamServiceDeps, "listTeamsByLeagueId">,

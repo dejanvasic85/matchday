@@ -1,7 +1,7 @@
 // Constrained string values shared by the entity Zod schemas. Mirrors packages/db/src/constants.ts
 // as a separate copy so `packages/domain` has no dependency on `packages/db`.
 
-/** External identity sources (ADR 0005, 0012). */
+/** External identity sources. */
 export const sourceValue = {
   dribl: "dribl",
   driblClubCode: "dribl_club_code",

@@ -1,4 +1,4 @@
-// List-clients job (0013): transport glue (AGENTS.md) — builds the real DB client and delegates
+// List-clients job: transport glue (AGENTS.md) — builds the real DB client and delegates
 // roster assembly to the service.
 
 import { type Result } from "@matchday/domain";

@@ -1,5 +1,5 @@
 // Launches Chrome, visits the Dribl site once for Cloudflare clearance, hands back the page.
-// Endpoint is abstracted (0009): connect over BROWSER_WS_ENDPOINT when set, else launch local.
+// Endpoint is abstracted: connect over BROWSER_WS_ENDPOINT when set, else launch local.
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { type Browser, chromium, type Page } from "playwright-core";

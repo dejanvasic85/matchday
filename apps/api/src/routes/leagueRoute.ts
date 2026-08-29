@@ -54,8 +54,7 @@ const listLeaguesRoute = createRoute({
         .openapi({
           param: { name: "clubId", in: "query" },
           example: "clb_V1StGXR8Z5",
-          description:
-            "Leagues this club's teams play in, derived from league membership (0012, #144).",
+          description: "Leagues this club's teams play in, derived from league membership.",
         }),
     }),
   },
@@ -182,7 +181,7 @@ const listLeagueTeamsRoute = createRoute({
   responses: {
     200: {
       description:
-        "The league's teams, via league_team membership (#141) — includes teams in table-less " +
+        "The league's teams, via league_team membership — includes teams in table-less " +
         "leagues (e.g. MiniRoos) that never appear in the league's table",
       content: { "application/json": { schema: teamResponseSchema.array() } },
     },

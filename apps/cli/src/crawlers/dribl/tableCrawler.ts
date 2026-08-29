@@ -1,5 +1,5 @@
 // Table (ladder) crawl: a single request after the round crawl, staged to R2 before mapping
-// (0004). Dribl's own wire format calls this a "ladder" — our side calls it "table".
+//. Dribl's own wire format calls this a "ladder" — our side calls it "table".
 
 import { ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";

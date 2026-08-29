@@ -1,5 +1,5 @@
 // Club data access: build a query, execute it, return a `Result` of rows. No business rules here
-// (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
+// (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
 import { and, asc, eq, gt, ilike, sql } from "drizzle-orm";
@@ -12,7 +12,7 @@ import { club, externalRef } from "#schema.ts";
 type Club = typeof club.$inferSelect;
 type ClubInsert = typeof club.$inferInsert;
 
-/** Keyset-paged on `id` (#164): ordered by primary key, seeking past the cursor. */
+/** Keyset-paged on `id`: ordered by primary key, seeking past the cursor. */
 export async function listClubs(db: Db, page: PageRequest = {}): Promise<Result<Page<Club>>> {
   const limit = resolveLimit(page.limit);
   const after = page.cursor === undefined ? undefined : decodeCursor(page.cursor);
@@ -55,7 +55,7 @@ export async function findClubByLogoUrl(db: Db, logoUrl: string): Promise<Result
 }
 
 /**
- * Find a club by the *original* source logo URL retained on its `external_ref` (ADR 0004).
+ * Find a club by the *original* source logo URL retained on its `external_ref`.
  * Unlike {@link findClubByLogoUrl}, which matches the club row's current `logoUrl`, this survives
  * club-enrichment mirroring that to an R2 URL: `external_ref.sourceUrl` is written once at
  * identity-resolution time and never rewritten, so it still matches what Dribl sends elsewhere
@@ -98,7 +98,7 @@ export async function findClubByName(db: Db, name: string): Promise<Result<Club 
 
 /**
  * Find clubs by a case-insensitive partial name match — the operator lookup behind
- * `mday club leagues` and `client add-subscription --club` (#85), where the operator types a
+ * `mday club leagues` and `client add-subscription --club`, where the operator types a
  * human-recognisable fragment ("Williamstown") rather than the exact stored name. Returns every
  * match so the caller (clubResolver) can fail on ambiguity instead of guessing.
  */
@@ -157,8 +157,8 @@ export type ClubEnrichmentFields = Pick<
 >;
 
 /**
- * Update-only write for the club-enrichment job (never creates a row — "attach, never create" per
- * ADR 0012): a plain `UPDATE ... WHERE id`, no insert branch, so the guarantee is structural
+ * Update-only write for the club-enrichment job (never creates a row — "attach, never create"):
+ * a plain `UPDATE ... WHERE id`, no insert branch, so the guarantee is structural
  * rather than relying on every caller happening to pass an existing id. Zero rows updated (the
  * club id vanished between resolution and this call) is a soft no-op (`ok(null)`), not an error —
  * not worth failing the whole enrichment run over one club.

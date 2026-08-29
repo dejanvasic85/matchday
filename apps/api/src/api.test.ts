@@ -1,5 +1,5 @@
-// Locks in ADR 0013's last piece (#77): the doc-level `security` declaration covers routes added
-// later (e.g. fixtures/table, #45) without each needing its own.
+// The doc-level `security` declaration covers routes added later (e.g. fixtures/table)
+// without each needing its own.
 
 import { z } from "zod";
 import app from "#api.ts";

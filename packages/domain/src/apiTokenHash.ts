@@ -1,4 +1,4 @@
-// Bearer API token generation and hashing (ADR 0013). Plaintext is shown once and never
+// Bearer API token generation and hashing. Plaintext is shown once and never
 // persisted — only its hash. Uses Web Crypto (not `node:crypto`) to run unmodified on Workers.
 
 const tokenPrefixValue = "mday_";

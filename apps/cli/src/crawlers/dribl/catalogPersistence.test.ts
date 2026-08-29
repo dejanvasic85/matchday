@@ -151,7 +151,7 @@ describe("persistCatalog", () => {
       expect.objectContaining({ clubId: null, name: "Under 9 Boys Wallabies - Eric/Nate" }),
     );
     // Table-less leagues never get a table_entry row, so this is the only membership record
-    // written for them — the data #144's clubId-filtered lookup fix depends on existing.
+    // written for them — the data the clubId-filtered league lookup depends on existing.
     expect(deps.upsertLeagueTeam).toHaveBeenCalledTimes(2);
     expect(deps.upsertLeagueTeam).toHaveBeenCalledWith(
       expect.objectContaining({ leagueId: expect.stringMatching(/^lea_/) }),

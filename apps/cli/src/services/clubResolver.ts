@@ -1,4 +1,4 @@
-// Club resolution (#85): resolve a club by a human-typed name fragment via fuzzy, case-insensitive
+// Club resolution: resolve a club by a human-typed name fragment via fuzzy, case-insensitive
 // partial match (unlike clientResolver's exact match). Ambiguous input fails listing candidates.
 
 import {

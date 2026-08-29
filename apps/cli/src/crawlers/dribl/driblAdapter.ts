@@ -1,4 +1,4 @@
-// The Dribl `SourceAdapter` (0012): opens a Cloudflare-cleared browser session and exposes the
+// The Dribl `SourceAdapter`: opens a Cloudflare-cleared browser session and exposes the
 // crawl operations plus countCatalogLeagues, a cheap listing-only sizer for crawl-catalog.yml.
 
 import { ok, type Result } from "@matchday/domain";

@@ -1,5 +1,5 @@
 // Fixture data access: build a query, execute it, return a `Result` of rows. No business rules
-// here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
+// here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import type { Result } from "@matchday/domain";
 import { asc, eq } from "drizzle-orm";
@@ -11,7 +11,7 @@ type Fixture = typeof fixture.$inferSelect;
 type FixtureInsert = typeof fixture.$inferInsert;
 
 /** A league's fixtures, round-then-kickoff ordered — the shape a fixture list/table page reads
- * naturally in (0045, subscription-scoped per ADR 0012). */
+ * naturally in (subscription-scoped). */
 export async function listFixturesByLeagueId(db: Db, leagueId: string): Promise<Result<Fixture[]>> {
   return runQuery(
     () =>

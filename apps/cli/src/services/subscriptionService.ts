@@ -1,4 +1,4 @@
-// Subscription creation (0012): a client subscribes to one of our leagues — validates the league
+// Subscription creation: a client subscribes to one of our leagues — validates the league
 // exists, mints the id, and delegates the write to data-access.
 
 import {
@@ -91,7 +91,7 @@ export type CreateSubscriptionsForClubInput = {
   clientName: string;
   clubName: string;
   /** Resolve the club and its leagues without writing any subscriptions — the safe-by-default
-   * habit for a fuzzy club match (#85): a typo'd `--club` is a prod-data event otherwise. */
+   * habit for a fuzzy club match: a typo'd `--club` is a prod-data event otherwise. */
   dryRun: boolean;
 };
 
@@ -100,7 +100,7 @@ export type ClubSubscriptionResult = ClubLeagues & {
   subscriptionIds: SubscriptionId[];
 };
 
-/** Subscribe a client to every league resolved for a club (#85) — onboarding a real club is one
+/** Subscribe a client to every league resolved for a club — onboarding a real club is one
  * call instead of one `add-subscription` per league. Resolves the club/leagues before the client
  * so an ambiguous or typo'd `--club` fails before any subscription write is attempted, dry run
  * or not. */
@@ -180,7 +180,7 @@ export type ConfiguredWebhook = {
 };
 
 /**
- * Configure (or replace) a subscription's webhook (#105): validates the URL, mints a fresh
+ * Configure (or replace) a subscription's webhook: validates the URL, mints a fresh
  * signing secret, and persists both. Re-running this on an already-configured subscription
  * rotates the secret — there's no "keep the old secret" path, matching how `create-token` always
  * mints a new token rather than exposing an existing one.
@@ -205,7 +205,7 @@ export async function setSubscriptionWebhook(
   return ok({ webhookUrl, webhookSecret });
 }
 
-/** Clear a subscription's webhook (#105), narrowing an unknown (or already-webhook-less)
+/** Clear a subscription's webhook, narrowing an unknown (or already-webhook-less)
  * subscription id to a `notFound` outcome, matching `removeSubscription`'s error shape. */
 export async function clearSubscriptionWebhook(
   deps: Pick<SubscriptionServiceDeps, "clearSubscriptionWebhook">,

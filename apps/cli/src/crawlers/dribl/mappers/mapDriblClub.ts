@@ -1,4 +1,4 @@
-// Dribl-raw -> domain mapper (0004: explicit named transform at the crawl boundary).
+// Dribl-raw -> domain mapper (explicit named transform at the crawl boundary).
 
 import type { Socials } from "@matchday/domain";
 import type { DriblClub } from "#crawlers/dribl/external/driblClub.ts";

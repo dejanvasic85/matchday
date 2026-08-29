@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// A client's API bearer token (ADR 0013), hashed at rest. A client can hold several active
+// A client's API bearer token, hashed at rest. A client can hold several active
 // tokens to rotate one in before revoking the old; `revokedAt` set means no longer valid.
 export const apiTokenSchema = z.object({
   id: z.string(),

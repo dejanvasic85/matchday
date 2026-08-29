@@ -1,4 +1,4 @@
-// Persists one league's deep crawl (0012). Sequential, aborting on the first `err`: every step is
+// Persists one league's deep crawl. Sequential, aborting on the first `err`: every step is
 // idempotent, so a partial run is safe to retry rather than persisting a half-mapped league.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
