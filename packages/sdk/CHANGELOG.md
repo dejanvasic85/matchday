@@ -1,5 +1,13 @@
 # @dejanvasic85/matchday-sdk
 
+## 2.1.1
+
+### Patch Changes
+
+- 963e421: Remove internal ADR and GitHub issue references from public-facing text. The SDK README and the
+  generated OpenAPI descriptions now describe what the API does without pointing at internal
+  decision records or issue numbers. Documentation only — no behaviour, types or endpoints change.
+
 ## 2.1.0
 
 ### Minor Changes
