@@ -1,6 +1,15 @@
 import { createMatchdayClient } from "#client.ts";
 import { getClubLeagues, getLeagueOverview, getLeagueTeams, listAllLeagues } from "#leagueTasks.ts";
 
+/** Stands in for a Next.js consumer's own global `RequestInit` augmentation — proves
+ * `MatchdayRequestInit` picks up a framework's added field through declaration merging, with no
+ * Next.js dependency in this package. */
+declare global {
+  interface RequestInit {
+    next?: { tags?: string[]; revalidate?: number | false };
+  }
+}
+
 function makeClient(body: unknown, status = 200) {
   const fetch = vi.fn(async (_request: Request) => new Response(JSON.stringify(body), { status }));
   const client = createMatchdayClient({
@@ -34,6 +43,42 @@ describe("getLeagueOverview", () => {
       error: expect.objectContaining({ status: 404, message: "League not found" }),
     });
   });
+
+  it("passes consumer-augmented RequestInit fields through to the underlying fetch", async () => {
+    const { client, fetch } = makeClient({ id: "lea_abc123", fixtures: [], table: [], teams: [] });
+    const next = { tags: ["matchday:league:lea_abc123"], revalidate: 3600 };
+
+    await getLeagueOverview(client, "lea_abc123", { next });
+
+    const request = fetch.mock.calls[0]?.[0];
+    expect(Reflect.get(request ?? {}, "next")).toEqual(next);
+  });
+
+  it("does not let init override the target path", async () => {
+    const { client, fetch } = makeClient({ id: "lea_abc123", fixtures: [], table: [], teams: [] });
+
+    await getLeagueOverview(
+      client,
+      "lea_abc123",
+      // @ts-expect-error params is not part of MatchdayRequestInit
+      { params: { path: { id: "lea_other" } } },
+    );
+
+    expect(fetch.mock.calls[0]?.[0]?.url).toBe(
+      "https://api.matchday.example/leagues/lea_abc123/overview",
+    );
+  });
+
+  it("does not let a caller who bypasses the type smuggle a headers override through init", async () => {
+    const { client, fetch } = makeClient({ id: "lea_abc123", fixtures: [], table: [], teams: [] });
+    const bypassedInit: Record<string, unknown> = {
+      headers: { Authorization: "Bearer evil" },
+    };
+
+    await getLeagueOverview(client, "lea_abc123", bypassedInit);
+
+    expect(fetch.mock.calls[0]?.[0]?.headers.get("authorization")).toBe("Bearer test-token");
+  });
 });
 
 describe("getLeagueTeams", () => {
@@ -45,6 +90,25 @@ describe("getLeagueTeams", () => {
     const { url } = fetch.mock.calls[0]?.[0] ?? {};
     expect(url).toBe("https://api.matchday.example/leagues/lea_abc123/teams");
     expect(url).not.toContain("/teams?");
+  });
+
+  it("passes consumer-augmented RequestInit fields through to the underlying fetch", async () => {
+    const { client, fetch } = makeClient([]);
+    const next = { tags: ["matchday:league:lea_abc123"], revalidate: 3600 };
+
+    await getLeagueTeams(client, "lea_abc123", { next });
+
+    const request = fetch.mock.calls[0]?.[0];
+    expect(Reflect.get(request ?? {}, "next")).toEqual(next);
+  });
+
+  it("still honours a caller's abort signal", async () => {
+    const { client, fetch } = makeClient([]);
+    const controller = new AbortController();
+
+    await getLeagueTeams(client, "lea_abc123", { signal: controller.signal });
+
+    expect(fetch.mock.calls[0]?.[0]?.signal?.aborted).toBe(false);
   });
 });
 

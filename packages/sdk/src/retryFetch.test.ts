@@ -157,4 +157,28 @@ describe("createRetryFetch", () => {
 
     expect(calls[0]?.signal?.aborted).toBe(true);
   });
+
+  it("preserves a custom property (e.g. Next.js's `next`) on every retry attempt", async () => {
+    const { fetch, calls } = makeFetch([
+      new Response(null, { status: 503 }),
+      new Response(null, { status: 200 }),
+    ]);
+    const retryFetch = createRetryFetch({
+      fetch,
+      timeoutMs: 100,
+      retries: 2,
+      retryDelayMs: 0,
+      sleep: noSleep,
+    });
+    const request = new Request("https://example.test/clubs");
+    const next = { tags: ["matchday:league:lea_abc123"], revalidate: 3600 };
+    Object.assign(request, { next });
+
+    await retryFetch(request);
+
+    expect(calls).toHaveLength(2);
+    for (const call of calls) {
+      expect(Reflect.get(call, "next")).toEqual(next);
+    }
+  });
 });

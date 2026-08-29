@@ -5,7 +5,10 @@ export {
   createMatchdayClient,
   type MatchdayClient,
   type MatchdayClientOptions,
+  type MatchdayRequestInit,
 } from "#client.ts";
+
+export { verifyWebhookSignature } from "#webhook.ts";
 
 export {
   ok,
