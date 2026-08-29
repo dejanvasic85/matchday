@@ -5,7 +5,7 @@
 import { notFound, ok, serverError, type Logger, type Result } from "@matchday/domain";
 import { browserFetch, type FetchPage } from "#crawlers/dribl/browserFetch.ts";
 import { buildDriblApiUrl, type DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
-import { driblFixturesApiResponseSchema } from "#crawlers/dribl/external/driblFixture.ts";
+import { listFixturePages } from "#crawlers/dribl/driblFixturesApi.ts";
 import type { DriblListItem } from "#crawlers/dribl/external/driblListEndpoints.ts";
 import { driblTableApiResponseSchema } from "#crawlers/dribl/external/driblTableEntry.ts";
 import {
@@ -89,26 +89,22 @@ function recordFixtureTeamSighting(
 }
 
 /** Discovers teams from a league's current fixtures — the fallback for a league with no table.
- * Omitting `round` asks Dribl for its current window, same as the site's default view. A team on
- * a bye right now is still missed, but self-heals on the next weekly crawl once it plays. */
+ * Omitting `round` asks Dribl for its current window, same as the site's default view, and every
+ * page of it: a single page caps at 30 fixtures and would hide the teams below that line. A team
+ * on a bye for the whole window is still missed, but self-heals on the next weekly crawl. */
 async function discoverTeamsFromFixtures(
   page: FetchPage,
+  logger: Logger,
   ids: DriblLeagueIds,
 ): Promise<Result<CatalogFixtureTeam[]>> {
   const teamsBySourceId = new Map<string, { name: string; logoUrl: string | null }>();
 
-  const url = buildDriblApiUrl("fixtures", ids);
-  const fetched = await browserFetch(page, url);
-  if (!fetched.ok) {
-    return fetched;
+  const pages = await listFixturePages({ page, logger, ids, label: "catalog team discovery" });
+  if (!pages.ok) {
+    return pages;
   }
 
-  const parsed = driblFixturesApiResponseSchema.safeParse(fetched.value);
-  if (!parsed.success) {
-    return serverError("Failed to validate fixtures response", parsed.error);
-  }
-
-  for (const fixture of parsed.data.data) {
+  for (const fixture of pages.value.flatMap((response) => response.data)) {
     const mapped = mapDriblFixture(fixture);
     if (mapped.homeTeamSourceId !== null && mapped.homeTeamName !== null) {
       recordFixtureTeamSighting(
@@ -242,7 +238,7 @@ export async function crawlCatalog(
 
     let fixtureTeams: CatalogFixtureTeam[] = [];
     if (tableEntries.length === 0) {
-      const fixtureTeamsResult = await discoverTeamsFromFixtures(page, ids);
+      const fixtureTeamsResult = await discoverTeamsFromFixtures(page, logger, ids);
       if (!fixtureTeamsResult.ok) {
         return fixtureTeamsResult;
       }

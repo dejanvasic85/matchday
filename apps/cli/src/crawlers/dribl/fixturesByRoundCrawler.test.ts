@@ -1,52 +1,26 @@
 import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import { makeQueuedFakePage } from "#test/fixtures/fakePage.ts";
 import { makeFakeRawStorage } from "#test/fixtures/rawStorage.ts";
+import { makeDriblFixture, makeDriblFixtureAttributes } from "#test/fixtures/driblFixture.ts";
 import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";
 import type { DriblLeagueIds } from "#crawlers/dribl/driblApiUrl.ts";
-import type { DriblFixtureAttributes } from "#crawlers/dribl/external/driblFixture.ts";
 import { crawlFixturesByRound } from "#crawlers/dribl/fixturesByRoundCrawler.ts";
 
 const ids: DriblLeagueIds = { season: "s", competition: "c", league: "l", tenant: "t" };
 
-function makeFixtureAttributes(
-  overrides: Partial<DriblFixtureAttributes> = {},
-): DriblFixtureAttributes {
+function makeFixtureResponse(count: number, nextCursor: string | null = null) {
   return {
-    name: "Fixture",
-    date: "2026-04-25T23:00:00.000000Z",
-    round: "R1",
-    full_round: "Round 1",
-    ground_name: "AB Shaw Reserve",
-    ground_latitude: -37.86,
-    ground_longitude: 144.78,
-    field_name: null,
-    home_team_name: "Home",
-    home_team_hash_id: "home-1",
-    home_logo: "https://ocean.dribl.com/home",
-    away_team_name: "Away",
-    away_team_hash_id: "away-1",
-    away_logo: "https://ocean.dribl.com/away",
-    competition_name: "Comp",
-    league_name: "League",
-    status: "pending",
-    bye_flag: false,
-    home_score: null,
-    away_score: null,
-    ...overrides,
+    data: Array.from({ length: count }, (_unused, index) =>
+      makeDriblFixture({
+        hash_id: `fixture-${index}`,
+        attributes: makeDriblFixtureAttributes({ name: `Fixture ${index}` }),
+      }),
+    ),
+    meta: { next_cursor: nextCursor },
   };
 }
 
-function makeFixtureResponse(count: number) {
-  return {
-    data: Array.from({ length: count }, (_unused, index) => ({
-      type: "fixtures" as const,
-      hash_id: `fixture-${index}`,
-      attributes: makeFixtureAttributes({ name: `Fixture ${index}` }),
-    })),
-  };
-}
-
-const emptyResponse = { data: [] };
+const emptyResponse = { data: [], meta: { next_cursor: null } };
 
 describe("crawlFixturesByRound", () => {
   describe("tabled leagues (sequential round scan)", () => {
@@ -71,8 +45,35 @@ describe("crawlFixturesByRound", () => {
 
       assert(result.ok);
       expect(rawStorage.puts).toHaveLength(2);
-      expect(rawStorage.puts[0]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-1.json");
-      expect(rawStorage.puts[1]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-2.json");
+      expect(rawStorage.puts[0]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-1-page-1.json");
+      expect(rawStorage.puts[1]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-2-page-1.json");
+    });
+
+    it("stages every page of a round that spans more than one cursor page", async () => {
+      const page = makeQueuedFakePage([
+        makeFixtureResponse(30, "cursor-2"),
+        makeFixtureResponse(4),
+        emptyResponse,
+        emptyResponse,
+      ]);
+      const rawStorage = makeFakeRawStorage();
+
+      const result = await crawlFixturesByRound({
+        page,
+        rawStorage,
+        logger: makeFakeLogger(),
+        ids,
+        leagueId: "lea_abc123",
+        crawlRunId: "run_1",
+        hasTable: true,
+      });
+
+      assert(result.ok);
+      expect(result.value.flatMap((response) => response.data)).toHaveLength(34);
+      expect(rawStorage.puts.map((put) => put.key)).toEqual([
+        "deep/lea_abc123/run_1/fixtures-round-1-page-1.json",
+        "deep/lea_abc123/run_1/fixtures-round-1-page-2.json",
+      ]);
     });
 
     it("continues past a single empty round (scheduling gap, not season end)", async () => {
@@ -101,13 +102,8 @@ describe("crawlFixturesByRound", () => {
 
     it("stages a round containing an unstructured placeholder fixture (null name)", async () => {
       const response = {
-        data: [
-          {
-            type: "fixtures" as const,
-            hash_id: "fixture-0",
-            attributes: makeFixtureAttributes({ name: null }),
-          },
-        ],
+        data: [makeDriblFixture({ attributes: makeDriblFixtureAttributes({ name: null }) })],
+        meta: { next_cursor: null },
       };
       const page = makeQueuedFakePage([response, emptyResponse, emptyResponse]);
       const rawStorage = makeFakeRawStorage();
@@ -193,8 +189,35 @@ describe("crawlFixturesByRound", () => {
       expect(result.value).toHaveLength(1);
       expect(result.value[0]?.data).toHaveLength(3);
       expect(rawStorage.puts).toHaveLength(1);
-      expect(rawStorage.puts[0]?.key).toBe("deep/lea_abc123/run_1/fixtures-round-1.json");
+      expect(rawStorage.puts[0]?.key).toBe("deep/lea_abc123/run_1/fixtures-window-page-1.json");
       expect(requestedUrls.some((url) => url.includes("round="))).toBe(false);
+    });
+
+    it("follows the cursor past the first 30 so later rounds are not dropped", async () => {
+      const page = makeQueuedFakePage([
+        makeFixtureResponse(30, "cursor-2"),
+        makeFixtureResponse(30, "cursor-3"),
+        makeFixtureResponse(25),
+      ]);
+      const rawStorage = makeFakeRawStorage();
+
+      const result = await crawlFixturesByRound({
+        page,
+        rawStorage,
+        logger: makeFakeLogger(),
+        ids,
+        leagueId: "lea_abc123",
+        crawlRunId: "run_1",
+        hasTable: false,
+      });
+
+      assert(result.ok);
+      expect(result.value.flatMap((response) => response.data)).toHaveLength(85);
+      expect(rawStorage.puts.map((put) => put.key)).toEqual([
+        "deep/lea_abc123/run_1/fixtures-window-page-1.json",
+        "deep/lea_abc123/run_1/fixtures-window-page-2.json",
+        "deep/lea_abc123/run_1/fixtures-window-page-3.json",
+      ]);
     });
 
     it("returns an empty array without staging when the current window has no fixtures", async () => {

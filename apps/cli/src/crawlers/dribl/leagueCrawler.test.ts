@@ -142,7 +142,7 @@ describe("crawlLeague", () => {
     expect(deps.upsertFixture).toHaveBeenCalledTimes(1);
     expect(deps.upsertTableEntry).toHaveBeenCalledTimes(1);
     expect(rawStorage.puts.map((put) => put.key)).toEqual([
-      "deep/lea_abc123/run_1/fixtures-round-1.json",
+      "deep/lea_abc123/run_1/fixtures-round-1-page-1.json",
       "deep/lea_abc123/run_1/table.json",
     ]);
   });
