@@ -176,7 +176,7 @@ export function createCli(): Command {
     .command("subscribed-leagues")
     .description(
       "List the distinct set of league ids with >=1 subscription, as JSON — the scope the " +
-        "deep-crawl GitHub Actions matrix crawls each run (0012).",
+        "deep-crawl GitHub Actions matrix crawls each run.",
     )
     .action(async () => {
       const config = getCliConfig();
@@ -194,7 +194,7 @@ export function createCli(): Command {
     .command("deep-crawl")
     .description(
       "Crawl fixtures + table for one league, discovering clubs/teams and persisting via " +
-        "entity resolution. Expensive; run at a fixture-derived cadence per 0003.",
+        "entity resolution. Expensive; run at a cadence derived from fixture dates.",
     )
     .option(
       "--source <name>",
@@ -260,12 +260,12 @@ export function createCli(): Command {
 
   const club = program
     .command("club")
-    .description("Look up clubs and the leagues their teams play in (#85).");
+    .description("Look up clubs and the leagues their teams play in.");
 
   club
     .command("leagues")
     .description(
-      "List the distinct leagues a club's teams play in, resolved via league_team (#144) — a " +
+      "List the distinct leagues a club's teams play in, resolved via league_team — a " +
         "league is only discoverable here once the catalog crawl has run for it at least once " +
         "(fine for onboarding a club into an existing dataset, circular for a brand-new league). " +
         "A name matching more than one club fails listing every candidate rather than guessing.",
@@ -290,9 +290,9 @@ export function createCli(): Command {
   const client = program
     .command("client")
     .description(
-      "Manage API consumers (0012/0013): the clients themselves, their league subscriptions " +
+      "Manage API consumers: the clients themselves, their league subscriptions " +
         "(which drive the deep crawl's scope), their bearer tokens, and each subscription's " +
-        "optional post-crawl webhook (#105).",
+        "optional post-crawl webhook.",
     );
 
   client
@@ -339,7 +339,7 @@ export function createCli(): Command {
   client
     .command("create-token")
     .description(
-      "Issue a new bearer API token for an existing client (0013). Prints the token id and the " +
+      "Issue a new bearer API token for an existing client. Prints the token id and the " +
         "plaintext token — the token is shown once here and never recoverable again, only " +
         "rotatable.",
     )
@@ -360,7 +360,7 @@ export function createCli(): Command {
 
   client
     .command("revoke-token")
-    .description("Revoke a bearer API token (0013) so it can no longer authenticate requests.")
+    .description("Revoke a bearer API token so it can no longer authenticate requests.")
     .argument("<tok_id>", "the api token id to revoke", parseApiTokenId)
     .action(async (id: ApiTokenId) => {
       const config = getCliConfig();
@@ -379,8 +379,8 @@ export function createCli(): Command {
   client
     .command("add-subscription")
     .description(
-      "Subscribe an existing client to a league (0012), or to every league a club's teams play " +
-        "in (#85) — exactly one of --league/--club. --club resolves via league_team (#144), only " +
+      "Subscribe an existing client to a league, or to every league a club's teams play " +
+        "in — exactly one of --league/--club. --club resolves via league_team, only " +
         "discoverable once the catalog crawl has run for a league at least once; run `club " +
         "leagues <name>` or pass --dry-run first to preview before writing N subscription rows " +
         "off a single fuzzy name match.",
@@ -507,7 +507,7 @@ export function createCli(): Command {
   client
     .command("set-webhook")
     .description(
-      "Configure (or rotate) a subscription's webhook (#105): after each deep crawl of its " +
+      "Configure (or rotate) a subscription's webhook: after each deep crawl of its " +
         "league, matchday POSTs { leagueId, hasChanges, crawledAt } to this URL, signed with a " +
         "freshly minted secret (X-Matchday-Signature: sha256=<hex>). The secret is shown once " +
         "here and never recoverable again — re-running this rotates it.",
@@ -537,7 +537,7 @@ export function createCli(): Command {
 
   client
     .command("clear-webhook")
-    .description("Remove a subscription's webhook (#105) so no further deliveries are sent for it.")
+    .description("Remove a subscription's webhook so no further deliveries are sent for it.")
     .argument("<sub_id>", "the subscription id to clear", parseSubscriptionId)
     .action(async (id: SubscriptionId) => {
       const config = getCliConfig();
@@ -555,13 +555,13 @@ export function createCli(): Command {
 
   const leagueTeam = program
     .command("league-team")
-    .description("Maintenance for the league_team membership table (#141).");
+    .description("Maintenance for the league_team membership table.");
 
   leagueTeam
     .command("backfill")
     .description(
-      "One-off: upsert a league_team row for every (league, team) pair already in table_entry " +
-        "(#143), for leagues crawled before the catalog crawl started writing league_team " +
+      "One-off: upsert a league_team row for every (league, team) pair already in table_entry, " +
+        "for leagues crawled before the catalog crawl started writing league_team " +
         "directly. Idempotent — safe to re-run. Table-less leagues (MiniRoos etc.) aren't covered " +
         "here; they need a fresh `catalog` crawl instead, since table_entry has nothing to derive " +
         "their membership from. --dry-run prints the pair count without writing.",

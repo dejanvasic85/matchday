@@ -35,8 +35,8 @@ vp run --filter @matchday/api dev
 
 `mday` is the crawler and administration CLI ([apps/cli](apps/cli/src/cli.ts)). It drives a real
 Chrome through playwright-core to clear Dribl's Cloudflare, then calls `mc-api.dribl.com`
-directly. In production it runs on GitHub Actions (`crawl-catalog.yml` and `crawl-deep.yml`, per
-ADR 0009). The steps below cover running it locally.
+directly. In production it runs on GitHub Actions (`crawl-catalog.yml` and `crawl-deep.yml`). The
+steps below cover running it locally.
 
 **1. Configure the environment.** The CLI loads [apps/cli/.env.local](apps/cli/.env.example)
 automatically (gitignored). Copy the example and fill it in:

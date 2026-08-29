@@ -30,7 +30,7 @@ app.use("*", dbClientMiddleware);
 app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
   type: "http",
   scheme: "bearer",
-  description: "Per-client API token (ADR 0013), issued via `mday api-token-create`.",
+  description: "Per-client API token, issued via `mday api-token-create`.",
 });
 
 app.doc("/openapi.json", {
