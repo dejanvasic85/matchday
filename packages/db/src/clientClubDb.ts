@@ -91,25 +91,6 @@ export async function listClientClubsByClientId(
   );
 }
 
-/** Look up one follow by its `(client_id, club_id)` key, or `null` when the client doesn't follow
- * that club — so webhook commands report "not followed" rather than silently doing nothing. */
-export async function findClientClub(
-  db: Db,
-  clientId: string,
-  clubId: string,
-): Promise<Result<ClientClub | null>> {
-  const result = await runQuery(
-    () =>
-      db
-        .select()
-        .from(clientClub)
-        .where(and(eq(clientClub.clientId, clientId), eq(clientClub.clubId, clubId)))
-        .limit(1),
-    "Failed to find client club",
-  );
-  return result.ok ? ok(result.value[0] ?? null) : result;
-}
-
 /** Hard-delete a follow, returning the removed row — or `null` when no such follow existed.
  * Unlike a subscription there's no soft delete: a follow carries no history worth reviving, and
  * the subscriptions it derived stay put until the next `sync-subscriptions` prunes them. */

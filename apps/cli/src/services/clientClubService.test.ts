@@ -17,7 +17,6 @@ function makeDeps(overrides: Partial<ClientClubServiceDeps> = {}): ClientClubSer
       .mockResolvedValue(ok([{ id: "clb_existing000", name: "Williamstown SC" }])),
     upsertClientClub: vi.fn().mockResolvedValue(ok({ id: "ccl_existing00" })),
     deleteClientClub: vi.fn().mockResolvedValue(ok({ id: "ccl_existing00" })),
-    listClientClubsByClientId: vi.fn().mockResolvedValue(ok([])),
     setClientClubWebhook: vi.fn().mockResolvedValue(ok({ id: "ccl_existing00" })),
     clearClientClubWebhook: vi.fn().mockResolvedValue(ok({ id: "ccl_existing00" })),
     ...overrides,

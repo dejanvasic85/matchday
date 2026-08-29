@@ -455,8 +455,10 @@ export function createCli(): Command {
       "Reconcile a client's subscriptions against the clubs it follows, for one season. Adds " +
         "every league a followed club plays in this season that isn't subscribed yet, and " +
         "removes subscriptions belonging to *older* seasons — so a season rollover is this one " +
-        "command. Prints the diff and writes nothing unless --apply is passed. Requires the " +
-        "catalog crawl to have run for the target season first.",
+        "command. Prints the diff and writes nothing unless --apply is passed. Subscriptions are " +
+        "derived, so a `remove-subscription` on a followed club's current-season league comes " +
+        "back on the next sync; use `unfollow-club` to drop one for good. Requires the catalog " +
+        "crawl to have run for the target season first.",
     )
     .requiredOption("--client <name>", "the client name")
     .option("--season <year>", "season to sync to (default: the latest season we hold)")

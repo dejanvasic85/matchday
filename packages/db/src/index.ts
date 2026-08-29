@@ -69,7 +69,6 @@ export {
   upsertClientClub,
   listClientClubs,
   listClientClubsByClientId,
-  findClientClub,
   deleteClientClub,
   setClientClubWebhook,
   clearClientClubWebhook,

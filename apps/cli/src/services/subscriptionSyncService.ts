@@ -103,6 +103,12 @@ export type SyncSubscriptionsInput = {
  * Removal is deliberately scoped to older seasons only, so a subscription added by hand for this
  * season (via `add-subscription --league`) survives a sync. Cleaning one of those up stays an
  * explicit `remove-subscription`.
+ *
+ * Subscriptions are derived state, so `remove-subscription` on a *followed* club's current-season
+ * league is undone by the next sync. Unfollow the club to drop it for good.
+ *
+ * Additions are written before removals, and a failed write returns immediately — leaving the
+ * earlier writes in place. Every write is an idempotent upsert, so re-running finishes the job.
  */
 export async function syncSubscriptions(
   input: SyncSubscriptionsInput,

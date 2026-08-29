@@ -13,7 +13,6 @@ import {
 import type {
   clearClientClubWebhook as clearClientClubWebhookDb,
   deleteClientClub,
-  listClientClubsByClientId,
   setClientClubWebhook as setClientClubWebhookDb,
   upsertClientClub,
 } from "@matchday/db";
@@ -28,7 +27,6 @@ export type ClientClubServiceDeps = ClientResolverDeps &
   ClubResolverDeps & {
     upsertClientClub: WithoutDb<typeof upsertClientClub>;
     deleteClientClub: WithoutDb<typeof deleteClientClub>;
-    listClientClubsByClientId: WithoutDb<typeof listClientClubsByClientId>;
     setClientClubWebhook: WithoutDb<typeof setClientClubWebhookDb>;
     clearClientClubWebhook: WithoutDb<typeof clearClientClubWebhookDb>;
   };
