@@ -4,12 +4,15 @@ import { resolveDriblLeagueIds } from "#crawlers/dribl/driblLeagueIdResolver.ts"
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 
-function makeLeagueRow(overrides: Partial<{ competitionId: string; seasonId: string }> = {}) {
+function makeLeagueRow(
+  overrides: Partial<{ competitionId: string; seasonId: string; hasTable: boolean | null }> = {},
+) {
   return {
     id: "lea_abc123",
     name: "NPL VIC Men",
     competitionId: "cmp_abc123",
     seasonId: "sea_abc123",
+    hasTable: true,
     createdAt: epoch,
     updatedAt: epoch,
     ...overrides,
@@ -51,8 +54,29 @@ describe("resolveDriblLeagueIds", () => {
         competition: "competition-hash-cmp_abc123",
         season: "season-hash-sea_abc123",
       },
-      context: { competitionId: "cmp_abc123", seasonId: "sea_abc123", leagueId: "lea_abc123" },
+      context: {
+        competitionId: "cmp_abc123",
+        seasonId: "sea_abc123",
+        leagueId: "lea_abc123",
+        hasTable: true,
+      },
     });
+  });
+
+  it("defaults hasTable to false when the league row has none set", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      getLeagueById: vi.fn().mockResolvedValue(ok(makeLeagueRow({ hasTable: null }))),
+      findExternalRefByInternalId: vi
+        .fn()
+        .mockImplementation((entityType: string, internalId: string) =>
+          Promise.resolve(ok(makeExternalRefRow(`${entityType}-hash-${internalId}`))),
+        ),
+    });
+
+    const result = await resolveDriblLeagueIds({ deps, leagueId });
+
+    assert(result.ok);
+    expect(result.value.context.hasTable).toBe(false);
   });
 
   it("returns err when the league doesn't exist", async () => {

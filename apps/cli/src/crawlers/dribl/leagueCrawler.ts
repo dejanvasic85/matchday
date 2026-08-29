@@ -45,6 +45,7 @@ export async function crawlLeague(input: CrawlLeagueInput): Promise<Result<Leagu
     ids,
     leagueId,
     crawlRunId,
+    hasTable: context.hasTable,
   });
   if (!fixturesResult.ok) {
     return fixturesResult;

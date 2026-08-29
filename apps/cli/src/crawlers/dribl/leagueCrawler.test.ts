@@ -14,6 +14,7 @@ function makeLeagueRow() {
     name: "NPL VIC Men",
     competitionId: "cmp_abc123",
     seasonId: "sea_abc123",
+    hasTable: true,
     createdAt: epoch,
     updatedAt: epoch,
   };

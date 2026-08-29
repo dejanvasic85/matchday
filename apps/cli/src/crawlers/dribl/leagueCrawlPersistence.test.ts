@@ -72,6 +72,7 @@ const context: LeagueCrawlContext = {
   competitionId: "cmp_abc123",
   seasonId: "sea_abc123",
   leagueId: "lea_abc123",
+  hasTable: true,
 };
 
 /** All lookups miss (new entities) and every upsert succeeds. */
