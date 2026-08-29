@@ -47,6 +47,7 @@ export async function deepCrawlLeague(
     ids,
     leagueId,
     crawlRunId,
+    hasTable: context.hasTable,
   });
   if (!fixturesResult.ok) {
     return fixturesResult;

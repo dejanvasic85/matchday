@@ -25,6 +25,7 @@ export type DeepCrawlLeagueContext = {
   competitionId: CompetitionId;
   seasonId: SeasonId;
   leagueId: LeagueId;
+  hasTable: boolean;
 };
 
 export type ResolveDriblLeagueIdsInput = {
@@ -94,6 +95,6 @@ export async function resolveDriblLeagueIds(
       competition: competitionHash.value,
       league: leagueHash.value,
     },
-    context: { competitionId, seasonId, leagueId },
+    context: { competitionId, seasonId, leagueId, hasTable: leagueRow.value.hasTable ?? false },
   });
 }
