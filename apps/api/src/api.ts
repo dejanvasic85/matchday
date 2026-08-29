@@ -1,6 +1,3 @@
-// matchday REST API — Hono on Cloudflare Workers (0007). Reaches Neon via the serverless driver,
-// never raw pg TCP (0009).
-
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { sentry } from "@sentry/hono/cloudflare";
 import type { ApiBindings } from "#config.ts";

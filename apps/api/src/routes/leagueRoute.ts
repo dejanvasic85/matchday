@@ -1,6 +1,3 @@
-// League routes (0045): thin transport glue. Fixtures/table nested under a league share the same
-// open-catalog access (ADR 0012: subscriptions only pick which leagues get deep-crawled).
-
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { ApiBindings } from "#config.ts";
 import type { DbVariables } from "#middleware/dbClient.ts";
@@ -13,34 +10,57 @@ import { leagueResponseSchema } from "#schemas/leagueSchema.ts";
 import { pagedSchema, pagingQuerySchema } from "#schemas/pagedSchema.ts";
 import { tableEntryResponseSchema } from "#schemas/tableEntrySchema.ts";
 import { teamResponseSchema } from "#schemas/teamSchema.ts";
-import { createFixtureServiceDeps, listLeagueFixtures } from "#services/fixtureService.ts";
+import {
+  createFixtureServiceDeps,
+  listLeagueFixtures,
+} from "#services/fixtureService.ts";
 import {
   createLeagueOverviewServiceDeps,
   getLeagueOverview,
 } from "#services/leagueOverviewService.ts";
-import { createLeagueServiceDeps, getLeague, listAllLeagues } from "#services/leagueService.ts";
-import { createTableEntryServiceDeps, listLeagueTable } from "#services/tableEntryService.ts";
-import { createTeamServiceDeps, listLeagueTeams } from "#services/teamService.ts";
+import {
+  createLeagueServiceDeps,
+  getLeague,
+  listAllLeagues,
+} from "#services/leagueService.ts";
+import {
+  createTableEntryServiceDeps,
+  listLeagueTable,
+} from "#services/tableEntryService.ts";
+import {
+  createTeamServiceDeps,
+  listLeagueTeams,
+} from "#services/teamService.ts";
 
-export const leagueRoute = new OpenAPIHono<{ Bindings: ApiBindings; Variables: DbVariables }>();
+export const leagueRoute = new OpenAPIHono<{
+  Bindings: ApiBindings;
+  Variables: DbVariables;
+}>();
 
 const listLeaguesRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["Leagues"],
-  summary: "List leagues, optionally filtered by competition, season, and/or club",
+  summary:
+    "List leagues, optionally filtered by competition, season, and/or club",
   request: {
     query: pagingQuerySchema.extend({
       competitionId: z
         .string()
         .regex(/^cmp_/)
         .optional()
-        .openapi({ param: { name: "competitionId", in: "query" }, example: "cmp_V1StGXR8Z5" }),
+        .openapi({
+          param: { name: "competitionId", in: "query" },
+          example: "cmp_V1StGXR8Z5",
+        }),
       seasonId: z
         .string()
         .regex(/^sea_/)
         .optional()
-        .openapi({ param: { name: "seasonId", in: "query" }, example: "sea_V1StGXR8Z5" }),
+        .openapi({
+          param: { name: "seasonId", in: "query" },
+          example: "sea_V1StGXR8Z5",
+        }),
       clubId: z
         .string()
         .regex(/^clb_/)
@@ -56,7 +76,11 @@ const listLeaguesRoute = createRoute({
   responses: {
     200: {
       description: "A page of leagues; follow `nextCursor` until it is null",
-      content: { "application/json": { schema: pagedSchema(leagueResponseSchema, "LeaguePage") } },
+      content: {
+        "application/json": {
+          schema: pagedSchema(leagueResponseSchema, "LeaguePage"),
+        },
+      },
     },
     ...errorResponsesValue,
   },
@@ -64,10 +88,14 @@ const listLeaguesRoute = createRoute({
 
 leagueRoute.openapi(listLeaguesRoute, async (c) => {
   const { limit, cursor, ...filter } = c.req.valid("query");
-  const result = await listAllLeagues(createLeagueServiceDeps(c.get("db")), filter, {
-    limit,
-    cursor,
-  });
+  const result = await listAllLeagues(
+    createLeagueServiceDeps(c.get("db")),
+    filter,
+    {
+      limit,
+      cursor,
+    },
+  );
   return jsonResult(c, result, "api.league.list.failed");
 });
 
@@ -113,7 +141,10 @@ const getLeagueOverviewRoute = createRoute({
 
 leagueRoute.openapi(getLeagueOverviewRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const result = await getLeagueOverview(createLeagueOverviewServiceDeps(c.get("db")), id);
+  const result = await getLeagueOverview(
+    createLeagueOverviewServiceDeps(c.get("db")),
+    id,
+  );
   return jsonResult(c, result, "api.league.overview.failed");
 });
 
@@ -126,7 +157,9 @@ const listLeagueFixturesRoute = createRoute({
   responses: {
     200: {
       description: "The league's fixtures, round- then kickoff-ordered",
-      content: { "application/json": { schema: fixtureResponseSchema.array() } },
+      content: {
+        "application/json": { schema: fixtureResponseSchema.array() },
+      },
     },
     ...errorResponsesValue,
   },
@@ -134,7 +167,10 @@ const listLeagueFixturesRoute = createRoute({
 
 leagueRoute.openapi(listLeagueFixturesRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const result = await listLeagueFixtures(createFixtureServiceDeps(c.get("db")), id);
+  const result = await listLeagueFixtures(
+    createFixtureServiceDeps(c.get("db")),
+    id,
+  );
   return jsonResult(c, result, "api.league.fixtures.failed");
 });
 
@@ -147,7 +183,9 @@ const listLeagueTableRoute = createRoute({
   responses: {
     200: {
       description: "The league's table, position-ordered",
-      content: { "application/json": { schema: tableEntryResponseSchema.array() } },
+      content: {
+        "application/json": { schema: tableEntryResponseSchema.array() },
+      },
     },
     ...errorResponsesValue,
   },
@@ -155,7 +193,10 @@ const listLeagueTableRoute = createRoute({
 
 leagueRoute.openapi(listLeagueTableRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const result = await listLeagueTable(createTableEntryServiceDeps(c.get("db")), id);
+  const result = await listLeagueTable(
+    createTableEntryServiceDeps(c.get("db")),
+    id,
+  );
   return jsonResult(c, result, "api.league.table.failed");
 });
 

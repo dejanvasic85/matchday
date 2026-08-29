@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "matchday-api",
-  "main": "src/index.ts",
+  "main": "src/api.ts",
   "compatibility_date": "2026-08-01",
   // Required by @sentry/cloudflare, which uses node:async_hooks for context propagation.
   "compatibility_flags": ["nodejs_compat"],
