@@ -6,7 +6,10 @@ import {
   createDbClient,
   findClientByName,
   findClubsByName,
+  findLatestSeason,
+  findSeasonByName,
   listLeaguesByClubId,
+  upsertClientClub,
   upsertSubscription,
 } from "@matchday/db";
 import type { CliConfig } from "#config.ts";
@@ -20,24 +23,29 @@ export type RunCreateSubscriptionsForClubJobInput = {
   config: CliConfig;
   clientName: string;
   clubName: string;
+  seasonName?: string;
   dryRun: boolean;
 };
 
 export async function runCreateSubscriptionsForClubJob(
   input: RunCreateSubscriptionsForClubJobInput,
 ): Promise<Result<ClubSubscriptionResult>> {
-  const { logger, config, clientName, clubName, dryRun } = input;
+  const { logger, config, clientName, clubName, seasonName, dryRun } = input;
 
   const db = createDbClient(config.DATABASE_URL);
   const result = await createSubscriptionsForClub({
     deps: {
       findClientByName: (name) => findClientByName(db, name),
       findClubsByName: (name) => findClubsByName(db, name),
-      listLeaguesByClubId: (id) => listLeaguesByClubId(db, id),
+      findLatestSeason: () => findLatestSeason(db),
+      findSeasonByName: (name) => findSeasonByName(db, name),
+      listLeaguesByClubId: (id, seasonId) => listLeaguesByClubId(db, id, seasonId),
+      upsertClientClub: (values) => upsertClientClub(db, values),
       upsertSubscription: (values) => upsertSubscription(db, values),
     },
     clientName,
     clubName,
+    seasonName,
     dryRun,
   });
 
@@ -46,6 +54,7 @@ export async function runCreateSubscriptionsForClubJob(
       clientName,
       clubId: result.value.club.id,
       clubName: result.value.club.name,
+      season: result.value.season.name,
       leagueCount: result.value.leagues.length,
     });
   }

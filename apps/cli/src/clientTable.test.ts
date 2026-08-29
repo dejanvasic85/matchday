@@ -6,12 +6,20 @@ function makeClient(overrides: Partial<ClientSummary> = {}): ClientSummary {
     id: "cli_willy00000",
     name: "Williamstown SC",
     activeTokenCount: 1,
+    clubs: [
+      {
+        id: "ccl_one0000000",
+        clubId: "clb_abc123",
+        clubName: "Williamstown SC",
+        hasWebhook: false,
+      },
+    ],
     subscriptions: [
       {
         id: "sub_one0000000",
         leagueId: "lea_abc123",
         leagueName: "Div 1 North",
-        hasWebhook: false,
+        seasonName: "2026",
       },
     ],
     ...overrides,
@@ -23,63 +31,68 @@ describe("renderClientTable", () => {
     expect(renderClientTable([])).toContain("mday client add");
   });
 
-  it("renders a client's id, name, token count and subscription on one line", () => {
+  it("renders a client's id, name, token count and followed club on one line", () => {
     const output = renderClientTable([makeClient()]);
     const [, row] = output.split("\n");
 
     expect(row).toContain("cli_willy00000");
     expect(row).toContain("Williamstown SC");
-    expect(row).toContain("sub_one0000000");
-    expect(row).toContain("Div 1 North");
+    expect(row).toContain("2026: 1");
   });
 
-  it("puts each extra subscription on its own line so ids stay copy-pasteable", () => {
+  it("counts subscriptions per season so a leftover season stands out", () => {
     const output = renderClientTable([
       makeClient({
         subscriptions: [
+          { id: "sub_one", leagueId: "lea_a", leagueName: "Div 1", seasonName: "2026" },
+          { id: "sub_two", leagueId: "lea_b", leagueName: "Div 2", seasonName: "2026" },
+          { id: "sub_old", leagueId: "lea_c", leagueName: "Div 3", seasonName: "2025" },
+        ],
+      }),
+    ]);
+
+    expect(output).toContain("2025: 1, 2026: 2");
+  });
+
+  it("puts each extra followed club on its own line", () => {
+    const output = renderClientTable([
+      makeClient({
+        clubs: [
           {
-            id: "sub_one0000000",
-            leagueId: "lea_abc123",
-            leagueName: "Div 1 North",
+            id: "ccl_one0000000",
+            clubId: "clb_abc123",
+            clubName: "Williamstown SC",
             hasWebhook: false,
           },
-          {
-            id: "sub_two0000000",
-            leagueId: "lea_def456",
-            leagueName: "Div 2 South",
-            hasWebhook: false,
-          },
+          { id: "ccl_two0000000", clubId: "clb_def456", clubName: "Altona FC", hasWebhook: false },
         ],
       }),
     ]);
 
     expect(output.split("\n")).toHaveLength(3);
-    expect(output).toContain("sub_two0000000");
+    expect(output).toContain("Altona FC");
   });
 
-  it("renders a placeholder for a client with no subscriptions", () => {
-    const output = renderClientTable([makeClient({ subscriptions: [], activeTokenCount: 0 })]);
+  it("renders a placeholder for a client that follows no clubs", () => {
+    const output = renderClientTable([
+      makeClient({ clubs: [], subscriptions: [], activeTokenCount: 0 }),
+    ]);
 
     expect(output.split("\n")).toHaveLength(2);
-    expect(output).not.toContain("sub_");
+    expect(output).not.toContain("ccl_");
   });
 
-  it("marks a subscription with a configured webhook, and one without", () => {
+  it("marks a followed club with a configured webhook, and one without", () => {
     const output = renderClientTable([
       makeClient({
-        subscriptions: [
+        clubs: [
           {
-            id: "sub_one0000000",
-            leagueId: "lea_abc123",
-            leagueName: "Div 1 North",
+            id: "ccl_one0000000",
+            clubId: "clb_abc123",
+            clubName: "Williamstown SC",
             hasWebhook: true,
           },
-          {
-            id: "sub_two0000000",
-            leagueId: "lea_def456",
-            leagueName: "Div 2 South",
-            hasWebhook: false,
-          },
+          { id: "ccl_two0000000", clubId: "clb_def456", clubName: "Altona FC", hasWebhook: false },
         ],
       }),
     ]);
@@ -92,7 +105,7 @@ describe("renderClientTable", () => {
   it("aligns columns across clients of differing name lengths", () => {
     const output = renderClientTable([
       makeClient({ name: "A" }),
-      makeClient({ id: "cli_altona0000", name: "A Much Longer Club Name", subscriptions: [] }),
+      makeClient({ id: "cli_altona0000", name: "A Much Longer Club Name", clubs: [] }),
     ]);
     const lines = output.split("\n");
 

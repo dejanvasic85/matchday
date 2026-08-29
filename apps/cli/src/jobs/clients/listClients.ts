@@ -5,6 +5,7 @@ import { type Result } from "@matchday/domain";
 import {
   createDbClient,
   listApiTokens,
+  listClientClubs,
   listClients,
   listSubscriptionsWithLeague,
 } from "@matchday/db";
@@ -26,6 +27,7 @@ export async function runListClientsJob(
   return listClientSummaries({
     listClients: () => listClients(db),
     listApiTokens: () => listApiTokens(db),
-    listSubscriptionsWithLeague: () => listSubscriptionsWithLeague(db),
+    listClientClubs: () => listClientClubs(db),
+    listSubscriptionsWithLeague: (filter) => listSubscriptionsWithLeague(db, filter),
   });
 }

@@ -3,8 +3,12 @@
 
 import { signWebhookPayload, type Logger, type Result } from "@matchday/domain";
 
-export type WebhookSubscription = {
+/** One delivery target: a client's followed club with a webhook configured. Identified by the
+ * `client_club` row, since that's what owns the webhook now — it outlives any one season's
+ * subscriptions. */
+export type WebhookTarget = {
   id: string;
+  clientName: string;
   webhookUrl: string;
   webhookSecret: string;
 };
@@ -30,7 +34,7 @@ export type WebhookNotificationServiceDeps = {
 };
 
 export type NotificationOutcome = {
-  subscriptionId: string;
+  clientClubId: string;
   delivered: boolean;
 };
 
@@ -38,33 +42,40 @@ export type NotifyLeagueSubscribersInput = {
   leagueId: string;
   hasChanges: boolean;
   crawledAt: Date;
-  subscriptions: WebhookSubscription[];
+  targets: WebhookTarget[];
 };
 
-/** Fans a league's post-crawl result out to every webhook-configured subscription on it.
- * Deliveries run concurrently — they're independent and `sendWebhook` never throws, so nothing
- * here can fail the batch; each subscriber gets its own `NotificationOutcome`. */
+/**
+ * Fans a league's post-crawl result out to every webhook target watching it. Deliveries run
+ * concurrently — they're independent and `sendWebhook` never throws, so nothing here can fail the
+ * batch; each target gets its own `NotificationOutcome`.
+ *
+ * The league is named in the signed JSON body only. It is deliberately *not* also appended to the
+ * URL as a query parameter: an unsigned copy of the same value invites a receiver to trust the
+ * forgeable one.
+ */
 export async function notifyLeagueSubscribers(
   deps: WebhookNotificationServiceDeps,
   input: NotifyLeagueSubscribersInput,
 ): Promise<NotificationOutcome[]> {
-  const { leagueId, hasChanges, crawledAt, subscriptions } = input;
+  const { leagueId, hasChanges, crawledAt, targets } = input;
   const payload: WebhookPayload = { leagueId, hasChanges, crawledAt: crawledAt.toISOString() };
   const body = JSON.stringify(payload);
 
   return Promise.all(
-    subscriptions.map(async (subscription): Promise<NotificationOutcome> => {
-      const signature = await signWebhookPayload(body, subscription.webhookSecret);
-      const result = await deps.sendWebhook({ url: subscription.webhookUrl, body, signature });
+    targets.map(async (target): Promise<NotificationOutcome> => {
+      const signature = await signWebhookPayload(body, target.webhookSecret);
+      const result = await deps.sendWebhook({ url: target.webhookUrl, body, signature });
       if (!result.ok) {
         deps.logger.warn("webhook.deliveryfailed", result.error.message, {
-          subscriptionId: subscription.id,
+          clientClubId: target.id,
+          clientName: target.clientName,
           leagueId,
           cause: result.error.cause,
         });
-        return { subscriptionId: subscription.id, delivered: false };
+        return { clientClubId: target.id, delivered: false };
       }
-      return { subscriptionId: subscription.id, delivered: true };
+      return { clientClubId: target.id, delivered: true };
     }),
   );
 }

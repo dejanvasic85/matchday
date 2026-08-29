@@ -191,6 +191,11 @@ const payload = isValid ? JSON.parse(rawBody) : null;
 `verifyWebhookSignature` returns `false` — never throws — for a missing header, an unrecognised
 scheme, a malformed hex value, or a signature that doesn't match.
 
+**Take `leagueId` from the verified body.** The delivery is
+`{ leagueId, hasChanges, crawledAt }`, and the body is the only place matchday states which league
+changed — nothing is appended to the URL. Route your cache revalidation off the parsed payload, so
+what you act on is exactly what the signature covered.
+
 ## Releasing
 
 [Changesets](https://github.com/changesets/changesets) handles versioning and publishing. Every PR

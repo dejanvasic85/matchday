@@ -2,23 +2,32 @@
 // rules here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
-import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
-import { league, subscription } from "#schema.ts";
+import { league, season, subscription } from "#schema.ts";
 
 type Subscription = typeof subscription.$inferSelect;
 type SubscriptionInsert = typeof subscription.$inferInsert;
 
-/** A subscription joined to the league it targets — what `mday client list` renders, so the
- * operator sees "Div 1 North" rather than a bare `lea_` id. */
+/** A subscription joined to the league it targets and that league's season — what `mday client
+ * list` renders, so the operator sees "Div 1 North (2026)" rather than a bare `lea_` id, and a
+ * subscription left behind by last season is obvious at a glance. */
 export type SubscriptionWithLeague = {
   id: string;
   clientId: string;
   leagueId: string;
   leagueName: string;
-  /** `mday client list` shows whether a webhook is configured (never the secret). */
-  webhookUrl: string | null;
+  seasonId: string;
+  seasonName: string;
+};
+
+/** Filters for {@link listSubscriptionsWithLeague} — applied in SQL, never by making the caller
+ * grep a full dump (AGENTS.md). */
+export type ListSubscriptionsFilter = {
+  clientId?: string;
+  seasonId?: string;
+  leagueId?: string;
 };
 
 /**
@@ -65,12 +74,22 @@ export async function listSubscribedLeagueIds(db: Db): Promise<Result<string[]>>
   return result.ok ? ok(result.value.map((row) => row.leagueId)) : result;
 }
 
-/** Every *active* subscription with its league's name, league-ordered. Not client-scoped: `client
- * list` renders the whole roster in one pass, so it groups these by `clientId` itself rather than
- * issuing a query per client. */
+/** Every *active* subscription with its league and season, season-then-league-ordered. Unfiltered
+ * it feeds `client list`, which renders the whole roster in one pass and groups by `clientId`
+ * itself rather than issuing a query per client; `filter` narrows it in SQL for the client- and
+ * season-scoped `client list-subscriptions`. */
 export async function listSubscriptionsWithLeague(
   db: Db,
+  filter: ListSubscriptionsFilter = {},
 ): Promise<Result<SubscriptionWithLeague[]>> {
+  const { clientId, seasonId, leagueId } = filter;
+  const conditions = [
+    isNull(subscription.deletedAt),
+    clientId === undefined ? undefined : eq(subscription.clientId, clientId),
+    seasonId === undefined ? undefined : eq(league.seasonId, seasonId),
+    leagueId === undefined ? undefined : eq(subscription.leagueId, leagueId),
+  ].filter((condition) => condition !== undefined);
+
   return runQuery(
     () =>
       db
@@ -79,12 +98,14 @@ export async function listSubscriptionsWithLeague(
           clientId: subscription.clientId,
           leagueId: subscription.leagueId,
           leagueName: league.name,
-          webhookUrl: subscription.webhookUrl,
+          seasonId: league.seasonId,
+          seasonName: season.name,
         })
         .from(subscription)
         .innerJoin(league, eq(subscription.leagueId, league.id))
-        .where(isNull(subscription.deletedAt))
-        .orderBy(asc(league.name)),
+        .innerJoin(season, eq(season.id, league.seasonId))
+        .where(and(...conditions))
+        .orderBy(asc(season.name), asc(league.name)),
     "Failed to list subscriptions with league",
   );
 }
@@ -104,103 +125,4 @@ export async function deleteSubscription(db: Db, id: string): Promise<Result<Sub
     "Failed to delete subscription",
   );
   return result.ok ? ok(result.value[0] ?? null) : result;
-}
-
-/**
- * Set (or replace) an active subscription's webhook target + signing secret. Deliberately
- * separate from `upsertSubscription`: re-subscribing a client to a league (the create/revive
- * path) must never silently overwrite an already-configured webhook, so the only way to change
- * one is this explicit call. Returns `null` when no such *active* subscription id exists.
- */
-export async function setSubscriptionWebhook(
-  db: Db,
-  id: string,
-  webhookUrl: string,
-  webhookSecret: string,
-): Promise<Result<Subscription | null>> {
-  const result = await runQuery(
-    () =>
-      db
-        .update(subscription)
-        .set({ webhookUrl, webhookSecret, updatedAt: new Date() })
-        .where(and(eq(subscription.id, id), isNull(subscription.deletedAt)))
-        .returning(),
-    "Failed to set subscription webhook",
-  );
-  return result.ok ? ok(result.value[0] ?? null) : result;
-}
-
-/** Clear an active subscription's webhook (both URL and secret), returning the updated row — or
- * `null` when no such *active* subscription id exists. */
-export async function clearSubscriptionWebhook(
-  db: Db,
-  id: string,
-): Promise<Result<Subscription | null>> {
-  const result = await runQuery(
-    () =>
-      db
-        .update(subscription)
-        .set({ webhookUrl: null, webhookSecret: null, updatedAt: new Date() })
-        .where(and(eq(subscription.id, id), isNull(subscription.deletedAt)))
-        .returning(),
-    "Failed to clear subscription webhook",
-  );
-  return result.ok ? ok(result.value[0] ?? null) : result;
-}
-
-/** A subscription's webhook delivery target — what the deep crawl reads post-crawl to
- * notify a league's subscribers. Scoped to one league (the crawl's own scope) and to
- * webhook-configured, active subscriptions only, so callers never branch on a null URL. */
-export type SubscriptionWebhook = {
-  id: string;
-  clientId: string;
-  webhookUrl: string;
-  webhookSecret: string;
-};
-
-/** Every *active*, webhook-configured subscription for a league — the deep crawl's post-run
- * notification fan-out list. */
-export async function listActiveSubscriptionsForLeagueWithWebhook(
-  db: Db,
-  leagueId: string,
-): Promise<Result<SubscriptionWebhook[]>> {
-  const result = await runQuery(
-    () =>
-      db
-        .select({
-          id: subscription.id,
-          clientId: subscription.clientId,
-          webhookUrl: subscription.webhookUrl,
-          webhookSecret: subscription.webhookSecret,
-        })
-        .from(subscription)
-        .where(
-          and(
-            eq(subscription.leagueId, leagueId),
-            isNull(subscription.deletedAt),
-            isNotNull(subscription.webhookUrl),
-            isNotNull(subscription.webhookSecret),
-          ),
-        ),
-    "Failed to list active subscriptions with webhook for league",
-  );
-  if (!result.ok) {
-    return result;
-  }
-  // The `isNotNull` filters above guarantee both are non-null in SQL, but Drizzle's column types
-  // stay nullable — narrow here so callers get a clean type without an unsafe cast.
-  return ok(
-    result.value.flatMap((row) =>
-      row.webhookUrl === null || row.webhookSecret === null
-        ? []
-        : [
-            {
-              id: row.id,
-              clientId: row.clientId,
-              webhookUrl: row.webhookUrl,
-              webhookSecret: row.webhookSecret,
-            },
-          ],
-    ),
-  );
 }

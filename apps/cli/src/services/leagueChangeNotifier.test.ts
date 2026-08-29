@@ -10,11 +10,23 @@ type FixtureRow = typeof schema.fixture.$inferSelect;
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 const crawledAt = new Date("2026-08-12T09:00:00.000Z");
-const subscription = {
-  id: "sub_abc123",
-  clientId: "cli_abc123",
+const clubId = "clb_abc123";
+const clientId = "cli_abc123";
+const clientClubWebhook = {
+  id: "ccl_abc123",
+  clientId,
+  clientName: "Williamstown SC",
+  clubId,
   webhookUrl: "https://example.com/webhooks/matchday",
   webhookSecret: "whsec_test",
+};
+const subscriptionRow = {
+  id: "sub_abc123",
+  clientId,
+  leagueId: "lea_abc123",
+  leagueName: "Div 1 North",
+  seasonId: "sea_abc123",
+  seasonName: "2026",
 };
 
 function makeFixtureRow(overrides: Partial<FixtureRow> = {}): FixtureRow {
@@ -42,7 +54,9 @@ function makeFixtureRow(overrides: Partial<FixtureRow> = {}): FixtureRow {
 
 function makeDeps(overrides: Partial<LeagueWebhookNotifierDeps> = {}): LeagueWebhookNotifierDeps {
   return {
-    listActiveSubscriptionsForLeagueWithWebhook: vi.fn().mockResolvedValue(ok([subscription])),
+    listClubIdsByLeagueId: vi.fn().mockResolvedValue(ok([clubId])),
+    listClientClubWebhooksForClubIds: vi.fn().mockResolvedValue(ok([clientClubWebhook])),
+    listSubscriptionsWithLeague: vi.fn().mockResolvedValue(ok([subscriptionRow])),
     listFixturesByLeagueId: vi.fn().mockResolvedValue(ok([makeFixtureRow()])),
     listTableEntriesByLeagueId: vi.fn().mockResolvedValue(ok([])),
     sendWebhook: vi.fn().mockResolvedValue(ok(undefined)),
@@ -65,13 +79,13 @@ describe("withLeagueChangeNotification", () => {
 
     expect(result).toEqual(ok({ fixtures: 1, tableEntries: 0 }));
     expect(runCrawl).toHaveBeenCalledTimes(1);
-    expect(deps.listActiveSubscriptionsForLeagueWithWebhook).not.toHaveBeenCalled();
+    expect(deps.listClubIdsByLeagueId).not.toHaveBeenCalled();
     expect(deps.sendWebhook).not.toHaveBeenCalled();
   });
 
-  it("runs the crawl without snapshotting when the league has no webhook subscriptions", async () => {
+  it("runs the crawl without snapshotting when no followed club has a webhook", async () => {
     const deps = makeDeps({
-      listActiveSubscriptionsForLeagueWithWebhook: vi.fn().mockResolvedValue(ok([])),
+      listClientClubWebhooksForClubIds: vi.fn().mockResolvedValue(ok([])),
     });
     const runCrawl = vi.fn().mockResolvedValue(ok({ fixtures: 1, tableEntries: 0 }));
 
@@ -84,6 +98,25 @@ describe("withLeagueChangeNotification", () => {
     expect(result).toEqual(ok({ fixtures: 1, tableEntries: 0 }));
     expect(deps.listFixturesByLeagueId).not.toHaveBeenCalled();
     expect(deps.sendWebhook).not.toHaveBeenCalled();
+  });
+
+  it("skips a followed club's webhook when the client isn't subscribed to the league", async () => {
+    const deps = makeDeps({ listSubscriptionsWithLeague: vi.fn().mockResolvedValue(ok([])) });
+    const runCrawl = vi.fn().mockResolvedValue(ok({ fixtures: 1, tableEntries: 0 }));
+
+    await withLeagueChangeNotification(deps, { leagueId: "lea_abc123", dryRun: false }, runCrawl);
+
+    expect(deps.listFixturesByLeagueId).not.toHaveBeenCalled();
+    expect(deps.sendWebhook).not.toHaveBeenCalled();
+  });
+
+  it("scopes the subscription check to the crawled league in SQL", async () => {
+    const deps = makeDeps();
+    const runCrawl = vi.fn().mockResolvedValue(ok({ fixtures: 1, tableEntries: 0 }));
+
+    await withLeagueChangeNotification(deps, { leagueId: "lea_abc123", dryRun: false }, runCrawl);
+
+    expect(deps.listSubscriptionsWithLeague).toHaveBeenCalledWith({ leagueId: "lea_abc123" });
   });
 
   it("passes a failed crawl through without notifying anyone", async () => {
@@ -109,7 +142,7 @@ describe("withLeagueChangeNotification", () => {
 
     expect(deps.sendWebhook).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: subscription.webhookUrl,
+        url: clientClubWebhook.webhookUrl,
         body: JSON.stringify({
           leagueId: "lea_abc123",
           hasChanges: false,
@@ -160,10 +193,10 @@ describe("withLeagueChangeNotification", () => {
     expect(callOrder).toEqual(["snapshot", "crawl", "snapshot"]);
   });
 
-  it("skips notification when the subscription lookup fails, but still runs the crawl", async () => {
-    const lookupError = serverError("Failed to list active subscriptions with webhook for league");
+  it("skips notification when the webhook lookup fails, but still runs the crawl", async () => {
+    const lookupError = serverError("Failed to list client club webhooks for club ids");
     const deps = makeDeps({
-      listActiveSubscriptionsForLeagueWithWebhook: vi.fn().mockResolvedValue(lookupError),
+      listClientClubWebhooksForClubIds: vi.fn().mockResolvedValue(lookupError),
     });
     const runCrawl = vi.fn().mockResolvedValue(ok({ fixtures: 1, tableEntries: 0 }));
 

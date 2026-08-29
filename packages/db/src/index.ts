@@ -32,7 +32,13 @@ export {
   type TeamWithClub,
 } from "#teamDb.ts";
 export { listCompetitions, getCompetitionById, upsertCompetition } from "#competitionDb.ts";
-export { listSeasons, getSeasonById, upsertSeason } from "#seasonDb.ts";
+export {
+  listSeasons,
+  getSeasonById,
+  findLatestSeason,
+  findSeasonByName,
+  upsertSeason,
+} from "#seasonDb.ts";
 export {
   listLeagues,
   upsertLeague,
@@ -48,20 +54,28 @@ export {
   listTableEntryTeamPairs,
   type TableEntryTeamPair,
 } from "#tableEntryDb.ts";
-export { upsertLeagueTeam } from "#leagueTeamDb.ts";
+export { upsertLeagueTeam, listClubIdsByLeagueId } from "#leagueTeamDb.ts";
 export { upsertExternalRef, findExternalRef, findExternalRefByInternalId } from "#externalRefDb.ts";
 export {
   upsertSubscription,
   listSubscribedLeagueIds,
   listSubscriptionsWithLeague,
   deleteSubscription,
-  setSubscriptionWebhook,
-  clearSubscriptionWebhook,
-  listActiveSubscriptionsForLeagueWithWebhook,
   type SubscriptionWithLeague,
-  type SubscriptionWebhook,
+  type ListSubscriptionsFilter,
 } from "#subscriptionDb.ts";
 export { upsertClientByName, listClients, findClientByName } from "#clientDb.ts";
+export {
+  upsertClientClub,
+  listClientClubs,
+  listClientClubsByClientId,
+  deleteClientClub,
+  setClientClubWebhook,
+  clearClientClubWebhook,
+  listClientClubWebhooksForClubIds,
+  type ClientClubWithClub,
+  type ClientClubWebhook,
+} from "#clientClubDb.ts";
 export {
   insertApiToken,
   findApiTokenByHash,

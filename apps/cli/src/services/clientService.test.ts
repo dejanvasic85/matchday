@@ -22,6 +22,18 @@ function makeDeps(overrides: Partial<ClientServiceDeps> = {}): ClientServiceDeps
           clientId: "cli_willy00000",
           leagueId: "lea_abc123",
           leagueName: "Div 1 North",
+          seasonId: "sea_abc123",
+          seasonName: "2026",
+        },
+      ]),
+    ),
+    listClientClubs: vi.fn().mockResolvedValue(
+      ok([
+        {
+          id: "ccl_one0000000",
+          clientId: "cli_willy00000",
+          clubId: "clb_abc123",
+          clubName: "Williamstown SC",
           webhookUrl: null,
         },
       ]),
@@ -42,21 +54,37 @@ describe("listClientSummaries", () => {
           id: "sub_one0000000",
           leagueId: "lea_abc123",
           leagueName: "Div 1 North",
+          seasonName: "2026",
+        },
+      ]);
+    }
+  });
+
+  it("attaches each client's followed clubs", async () => {
+    const result = await listClientSummaries(makeDeps());
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value[0]?.clubs).toEqual([
+        {
+          id: "ccl_one0000000",
+          clubId: "clb_abc123",
+          clubName: "Williamstown SC",
           hasWebhook: false,
         },
       ]);
     }
   });
 
-  it("reports hasWebhook true when a subscription has a webhook configured", async () => {
+  it("reports hasWebhook true when a followed club has a webhook configured", async () => {
     const deps = makeDeps({
-      listSubscriptionsWithLeague: vi.fn().mockResolvedValue(
+      listClientClubs: vi.fn().mockResolvedValue(
         ok([
           {
-            id: "sub_one0000000",
+            id: "ccl_one0000000",
             clientId: "cli_willy00000",
-            leagueId: "lea_abc123",
-            leagueName: "Div 1 North",
+            clubId: "clb_abc123",
+            clubName: "Williamstown SC",
             webhookUrl: "https://example.com/webhooks/matchday",
           },
         ]),
@@ -67,7 +95,7 @@ describe("listClientSummaries", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value[0]?.subscriptions[0]?.hasWebhook).toBe(true);
+      expect(result.value[0]?.clubs[0]?.hasWebhook).toBe(true);
     }
   });
 
@@ -86,7 +114,7 @@ describe("listClientSummaries", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       const altona = result.value.find((summary) => summary.id === "cli_altona0000");
-      expect(altona).toMatchObject({ activeTokenCount: 0, subscriptions: [] });
+      expect(altona).toMatchObject({ activeTokenCount: 0, subscriptions: [], clubs: [] });
     }
   });
 
@@ -110,6 +138,15 @@ describe("listClientSummaries", () => {
   it("propagates a subscription listing failure", async () => {
     const listError = serverError("Failed to list subscriptions with league");
     const deps = makeDeps({ listSubscriptionsWithLeague: vi.fn().mockResolvedValue(listError) });
+
+    const result = await listClientSummaries(deps);
+
+    expect(result).toEqual(listError);
+  });
+
+  it("propagates a followed-club listing failure", async () => {
+    const listError = serverError("Failed to list client clubs");
+    const deps = makeDeps({ listClientClubs: vi.fn().mockResolvedValue(listError) });
 
     const result = await listClientSummaries(deps);
 

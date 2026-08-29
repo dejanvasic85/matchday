@@ -189,6 +189,31 @@ export const client = pgTable(
   (table) => [uniqueIndex("client_name_key").on(table.name)],
 );
 
+// A client follows a club: the provenance a subscription alone can't record. Subscriptions are
+// derived from this (club's teams -> their leagues in a season), so a season rollover is a
+// re-derivation rather than per-row surgery. Also carries the webhook, which therefore outlives
+// any one season's subscriptions.
+export const clientClub = pgTable(
+  "client_club",
+  {
+    id: text("id").primaryKey(),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => client.id),
+    clubId: text("club_id")
+      .notNull()
+      .references(() => club.id),
+    // Post-crawl notification target for every league this club plays in. Set/cleared via a
+    // dedicated CLI path so the follow upsert never wipes an already-configured webhook.
+    webhookUrl: text("webhook_url"),
+    // HMAC-SHA256 signing key for webhook deliveries (`X-Matchday-Signature`), shown once.
+    // Plaintext (unlike token_hash) because we compute the signature, not the receiver.
+    webhookSecret: text("webhook_secret"),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("client_club_client_club_key").on(table.clientId, table.clubId)],
+);
+
 // A client subscribes to one of our leagues: drives the deep crawl (fixtures +
 // tables crawled only for subscribed leagues). Subsumes the old tracked_competition.
 export const subscription = pgTable(
@@ -204,12 +229,6 @@ export const subscription = pgTable(
     // Soft delete: `client remove-subscription` sets this instead of deleting the row, so
     // re-subscribing (the upsert's conflict branch) revives it instead of colliding on the unique index.
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
-    // Optional post-crawl notification target; set/cleared via a dedicated CLI path so
-    // the subscribe upsert never wipes an already-configured webhook.
-    webhookUrl: text("webhook_url"),
-    // HMAC-SHA256 signing key for webhook deliveries (`X-Matchday-Signature`), shown once.
-    // Plaintext (unlike token_hash) because we compute the signature, not the receiver.
-    webhookSecret: text("webhook_secret"),
     ...timestamps,
   },
   (table) => [
@@ -240,6 +259,7 @@ export const apiToken = pgTable(
 
 export const clubRelations = relations(club, ({ many }) => ({
   teams: many(team),
+  clientClubs: many(clientClub),
 }));
 
 export const teamRelations = relations(team, ({ one }) => ({
@@ -291,7 +311,13 @@ export const subscriptionRelations = relations(subscription, ({ one }) => ({
 
 export const clientRelations = relations(client, ({ many }) => ({
   subscriptions: many(subscription),
+  clientClubs: many(clientClub),
   apiTokens: many(apiToken),
+}));
+
+export const clientClubRelations = relations(clientClub, ({ one }) => ({
+  client: one(client, { fields: [clientClub.clientId], references: [client.id] }),
+  club: one(club, { fields: [clientClub.clubId], references: [club.id] }),
 }));
 
 export const apiTokenRelations = relations(apiToken, ({ one }) => ({

@@ -16,6 +16,7 @@ export const idPrefixValue = {
   externalRef: "ext",
   subscription: "sub",
   client: "cli",
+  clientClub: "ccl",
   apiToken: "tok",
 } as const;
 
@@ -39,6 +40,7 @@ export type LeagueTeamId = EntityId<"leagueTeam">;
 export type ExternalRefId = EntityId<"externalRef">;
 export type SubscriptionId = EntityId<"subscription">;
 export type ClientId = EntityId<"client">;
+export type ClientClubId = EntityId<"clientClub">;
 export type ApiTokenId = EntityId<"apiToken">;
 
 const nanoidAlphabetValue = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
