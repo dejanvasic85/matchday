@@ -6,6 +6,7 @@ function makeValidLeague() {
     name: "VPL Division 1",
     competitionId: "cmp_abc123",
     seasonId: "sea_abc123",
+    hasTable: true,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

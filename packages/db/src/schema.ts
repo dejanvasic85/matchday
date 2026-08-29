@@ -71,6 +71,9 @@ export const league = pgTable("league", {
   seasonId: text("season_id")
     .notNull()
     .references(() => season.id),
+  // Some leagues (junior/MiniRoos age groups) never publish a table on Dribl. Set from the
+  // catalog crawl's own table-empty check.
+  hasTable: boolean("has_table"),
   ...timestamps,
 });
 

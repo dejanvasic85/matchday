@@ -72,6 +72,7 @@ export async function persistLeague(
         name: league.leagueName,
         competitionId: competitionResult.value,
         seasonId: seasonResult.value,
+        hasTable: league.tableEntries.length > 0,
       }),
   });
   if (!leagueResult.ok) {

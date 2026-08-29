@@ -16,6 +16,9 @@ export const leagueResponseSchema = z
     name: z.string(),
     competitionId: z.string(),
     seasonId: z.string(),
+    hasTable: z.boolean().openapi({
+      description: "Whether this league publishes a ladder/table. False for some junior leagues.",
+    }),
     competition: summarySchema("CompetitionSummary", "cmp_V1StGXR8Z5"),
     season: summarySchema("SeasonSummary", "sea_V1StGXR8Z5"),
     createdAt: z.iso.datetime(),

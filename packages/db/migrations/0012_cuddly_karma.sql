@@ -1,0 +1,1 @@
+ALTER TABLE "league" ADD COLUMN "has_table" boolean;

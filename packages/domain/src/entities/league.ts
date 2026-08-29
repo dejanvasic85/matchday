@@ -5,6 +5,7 @@ export const leagueSchema = z.object({
   name: z.string(),
   competitionId: z.string(),
   seasonId: z.string(),
+  hasTable: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
