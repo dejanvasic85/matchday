@@ -37,7 +37,7 @@ a **backend + CLI crawler; there is no UI in this repo.**
 pnpm + Vite+ monorepo:
 
 - `apps/api` — REST API
-- `apps/cli` — `mday` CLI: the **administration surface** (0014) as well as the crawler. Crawl
+- `apps/cli` — `mday` CLI: the **administration surface** as well as the crawler. Crawl
   code lives one subdirectory per source under `src/crawlers/` (`dribl/` today, including its
   Dribl-specific external schemas + mappers — nothing source-specific lives outside its own
   `crawlers/<source>/` folder); admin/crawl entry points are grouped under `src/jobs/<area>/`.
@@ -58,7 +58,7 @@ tagged with `phase:N` / `adr:NNNN` labels.
 - **Database:** **Postgres on Neon**, via **Drizzle**. From a Worker, reach it through the Neon
   serverless driver / Hyperdrive — **never a raw `pg` TCP connection from a V8 isolate**.
 - **Scraper:** **playwright-core** with real Chrome to clear Dribl's Cloudflare, then direct
-  `mc-api.dribl.com` calls. It runs on **GitHub Actions** hosted runners (0009). The browser
+  `mc-api.dribl.com` calls. It runs on **GitHub Actions** hosted runners. The browser
   endpoint stays abstracted, so moving off them is a config change, not a rewrite. See the
   `dribl-crawling` skill.
 - **Identifiers:** app-owned **prefixed-nanoid** primary IDs
@@ -152,14 +152,14 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
     collaborators (data-access, logger, clock, notifiers) **by argument** so tests pass fakes. This
     is the unit-tested layer.
   - **Transport** — thin Hono handlers / CLI jobs that construct the real dependencies and call
-    the service. Keep it glue-only. A future consumer-facing MCP server (0014) is one more
+    the service. Keep it glue-only. A future consumer-facing MCP server is one more
     transport over these same services, so nothing a transport needs belongs in a service.
 - **No verb-first file/module names.** A module is named after the thing it's about
   (`clubDb.ts`, `clubResolver.ts`, `catalogCrawler.ts`); verbs belong to the functions inside
   (`upsertClub`, `resolveClub`, `crawlCatalog`). Exported function/type names are unaffected by
   this rule — only the file name changes.
-- **CLI commands are consumed by agents as well as humans** (0014 — `mday` is the admin surface,
-  so there's no admin MCP server to be "the machine interface"). Therefore:
+- **CLI commands are consumed by agents as well as humans** (`mday` is the admin surface, so
+  there's no admin MCP server to be "the machine interface"). Therefore:
   - Group commands by noun, subcommand by verb: `mday client add`, `mday client list`.
   - Every read command that prints a table also offers `--json`; keep stdout to the payload alone
     and send logs to stderr, so `| jq` works.
@@ -208,7 +208,7 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
   (`@/...`) in `vite.config.ts`, which only worked for tooling that reads that file. It silently
   did not exist for `apps/cli`'s `mday` binary, which CI runs as a raw `node src/cli.ts` with no
   bundler in front of it. So an "alias imports everywhere" pass broke every scheduled crawl
-  workflow with `ERR_MODULE_NOT_FOUND` (#92), because nothing in that runtime path understood
+  workflow with `ERR_MODULE_NOT_FOUND`, because nothing in that runtime path understood
   `@/`. Subpath imports have no such blind spot: the same `#foo.ts` resolves whether the package's
   production entrypoint is bundled (`apps/api`, through wrangler and esbuild) or run raw
   (`apps/cli`). One convention, not one per package shape.
@@ -216,6 +216,22 @@ builds on top of it, rather than accumulating a large uncheckable stack of commi
 - Avoid magic numbers/strings — name them. Comments only for non-obvious intent; never commented-out
   code. **Max 2 lines per comment** — if it needs more, put the reasoning in the PR description or
   an ADR instead.
+- **Never cite an ADR number or a GitHub issue number outside `docs/decisions/`.** No `(0012)`, no
+  `ADR 0013`, no `(#105)` — not in code comments, not in docs, not in READMEs, not in `--help`
+  text, OpenAPI descriptions, log messages or error strings. This applies to every file in the
+  repo except the ADRs themselves, which may cross-reference each other by number.
+
+  **Why:** a bare number tells the reader nothing they can act on. Worse, this repo is public and
+  the SDK README ships to npm, so those numbers leak an internal backlog to people who cannot open
+  it. They also rot — issues get closed, renumbered and superseded, and nothing fails when they do.
+
+  **How to apply:** write the reason instead of the pointer. `// Catalog crawl (0012): upserts...`
+  becomes `// Catalog crawl: upserts...`; `derived from league membership (0012, #144)` becomes
+  `derived from league membership`. Keep domain terms (`league_team`, `external_ref`, `table_entry`)
+  exactly as they are — the rule removes reference numbers, not the explanation. If the number was
+  carrying real context, put that context into the sentence. Pointing at `AGENTS.md` or
+  `docs/decisions/` as a directory is fine; it is the numbers that are banned.
+
 - **Zod** for validation schemas and for **env/config**: a Zod-validated config module per app. Env
   vars are documented in `.env.example` only — never listed in docs or README files.
 

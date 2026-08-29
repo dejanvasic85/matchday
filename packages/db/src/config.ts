@@ -8,7 +8,7 @@ import { z } from "zod";
  * `packages/db/.env.example`.
  */
 const dbEnvSchema = z.object({
-  // Neon Postgres — reached via the serverless (neon-http) driver, never raw pg TCP (ADR 0009).
+  // Neon Postgres — reached via the serverless (neon-http) driver, never raw pg TCP.
   DATABASE_URL: z.url(),
 });
 

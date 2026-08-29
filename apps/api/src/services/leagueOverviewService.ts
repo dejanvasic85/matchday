@@ -1,4 +1,4 @@
-// League overview (#163): one league page's data in one response — league, fixtures, table, teams.
+// League overview: one league page's data in one response — league, fixtures, table, teams.
 // Composes the per-collection services rather than re-querying, so mapping stays in one place.
 
 import { ok, type Result } from "@matchday/domain";

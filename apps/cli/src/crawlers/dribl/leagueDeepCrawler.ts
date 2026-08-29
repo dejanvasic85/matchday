@@ -1,4 +1,4 @@
-// Crawls + persists fixtures and the table for one subscribed league (0012). One invocation = one
+// Crawls + persists fixtures and the table for one subscribed league. One invocation = one
 // league — see docs/plans/2026-07-18-deep-crawl.md for why leagues crawl independently.
 
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";

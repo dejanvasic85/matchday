@@ -1,4 +1,4 @@
-// Competition routes (0045): thin transport glue (AGENTS.md) — OpenAPI validates the path param,
+// Competition routes: thin transport glue (AGENTS.md) — OpenAPI validates the path param,
 // the service maps data-access results to the wire shape, this just picks the HTTP status.
 
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";

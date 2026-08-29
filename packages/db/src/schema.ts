@@ -1,4 +1,4 @@
-// Drizzle schema for matchday's Postgres (Neon), modelling ADR 0011.
+// Drizzle schema for matchday's Postgres (Neon).
 // Camelcase fields map to snake_case columns via `casing: "snake_case"`.
 
 import { relations } from "drizzle-orm";
@@ -133,7 +133,7 @@ export const tableEntry = pgTable(
   ],
 );
 
-// A team's membership in a league, independent of a table existing (0011 addendum, #141).
+// A team's membership in a league, independent of a table existing.
 // table_entry only gets a row when a ladder exists, missing table-less divisions (e.g. MiniRoos).
 export const leagueTeam = pgTable(
   "league_team",
@@ -162,7 +162,7 @@ export const externalRef = pgTable(
     ...timestamps,
   },
   (table) => [
-    // Idempotency key: a source hash maps to exactly one internal entity (ADR 0005).
+    // Idempotency key: a source hash maps to exactly one internal entity.
     uniqueIndex("external_ref_source_source_id_key").on(table.source, table.sourceId),
     // An entity has at most one ref per source.
     uniqueIndex("external_ref_entity_source_key").on(
@@ -175,7 +175,7 @@ export const externalRef = pgTable(
   ],
 );
 
-// A client of the API (ADR 0013): the entity both subscriptions and API tokens belong to.
+// A client of the API: the entity both subscriptions and API tokens belong to.
 export const client = pgTable(
   "client",
   {
@@ -186,7 +186,7 @@ export const client = pgTable(
   (table) => [uniqueIndex("client_name_key").on(table.name)],
 );
 
-// A client subscribes to one of our leagues (ADR 0012): drives the deep crawl (fixtures +
+// A client subscribes to one of our leagues: drives the deep crawl (fixtures +
 // tables crawled only for subscribed leagues). Subsumes the old tracked_competition.
 export const subscription = pgTable(
   "client_subscription",
@@ -201,7 +201,7 @@ export const subscription = pgTable(
     // Soft delete: `client remove-subscription` sets this instead of deleting the row, so
     // re-subscribing (the upsert's conflict branch) revives it instead of colliding on the unique index.
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
-    // Optional post-crawl notification target (#105); set/cleared via a dedicated CLI path so
+    // Optional post-crawl notification target; set/cleared via a dedicated CLI path so
     // the subscribe upsert never wipes an already-configured webhook.
     webhookUrl: text("webhook_url"),
     // HMAC-SHA256 signing key for webhook deliveries (`X-Matchday-Signature`), shown once.
@@ -216,7 +216,7 @@ export const subscription = pgTable(
   ],
 );
 
-// A client's API bearer token (ADR 0013), hashed at rest — never the plaintext.
+// A client's API bearer token, hashed at rest — never the plaintext.
 // A client can hold multiple active tokens (like an AWS key pair) to roll one in before revoking.
 export const apiToken = pgTable(
   "client_api_token",

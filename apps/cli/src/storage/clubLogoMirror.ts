@@ -1,4 +1,4 @@
-// Self-hosts a club's logo on R2 instead of hotlinking Dribl's CDN (ADR 0004) — content-hash
+// Self-hosts a club's logo on R2 instead of hotlinking Dribl's CDN — content-hash
 // keyed object names give idempotent re-upload for free (unchanged logo = no-op PUT).
 
 import { createHash } from "node:crypto";

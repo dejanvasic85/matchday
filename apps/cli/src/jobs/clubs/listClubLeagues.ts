@@ -1,4 +1,4 @@
-// List-club-leagues job (#85): read-only discovery for onboarding — "which leagues does this
+// List-club-leagues job: read-only discovery for onboarding — "which leagues does this
 // club's teams actually play in?"
 
 import { type Result } from "@matchday/domain";

@@ -1,4 +1,4 @@
-// API token authentication (ADR 0013). Every *credential* failure maps to the same `Unauthorized`
+// API token authentication. Every *credential* failure maps to the same `Unauthorized`
 // error so the transport can't leak which case applied; a failed lookup is `ServerError` instead.
 
 import {

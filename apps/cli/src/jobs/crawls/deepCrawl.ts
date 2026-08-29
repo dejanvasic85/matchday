@@ -1,5 +1,5 @@
-// Deep crawl (0012): fixtures + table for exactly one league, discovering clubs/teams as it goes.
-// Transport glue that wires the real DB/R2 clients and wraps the crawl with `withLeagueChangeNotification` (#105).
+// Deep crawl: fixtures + table for exactly one league, discovering clubs/teams as it goes.
+// Transport glue that wires the real DB/R2 clients and wraps the crawl with `withLeagueChangeNotification`.
 
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";
 import {

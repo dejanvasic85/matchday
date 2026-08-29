@@ -1,4 +1,4 @@
-// Count catalog leagues (0012): cheap listing-only companion to the catalog crawl (no fetches or
+// Count catalog leagues: cheap listing-only companion to the catalog crawl (no fetches or
 // persistence) — sizes the crawl-catalog.yml matrix ahead of the real crawl.
 
 import { ok, type Logger, type Result } from "@matchday/domain";

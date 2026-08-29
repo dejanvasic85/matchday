@@ -1,9 +1,9 @@
-// Response caching for read routes (0046). Runs AFTER apiTokenAuthMiddleware, so a cache hit still
+// Response caching for read routes. Runs AFTER apiTokenAuthMiddleware, so a cache hit still
 // costs a token check — only the Neon round-trip is skipped.
 
 import type { Context, MiddlewareHandler, Next } from "hono";
 
-/** Seconds a resource stays cached, from its crawl cadence (0003): the catalog crawl is weekly,
+/** Seconds a resource stays cached, from its crawl cadence: the catalog crawl is weekly,
  * the deep crawl (fixtures/tables) hourly during match windows. */
 export const cacheTtlValue = {
   catalog: 3600,
@@ -15,7 +15,7 @@ const cacheableStatus = 200;
 /** `public` on the stored copy so the Cache API will accept it, `private` on the one sent back.
  * Returning `public` would let Cloudflare's CDN serve this URL without invoking the Worker — and
  * since the cache key excludes the Authorization header, that would answer unauthenticated
- * requests from cache (ADR 0013). */
+ * requests from cache. */
 function cacheableCopy(response: Response, ttlSeconds: number): Response {
   const copy = new Response(response.body, response);
   copy.headers.set("Cache-Control", `public, max-age=${ttlSeconds}`);

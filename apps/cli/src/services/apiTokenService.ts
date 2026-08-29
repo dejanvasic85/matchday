@@ -1,4 +1,4 @@
-// API token issuance/revocation (ADR 0013): persists only the token's hash — the plaintext is
+// API token issuance/revocation: persists only the token's hash — the plaintext is
 // returned once and never stored, so it can't be recovered later, only rotated.
 
 import {

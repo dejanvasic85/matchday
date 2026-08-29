@@ -1,4 +1,4 @@
-// Club enrichment job (0012): enriches clubs the deep crawl already discovered (never creates)
+// Club enrichment job: enriches clubs the deep crawl already discovered (never creates)
 // with detail/logo from the source, then mirrors the logo to R2. Transport glue (AGENTS.md).
 
 import { ok, serverError, type Logger, type Result } from "@matchday/domain";

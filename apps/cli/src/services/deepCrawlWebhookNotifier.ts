@@ -1,4 +1,4 @@
-// Wraps a deep crawl with post-crawl webhook notification (#105): snapshots fixtures+table before
+// Wraps a deep crawl with post-crawl webhook notification: snapshots fixtures+table before
 // and after, diffs, and notifies. Kept as a wrapper so the skip branches are unit-testable.
 
 import { type Logger, type Result } from "@matchday/domain";

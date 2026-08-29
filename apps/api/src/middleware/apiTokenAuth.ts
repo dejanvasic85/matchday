@@ -1,4 +1,4 @@
-// Bearer API token auth middleware (ADR 0013) — delegates the auth decision to
+// Bearer API token auth middleware — delegates the auth decision to
 // apiTokenAuthService; a rejected credential and an unreachable token store are different failures.
 
 import { createConsoleLogger, errorKindValue, type ClientId } from "@matchday/domain";

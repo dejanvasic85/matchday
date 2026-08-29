@@ -1,5 +1,5 @@
-// Club service (0045): maps DB rows to the wire shape. Catalog data, open to any authenticated
-// client, no subscription scoping (ADR 0013).
+// Club service: maps DB rows to the wire shape. Catalog data, open to any authenticated
+// client, no subscription scoping.
 
 import { requireFound, type Club, type Result } from "@matchday/domain";
 import { mapPage, type PagedResponse } from "#services/pagedResponse.ts";
@@ -24,7 +24,7 @@ export function createClubServiceDeps(db: Db): ClubServiceDeps {
 }
 
 /** `Pick`, not `Omit`, so a new column stays off the wire until named here — and mapped
- * field-by-field below, since a spread would leak it regardless (#169). */
+ * field-by-field below, since a spread would leak it regardless. */
 export type ClubResponse = Pick<
   Club,
   | "id"

@@ -1,5 +1,5 @@
-// League service (0045): maps DB rows to the wire shape. Catalog data, open to any authenticated
-// client, no subscription scoping (ADR 0013).
+// League service: maps DB rows to the wire shape. Catalog data, open to any authenticated
+// client, no subscription scoping.
 
 import { requireFound, type Result } from "@matchday/domain";
 import { mapPage, type PagedResponse } from "#services/pagedResponse.ts";

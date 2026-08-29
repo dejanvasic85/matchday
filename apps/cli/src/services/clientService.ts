@@ -1,4 +1,4 @@
-// Client roster assembly (0013): stitches three flat data-access reads into the per-client view
+// Client roster assembly: stitches three flat data-access reads into the per-client view
 // `mday client list` renders — three queries total, not 2N+1.
 
 import { ok, type Result } from "@matchday/domain";

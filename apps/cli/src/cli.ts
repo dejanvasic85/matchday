@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// `mday` — the crawler CLI (0012). Thin commander wiring: each command constructs real
+// `mday` — the crawler CLI. Thin commander wiring: each command constructs real
 // dependencies (config, logger) and calls the matching job in src/jobs.
 
 import {

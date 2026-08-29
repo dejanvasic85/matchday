@@ -1,4 +1,4 @@
-// Real webhook delivery (#105): single POST, short timeout, no retries (v1 scope). Failure is
+// Real webhook delivery: single POST, short timeout, no retries (v1 scope). Failure is
 // reported as a `Result`, never thrown, so callers can isolate one subscriber's failure.
 
 import { ok, serverError, type Result } from "@matchday/domain";

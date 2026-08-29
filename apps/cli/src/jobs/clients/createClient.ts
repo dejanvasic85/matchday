@@ -1,4 +1,4 @@
-// Create-client job (0013): transport glue (AGENTS.md) — builds the real DB client and delegates
+// Create-client job: transport glue (AGENTS.md) — builds the real DB client and delegates
 // creation to the service.
 
 import { type ClientId, type Logger, type Result } from "@matchday/domain";

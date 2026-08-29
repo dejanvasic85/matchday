@@ -54,7 +54,7 @@ export function badRequest(message: string): Result<never, ResultError> {
 }
 
 /** The caller could not be authenticated. Distinct from `serverError` so a failing token lookup
- * is never reported to the client as a rejected credential (ADR 0013). */
+ * is never reported to the client as a rejected credential. */
 export function unauthorized(message: string): Result<never, ResultError> {
   return err({ kind: errorKindValue.unauthorized, message });
 }

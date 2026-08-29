@@ -1,4 +1,4 @@
-// Source-adapter contract (0012): a source owns its session lifecycle plus catalog/deep-crawl/club-enrichment.
+// Source-adapter contract: a source owns its session lifecycle plus catalog/deep-crawl/club-enrichment.
 // Jobs are source-agnostic dispatchers; a new source is just a new adapter in sourceRegistry.ts.
 
 import type { LeagueId, Logger, Result } from "@matchday/domain";

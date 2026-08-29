@@ -1,4 +1,4 @@
-// Resolves a club by its Dribl `club_code` (ADR 0012), the primary identity — logo/name matching
+// Resolves a club by its Dribl `club_code`, the primary identity — logo/name matching
 // is only a one-time bridge for pre-existing rows since logo is mutable and shared by pseudo-clubs.
 
 import {

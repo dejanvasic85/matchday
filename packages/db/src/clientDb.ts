@@ -1,5 +1,5 @@
 // Client data access: build a query, execute it, return a `Result` of rows. No business rules
-// here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
+// here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
 import { asc, eq } from "drizzle-orm";

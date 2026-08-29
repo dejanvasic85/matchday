@@ -1,5 +1,5 @@
 // External ref data access: build a query, execute it, return a `Result` of rows. No business
-// rules here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
+// rules here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
 import { and, eq } from "drizzle-orm";
@@ -12,7 +12,7 @@ type ExternalRef = typeof externalRef.$inferSelect;
 type ExternalRefInsert = typeof externalRef.$inferInsert;
 
 /**
- * Upsert an external reference by its `(source, sourceId)` idempotency key (ADR 0005): insert it,
+ * Upsert an external reference by its `(source, sourceId)` idempotency key: insert it,
  * or update the mapping/metadata if that source hash is already known. The single primitive the
  * crawler's idempotent re-scraping (Phase 3) builds on.
  */

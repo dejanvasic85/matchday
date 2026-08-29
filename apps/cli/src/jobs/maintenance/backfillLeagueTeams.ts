@@ -1,4 +1,4 @@
-// Backfill league_team job (#143): one-off admin op, run once after #142, to populate league_team
+// Backfill league_team job: one-off admin op that populates league_team
 // from existing table_entry rows. Table-less leagues (MiniRoos etc.) need a fresh crawl instead.
 
 import { type Logger, type Result } from "@matchday/domain";

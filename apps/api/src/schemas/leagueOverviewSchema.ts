@@ -4,7 +4,7 @@ import { tableEntryResponseSchema } from "#schemas/tableEntrySchema.ts";
 import { teamResponseSchema } from "#schemas/teamSchema.ts";
 
 /** A league plus everything one league page renders. Every collection is always present — an
- * empty league yields empty arrays, never a missing key (#163). */
+ * empty league yields empty arrays, never a missing key. */
 export const leagueOverviewResponseSchema = leagueResponseSchema
   .extend({
     fixtures: fixtureResponseSchema.array(),

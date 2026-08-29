@@ -1,4 +1,4 @@
-// Crawls club detail for club-enrichment (0012): source-wide, DB-free, includes admin
+// Crawls club detail for club-enrichment: source-wide, DB-free, includes admin
 // pseudo-clubs — the persist phase's bridge-match filters those out, not this crawl phase.
 
 import { ok, type Logger, type Result } from "@matchday/domain";

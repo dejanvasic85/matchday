@@ -1,4 +1,4 @@
-// Remove-subscription job (0012): transport glue (AGENTS.md) — builds the real DB client and
+// Remove-subscription job: transport glue (AGENTS.md) — builds the real DB client and
 // delegates deletion to the subscription service.
 
 import { type Logger, type Result, type SubscriptionId } from "@matchday/domain";

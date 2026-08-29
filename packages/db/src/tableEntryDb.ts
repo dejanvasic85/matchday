@@ -1,5 +1,5 @@
 // Table entry data access: build a query, execute it, return a `Result` of rows. No business
-// rules here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
+// rules here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import type { Result } from "@matchday/domain";
 import { asc, eq } from "drizzle-orm";
@@ -13,7 +13,7 @@ type TableEntryInsert = typeof tableEntry.$inferInsert;
 export type TableEntryTeamPair = { leagueId: string; teamId: string };
 
 /** Every `(league_id, team_id)` pair with a table entry — the source data for the one-off
- * `league_team` backfill (#143). `table_entry` already carries a unique `(league_id, team_id)`
+ * `league_team` backfill. `table_entry` already carries a unique `(league_id, team_id)`
  * index, so every row here is already a distinct pair; no dedup needed. */
 export async function listTableEntryTeamPairs(db: Db): Promise<Result<TableEntryTeamPair[]>> {
   return runQuery(
@@ -22,7 +22,7 @@ export async function listTableEntryTeamPairs(db: Db): Promise<Result<TableEntry
   );
 }
 
-/** A league's ladder, position-ordered (0045, subscription-scoped per ADR 0012). */
+/** A league's ladder, position-ordered (subscription-scoped). */
 export async function listTableEntriesByLeagueId(
   db: Db,
   leagueId: string,

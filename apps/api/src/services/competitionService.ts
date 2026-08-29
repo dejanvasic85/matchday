@@ -1,5 +1,5 @@
-// Competition service (0045): maps DB rows to the wire shape. Catalog data, open to any
-// authenticated client, no subscription scoping (ADR 0013).
+// Competition service: maps DB rows to the wire shape. Catalog data, open to any
+// authenticated client, no subscription scoping.
 
 import { requireFound, type Competition, type Result } from "@matchday/domain";
 import { mapPage, type PagedResponse } from "#services/pagedResponse.ts";
@@ -24,7 +24,7 @@ export function createCompetitionServiceDeps(db: Db): CompetitionServiceDeps {
 }
 
 /** `Pick`, not `Omit`, so a new column stays off the wire until named here — and mapped
- * field-by-field below, since a spread would leak it regardless (#169). */
+ * field-by-field below, since a spread would leak it regardless. */
 export type CompetitionResponse = Pick<Competition, "id" | "name"> & {
   createdAt: string;
   updatedAt: string;

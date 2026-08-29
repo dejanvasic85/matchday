@@ -1,4 +1,4 @@
-// Source-wide catalog list calls (0012): tenant -> competitions -> leagues returned in full (no
+// Source-wide catalog list calls: tenant -> competitions -> leagues returned in full (no
 // name-matching), unlike resolveLeagueIds which needs the target name upfront.
 
 import { ok, serverError, type Result } from "@matchday/domain";

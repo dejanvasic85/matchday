@@ -1,5 +1,5 @@
 // Season data access: build a query, execute it, return a `Result` of rows. No business rules
-// here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
+// here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
 import { asc, eq, gt } from "drizzle-orm";
@@ -11,7 +11,7 @@ import { season } from "#schema.ts";
 type Season = typeof season.$inferSelect;
 type SeasonInsert = typeof season.$inferInsert;
 
-/** Keyset-paged on `id` (#164): ordered by primary key, seeking past the cursor. */
+/** Keyset-paged on `id`: ordered by primary key, seeking past the cursor. */
 export async function listSeasons(db: Db, page: PageRequest = {}): Promise<Result<Page<Season>>> {
   const limit = resolveLimit(page.limit);
   const after = page.cursor === undefined ? undefined : decodeCursor(page.cursor);

@@ -1,4 +1,4 @@
-// Revoke-api-token job (0013): transport glue (AGENTS.md) — builds the real DB client and
+// Revoke-api-token job: transport glue (AGENTS.md) — builds the real DB client and
 // delegates revocation to the service.
 
 import { type ApiTokenId, type Logger, type Result } from "@matchday/domain";

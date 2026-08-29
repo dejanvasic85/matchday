@@ -1,5 +1,5 @@
-// Fixture service (0045): maps DB rows to the wire shape. Catalog data, open to any authenticated
-// client — subscriptions only gate which leagues get deep-crawled (ADR 0012), not who can read.
+// Fixture service: maps DB rows to the wire shape. Catalog data, open to any authenticated
+// client — subscriptions only gate which leagues get deep-crawled, not who can read.
 
 import { mapResult, type Result } from "@matchday/domain";
 import { listFixturesByLeagueId, type Db, type schema } from "@matchday/db";
@@ -23,7 +23,7 @@ export function createFixtureServiceDeps(db: Db): FixtureServiceDeps {
 type FixtureRow = typeof schema.fixture.$inferSelect;
 
 /** `Pick`, not `Omit`, so a new column stays off the wire until named here — and mapped
- * field-by-field below, since a spread would leak it regardless (#169). */
+ * field-by-field below, since a spread would leak it regardless. */
 export type FixtureResponse = Pick<
   FixtureRow,
   | "id"

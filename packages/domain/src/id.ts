@@ -1,7 +1,7 @@
 import { customAlphabet } from "nanoid";
 
 /**
- * Entity ID prefixes, finalised in ADR 0011. Each entity's primary key is an
+ * Entity ID prefixes. Each entity's primary key is an
  * app-owned prefixed nanoid, e.g. `clb_V1StGXR8Z5`.
  */
 export const idPrefixValue = {

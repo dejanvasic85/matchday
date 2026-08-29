@@ -1,4 +1,4 @@
-// Stages a source's raw API responses to R2 pre-transform (0004), via aws4fetch (fetch-native
+// Stages a source's raw API responses to R2 pre-transform, via aws4fetch (fetch-native
 // SigV4, no Node-specific deps) so it works unchanged on Node or a Worker runtime. Source-agnostic.
 
 import { ok, serverError, type Result } from "@matchday/domain";

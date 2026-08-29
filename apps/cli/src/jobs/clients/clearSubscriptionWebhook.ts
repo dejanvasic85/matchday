@@ -1,4 +1,4 @@
-// Clear-subscription-webhook job (#105): transport glue (AGENTS.md) — builds the real DB client
+// Clear-subscription-webhook job: transport glue (AGENTS.md) — builds the real DB client
 // and delegates the clear to the service.
 
 import { type Logger, type Result, type SubscriptionId } from "@matchday/domain";

@@ -1,5 +1,5 @@
 // Subscription data access: build a query, execute it, return a `Result` of rows. No business
-// rules here (ADR / AGENTS.md). Driver errors are captured into `err` rather than thrown.
+// rules here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
 import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
@@ -107,7 +107,7 @@ export async function deleteSubscription(db: Db, id: string): Promise<Result<Sub
 }
 
 /**
- * Set (or replace) an active subscription's webhook target + signing secret (#105). Deliberately
+ * Set (or replace) an active subscription's webhook target + signing secret. Deliberately
  * separate from `upsertSubscription`: re-subscribing a client to a league (the create/revive
  * path) must never silently overwrite an already-configured webhook, so the only way to change
  * one is this explicit call. Returns `null` when no such *active* subscription id exists.
@@ -148,7 +148,7 @@ export async function clearSubscriptionWebhook(
   return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
-/** A subscription's webhook delivery target — what the deep crawl reads post-crawl (#105) to
+/** A subscription's webhook delivery target — what the deep crawl reads post-crawl to
  * notify a league's subscribers. Scoped to one league (the crawl's own scope) and to
  * webhook-configured, active subscriptions only, so callers never branch on a null URL. */
 export type SubscriptionWebhook = {

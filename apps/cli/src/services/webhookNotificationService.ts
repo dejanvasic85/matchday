@@ -1,4 +1,4 @@
-// Webhook notification service (#105): notifies webhook-configured subscriptions after a crawl.
+// Webhook notification service: notifies webhook-configured subscriptions after a crawl.
 // Each delivery is independent — a failing endpoint is logged and skipped, never fails the batch.
 
 import { signWebhookPayload, type Logger, type Result } from "@matchday/domain";

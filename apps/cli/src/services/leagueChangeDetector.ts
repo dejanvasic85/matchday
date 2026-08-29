@@ -1,4 +1,4 @@
-// League change detection (#105): compares fixtures+table before/after a crawl for `hasChanges`.
+// League change detection: compares fixtures+table before/after a crawl for `hasChanges`.
 // Timestamps are excluded — the crawl's upsert bumps `updatedAt` on every touched row regardless.
 
 import type { schema } from "@matchday/db";
