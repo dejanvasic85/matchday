@@ -3,22 +3,7 @@
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { retryConfigValue } from "#constants.ts";
-
-/** Transient iff no `sourceError` — the SQL never executed, vs. a real SQL error which must not be retried. */
-function isTransientDbError(cause: unknown): boolean {
-  if (typeof cause !== "object" || cause === null) {
-    return false;
-  }
-  if (!("name" in cause) || cause.name !== "NeonDbError") {
-    return false;
-  }
-  const sourceError = "sourceError" in cause ? cause.sourceError : undefined;
-  return sourceError === undefined || sourceError === null || isEmptyObject(sourceError);
-}
-
-function isEmptyObject(value: unknown): boolean {
-  return typeof value === "object" && value !== null && Object.keys(value).length === 0;
-}
+import { describeCause, isTransientNeonError } from "#neonError.ts";
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -34,14 +19,14 @@ export async function runQuery<T>(fn: () => Promise<T>, message: string): Promis
       return ok(await fn());
     } catch (cause) {
       lastCause = cause;
-      if (attempt >= retryConfigValue.maxAttempts || !isTransientDbError(cause)) {
+      if (attempt >= retryConfigValue.maxAttempts || !isTransientNeonError(cause)) {
         break;
       }
       await delay(retryConfigValue.baseDelayMs * 2 ** (attempt - 1));
     }
   }
 
-  return serverError(message, lastCause);
+  return serverError(message, describeCause(lastCause));
 }
 
 /** Run an upsert (with retry, via {@link runQuery}) and unwrap its single `returning()` row,
