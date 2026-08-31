@@ -42,6 +42,10 @@ pnpm + Vite+ monorepo:
   Dribl-specific external schemas + mappers — nothing source-specific lives outside its own
   `crawlers/<source>/` folder); admin/crawl entry points are grouped under `src/jobs/<area>/`.
   New administration features land here by default rather than in an admin MCP server.
+- `apps/scheduler` — Cloudflare Worker that fires the crawl workflows on a cron. GitHub's own
+  `schedule` trigger proved unreliable (runs delayed by hours, most dropped), so the workflows are
+  `workflow_dispatch`-only and this drives them. Game windows live in Melbourne local time here,
+  not in a UTC cron expression, so daylight saving never shifts them.
 - `packages/domain` — Zod schemas, entity types, ID service (source-agnostic; no Dribl knowledge)
 - `packages/db` — Drizzle schema, migrations, per-entity data access
 - `infra/` — deployment/infra config

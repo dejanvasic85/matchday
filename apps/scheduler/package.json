@@ -1,0 +1,27 @@
+{
+  "name": "@matchday/scheduler",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#*": "./src/*"
+  },
+  "exports": {
+    ".": "./src/scheduler.ts"
+  },
+  "scripts": {
+    "test": "vp test run",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@matchday/domain": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vite-plus": "0.3.0",
+    "wrangler": "catalog:"
+  }
+}

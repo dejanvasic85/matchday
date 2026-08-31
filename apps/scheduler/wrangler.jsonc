@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "matchday-scheduler",
+  "main": "src/scheduler.ts",
+  "compatibility_date": "2026-08-01",
+  // Hourly, all day. The Melbourne game windows live in src/crawlWindow.ts, not here: cron is
+  // UTC-only, so a fixed expression would drift an hour every daylight-saving switch. Ticks
+  // outside a window are a cheap no-op.
+  "triggers": {
+    "crons": ["17 * * * *"],
+  },
+  // Cloudflare Workers Logs — captures console.warn/console.error (AGENTS.md structured logging).
+  "observability": {
+    "enabled": true,
+  },
+  // Non-secret config. GITHUB_TOKEN is a Worker secret (deploy.yml), never committed here.
+  "vars": {
+    "LOG_LEVEL": "info",
+    "ENVIRONMENT": "production",
+    "GITHUB_OWNER": "dejanvasic85",
+    "GITHUB_REPO": "matchday",
+    "GITHUB_REF": "main",
+  },
+}

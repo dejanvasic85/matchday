@@ -1,12 +1,10 @@
 name: Crawl leagues
 
 on:
-  # Touch to nudge GitHub into re-registering the cron schedule after the crawl-deep -> crawl-leagues rename.
-  schedule:
-    # Weekday evenings, hourly, 6pm-11pm AEST (game evenings). UTC = AEST-10, no DST adjustment.
-    - cron: "0 8-13 * * 1-5"
-    # Weekends, hourly, 11am-11pm AEST (game days). UTC = AEST-10, no DST adjustment.
-    - cron: "0 1-13 * * 6,0"
+  # Dispatch-only, on purpose. GitHub's `schedule` trigger is best-effort: it delayed runs here by
+  # 5 minutes to 4 hours and fired only 4 of 26 expected slots over one weekend. The
+  # matchday-scheduler Worker (apps/scheduler) drives this hourly instead, and holds the game
+  # windows in Melbourne local time so daylight saving doesn't shift them.
   workflow_dispatch:
 
 permissions:
