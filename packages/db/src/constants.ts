@@ -33,6 +33,16 @@ export const externalRefEntityTypeValue = {
 export type ExternalRefEntityType =
   (typeof externalRefEntityTypeValue)[keyof typeof externalRefEntityTypeValue];
 
+/** Neon proxy statuses worth another attempt (see runQuery); `serverErrorFloor` is a range start. */
+export const transientHttpStatusValue = {
+  tooManyRequests: 429,
+  serverErrorFloor: 500,
+} as const;
+
+/** How far to follow an error's `cause` chain when flattening it for a log line. Also what stops
+ * a self-referencing chain from recursing forever. */
+export const maxCauseDepth = 5;
+
 /** Bounded retry for transient neon-http failures (see runQuery). Attempts include the first try;
  * backoff is `baseDelayMs * 2 ** (attempt - 1)`, so 3 attempts wait ~100ms then ~200ms. */
 export const retryConfigValue = {

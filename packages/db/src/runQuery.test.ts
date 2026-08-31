@@ -1,17 +1,9 @@
 import { ok, serverError } from "@matchday/domain";
 import { retryConfigValue } from "#constants.ts";
 import { runQuery } from "#runQuery.ts";
+import { makeConnectionError, makeProxyError, makeSqlError } from "#test/fixtures/neonErrors.ts";
 
-/** A neon-http connection-level failure: NeonDbError with no populated sourceError. */
-function makeTransientError() {
-  return { name: "NeonDbError", sourceError: {} };
-}
-
-/** A neon-http SQL error: NeonDbError carrying the database's own error. */
-function makeSqlError() {
-  return { name: "NeonDbError", sourceError: { code: "23505", message: "duplicate key" } };
-}
-
+// Which errors count as transient is neonError.test.ts's job; these cover the retry loop itself.
 describe("runQuery", () => {
   it("returns ok with the query result on success", async () => {
     const fn = vi.fn().mockResolvedValue([{ id: "row1" }]);
@@ -22,10 +14,10 @@ describe("runQuery", () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
-  it("retries a transient neon-http error and succeeds on a later attempt", async () => {
+  it("retries a transient error and succeeds on a later attempt", async () => {
     const fn = vi
       .fn()
-      .mockRejectedValueOnce(makeTransientError())
+      .mockRejectedValueOnce(makeConnectionError())
       .mockResolvedValueOnce([{ id: "row1" }]);
 
     const result = await runQuery(fn, "transient then ok");
@@ -35,32 +27,42 @@ describe("runQuery", () => {
   });
 
   it("gives up after maxAttempts when the transient error persists", async () => {
-    const cause = makeTransientError();
-    const fn = vi.fn().mockRejectedValue(cause);
+    const fn = vi.fn().mockRejectedValue(makeProxyError(503));
 
     const result = await runQuery(fn, "always transient");
 
-    expect(result).toEqual(serverError("always transient", cause));
+    expect(result.ok).toBe(false);
     expect(fn).toHaveBeenCalledTimes(retryConfigValue.maxAttempts);
   });
 
-  it("does not retry a real SQL error (populated sourceError)", async () => {
-    const cause = makeSqlError();
-    const fn = vi.fn().mockRejectedValue(cause);
+  it("fails immediately on a permanent error", async () => {
+    const fn = vi.fn().mockRejectedValue(makeSqlError());
 
     const result = await runQuery(fn, "sql error");
 
-    expect(result).toEqual(serverError("sql error", cause));
+    expect(result.ok).toBe(false);
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
   it("does not retry a non-neon error", async () => {
-    const cause = new Error("boom");
-    const fn = vi.fn().mockRejectedValue(cause);
+    const fn = vi.fn().mockRejectedValue(new Error("boom"));
 
     const result = await runQuery(fn, "generic error");
 
-    expect(result).toEqual(serverError("generic error", cause));
     expect(fn).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(serverError("generic error", { name: "Error", message: "boom" }));
+  });
+
+  it("reports the last cause in a form that survives JSON logging", async () => {
+    const fn = vi.fn().mockRejectedValue(makeConnectionError());
+
+    const result = await runQuery(fn, "connection failed");
+
+    expect(result.ok).toBe(false);
+    const logged = JSON.parse(JSON.stringify(result.ok ? null : result.error.cause));
+    expect(logged).toMatchObject({
+      message: "Error connecting to database: TypeError: fetch failed",
+      sourceError: { message: "fetch failed" },
+    });
   });
 });
