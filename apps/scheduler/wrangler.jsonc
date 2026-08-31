@@ -10,8 +10,16 @@
     "crons": ["17 * * * *"],
   },
   // Cloudflare Workers Logs — captures console.warn/console.error (AGENTS.md structured logging).
+  // Invocation logs stay on: with no HTTP traffic, the per-tick invocation record is the only
+  // evidence the cron fired at all. Traces are off — this Worker makes one outbound call.
   "observability": {
-    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+    },
+    "traces": {
+      "enabled": false,
+    },
   },
   // Non-secret config. GITHUB_TOKEN is a Worker secret (deploy.yml), never committed here.
   "vars": {
