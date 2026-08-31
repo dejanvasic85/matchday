@@ -81,3 +81,43 @@ jobs:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+  deploy-scheduler:
+    name: Deploy scheduler
+    # No dependency on migrate: the scheduler touches no database, it only fires
+    # workflow_dispatch on a cron.
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # See deploy-api: wrangler-action's pnpm packageManager input needs a bare pnpm on PATH.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.24.0
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+        with:
+          cache: true
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/scheduler
+          wranglerVersion: "4.120.0"
+          packageManager: pnpm
+          secrets: |
+            GITHUB_TOKEN
+        env:
+          # Bound to the Worker as a runtime secret. Sourced from GH_DISPATCH_TOKEN because Actions
+          # reserves the GITHUB_TOKEN name and refuses a repository secret using it.
+          GITHUB_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
