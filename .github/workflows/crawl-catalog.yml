@@ -1,8 +1,9 @@
 name: Crawl catalog
 
 on:
-  schedule:
-    - cron: "0 17 * * 1" # weekly, Tue 03:00 AEST
+  # Dispatch-only, on purpose — same reason as the league crawl. GitHub's `schedule` trigger is
+  # best-effort: the last weekly run it owned fired 4h42m late. The matchday-scheduler Worker
+  # (apps/scheduler) drives this instead, on a weekly slot held in Melbourne local time.
   workflow_dispatch:
 
 permissions:

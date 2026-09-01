@@ -6,12 +6,16 @@
 // unit-testable — none of which a cron string can offer.
 
 /** Game windows in Melbourne local time, as `[startHour, endHour]` inclusive of both ends. */
-const crawlWindowValue = {
+const leagueWindowValue = {
   // Weekday evenings: games run under lights.
   weekday: { startHour: 18, endHour: 23 },
   // Weekends: games run through the day.
   weekend: { startHour: 11, endHour: 23 },
 } as const;
+
+/** The one weekly slot the catalog crawl runs in, in Melbourne local time. Early Tuesday morning
+ * is quiet: no games in flight, and a full source-wide crawl has the runner to itself. */
+const catalogWindowValue = { weekday: "Tue", hour: 3 } as const;
 
 const melbourneTimeZone = "Australia/Melbourne";
 
@@ -54,14 +58,26 @@ export type CrawlDecision = {
 
 /** True inside a game window in Melbourne local time. Everything outside is a cheap no-op:
  * the Worker still wakes hourly, decides not to crawl, and logs why. */
-export function decideCrawl(instant: Date): CrawlDecision {
+export function decideLeagueCrawl(instant: Date): CrawlDecision {
   const { hour, weekday } = toMelbourneParts(instant);
   const window = weekendDayValue.includes(weekday)
-    ? crawlWindowValue.weekend
-    : crawlWindowValue.weekday;
+    ? leagueWindowValue.weekend
+    : leagueWindowValue.weekday;
 
   return {
     shouldCrawl: hour >= window.startHour && hour <= window.endHour,
+    localHour: hour,
+    localWeekday: weekday,
+  };
+}
+
+/** True on the single weekly tick the catalog crawl belongs to. Pinned to Melbourne local time,
+ * so the slot stays at 3am through the AEST/AEDT switch instead of drifting an hour. */
+export function decideCatalogCrawl(instant: Date): CrawlDecision {
+  const { hour, weekday } = toMelbourneParts(instant);
+
+  return {
+    shouldCrawl: weekday === catalogWindowValue.weekday && hour === catalogWindowValue.hour,
     localHour: hour,
     localWeekday: weekday,
   };
