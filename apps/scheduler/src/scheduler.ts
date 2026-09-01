@@ -1,6 +1,6 @@
-// The Worker entry point: transport glue only (AGENTS.md). Cloudflare wakes this hourly; the
-// decision of whether that tick is inside a game window lives in `crawlWindow.ts`, and the
-// dispatch itself in `workflowDispatcher.ts`.
+// The Worker entry point: transport glue only (AGENTS.md). Cloudflare wakes this hourly; which
+// crawls that tick belongs to is decided in `crawlWindow.ts`, and the dispatch itself lives in
+// `workflowDispatcher.ts`.
 //
 // This exists because GitHub's own `schedule` trigger is best-effort: it delays runs by minutes
 // to hours and drops most of them outright. `workflow_dispatch` is not best-effort, so we keep
@@ -8,12 +8,16 @@
 
 import { createConsoleLogger } from "@matchday/domain";
 import { getSchedulerConfig, type SchedulerBindings } from "#config.ts";
-import { runCrawlSchedule } from "#crawlScheduler.ts";
+import { runCrawlSchedule, type CrawlSchedule } from "#crawlScheduler.ts";
+import { decideCatalogCrawl, decideLeagueCrawl } from "#crawlWindow.ts";
 import { dispatchWorkflow } from "#workflowDispatcher.ts";
 
-/** The crawl workflow this scheduler drives. The catalog crawl stays on GitHub's own weekly
- * schedule — a missed or late weekly run costs nothing, unlike a missed game-evening crawl. */
-const crawlWorkflowValue = "crawl-leagues.yml";
+/** The crawls this scheduler drives, each with the rule for which ticks it belongs to. Both are
+ * dispatch-only workflows: GitHub's own `schedule` trigger is too unreliable to drive either. */
+const crawlScheduleValue: readonly CrawlSchedule[] = [
+  { workflow: "crawl-leagues.yml", decide: decideLeagueCrawl },
+  { workflow: "crawl-catalog.yml", decide: decideCatalogCrawl },
+];
 
 export default {
   async scheduled(event: ScheduledController, env: SchedulerBindings): Promise<void> {
@@ -31,7 +35,7 @@ export default {
         }),
       logger,
       now: new Date(event.scheduledTime),
-      workflow: crawlWorkflowValue,
+      schedules: crawlScheduleValue,
     });
 
     // Throw at the transport boundary so Cloudflare records the invocation as failed and it shows
