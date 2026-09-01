@@ -3,12 +3,12 @@
 // Worker runtime treating it as an unhandled rejection.
 
 import { ok, serverError, type Result } from "@matchday/domain";
-
-const githubApiBaseUrl = "https://api.github.com";
-const githubApiVersion = "2022-11-28";
-// GitHub rejects requests without a User-Agent.
-const userAgentValue = "matchday-scheduler";
-const dispatchTimeoutMs = 10000;
+import {
+  githubApiBaseUrl,
+  githubHeaders,
+  githubRequestTimeoutMs,
+  type FetchLike,
+} from "#githubApi.ts";
 
 export type DispatchWorkflowInput = {
   owner: string;
@@ -19,9 +19,6 @@ export type DispatchWorkflowInput = {
   ref: string;
   token: string;
 };
-
-/** Injected so tests assert on the request without a real network call. */
-export type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
 
 /**
  * Fire a `workflow_dispatch` for one workflow. GitHub answers 204 with an empty body on success;
@@ -38,15 +35,9 @@ export async function dispatchWorkflow(
   try {
     const response = await fetchImpl(url, {
       method: "POST",
-      headers: {
-        accept: "application/vnd.github+json",
-        authorization: `Bearer ${token}`,
-        "content-type": "application/json",
-        "user-agent": userAgentValue,
-        "x-github-api-version": githubApiVersion,
-      },
+      headers: githubHeaders(token, "json"),
       body: JSON.stringify({ ref }),
-      signal: AbortSignal.timeout(dispatchTimeoutMs),
+      signal: AbortSignal.timeout(githubRequestTimeoutMs),
     });
 
     if (!response.ok) {

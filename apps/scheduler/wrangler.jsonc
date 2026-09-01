@@ -3,15 +3,16 @@
   "name": "matchday-scheduler",
   "main": "src/scheduler.ts",
   "compatibility_date": "2026-08-01",
-  // Hourly, all day. The Melbourne game windows live in src/crawlWindow.ts, not here: cron is
-  // UTC-only, so a fixed expression would drift an hour every daylight-saving switch. Ticks
-  // outside a window are a cheap no-op.
+  // Every 15 minutes, all day. The Melbourne windows live in src/crawlWindow.ts, not here: cron
+  // is UTC-only, so a fixed expression would drift an hour every daylight-saving switch. Ticks
+  // outside a window are a cheap no-op, and inside one the run history decides what is due.
   "triggers": {
-    "crons": ["17 * * * *"],
+    "crons": ["*/15 * * * *"],
   },
   // Cloudflare Workers Logs — captures console.warn/console.error (AGENTS.md structured logging).
   // Invocation logs stay on: with no HTTP traffic, the per-tick invocation record is the only
-  // evidence the cron fired at all. Traces are off — this Worker makes one outbound call.
+  // evidence the cron fired at all. Traces are off — the outbound calls are a handful of GitHub
+  // requests a tick, and the structured logs already say what each one decided.
   "observability": {
     "logs": {
       "enabled": true,
