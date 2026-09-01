@@ -1,5 +1,8 @@
 // Production `Logger` implementation (AGENTS.md): one JSON line per call. `warn`/`error` route
 // through `console.warn`/`console.error` so Cloudflare Workers Logs classifies them correctly.
+//
+// Console only, never `process`: this runs in Workers isolates without `nodejs_compat`, where
+// `process` is undefined and touching it throws. `console.log` still reaches stdout under Node.
 
 import type { LogFields, Logger } from "#logger.ts";
 
@@ -15,7 +18,9 @@ function write(level: LogLevel, event: string, msg: string, fields?: LogFields):
       console.error(line);
       break;
     default:
-      process.stdout.write(`${line}\n`);
+      // The sanctioned console.log: this module is the transport no-console funnels others into.
+      // oxlint-disable-next-line no-console
+      console.log(line);
   }
 }
 
