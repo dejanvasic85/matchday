@@ -4,82 +4,108 @@ import {
   type CrawlSchedule,
   type RunCrawlScheduleInput,
 } from "#crawlScheduler.ts";
+import type { WorkflowRunSummary } from "#workflowRuns.ts";
 
 function makeFakeLogger() {
   return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 }
 
-// The windows themselves are covered in crawlWindow.test.ts; these stubs keep this suite about
-// orchestration alone, so a change to the game hours never breaks it.
-const tick = new Date("2026-08-31T09:00:00Z");
+// The windows themselves are covered in crawlWindow.test.ts and the due/not-due rule in
+// crawlReconciler.test.ts; these stubs keep this suite about orchestration alone.
+const tick = new Date("2026-09-01T12:00:00Z");
+const hourMs = 60 * 60 * 1000;
 
-function makeSchedule(workflow: string, shouldCrawl: boolean): CrawlSchedule {
+function makeSchedule(workflow: string, inWindow: boolean): CrawlSchedule {
   return {
     workflow,
-    decide: vi.fn().mockReturnValue({ shouldCrawl, localHour: 19, localWeekday: "Mon" }),
+    isInWindow: vi.fn().mockReturnValue({ inWindow, localHour: 19, localWeekday: "Mon" }),
+    minIntervalMs: hourMs,
   };
 }
 
-const leaguesDue = makeSchedule("crawl-leagues.yml", true);
-const catalogDue = makeSchedule("crawl-catalog.yml", true);
-const catalogNotDue = makeSchedule("crawl-catalog.yml", false);
+/** A run old enough that the schedule is due again. */
+function staleRun(): WorkflowRunSummary {
+  return { createdAt: new Date("2026-09-01T06:00:00Z"), active: false };
+}
+
+const leaguesOpen = makeSchedule("crawl-leagues.yml", true);
+const catalogShut = makeSchedule("crawl-catalog.yml", false);
 
 function makeInput(overrides: Partial<RunCrawlScheduleInput> = {}): RunCrawlScheduleInput {
   return {
     dispatch: vi.fn().mockResolvedValue(ok(undefined)),
+    listRuns: vi.fn().mockResolvedValue(ok([staleRun()])),
     logger: makeFakeLogger(),
     now: tick,
-    schedules: [leaguesDue, catalogNotDue],
+    schedules: [leaguesOpen, catalogShut],
     ...overrides,
   };
 }
 
 describe("runCrawlSchedule", () => {
-  it("dispatches only the workflows due on this tick", async () => {
+  it("dispatches a schedule that is in window and due", async () => {
     const input = makeInput();
 
     const result = await runCrawlSchedule(input);
 
     expect(result).toEqual(
       ok([
-        { workflow: "crawl-leagues.yml", dispatched: true, localHour: 19, localWeekday: "Mon" },
-        { workflow: "crawl-catalog.yml", dispatched: false, localHour: 19, localWeekday: "Mon" },
+        {
+          workflow: "crawl-leagues.yml",
+          dispatched: true,
+          reason: "due",
+          localHour: 19,
+          localWeekday: "Mon",
+        },
+        {
+          workflow: "crawl-catalog.yml",
+          dispatched: false,
+          reason: "outside-window",
+          localHour: 19,
+          localWeekday: "Mon",
+        },
       ]),
     );
     expect(input.dispatch).toHaveBeenCalledExactlyOnceWith("crawl-leagues.yml");
   });
 
   it("decides every schedule against the tick it was given", async () => {
-    const schedules = [
-      makeSchedule("crawl-leagues.yml", true),
-      makeSchedule("crawl-catalog.yml", false),
-    ];
+    const schedules = [leaguesOpen, catalogShut];
     const input = makeInput({ schedules });
 
     await runCrawlSchedule(input);
 
     for (const schedule of schedules) {
-      expect(schedule.decide).toHaveBeenCalledExactlyOnceWith(tick);
+      expect(schedule.isInWindow).toHaveBeenCalledWith(tick);
     }
   });
 
-  it("dispatches both when the weekly catalog slot lands inside a game window", async () => {
-    const input = makeInput({ schedules: [leaguesDue, catalogDue] });
+  it("does not ask GitHub for runs when the window is shut", async () => {
+    const input = makeInput({ schedules: [catalogShut] });
 
     await runCrawlSchedule(input);
 
-    expect(input.dispatch).toHaveBeenCalledWith("crawl-leagues.yml");
-    expect(input.dispatch).toHaveBeenCalledWith("crawl-catalog.yml");
+    expect(input.listRuns).not.toHaveBeenCalled();
   });
 
-  it("dispatches nothing when no schedule is due", async () => {
-    const input = makeInput({ schedules: [makeSchedule("crawl-leagues.yml", false)] });
+  it("does not dispatch when the workflow already ran inside its interval", async () => {
+    const recent = { createdAt: new Date("2026-09-01T11:30:00Z"), active: false };
+    const input = makeInput({
+      listRuns: vi.fn().mockResolvedValue(ok([recent])),
+      schedules: [leaguesOpen],
+    });
 
     const result = await runCrawlSchedule(input);
 
     expect(result).toEqual(
       ok([
-        { workflow: "crawl-leagues.yml", dispatched: false, localHour: 19, localWeekday: "Mon" },
+        {
+          workflow: "crawl-leagues.yml",
+          dispatched: false,
+          reason: "ran-recently",
+          localHour: 19,
+          localWeekday: "Mon",
+        },
       ]),
     );
     expect(input.dispatch).not.toHaveBeenCalled();
@@ -92,8 +118,8 @@ describe("runCrawlSchedule", () => {
 
     expect(input.logger.debug).toHaveBeenCalledWith(
       "scheduler.skipped",
-      "outside a crawl window, not dispatching",
-      expect.objectContaining({ localHour: 19, workflow: "crawl-catalog.yml" }),
+      "outside the crawl window",
+      expect.objectContaining({ workflow: "crawl-catalog.yml", reason: "outside-window" }),
     );
   });
 
@@ -109,9 +135,30 @@ describe("runCrawlSchedule", () => {
     );
   });
 
+  it("reports a failed run lookup rather than dispatching blind", async () => {
+    const lookupError = serverError("Run lookup for crawl-leagues.yml failed: HTTP 401");
+    const input = makeInput({
+      listRuns: vi.fn().mockResolvedValue(lookupError),
+      schedules: [leaguesOpen],
+    });
+
+    const result = await runCrawlSchedule(input);
+
+    expect(result).toEqual(lookupError);
+    expect(input.dispatch).not.toHaveBeenCalled();
+    expect(input.logger.error).toHaveBeenCalledWith(
+      "scheduler.lookupfailed",
+      "Run lookup for crawl-leagues.yml failed: HTTP 401",
+      expect.objectContaining({ workflow: "crawl-leagues.yml" }),
+    );
+  });
+
   it("propagates a dispatch failure and logs it as an error", async () => {
     const dispatchError = serverError("Workflow dispatch for crawl-leagues.yml failed: HTTP 401");
-    const input = makeInput({ dispatch: vi.fn().mockResolvedValue(dispatchError) });
+    const input = makeInput({
+      dispatch: vi.fn().mockResolvedValue(dispatchError),
+      schedules: [leaguesOpen],
+    });
 
     const result = await runCrawlSchedule(input);
 
@@ -130,7 +177,10 @@ describe("runCrawlSchedule", () => {
       .mockImplementation(async (workflow: string) =>
         workflow === "crawl-catalog.yml" ? dispatchError : ok(undefined),
       );
-    const input = makeInput({ dispatch, schedules: [catalogDue, leaguesDue] });
+    const input = makeInput({
+      dispatch,
+      schedules: [makeSchedule("crawl-catalog.yml", true), leaguesOpen],
+    });
 
     const result = await runCrawlSchedule(input);
 
