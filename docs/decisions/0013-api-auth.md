@@ -36,7 +36,11 @@ simple until something forces otherwise.
 
 - A new `client` table in `packages/db`, holding an id and a name. `subscription.clientName`
   becomes `subscription.clientId`, pointing at `client.id`.
-- A new `api_token` table: `clientId`, `tokenHash`, `createdAt` and `revokedAt`.
+- A new `api_token` table: `clientId`, `tokenHash`, `createdAt`, `revokedAt` and `lastUsedAt`.
+- `lastUsedAt` is stamped by the auth middleware, off the response path and at most once an hour
+  per token. That dates a token's use — enough to retire one nobody calls with, or to tell a
+  client to rotate an old one — without a DB write on every authenticated request. Counting
+  requests, rather than dating them, would need a per-request write and is not in scope.
 - Hono middleware resolves the client from the bearer token, and rejects a token that is missing,
   unknown or revoked.
 - How we issue and revoke tokens, by CLI or by hand, is an implementation detail of #77 rather

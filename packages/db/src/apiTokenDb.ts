@@ -2,13 +2,31 @@
 // here — token generation/hashing is a service concern.
 
 import { ok, serverError, type Result } from "@matchday/domain";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { runQuery } from "#runQuery.ts";
 import { apiToken } from "#schema.ts";
 
 type ApiToken = typeof apiToken.$inferSelect;
 type ApiTokenInsert = typeof apiToken.$inferInsert;
+
+/** Everything a token row says about itself apart from the secret: enough to report who owns it,
+ * whether it still works, how old it is and when it was last used. */
+const apiTokenSummaryColumnsValue = {
+  id: apiToken.id,
+  clientId: apiToken.clientId,
+  revokedAt: apiToken.revokedAt,
+  lastUsedAt: apiToken.lastUsedAt,
+  createdAt: apiToken.createdAt,
+} as const;
+
+export type ApiTokenSummary = {
+  id: string;
+  clientId: string;
+  revokedAt: Date | null;
+  lastUsedAt: Date | null;
+  createdAt: Date;
+};
 
 export async function insertApiToken(db: Db, values: ApiTokenInsert): Promise<Result<ApiToken>> {
   const result = await runQuery(
@@ -37,27 +55,28 @@ export async function findApiTokenByHash(
   return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
+/** One client's tokens, newest first, for `mday client tokens`. The `token_hash` is deliberately
+ * not selected — nothing outside request-time auth needs it. */
 export async function listApiTokensByClientId(
   db: Db,
   clientId: string,
-): Promise<Result<ApiToken[]>> {
+): Promise<Result<ApiTokenSummary[]>> {
   return runQuery(
-    () => db.select().from(apiToken).where(eq(apiToken.clientId, clientId)),
+    () =>
+      db
+        .select(apiTokenSummaryColumnsValue)
+        .from(apiToken)
+        .where(eq(apiToken.clientId, clientId))
+        .orderBy(desc(apiToken.createdAt)),
     "Failed to list api tokens by client id",
   );
 }
 
 /** Every token across all clients. Not client-scoped: `client list` renders the whole roster in
- * one pass, so it counts these by `clientId` itself rather than issuing a query per client. The
- * `token_hash` is deliberately not selected — nothing outside request-time auth needs it. */
-export async function listApiTokens(
-  db: Db,
-): Promise<Result<{ id: string; clientId: string; revokedAt: Date | null }[]>> {
+ * one pass, so it counts these by `clientId` itself rather than issuing a query per client. */
+export async function listApiTokens(db: Db): Promise<Result<ApiTokenSummary[]>> {
   return runQuery(
-    () =>
-      db
-        .select({ id: apiToken.id, clientId: apiToken.clientId, revokedAt: apiToken.revokedAt })
-        .from(apiToken),
+    () => db.select(apiTokenSummaryColumnsValue).from(apiToken),
     "Failed to list api tokens",
   );
 }
@@ -73,4 +92,20 @@ export async function revokeApiToken(db: Db, id: string): Promise<Result<ApiToke
     "Failed to revoke api token",
   );
   return result.ok ? ok(result.value[0] ?? null) : result;
+}
+
+/** Stamps a token's last authenticated use. Called off the request's critical path and only when
+ * the stored value is stale, so an active token costs one write an hour, not one per request. */
+export async function touchApiTokenLastUsed(
+  db: Db,
+  id: string,
+  usedAt: Date,
+): Promise<Result<void>> {
+  // `updatedAt` deliberately untouched: a usage ping is not an edit to the token itself, and
+  // bumping it hourly would hide when the token was actually issued or revoked.
+  const result = await runQuery(
+    () => db.update(apiToken).set({ lastUsedAt: usedAt }).where(eq(apiToken.id, id)),
+    "Failed to update api token last used at",
+  );
+  return result.ok ? ok(undefined) : result;
 }
