@@ -99,6 +99,13 @@
       "when": 1788006320950,
       "tag": "0013_mushy_supreme_intelligence",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1788687886184,
+      "tag": "0014_new_jackpot",
+      "breakpoints": true
     }
   ]
 }

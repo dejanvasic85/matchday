@@ -3,23 +3,7 @@
 
 import type { SubscriptionWithLeague } from "@matchday/db";
 import type { SubscriptionSyncPlan } from "#services/subscriptionSyncService.ts";
-
-const columnGap = "  ";
-
-function padRow(cells: string[], widths: number[]): string {
-  return cells
-    .map((cell, index) => (index === cells.length - 1 ? cell : cell.padEnd(widths[index] ?? 0)))
-    .join(columnGap)
-    .trimEnd();
-}
-
-function renderTable(header: string[], body: string[][]): string {
-  const rows = [header, ...body];
-  const widths = header.map((_, index) =>
-    Math.max(...rows.map((row) => (row[index] ?? "").length)),
-  );
-  return rows.map((row) => padRow(row, widths)).join("\n");
-}
+import { renderTable } from "#terminalTable.ts";
 
 /** Season first: a subscription left behind by a finished season is what the operator is looking
  * for, and grouping it into the leftmost column makes it jump out. */
