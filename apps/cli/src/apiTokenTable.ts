@@ -1,7 +1,7 @@
 // Terminal rendering for `mday client list-tokens` — presentation only, so `--json` prints the
 // service's shape untouched.
 
-import { apiTokenStatusValue, type ApiTokenUsage } from "#services/apiTokenService.ts";
+import type { ApiTokenUsage } from "#services/apiTokenService.ts";
 import { emptyCell, renderTable } from "#terminalTable.ts";
 
 /** Date only: last use is stamped at most once an hour, so printing a time would imply a
@@ -11,16 +11,15 @@ function dateCell(value: Date | null): string {
 }
 
 function lastUsedCell(token: ApiTokenUsage): string {
-  if (token.lastUsedAt === null) {
+  if (token.lastUsedAt === null || token.idleDays === null) {
     return "never";
   }
-  return `${dateCell(token.lastUsedAt)} (${token.idleDays ?? 0}d ago)`;
+  return `${dateCell(token.lastUsedAt)} (${token.idleDays}d ago)`;
 }
 
+/** `renewalDue` is the service's call — a revoked token is never due, so nothing to re-check. */
 function statusCell(token: ApiTokenUsage): string {
-  return token.renewalDue && token.status !== apiTokenStatusValue.revoked
-    ? `${token.status}, renew`
-    : token.status;
+  return token.renewalDue ? `${token.status}, renew` : token.status;
 }
 
 export function renderApiTokenTable(tokens: ApiTokenUsage[]): string {

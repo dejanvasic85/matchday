@@ -229,6 +229,22 @@ describe("listApiTokenUsage", () => {
     expect(deps.listApiTokensByClientId).not.toHaveBeenCalled();
   });
 
+  // The operator's clock can sit a moment behind the API's stamp; "-1d ago" would look like a bug.
+  it("never reports negative days for a stamp written just ahead of the clock", async () => {
+    const deps = makeDeps({
+      listApiTokensByClientId: vi
+        .fn()
+        .mockResolvedValue(ok([makeTokenRow({ lastUsedAt: new Date(now.getTime() + 1000) })])),
+    });
+
+    const result = await listApiTokenUsage(deps, "Williamstown SC", now);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value[0]?.idleDays).toBe(0);
+    }
+  });
+
   it("propagates a failed token read", async () => {
     const readError = serverError("Failed to list api tokens by client id");
     const deps = makeDeps({ listApiTokensByClientId: vi.fn().mockResolvedValue(readError) });

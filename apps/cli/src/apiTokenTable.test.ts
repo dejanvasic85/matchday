@@ -45,16 +45,18 @@ describe("renderApiTokenTable", () => {
     expect(output).toContain("active, renew");
   });
 
-  // A revoked token is already dead, so telling the operator to rotate it is noise.
+  // A revoked token is already dead, so the service never marks one due — and nothing here
+  // re-decides that.
   it("does not ask for renewal on a revoked token", () => {
     const output = renderApiTokenTable([
       makeToken({
         status: apiTokenStatusValue.revoked,
         revokedAt: new Date("2026-09-01T00:00:00.000Z"),
-        renewalDue: true,
+        renewalDue: false,
       }),
     ]);
 
+    expect(output).toContain("revoked");
     expect(output).not.toContain("renew");
   });
 });

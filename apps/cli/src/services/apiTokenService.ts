@@ -93,8 +93,9 @@ export async function revokeApiTokenById(
   return ok(undefined);
 }
 
+/** Never negative: a stamp written a moment ahead of this machine's clock is "today", not "-1d". */
 function wholeDaysBetween(from: Date, to: Date): number {
-  return Math.floor((to.getTime() - from.getTime()) / apiTokenLifecycleValue.msPerDay);
+  return Math.max(0, Math.floor((to.getTime() - from.getTime()) / apiTokenLifecycleValue.msPerDay));
 }
 
 function toStatus(
