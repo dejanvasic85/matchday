@@ -12,7 +12,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  packages: write
 
 concurrency:
   group: ${{ github.workflow }}
@@ -47,14 +46,12 @@ jobs:
       - name: Install dependencies
         run: vp install --frozen-lockfile
 
-      # Written to the runner's user-level ~/.npmrc, not the repo's — pnpm 11 silently ignores
+      # Written to the runner's user-level ~/.npmrc, not the repo's — pnpm silently ignores
       # env-var tokens from a committed project .npmrc, which is what broke the first run of this.
-      - name: Configure GitHub Packages auth
+      - name: Configure npm auth
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "@dejanvasic85:registry=https://npm.pkg.github.com" >> ~/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
 
       # Pending changesets open/update a bot "Version Packages" PR instead of publishing directly;
       # merging it consumes the changesets, triggering the actual publish.
@@ -69,4 +66,4 @@ jobs:
           publish-script: pnpm run release:sdk
           github-token: ${{ secrets.RELEASE_PAT }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
