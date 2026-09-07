@@ -91,19 +91,12 @@ install/link layer underneath.
 - ⚠️ **Local points at PRODUCTION.** There is no separate dev database: maintaining a second
   crawled copy cost more than it was worth, so the **prod** `DATABASE_URL` (Neon `matchday`) is
   what you run against. Everything below follows from that.
-- **One `.env` at the repo root** holds every local variable, documented in `.env.example`. There
-  are no per-app `.env.local` or `.dev.vars` files — four copies of `DATABASE_URL` drifted, and
-  one was missed during a Neon project move, so local API dev kept talking to the old database
-  until someone noticed. Each consumer already has its own way to read the root file:
-
-  | Consumer                     | Mechanism                                                 |
-  | ---------------------------- | --------------------------------------------------------- |
-  | `apps/cli`                   | `node --env-file-if-exists=../../.env` in its `mday` task |
-  | `apps/api`, `apps/scheduler` | `wrangler dev --env-file ../../.env`                      |
-  | `packages/db`                | `process.loadEnvFile` in `drizzle.config.ts`              |
-
-  An already-set variable always wins, so CI's exported values beat any stray local file.
-  `--env-file` replaces wrangler's own `.dev.vars` lookup — don't reintroduce that file.
+- **One `.env` at the repo root** holds every local variable, documented in `.env.example`. No
+  per-app `.env.local` or `.dev.vars` — four copies of `DATABASE_URL` drifted, and one was missed
+  during a Neon project move. The CLI reads it via `--env-file-if-exists`, the Workers via
+  `wrangler dev --env-file`, drizzle-kit via `process.loadEnvFile`. An already-set variable always
+  wins, so CI beats any stray local file. `--env-file` replaces wrangler's own `.dev.vars` lookup
+  — don't reintroduce that file.
 
 - **Treat every local write as a production write.** Reads are free; anything that inserts,
   updates or deletes is hitting live data. Before running a write command or an ad-hoc script,

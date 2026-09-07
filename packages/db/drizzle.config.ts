@@ -4,8 +4,7 @@ import { defineConfig } from "drizzle-kit";
 
 const rootEnvPath = fileURLToPath(new URL("../../.env", import.meta.url));
 
-// drizzle-kit doesn't autoload env files, so fall back to the repo's single `.env` for local
-// `migrate`/`studio` runs. An already-set DATABASE_URL wins, which is what CI relies on.
+// drizzle-kit doesn't autoload env files. An already-set DATABASE_URL wins, as CI relies on.
 if (!process.env.DATABASE_URL && existsSync(rootEnvPath)) {
   process.loadEnvFile(rootEnvPath);
 }
