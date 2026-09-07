@@ -1,6 +1,6 @@
 {
   "name": "matchday-sdk",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "private": false,
   "description": "A typed client for the matchday API, generated from its live OpenAPI spec.",
   "keywords": [
