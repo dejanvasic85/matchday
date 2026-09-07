@@ -1,35 +1,19 @@
-# @dejanvasic85/matchday-sdk
+# matchday-sdk
 
 A typed client for the matchday API, generated from its live OpenAPI spec. Every protected route
 needs a per-client bearer token, and `createMatchdayClient` sets that header for you.
 
 ## Install
 
-We publish to **GitHub Packages**, not to the public npm registry. The matchday repo is public,
-but installing from GitHub Packages still needs an authenticated `npm` or `pnpm`. To set that up:
-
-1. Create a
-   [personal access token with `read:packages`](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-with-a-personal-access-token).
-   This is **not** the `GITHUB_TOKEN` that CI provides automatically, which cannot read across
-   repos.
-2. Store it as `MATCHDAY_SDK_TOKEN`.
-3. Add this to your project's `.npmrc`:
-
-```ini
-@dejanvasic85:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${MATCHDAY_SDK_TOKEN}
-```
-
-Then:
-
 ```sh
-pnpm add @dejanvasic85/matchday-sdk
+npm i matchday-sdk
+# or: pnpm add matchday-sdk
 ```
 
 ## Usage
 
 ```ts
-import { createMatchdayClient } from "@dejanvasic85/matchday-sdk";
+import { createMatchdayClient } from "matchday-sdk";
 
 const client = createMatchdayClient({
   baseUrl: "https://api.matchday.example",
@@ -56,7 +40,7 @@ catalog:
 | `getClubLeagues(client, clubId)`      | every league a club's teams play in               |
 
 ```ts
-import { getLeagueOverview } from "@dejanvasic85/matchday-sdk";
+import { getLeagueOverview } from "matchday-sdk";
 
 const result = await getLeagueOverview(client, "lea_V1StGXR8Z5");
 if (result.ok) {
@@ -75,7 +59,7 @@ Use `getLeagueTeams` rather than `GET /teams` plus `GET /clubs`. The full catalo
 augmentation adds:
 
 ```ts
-import { getLeagueTeams } from "@dejanvasic85/matchday-sdk";
+import { getLeagueTeams } from "matchday-sdk";
 
 // A Next.js app augments the global RequestInit type with `next`, so this needs no SDK-side
 // Next.js support — it's just RequestInit, and the SDK preserves whatever you put on it.
@@ -97,7 +81,7 @@ List routes return `{ data, nextCursor }`. The `listAll*` helpers follow `nextCu
 and hand you one array, so you write no cursor loop:
 
 ```ts
-import { listAllClubs, listAllLeagues, listAllTeams } from "@dejanvasic85/matchday-sdk";
+import { listAllClubs, listAllLeagues, listAllTeams } from "matchday-sdk";
 
 const clubs = await listAllClubs(client);
 if (clubs.ok) {
@@ -126,7 +110,7 @@ For a route these helpers do not cover, `fetchAllPages` runs the same loop and l
 to you:
 
 ```ts
-import { fetchAllPages, type components } from "@dejanvasic85/matchday-sdk";
+import { fetchAllPages, type components } from "matchday-sdk";
 
 type Season = components["schemas"]["Season"];
 
@@ -143,7 +127,7 @@ Treat paging as a guard rail, not as the way in. If you find yourself walking th
 `unwrap` turns a call into a `Result`, so you stop repeating `if (error || !data) throw`:
 
 ```ts
-import { unwrap, unwrapOrThrow } from "@dejanvasic85/matchday-sdk";
+import { unwrap, unwrapOrThrow } from "matchday-sdk";
 
 const result = unwrap(await client.GET("/clubs"));
 if (!result.ok) {
@@ -164,7 +148,7 @@ the exact request body, signed with the `whsec_...` secret from `mday client set
 comparison runs in constant time:
 
 ```ts
-import { verifyWebhookSignature } from "@dejanvasic85/matchday-sdk";
+import { verifyWebhookSignature } from "matchday-sdk";
 
 const isValid = await verifyWebhookSignature(
   rawBody, // the exact bytes matchday sent — see below
