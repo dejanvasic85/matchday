@@ -16,7 +16,7 @@
   // Sentry source map upload on `wrangler deploy` (requires SENTRY_AUTH_TOKEN/ORG/PROJECT env).
   "upload_source_maps": true,
   // Non-secret config. DATABASE_URL and SENTRY_DSN are set as Worker secrets (deploy.yml), never
-  // committed here. Override locally in a gitignored .dev.vars (e.g. ENVIRONMENT=development) —
+  // committed here. Override locally in the gitignored root .env (e.g. ENVIRONMENT=development) —
   // wrangler dev reads these vars too.
   "vars": {
     "LOG_LEVEL": "info",

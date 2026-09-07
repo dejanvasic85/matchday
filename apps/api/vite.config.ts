@@ -6,7 +6,7 @@ export default defineConfig({
       // Wrangler (not Vite) bundles this Worker; `build` is a cacheable dry-run bundle check,
       // `dev`/`deploy` are side-effecting and uncached.
       dev: {
-        command: "wrangler dev",
+        command: "wrangler dev --env-file ../../.env",
         cache: false,
       },
       build: {

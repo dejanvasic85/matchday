@@ -1,10 +1,12 @@
 import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "drizzle-kit";
 
-// drizzle-kit doesn't autoload env files, so load `.env.local` for local `migrate`/`studio`
-// runs. In CI the var comes from the environment (the GitHub secret), so the file is optional.
-if (existsSync(".env.local")) {
-  process.loadEnvFile(".env.local");
+const rootEnvPath = fileURLToPath(new URL("../../.env", import.meta.url));
+
+// drizzle-kit doesn't autoload env files. An already-set DATABASE_URL wins, as CI relies on.
+if (!process.env.DATABASE_URL && existsSync(rootEnvPath)) {
+  process.loadEnvFile(rootEnvPath);
 }
 
 // `generate` diffs the schema and needs no connection, so pass the URL through unvalidated

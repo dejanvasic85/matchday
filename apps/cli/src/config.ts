@@ -2,8 +2,8 @@ import { parseEnv } from "@matchday/domain";
 import { z } from "zod";
 
 /**
- * CLI environment (Node `process.env`). Vars are documented in
- * `apps/cli/.env.example`. Call `getCliConfig()` once at startup.
+ * CLI environment (Node `process.env`). Vars are documented in the root `.env.example`.
+ * Call `getCliConfig()` once at startup.
  */
 const cliEnvSchema = z.object({
   // Neon Postgres — the crawler upserts crawled data by external_ref.

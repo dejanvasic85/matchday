@@ -38,16 +38,16 @@ Chrome through playwright-core to clear Dribl's Cloudflare, then calls `mc-api.d
 directly. In production it runs on GitHub Actions (`crawl-catalog.yml` and `crawl-leagues.yml`). The
 steps below cover running it locally.
 
-**1. Configure the environment.** The CLI loads [apps/cli/.env.local](apps/cli/.env.example)
-automatically (gitignored). Copy the example and fill it in:
+**1. Configure the environment.** Every app and package reads one `.env` at the repo root
+(gitignored). Copy the example and fill it in:
 
 ```sh
-cp apps/cli/.env.example apps/cli/.env.local
+cp .env.example .env
 ```
 
 Point `DATABASE_URL` at the Neon **`matchday`** pooled host (`?sslmode=require`).
-See [apps/cli/.env.example](apps/cli/.env.example) for every variable; R2 credentials are
-required (raw responses are staged there even on a dry run).
+See [.env.example](.env.example) for every variable; R2 credentials are required (raw
+responses are staged there even on a dry run).
 
 > ⚠️ **That is the production database.** There is no separate dev database, because keeping a
 > second crawled copy in sync cost more than it was worth. Every local command that writes,

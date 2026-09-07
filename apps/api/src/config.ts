@@ -5,7 +5,7 @@ import { z } from "zod";
  * API environment. On Cloudflare Workers there is no `process.env`; the runtime passes
  * an `env` binding into the fetch handler. Call `getApiConfig(env)` once per request (or
  * once at startup for a long-lived Node process) with that record. Vars are documented in
- * `apps/api/.env.example`.
+ * the root `.env.example`.
  */
 const apiEnvSchema = z.object({
   // Neon Postgres — reached via the serverless driver / Hyperdrive, never raw pg TCP.
@@ -13,8 +13,8 @@ const apiEnvSchema = z.object({
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   // Sentry DSN (optional — Sentry no-ops when unset, so local dev doesn't need an account).
   SENTRY_DSN: z.string().optional(),
-  // Sentry environment tag. wrangler.jsonc commits "production"; override to "development" in a
-  // local .dev.vars so dev traffic doesn't get tagged as production in Sentry.
+  // Sentry environment tag. wrangler.jsonc commits "production"; override to "development" in
+  // the root `.env` so dev traffic doesn't get tagged as production in Sentry.
   ENVIRONMENT: z.enum(["development", "production"]).default("development"),
 });
 

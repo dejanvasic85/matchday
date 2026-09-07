@@ -3,7 +3,7 @@ import { z } from "zod";
 
 /**
  * Scheduler environment. On Cloudflare Workers there is no `process.env`; the runtime passes an
- * `env` binding into the scheduled handler. Vars are documented in `apps/scheduler/.env.example`.
+ * `env` binding into the scheduled handler. Vars are documented in the root `.env.example`.
  */
 const schedulerEnvSchema = z.object({
   // Fine-grained PAT with Actions: read and write on this repo only. A Worker secret, never a var.
