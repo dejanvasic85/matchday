@@ -1,5 +1,17 @@
 # @dejanvasic85/matchday-sdk
 
+## 2.4.0
+
+### Minor Changes
+
+- 3e74367: Publish to the public npm registry as `matchday-sdk`.
+
+  The package was `@dejanvasic85/matchday-sdk` on GitHub Packages, which needs an authenticated
+  token even to read a public package. Installing it now needs no auth at all.
+
+  Update your dependency name to `matchday-sdk`, update your imports, and drop the
+  `@dejanvasic85:registry` lines from your `.npmrc`.
+
 ## 2.3.1
 
 ### Patch Changes
