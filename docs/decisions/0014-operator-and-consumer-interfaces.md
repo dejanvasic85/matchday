@@ -73,7 +73,7 @@ enforce it in the wiring; never assume it.
   caller to filter a full dump, and describe itself in `--help`. `mday client list --json` is the
   pattern to follow.
 - Make destructive CLI commands recoverable, or make them ask first. This matters more because
-  `.env.local` points at production: we have no dev database, and Neon branching is the intended
+  the local `.env` points at production: we have no dev database, and Neon branching is the intended
   fix (#84).
 - We have **not** scheduled an MCP server. It is blocked on the API gaining real resource routes
   (#45) and on the auth scheme landing (0013, #77). Filing it earlier would invert that

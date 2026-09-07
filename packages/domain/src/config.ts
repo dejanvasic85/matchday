@@ -3,7 +3,7 @@ import type { z } from "zod";
 /**
  * Parse a raw environment record against a Zod schema, throwing a single readable
  * error listing every invalid/missing variable. Each app defines its own schema and
- * calls this once at startup; env vars are documented in that app's `.env.example`.
+ * calls this once at startup; env vars are documented in the root `.env.example`.
  */
 export function parseEnv<T extends z.ZodType>(
   schema: T,

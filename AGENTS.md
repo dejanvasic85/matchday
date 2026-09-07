@@ -89,8 +89,22 @@ install/link layer underneath.
 ## Local development / database
 
 - ⚠️ **Local points at PRODUCTION.** There is no separate dev database: maintaining a second
-  crawled copy cost more than it was worth, so `.env.local` in every app holds the **prod**
-  `DATABASE_URL` (Neon `matchday`). Everything below follows from that.
+  crawled copy cost more than it was worth, so the **prod** `DATABASE_URL` (Neon `matchday`) is
+  what you run against. Everything below follows from that.
+- **One `.env` at the repo root** holds every local variable, documented in `.env.example`. There
+  are no per-app `.env.local` or `.dev.vars` files — four copies of `DATABASE_URL` drifted, and
+  one was missed during a Neon project move, so local API dev kept talking to the old database
+  until someone noticed. Each consumer already has its own way to read the root file:
+
+  | Consumer                     | Mechanism                                                 |
+  | ---------------------------- | --------------------------------------------------------- |
+  | `apps/cli`                   | `node --env-file-if-exists=../../.env` in its `mday` task |
+  | `apps/api`, `apps/scheduler` | `wrangler dev --env-file ../../.env`                      |
+  | `packages/db`                | `process.loadEnvFile` in `drizzle.config.ts`              |
+
+  An already-set variable always wins, so CI's exported values beat any stray local file.
+  `--env-file` replaces wrangler's own `.dev.vars` lookup — don't reintroduce that file.
+
 - **Treat every local write as a production write.** Reads are free; anything that inserts,
   updates or deletes is hitting live data. Before running a write command or an ad-hoc script,
   say so and get the go-ahead. Never write test/scratch rows to "try something out" — and if you
@@ -99,9 +113,9 @@ install/link layer underneath.
   HTTP/WebSocket protocol and **cannot** connect to a raw-TCP local Postgres, so don't introduce
   one or add a `pg` driver for it.
 - **Migrations** run via drizzle-kit: `cd packages/db && vp run db:migrate`. `drizzle.config.ts`
-  auto-loads `packages/db/.env.local` (gitignored; Neon **direct** host, `?sslmode=require`).
-  **Don't run migrations locally** — that is now a prod DDL change. They run in CI
-  (`.github/workflows/deploy.yml`, on push to `main`) from the `DATABASE_URL` secret.
+  falls back to the root `.env`, which holds the Neon **pooled** host. **Don't run migrations
+  locally** — that is now a prod DDL change. They run in CI (`.github/workflows/deploy.yml`, on
+  push to `main`) from the `DATABASE_URL` secret, which uses the direct host.
 - **Want isolation?** Neon branching is the intended fix (a copy-on-write branch of `matchday`,
   no re-crawl) — not yet set up. Until it is, the above stands.
 
