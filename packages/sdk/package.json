@@ -1,9 +1,26 @@
 {
-  "name": "@dejanvasic85/matchday-sdk",
+  "name": "matchday-sdk",
   "version": "2.3.1",
   "private": false,
+  "description": "A typed client for the matchday API, generated from its live OpenAPI spec.",
+  "keywords": [
+    "dribl",
+    "fixtures",
+    "matchday",
+    "openapi",
+    "sdk",
+    "sports"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dejanvasic85/matchday.git",
+    "directory": "packages/sdk"
+  },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md"
   ],
   "type": "module",
   "main": "./dist/index.mjs",
@@ -14,9 +31,6 @@
   "exports": {
     ".": "./dist/index.mjs",
     "./package.json": "./package.json"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
     "generate": "node scripts/generateClient.ts",

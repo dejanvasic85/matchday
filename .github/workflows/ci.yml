@@ -36,7 +36,7 @@ jobs:
         run: vp install --frozen-lockfile
 
       - name: Generate SDK client types
-        run: vp run --filter @dejanvasic85/matchday-sdk generate
+        run: vp run --filter matchday-sdk generate
 
       - name: Check (format + lint + type-check)
         run: vp check
