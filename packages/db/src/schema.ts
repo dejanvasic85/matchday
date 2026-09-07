@@ -249,6 +249,9 @@ export const apiToken = pgTable(
       .references(() => client.id),
     tokenHash: text("token_hash").notNull(),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    // Null until the token's first authenticated request. Written at most once an hour per
+    // token, so it dates last use rather than counting it.
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => [

@@ -2,16 +2,7 @@
 // roster shape stays independent of how it's displayed (and `--json` prints it untouched).
 
 import type { ClientSummary } from "#services/clientService.ts";
-
-const columnGap = "  ";
-const emptyCell = "-";
-
-function padRow(cells: string[], widths: number[]): string {
-  return cells
-    .map((cell, index) => (index === cells.length - 1 ? cell : cell.padEnd(widths[index] ?? 0)))
-    .join(columnGap)
-    .trimEnd();
-}
+import { emptyCell, renderTable } from "#terminalTable.ts";
 
 /** Subscriptions counted per season rather than listed: a client holds dozens, and the roster's
  * job is to make a leftover season obvious ("2025: 18") — `client list-subscriptions` is where
@@ -33,11 +24,24 @@ function subscriptionCell(client: ClientSummary): string {
     .join(", ");
 }
 
+/** Date only, and "never" spelled out: the stamp behind it is written at most hourly, so a time
+ * would imply a precision it doesn't have. */
+function lastApiUseCell(client: ClientSummary): string {
+  return client.lastApiUseAt === null
+    ? "never"
+    : client.lastApiUseAt.toISOString().slice(0, "yyyy-mm-dd".length);
+}
+
 /** One line per followed club so the webhook column is per-club; a client's id/name/tokens and
  * subscription summary are printed on its first line only, blank on continuation lines. */
 function toRows(clients: ClientSummary[]): string[][] {
   return clients.flatMap((client) => {
-    const summary = [client.id, client.name, String(client.activeTokenCount)];
+    const summary = [
+      client.id,
+      client.name,
+      String(client.activeTokenCount),
+      lastApiUseCell(client),
+    ];
     const subscriptions = subscriptionCell(client);
     if (client.clubs.length === 0) {
       return [[...summary, emptyCell, emptyCell, subscriptions]];
@@ -45,7 +49,7 @@ function toRows(clients: ClientSummary[]): string[][] {
     return client.clubs.map((club, index) =>
       index === 0
         ? [...summary, club.clubName, club.hasWebhook ? "yes" : emptyCell, subscriptions]
-        : ["", "", "", club.clubName, club.hasWebhook ? "yes" : emptyCell, ""],
+        : ["", "", "", "", club.clubName, club.hasWebhook ? "yes" : emptyCell, ""],
     );
   });
 }
@@ -55,11 +59,8 @@ export function renderClientTable(clients: ClientSummary[]): string {
     return 'No clients yet — create one with "mday client add <name>".';
   }
 
-  const header = ["CLIENT ID", "NAME", "TOKENS", "FOLLOWED CLUB", "WEBHOOK", "SUBSCRIPTIONS"];
-  const rows = [header, ...toRows(clients)];
-  const widths = header.map((_, index) =>
-    Math.max(...rows.map((row) => (row[index] ?? "").length)),
+  return renderTable(
+    ["CLIENT ID", "NAME", "TOKENS", "LAST API USE", "FOLLOWED CLUB", "WEBHOOK", "SUBSCRIPTIONS"],
+    toRows(clients),
   );
-
-  return rows.map((row) => padRow(row, widths)).join("\n");
 }

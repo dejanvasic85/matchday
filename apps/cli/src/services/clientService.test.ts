@@ -11,8 +11,20 @@ function makeDeps(overrides: Partial<ClientServiceDeps> = {}): ClientServiceDeps
     ),
     listApiTokens: vi.fn().mockResolvedValue(
       ok([
-        { id: "tok_active0000", clientId: "cli_willy00000", revokedAt: null },
-        { id: "tok_revoked000", clientId: "cli_willy00000", revokedAt: new Date() },
+        {
+          id: "tok_active0000",
+          clientId: "cli_willy00000",
+          revokedAt: null,
+          lastUsedAt: new Date("2026-09-01T04:00:00.000Z"),
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+        {
+          id: "tok_revoked000",
+          clientId: "cli_willy00000",
+          revokedAt: new Date(),
+          lastUsedAt: new Date("2026-08-01T04:00:00.000Z"),
+          createdAt: new Date("2025-01-01T00:00:00.000Z"),
+        },
       ]),
     ),
     listSubscriptionsWithLeague: vi.fn().mockResolvedValue(
@@ -108,13 +120,52 @@ describe("listClientSummaries", () => {
     }
   });
 
+  // Across every token, revoked ones included: the question is when this client last called us,
+  // not which credential it used.
+  it("reports the client's most recent token use", async () => {
+    const result = await listClientSummaries(makeDeps());
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value[0]?.lastApiUseAt).toEqual(new Date("2026-09-01T04:00:00.000Z"));
+    }
+  });
+
+  it("reports a null last use for a client whose tokens have never authenticated", async () => {
+    const deps = makeDeps({
+      listApiTokens: vi.fn().mockResolvedValue(
+        ok([
+          {
+            id: "tok_active0000",
+            clientId: "cli_willy00000",
+            revokedAt: null,
+            lastUsedAt: null,
+            createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          },
+        ]),
+      ),
+    });
+
+    const result = await listClientSummaries(deps);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value[0]?.lastApiUseAt).toBeNull();
+    }
+  });
+
   it("reports zero tokens and no subscriptions for a client with neither", async () => {
     const result = await listClientSummaries(makeDeps());
 
     expect(result.ok).toBe(true);
     if (result.ok) {
       const altona = result.value.find((summary) => summary.id === "cli_altona0000");
-      expect(altona).toMatchObject({ activeTokenCount: 0, subscriptions: [], clubs: [] });
+      expect(altona).toMatchObject({
+        activeTokenCount: 0,
+        lastApiUseAt: null,
+        subscriptions: [],
+        clubs: [],
+      });
     }
   });
 

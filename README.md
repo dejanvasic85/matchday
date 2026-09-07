@@ -129,15 +129,27 @@ pnpm mday client create-token "Williamstown SC"
 pnpm mday client list
 ```
 
-`client list` prints the roster, one line per subscription (`--json` for scripting):
+`client list` prints the roster, one line per followed club (`--json` for scripting):
 
 ```
-CLIENT ID         NAME             TOKENS  SUBSCRIPTION ID   LEAGUE
-cli_xxxxxxxxxxxx  Williamstown SC  1       sub_xxxxxxxxxxxx  Div 1 North
-                                           sub_yyyyyyyyyyyy  Div 2 South
+CLIENT ID         NAME             TOKENS  LAST API USE  FOLLOWED CLUB    WEBHOOK  SUBSCRIPTIONS
+cli_xxxxxxxxxxxx  Williamstown SC  1       2026-09-05    Williamstown SC  yes      2026: 2
 ```
 
-To undo either one, use the id from that table:
+`client list-tokens` breaks that down per token, so you can see which one a client actually calls
+with and retire the rest:
+
+```
+TOKEN ID          STATUS  ISSUED      AGE   LAST USED
+tok_xxxxxxxxxxxx  active  2026-01-14  235d  2026-09-05 (0d ago)
+tok_yyyyyyyyyyyy  unused  2026-08-20  17d   never
+```
+
+A token is `unused` when it has never authenticated a request, `idle` after 90 days of silence
+(safe to revoke), and flagged `renew` once it is over a year old. The API stamps last use at most
+once an hour per token, so the date lags live traffic by that much and no request pays for a write.
+
+To undo either one, use the id from those tables:
 
 ```sh
 pnpm mday client remove-subscription sub_xxxxxxxxxxxx

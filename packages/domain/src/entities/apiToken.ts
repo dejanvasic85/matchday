@@ -7,6 +7,7 @@ export const apiTokenSchema = z.object({
   clientId: z.string(),
   tokenHash: z.string(),
   revokedAt: z.date().nullable(),
+  lastUsedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

@@ -6,6 +6,7 @@ function makeValidApiToken() {
     clientId: "cli_abc123",
     tokenHash: "a".repeat(64),
     revokedAt: null,
+    lastUsedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -20,6 +21,12 @@ describe("apiTokenSchema", () => {
 
   it("accepts a revoked api token", () => {
     const result = apiTokenSchema.safeParse({ ...makeValidApiToken(), revokedAt: new Date() });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts an api token that has been used", () => {
+    const result = apiTokenSchema.safeParse({ ...makeValidApiToken(), lastUsedAt: new Date() });
 
     expect(result.success).toBe(true);
   });

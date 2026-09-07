@@ -6,6 +6,7 @@ function makeClient(overrides: Partial<ClientSummary> = {}): ClientSummary {
     id: "cli_willy00000",
     name: "Williamstown SC",
     activeTokenCount: 1,
+    lastApiUseAt: new Date("2026-09-01T04:00:00.000Z"),
     clubs: [
       {
         id: "ccl_one0000000",
@@ -100,6 +101,21 @@ describe("renderClientTable", () => {
 
     expect(withWebhook).toContain("yes");
     expect(withoutWebhook).not.toContain("yes");
+  });
+
+  it("dates the client's last API call, without a misleading time of day", () => {
+    const output = renderClientTable([makeClient()]);
+    const [, row] = output.split("\n");
+
+    expect(row).toContain("2026-09-01");
+    expect(row).not.toContain("04:00");
+  });
+
+  it("says so plainly when a client has never called the API", () => {
+    const output = renderClientTable([makeClient({ lastApiUseAt: null })]);
+    const [, row] = output.split("\n");
+
+    expect(row).toContain("never");
   });
 
   it("aligns columns across clients of differing name lengths", () => {

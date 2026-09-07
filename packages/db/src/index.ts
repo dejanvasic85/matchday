@@ -82,6 +82,8 @@ export {
   listApiTokens,
   listApiTokensByClientId,
   revokeApiToken,
+  touchApiTokenLastUsed,
+  type ApiTokenSummary,
 } from "#apiTokenDb.ts";
 export { pingDb } from "#healthDb.ts";
 export {

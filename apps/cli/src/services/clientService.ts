@@ -41,6 +41,9 @@ export type ClientSummary = {
   name: string;
   /** Tokens that can still authenticate — revoked ones are excluded from the count. */
   activeTokenCount: number;
+  /** When this client last called the API, across every token it has held — null if it never
+   * has. Run `client list-tokens` to see which token, and how stale each one is. */
+  lastApiUseAt: Date | null;
   clubs: ClientClubSummary[];
   subscriptions: ClientSubscriptionSummary[];
 };
@@ -56,6 +59,16 @@ function groupByClientId<T extends { clientId: string }>(rows: T[]): Map<string,
     existing.push(row);
   }
   return grouped;
+}
+
+function latestUse(tokens: { lastUsedAt: Date | null }[]): Date | null {
+  let latest: Date | null = null;
+  for (const token of tokens) {
+    if (token.lastUsedAt !== null && (latest === null || token.lastUsedAt > latest)) {
+      latest = token.lastUsedAt;
+    }
+  }
+  return latest;
 }
 
 export async function listClientSummaries(
@@ -92,6 +105,7 @@ export async function listClientSummaries(
       activeTokenCount: (tokensByClient.get(row.id) ?? []).filter(
         (token) => token.revokedAt === null,
       ).length,
+      lastApiUseAt: latestUse(tokensByClient.get(row.id) ?? []),
       clubs: (clubsByClient.get(row.id) ?? []).map((clientClub) => ({
         id: clientClub.id,
         clubId: clientClub.clubId,

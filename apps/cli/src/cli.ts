@@ -10,6 +10,7 @@ import {
   type SubscriptionId,
 } from "@matchday/domain";
 import { Command, InvalidArgumentError, Option } from "commander";
+import { renderApiTokenTable } from "#apiTokenTable.ts";
 import { renderClientTable } from "#clientTable.ts";
 import { renderSubscriptionTable, renderSyncPlan } from "#subscriptionTable.ts";
 import { renderClubLeagueTable } from "#clubLeagueTable.ts";
@@ -19,6 +20,7 @@ import { runCatalogJob } from "#jobs/crawls/catalog.ts";
 import { runCountCatalogLeaguesJob } from "#jobs/crawls/countCatalogLeagues.ts";
 import { runClubEnrichmentJob } from "#jobs/clubs/enrichClubs.ts";
 import { runListClubLeaguesJob } from "#jobs/clubs/listClubLeagues.ts";
+import { runListApiTokenUsageJob } from "#jobs/clients/apiTokenUsage.ts";
 import { runCreateApiTokenJob } from "#jobs/clients/createApiToken.ts";
 import { runCreateClientJob } from "#jobs/clients/createClient.ts";
 import { runCreateSubscriptionJob } from "#jobs/clients/createSubscription.ts";
@@ -368,6 +370,31 @@ export function createCli(): Command {
       process.stdout.write(`Token id: ${result.value.id}\n`);
       process.stdout.write(`Token: ${result.value.token}\n`);
       process.stdout.write("Store this token now — it will not be shown again.\n");
+    });
+
+  client
+    .command("list-tokens")
+    .description(
+      "List one client's tokens with when each was issued, when it last authenticated a " +
+        "request, and a status: unused (never called), idle (nothing for 90 days — safe to " +
+        "revoke), active, or revoked. A token past a year old is also flagged for renewal. " +
+        "Last use is stamped at most hourly, so it can lag live traffic by that much.",
+    )
+    .argument("<name>", "the client name")
+    .option("--json", "print the tokens as JSON instead of a table", false)
+    .action(async (name: string, options: { json: boolean }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runListApiTokenUsageJob({ config, clientName: name });
+      if (!result.ok) {
+        logger.error("apitoken.listfailed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+        return;
+      }
+      const output = options.json
+        ? JSON.stringify(result.value, null, 2)
+        : renderApiTokenTable(result.value);
+      process.stdout.write(`${output}\n`);
     });
 
   client
