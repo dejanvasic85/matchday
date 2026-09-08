@@ -56,7 +56,7 @@ jobs:
       # Pending changesets open/update a bot "Version Packages" PR instead of publishing directly;
       # merging it consumes the changesets, triggering the actual publish.
       - name: Create release PR or publish
-        uses: changesets/action@v2.1.1
+        uses: changesets/action@v2.1.2
         with:
           # Chains a `vp check --fix` after versioning — raw `changeset version` leaves
           # CHANGELOG.md in a style that fails `vp check` on the "Version Packages" PR.
