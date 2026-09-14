@@ -10,3 +10,17 @@ export const crawlerConfigValue = {
   viewport: { width: 1280, height: 720 },
   clearanceWaitMs: 3000,
 } as const;
+
+/** Bounded retry for mc-api calls (see browserFetch). Attempts include the first try; backoff
+ * doubles from `baseDelayMs`, caps at `maxDelayMs`, and is jittered. */
+export const fetchRetryConfigValue = {
+  maxAttempts: 3,
+  baseDelayMs: 500,
+  maxDelayMs: 4000,
+} as const;
+
+/** Dribl responses worth another attempt (see browserFetch); `serverErrorFloor` is a range start. */
+export const transientHttpStatusValue = {
+  tooManyRequests: 429,
+  serverErrorFloor: 500,
+} as const;

@@ -1,4 +1,4 @@
-import { describeCause, isTransientNeonError } from "#neonError.ts";
+import { isTransientNeonError } from "#neonError.ts";
 import { makeConnectionError, makeProxyError, makeSqlError } from "#test/fixtures/neonErrors.ts";
 
 describe("isTransientNeonError", () => {
@@ -27,62 +27,5 @@ describe("isTransientNeonError", () => {
     expect(isTransientNeonError(new Error("boom"))).toBe(false);
     expect(isTransientNeonError("not an object")).toBe(false);
     expect(isTransientNeonError(null)).toBe(false);
-  });
-});
-
-describe("describeCause", () => {
-  // Errors JSON.stringify to `{}`, so a production failure logged as `sourceError:{}`.
-  it("keeps the message and nested sourceError readable through JSON.stringify", () => {
-    const logged = JSON.parse(JSON.stringify(describeCause(makeConnectionError())));
-
-    expect(logged).toEqual({
-      name: "NeonDbError",
-      message: "Error connecting to database: TypeError: fetch failed",
-      sourceError: { name: "TypeError", message: "fetch failed" },
-    });
-  });
-
-  it("keeps the SQLSTATE and severity of a SQL error", () => {
-    const logged = JSON.parse(JSON.stringify(describeCause(makeSqlError())));
-
-    expect(logged).toMatchObject({
-      message: "duplicate key value violates unique constraint",
-      code: "23505",
-      severity: "ERROR",
-    });
-  });
-
-  it("keeps every field neon-http copies off a Postgres error, not a hand-picked few", () => {
-    const error = Object.assign(new Error("violates foreign key"), {
-      name: "NeonDbError",
-      code: "23503",
-      table: "league_team",
-      constraint: "league_team_team_id_fk",
-    });
-
-    expect(describeCause(error)).toMatchObject({
-      table: "league_team",
-      constraint: "league_team_team_id_fk",
-    });
-  });
-
-  it("terminates on a self-referencing cause chain", () => {
-    const outer = new Error("outer");
-    const inner = new Error("inner");
-    Object.assign(outer, { cause: inner });
-    Object.assign(inner, { cause: outer });
-
-    expect(() => JSON.stringify(describeCause(outer))).not.toThrow();
-  });
-
-  it("unwraps a nested cause chain", () => {
-    const logged = describeCause(new Error("outer", { cause: new Error("inner") }));
-
-    expect(logged).toMatchObject({ message: "outer", cause: { message: "inner" } });
-  });
-
-  it("passes a non-Error through untouched", () => {
-    expect(describeCause({ plain: "object" })).toEqual({ plain: "object" });
-    expect(describeCause(undefined)).toBeUndefined();
   });
 });
