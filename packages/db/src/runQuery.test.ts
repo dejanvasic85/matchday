@@ -3,12 +3,26 @@ import { retryConfigValue } from "#constants.ts";
 import { runQuery } from "#runQuery.ts";
 import { makeConnectionError, makeProxyError, makeSqlError } from "#test/fixtures/neonErrors.ts";
 
-// Which errors count as transient is neonError.test.ts's job; these cover the retry loop itself.
+// Backoff runs into the seconds, so timers are faked: start the call, drain every pending timer,
+// then await. Which errors count as transient is neonError.test.ts's job.
+async function runWithTimersDrained<T>(call: Promise<T>): Promise<T> {
+  await vi.runAllTimersAsync();
+  return call;
+}
+
 describe("runQuery", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("returns ok with the query result on success", async () => {
     const fn = vi.fn().mockResolvedValue([{ id: "row1" }]);
 
-    const result = await runQuery(fn, "should not fail");
+    const result = await runWithTimersDrained(runQuery(fn, "should not fail"));
 
     expect(result).toEqual(ok([{ id: "row1" }]));
     expect(fn).toHaveBeenCalledTimes(1);
@@ -20,7 +34,7 @@ describe("runQuery", () => {
       .mockRejectedValueOnce(makeConnectionError())
       .mockResolvedValueOnce([{ id: "row1" }]);
 
-    const result = await runQuery(fn, "transient then ok");
+    const result = await runWithTimersDrained(runQuery(fn, "transient then ok"));
 
     expect(result).toEqual(ok([{ id: "row1" }]));
     expect(fn).toHaveBeenCalledTimes(2);
@@ -29,16 +43,27 @@ describe("runQuery", () => {
   it("gives up after maxAttempts when the transient error persists", async () => {
     const fn = vi.fn().mockRejectedValue(makeProxyError(503));
 
-    const result = await runQuery(fn, "always transient");
+    const result = await runWithTimersDrained(runQuery(fn, "always transient"));
 
     expect(result.ok).toBe(false);
     expect(fn).toHaveBeenCalledTimes(retryConfigValue.maxAttempts);
   });
 
+  it("waits between attempts rather than retrying in a tight loop", async () => {
+    const fn = vi.fn().mockRejectedValue(makeProxyError(503));
+
+    const call = runQuery(fn, "always transient");
+    await vi.advanceTimersByTimeAsync(0);
+
+    // Without a backoff wait, every attempt would already have been spent by now.
+    expect(fn).toHaveBeenCalledTimes(1);
+    await runWithTimersDrained(call);
+  });
+
   it("fails immediately on a permanent error", async () => {
     const fn = vi.fn().mockRejectedValue(makeSqlError());
 
-    const result = await runQuery(fn, "sql error");
+    const result = await runWithTimersDrained(runQuery(fn, "sql error"));
 
     expect(result.ok).toBe(false);
     expect(fn).toHaveBeenCalledTimes(1);
@@ -47,7 +72,7 @@ describe("runQuery", () => {
   it("does not retry a non-neon error", async () => {
     const fn = vi.fn().mockRejectedValue(new Error("boom"));
 
-    const result = await runQuery(fn, "generic error");
+    const result = await runWithTimersDrained(runQuery(fn, "generic error"));
 
     expect(fn).toHaveBeenCalledTimes(1);
     expect(result).toEqual(serverError("generic error", { name: "Error", message: "boom" }));
@@ -56,7 +81,7 @@ describe("runQuery", () => {
   it("reports the last cause in a form that survives JSON logging", async () => {
     const fn = vi.fn().mockRejectedValue(makeConnectionError());
 
-    const result = await runQuery(fn, "connection failed");
+    const result = await runWithTimersDrained(runQuery(fn, "connection failed"));
 
     expect(result.ok).toBe(false);
     const logged = JSON.parse(JSON.stringify(result.ok ? null : result.error.cause));

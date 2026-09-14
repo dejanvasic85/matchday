@@ -39,13 +39,11 @@ export const transientHttpStatusValue = {
   serverErrorFloor: 500,
 } as const;
 
-/** How far to follow an error's `cause` chain when flattening it for a log line. Also what stops
- * a self-referencing chain from recursing forever. */
-export const maxCauseDepth = 5;
-
 /** Bounded retry for transient neon-http failures (see runQuery). Attempts include the first try;
- * backoff is `baseDelayMs * 2 ** (attempt - 1)`, so 3 attempts wait ~100ms then ~200ms. */
+ * backoff doubles from `baseDelayMs`, caps at `maxDelayMs`, and is jittered, so a worst-case run
+ * waits roughly 4-8s in total rather than failing the job. */
 export const retryConfigValue = {
-  maxAttempts: 3,
-  baseDelayMs: 100,
+  maxAttempts: 5,
+  baseDelayMs: 500,
+  maxDelayMs: 8000,
 } as const;

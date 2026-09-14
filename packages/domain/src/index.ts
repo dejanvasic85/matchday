@@ -19,6 +19,8 @@ export {
 export { parseEnv } from "#config.ts";
 export { generateApiToken, hashApiToken } from "#apiTokenHash.ts";
 export { generateWebhookSecret, signWebhookPayload } from "#webhookSignature.ts";
+export { describeCause } from "#errorCause.ts";
+export { backoffDelayMs, delay, type BackoffConfig } from "#retryBackoff.ts";
 export type { LogFields, Logger } from "#logger.ts";
 export { createConsoleLogger } from "#consoleLogger.ts";
 export {
