@@ -4,16 +4,25 @@
 import { ok, type Logger, type Result } from "@matchday/domain";
 import { createDbClient, listSubscribedLeagueIds } from "@matchday/db";
 import type { CliConfig } from "#config.ts";
+import { chunkLeagueIds } from "#services/leagueChunks.ts";
 
 export type RunSubscribedLeaguesJobInput = {
   logger: Logger;
   config: CliConfig;
+  /** Cap on matrix jobs. Without it the ids are listed ungrouped. */
+  maxChunks?: number;
+};
+
+export type SubscribedLeaguesSummary = {
+  leagueIds: string[];
+  /** One space-separated group per matrix job; empty unless `maxChunks` was given. */
+  chunks: string[];
 };
 
 export async function runSubscribedLeaguesJob(
   input: RunSubscribedLeaguesJobInput,
-): Promise<Result<string[]>> {
-  const { logger, config } = input;
+): Promise<Result<SubscribedLeaguesSummary>> {
+  const { logger, config, maxChunks } = input;
 
   const db = createDbClient(config.DATABASE_URL);
   const result = await listSubscribedLeagueIds(db);
@@ -21,9 +30,16 @@ export async function runSubscribedLeaguesJob(
     return result;
   }
 
+  const leagueIds = result.value;
+  const chunks =
+    maxChunks === undefined
+      ? []
+      : chunkLeagueIds(leagueIds, maxChunks).map((chunk) => chunk.join(" "));
+
   logger.info("subscribedleagues.result", "listed subscribed league ids", {
-    leagueIds: result.value,
-    count: result.value.length,
+    leagueIds,
+    count: leagueIds.length,
+    chunks,
   });
-  return ok(result.value);
+  return ok({ leagueIds, chunks });
 }

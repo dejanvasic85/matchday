@@ -22,6 +22,9 @@ env:
   R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
   R2_PUBLIC_ASSETS_URL: ${{ secrets.R2_PUBLIC_ASSETS_URL }}
   R2_RAW_BUCKET_NAME: ${{ secrets.R2_RAW_BUCKET_NAME }}
+  # Cap on matrix jobs. One job per league meant 42 of them, each paying ~60s of Vite+ and
+  # Chrome setup for ~140s of crawling, and all hitting Dribl and Neon at once.
+  MAX_CRAWL_JOBS: "8"
 
 jobs:
   setup:
@@ -30,7 +33,7 @@ jobs:
     environment: production
     timeout-minutes: 10
     outputs:
-      leagues: ${{ steps.leagues.outputs.leagues }}
+      chunks: ${{ steps.leagues.outputs.chunks }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -43,27 +46,33 @@ jobs:
       - name: Install dependencies
         run: vp install --frozen-lockfile
 
-      - name: List subscribed leagues
+      - name: List subscribed leagues and deal them into matrix chunks
         id: leagues
         run: |
-          output=$(vp run --filter @matchday/cli mday subscribed-leagues)
-          leagues=$(echo "$output" | grep -o '{.*}' | jq -c '.leagueIds')
-          echo "leagues=$leagues" >> "$GITHUB_OUTPUT"
-          echo "Subscribed leagues: $leagues"
+          output=$(vp run --filter @matchday/cli mday subscribed-leagues --max-chunks "$MAX_CRAWL_JOBS")
+          chunks=$(echo "$output" | grep -o '{.*}' | tail -1 | jq -c '.chunks')
+          # A parse failure must fail here, not silently produce an empty matrix that the crawl
+          # job's `if` guard reads as "nothing subscribed".
+          if [ -z "$chunks" ] || ! echo "$chunks" | jq -e 'type == "array"' > /dev/null; then
+            echo "::error::Failed to parse chunks from 'mday subscribed-leagues' output: $output"
+            exit 1
+          fi
+          echo "chunks=$chunks" >> "$GITHUB_OUTPUT"
+          echo "Matrix chunks (max $MAX_CRAWL_JOBS): $chunks"
 
   crawl-leagues:
     name: Crawl subscribed leagues
     needs: setup
-    if: needs.setup.outputs.leagues != '[]'
+    if: needs.setup.outputs.chunks != '[]'
     runs-on: ubuntu-latest
     environment: production
-    # Install Chrome's retry can itself take up to ~10 min worst case (see crawl-catalog.yml's
-    # setup job) on top of this job's own crawl work.
-    timeout-minutes: 40
+    # A chunk now crawls several leagues in a row, and job count is capped, so per-job work
+    # grows as leagues are added. Raise MAX_CRAWL_JOBS before this ceiling, not after.
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        league: ${{ fromJson(needs.setup.outputs.leagues) }}
+        leagues: ${{ fromJson(needs.setup.outputs.chunks) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -107,4 +116,9 @@ jobs:
           exit 1
 
       - name: Run league crawl
-        run: vp run --filter @matchday/cli mday crawl-leagues --league ${{ matrix.league }}
+        run: |
+          args=()
+          for league in ${{ matrix.leagues }}; do
+            args+=(--league "$league")
+          done
+          vp run --filter @matchday/cli mday crawl-leagues "${args[@]}"
