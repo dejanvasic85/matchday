@@ -24,7 +24,7 @@ env:
   R2_RAW_BUCKET_NAME: ${{ secrets.R2_RAW_BUCKET_NAME }}
   # Cap on matrix jobs. One job per league meant 42 of them, each paying ~60s of Vite+ and
   # Chrome setup for ~140s of crawling, and all hitting Dribl and Neon at once.
-  MAX_CRAWL_JOBS: "8"
+  MAX_CRAWL_JOBS: 12"
 
 jobs:
   setup:
