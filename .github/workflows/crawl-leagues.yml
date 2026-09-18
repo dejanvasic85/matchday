@@ -57,10 +57,12 @@ jobs:
             exit 1
           fi
           echo "chunks=$chunks" >> "$GITHUB_OUTPUT"
-          echo "Matrix chunks (max $MAX_CRAWL_JOBS): $chunks"
+          echo "Matrix chunks (max $MAX_CRAWL_JOBS):"
+          echo "$chunks" | jq -r '.[] | "  \(.label)  \(.leagues)"'
 
   crawl-leagues:
-    name: Crawl subscribed leagues
+    # Naming the job after the chunk's leagues made the run list unreadable.
+    name: Crawl leagues ${{ matrix.chunk.label }}
     needs: setup
     if: needs.setup.outputs.chunks != '[]'
     runs-on: ubuntu-latest
@@ -71,7 +73,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        leagues: ${{ fromJson(needs.setup.outputs.chunks) }}
+        chunk: ${{ fromJson(needs.setup.outputs.chunks) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -117,7 +119,7 @@ jobs:
       - name: Run league crawl
         run: |
           args=()
-          for league in ${{ matrix.leagues }}; do
+          for league in ${{ matrix.chunk.leagues }}; do
             args+=(--league "$league")
           done
           vp run --filter @matchday/cli mday crawl-leagues "${args[@]}"

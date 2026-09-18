@@ -4,7 +4,7 @@
 import { ok, type Logger, type Result } from "@matchday/domain";
 import { createDbClient, listSubscribedLeagueIds } from "@matchday/db";
 import type { CliConfig } from "#config.ts";
-import { chunkLeagueIds } from "#services/leagueChunks.ts";
+import { chunkLeagueIds, labelLeagueChunks, type LeagueChunk } from "#services/leagueChunks.ts";
 
 export type RunSubscribedLeaguesJobInput = {
   logger: Logger;
@@ -15,8 +15,8 @@ export type RunSubscribedLeaguesJobInput = {
 
 export type SubscribedLeaguesSummary = {
   leagueIds: string[];
-  /** One space-separated group per matrix job; empty unless `maxChunks` was given. */
-  chunks: string[];
+  /** One labelled group per matrix job; empty unless `maxChunks` was given. */
+  chunks: LeagueChunk[];
 };
 
 export async function runSubscribedLeaguesJob(
@@ -32,9 +32,7 @@ export async function runSubscribedLeaguesJob(
 
   const leagueIds = result.value;
   const chunks =
-    maxChunks === undefined
-      ? []
-      : chunkLeagueIds(leagueIds, maxChunks).map((chunk) => chunk.join(" "));
+    maxChunks === undefined ? [] : labelLeagueChunks(chunkLeagueIds(leagueIds, maxChunks));
 
   logger.info("subscribedleagues.result", "listed subscribed league ids", {
     leagueIds,
