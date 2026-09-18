@@ -66,6 +66,10 @@ function parseLeagueId(value: string): LeagueId {
   return leagueId;
 }
 
+function collectLeagueId(value: string, previous: LeagueId[] = []): LeagueId[] {
+  return [...previous, parseLeagueId(value)];
+}
+
 function parseApiTokenId(value: string): ApiTokenId {
   const id = parseId(value, "apiToken");
   if (id === undefined) {
@@ -184,12 +188,22 @@ export function createCli(): Command {
     .command("subscribed-leagues")
     .description(
       "List the distinct set of league ids with >=1 subscription, as JSON — the scope the " +
-        "crawl-leagues GitHub Actions matrix crawls each run.",
+        "crawl-leagues GitHub Actions matrix crawls each run. With --max-chunks, also deals " +
+        "them into that many space-separated groups, one per matrix job.",
     )
-    .action(async () => {
+    .option(
+      "--max-chunks <n>",
+      "cap the league ids into at most n groups, one per crawl-leagues matrix job",
+      parsePositiveInt,
+    )
+    .action(async (options: { maxChunks?: number }) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
-      const result = await runSubscribedLeaguesJob({ logger, config });
+      const result = await runSubscribedLeaguesJob({
+        logger,
+        config,
+        maxChunks: options.maxChunks,
+      });
       if (!result.ok) {
         logger.error("subscribedleagues.failed", result.error.message, {
           cause: result.error.cause,
@@ -201,8 +215,10 @@ export function createCli(): Command {
   program
     .command("crawl-leagues")
     .description(
-      "Crawl fixtures + table for one subscribed league, discovering clubs/teams and persisting " +
-        "via entity resolution. Expensive; run at a cadence derived from fixture dates.",
+      "Crawl fixtures + table for one or more subscribed leagues, discovering clubs/teams and " +
+        "persisting via entity resolution. Leagues given together share one browser session and " +
+        "are crawled in order; one failing league does not stop the rest, but does fail the " +
+        "command. Expensive; run at a cadence derived from fixture dates.",
     )
     .option(
       "--source <name>",
@@ -210,20 +226,24 @@ export function createCli(): Command {
       parseCrawlSource,
       crawlSourceValue.dribl,
     )
-    .requiredOption("--league <lea_id>", "the league id to crawl", parseLeagueId)
+    .requiredOption(
+      "--league <lea_id>",
+      "a league id to crawl; repeat the flag to crawl several in one browser session",
+      collectLeagueId,
+    )
     .option(
       "--dry-run",
       "crawl and stage to R2, logging a summary, without writing to the database",
       false,
     )
-    .action(async (options: { source: CrawlSource; league: LeagueId; dryRun: boolean }) => {
+    .action(async (options: { source: CrawlSource; league: LeagueId[]; dryRun: boolean }) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
       const result = await runCrawlLeaguesJob({
         logger,
         config,
         source: options.source,
-        leagueId: options.league,
+        leagueIds: options.league,
         dryRun: options.dryRun,
       });
       if (!result.ok) {
