@@ -51,8 +51,7 @@ jobs:
         run: |
           output=$(vp run --filter @matchday/cli mday subscribed-leagues --max-chunks "$MAX_CRAWL_JOBS")
           chunks=$(echo "$output" | grep -o '{.*}' | tail -1 | jq -c '.chunks')
-          # A parse failure must fail here, not silently produce an empty matrix that the crawl
-          # job's `if` guard reads as "nothing subscribed".
+          # Fail here with the output quoted, rather than downstream inside fromJson.
           if [ -z "$chunks" ] || ! echo "$chunks" | jq -e 'type == "array"' > /dev/null; then
             echo "::error::Failed to parse chunks from 'mday subscribed-leagues' output: $output"
             exit 1
