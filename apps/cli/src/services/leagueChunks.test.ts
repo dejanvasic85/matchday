@@ -1,4 +1,4 @@
-import { chunkLeagueIds } from "#services/leagueChunks.ts";
+import { chunkLeagueIds, labelLeagueChunks } from "#services/leagueChunks.ts";
 
 describe("chunkLeagueIds", () => {
   it("deals leagues round-robin so neighbours land on different jobs", () => {
@@ -42,5 +42,18 @@ describe("chunkLeagueIds", () => {
 
   it("returns nothing to run when no league is subscribed", () => {
     expect(chunkLeagueIds([], 8)).toEqual([]);
+  });
+});
+
+describe("labelLeagueChunks", () => {
+  it("labels each chunk with its place in the run", () => {
+    expect(labelLeagueChunks([["a", "b"], ["c"]])).toEqual([
+      { label: "1/2", leagues: "a b" },
+      { label: "2/2", leagues: "c" },
+    ]);
+  });
+
+  it("returns nothing when there are no chunks", () => {
+    expect(labelLeagueChunks([])).toEqual([]);
   });
 });

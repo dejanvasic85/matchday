@@ -16,3 +16,16 @@ export function chunkLeagueIds(leagueIds: string[], maxChunks: number): string[]
   });
   return chunks;
 }
+
+export type LeagueChunk = {
+  /** Short "1/8" label — the matrix job name, so the run list stays readable. */
+  label: string;
+  leagues: string;
+};
+
+export function labelLeagueChunks(chunks: string[][]): LeagueChunk[] {
+  return chunks.map((chunk, index) => ({
+    label: `${index + 1}/${chunks.length}`,
+    leagues: chunk.join(" "),
+  }));
+}
