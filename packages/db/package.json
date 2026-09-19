@@ -28,6 +28,6 @@
     "@types/node": "catalog:",
     "drizzle-kit": "catalog:",
     "typescript": "catalog:",
-    "vite-plus": "0.3.2"
+    "vite-plus": "0.3.3"
   }
 }
