@@ -40,9 +40,25 @@ describe("listAllClubs", () => {
   it("honours a caller's limit over the default", async () => {
     const { client, urls } = makeClient([{ data: [], nextCursor: null }]);
 
-    await listAllClubs(client, { limit: 50 });
+    await listAllClubs(client, {}, { limit: 50 });
 
     expect(urls[0]).toContain("limit=50");
+  });
+
+  it("searches by name server-side rather than walking the whole catalog", async () => {
+    const { client, urls } = makeClient([{ data: [], nextCursor: null }]);
+
+    await listAllClubs(client, { name: "Williamstown" });
+
+    expect(urls[0]).toContain("name=Williamstown");
+  });
+
+  it("requests the unfiltered catalog when given no filter", async () => {
+    const { client, urls } = makeClient([{ data: [], nextCursor: null }]);
+
+    await listAllClubs(client);
+
+    expect(urls[0]).not.toContain("name=");
   });
 });
 

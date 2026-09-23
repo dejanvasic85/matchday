@@ -18,7 +18,7 @@ export type CompetitionServiceDeps = {
  * layer should reach into @matchday/db (AGENTS.md: routes are glue, services own the logic). */
 export function createCompetitionServiceDeps(db: Db): CompetitionServiceDeps {
   return {
-    listCompetitions: () => listCompetitions(db),
+    listCompetitions: (page) => listCompetitions(db, page),
     getCompetitionById: (id) => getCompetitionById(db, id),
   };
 }

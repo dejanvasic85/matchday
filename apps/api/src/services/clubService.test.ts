@@ -1,5 +1,19 @@
+import { createDbClient, listClubs } from "@matchday/db";
 import { notFound, ok, serverError } from "@matchday/domain";
-import { getClub, listAllClubs, type ClubServiceDeps } from "#services/clubService.ts";
+import {
+  createClubServiceDeps,
+  getClub,
+  listAllClubs,
+  type ClubServiceDeps,
+} from "#services/clubService.ts";
+
+vi.mock("@matchday/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@matchday/db")>()),
+  listClubs: vi.fn(),
+}));
+
+// Never queried: the data-access function it would reach is mocked above.
+const db = createDbClient("postgres://user:pass@localhost:5432/db");
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 
@@ -45,13 +59,14 @@ describe("listAllClubs", () => {
     );
   });
 
-  it("passes limit and cursor through to data access", async () => {
+  it("passes the name filter, limit and cursor through to data access", async () => {
     const deps = makeDeps();
+    const filter = { name: "williamstown" };
     const page = { limit: 25, cursor: "Y2xiX2FiYzEyMw" };
 
-    await listAllClubs(deps, page);
+    await listAllClubs(deps, filter, page);
 
-    expect(deps.listClubs).toHaveBeenCalledWith(page);
+    expect(deps.listClubs).toHaveBeenCalledWith(filter, page);
   });
 
   it("surfaces nextCursor so a caller knows another page exists", async () => {
@@ -94,6 +109,17 @@ describe("listAllClubs", () => {
     const result = await listAllClubs(deps);
 
     expect(result).toEqual(listError);
+  });
+});
+
+describe("createClubServiceDeps", () => {
+  it("forwards the name filter and page to the real listClubs", async () => {
+    const filter = { name: "williamstown" };
+    const page = { limit: 25, cursor: "Y2xiX2FiYzEyMw" };
+
+    await createClubServiceDeps(db).listClubs(filter, page);
+
+    expect(vi.mocked(listClubs)).toHaveBeenCalledWith(db, filter, page);
   });
 });
 

@@ -1,7 +1,7 @@
 // Club routes: thin transport glue (AGENTS.md) — OpenAPI validates the path param, the
 // service maps data-access results to the wire shape, this just picks the HTTP status.
 
-import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { ApiBindings } from "#config.ts";
 import type { DbVariables } from "#middleware/dbClient.ts";
 import { jsonResult } from "#resultResponse.ts";
@@ -17,8 +17,21 @@ const listClubsRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["Clubs"],
-  summary: "List clubs, newest page first",
-  request: { query: pagingQuerySchema },
+  summary: "List clubs, optionally filtered by name",
+  request: {
+    query: pagingQuerySchema.extend({
+      name: z
+        .string()
+        .trim()
+        .min(1)
+        .optional()
+        .openapi({
+          param: { name: "name", in: "query" },
+          example: "Williamstown",
+          description: "Clubs whose name contains this text, ignoring case.",
+        }),
+    }),
+  },
   responses: {
     200: {
       description: "A page of clubs; follow `nextCursor` until it is null",
@@ -29,7 +42,11 @@ const listClubsRoute = createRoute({
 });
 
 clubRoute.openapi(listClubsRoute, async (c) => {
-  const result = await listAllClubs(createClubServiceDeps(c.get("db")), c.req.valid("query"));
+  const { limit, cursor, ...filter } = c.req.valid("query");
+  const result = await listAllClubs(createClubServiceDeps(c.get("db")), filter, {
+    limit,
+    cursor,
+  });
   return jsonResult(c, result, "api.club.list.failed");
 });
 

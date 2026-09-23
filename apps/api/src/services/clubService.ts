@@ -3,7 +3,13 @@
 
 import { requireFound, type Club, type Result } from "@matchday/domain";
 import { mapPage, type PagedResponse } from "#services/pagedResponse.ts";
-import { getClubById, listClubs, type Db, type PageRequest } from "@matchday/db";
+import {
+  getClubById,
+  listClubs,
+  type Db,
+  type ListClubsFilter,
+  type PageRequest,
+} from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
@@ -18,7 +24,7 @@ export type ClubServiceDeps = {
  * layer should reach into @matchday/db (AGENTS.md: routes are glue, services own the logic). */
 export function createClubServiceDeps(db: Db): ClubServiceDeps {
   return {
-    listClubs: () => listClubs(db),
+    listClubs: (filter, page) => listClubs(db, filter, page),
     getClubById: (id) => getClubById(db, id),
   };
 }
@@ -65,9 +71,10 @@ function mapToClubResponse(club: Club): ClubResponse {
 
 export async function listAllClubs(
   deps: Pick<ClubServiceDeps, "listClubs">,
+  filter?: ListClubsFilter,
   page?: PageRequest,
 ): Promise<Result<PagedResponse<ClubResponse>>> {
-  return mapPage(await deps.listClubs(page), mapToClubResponse);
+  return mapPage(await deps.listClubs(filter, page), mapToClubResponse);
 }
 
 export async function getClub(
