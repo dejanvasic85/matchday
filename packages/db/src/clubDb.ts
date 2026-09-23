@@ -5,6 +5,7 @@ import { ok, type Result } from "@matchday/domain";
 import { and, asc, eq, gt, ilike, sql } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { externalRefEntityTypeValue } from "#constants.ts";
+import { escapeLikePattern } from "#likePattern.ts";
 import { decodeCursor, resolveLimit, toPage, type Page, type PageRequest } from "#paging.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
 import { club, externalRef } from "#schema.ts";
@@ -12,20 +13,32 @@ import { club, externalRef } from "#schema.ts";
 type Club = typeof club.$inferSelect;
 type ClubInsert = typeof club.$inferInsert;
 
-/** Keyset-paged on `id`: ordered by primary key, seeking past the cursor. */
-export async function listClubs(db: Db, page: PageRequest = {}): Promise<Result<Page<Club>>> {
+export type ListClubsFilter = { name?: string };
+
+/** Keyset-paged on `id`: ordered by primary key, seeking past the cursor. `name` narrows to clubs
+ * whose name contains it, ignoring case. */
+export async function listClubs(
+  db: Db,
+  filter: ListClubsFilter = {},
+  page: PageRequest = {},
+): Promise<Result<Page<Club>>> {
   const limit = resolveLimit(page.limit);
   const after = page.cursor === undefined ? undefined : decodeCursor(page.cursor);
   if (after !== undefined && !after.ok) {
     return after;
   }
 
+  const conditions = [
+    filter.name !== undefined ? ilike(club.name, `%${escapeLikePattern(filter.name)}%`) : undefined,
+    after !== undefined ? gt(club.id, after.value) : undefined,
+  ].filter((condition) => condition !== undefined);
+
   const result = await runQuery(
     () =>
       db
         .select()
         .from(club)
-        .where(after === undefined ? undefined : gt(club.id, after.value))
+        .where(conditions.length === 0 ? undefined : and(...conditions))
         .orderBy(asc(club.id))
         .limit(limit + 1),
     "Failed to list clubs",

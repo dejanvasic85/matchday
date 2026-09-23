@@ -1,9 +1,19 @@
+import { createDbClient, listCompetitions } from "@matchday/db";
 import { notFound, ok, serverError } from "@matchday/domain";
 import {
+  createCompetitionServiceDeps,
   getCompetition,
   listAllCompetitions,
   type CompetitionServiceDeps,
 } from "#services/competitionService.ts";
+
+vi.mock("@matchday/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@matchday/db")>()),
+  listCompetitions: vi.fn(),
+}));
+
+// Never queried: the data-access function it would reach is mocked above.
+const db = createDbClient("postgres://user:pass@localhost:5432/db");
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 
@@ -67,6 +77,16 @@ describe("listAllCompetitions", () => {
     const result = await listAllCompetitions(deps);
 
     expect(result).toEqual(listError);
+  });
+});
+
+describe("createCompetitionServiceDeps", () => {
+  it("forwards the page to the real listCompetitions", async () => {
+    const page = { limit: 25, cursor: "Y21wX2FiYzEyMw" };
+
+    await createCompetitionServiceDeps(db).listCompetitions(page);
+
+    expect(vi.mocked(listCompetitions)).toHaveBeenCalledWith(db, page);
   });
 });
 

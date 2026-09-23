@@ -23,6 +23,7 @@ export {
   upsertClub,
   updateClubEnrichmentFields,
   type ClubEnrichmentFields,
+  type ListClubsFilter,
 } from "#clubDb.ts";
 export {
   listTeams,

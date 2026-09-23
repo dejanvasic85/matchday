@@ -18,7 +18,7 @@ export type SeasonServiceDeps = {
  * layer should reach into @matchday/db (AGENTS.md: routes are glue, services own the logic). */
 export function createSeasonServiceDeps(db: Db): SeasonServiceDeps {
   return {
-    listSeasons: () => listSeasons(db),
+    listSeasons: (page) => listSeasons(db, page),
     getSeasonById: (id) => getSeasonById(db, id),
   };
 }
