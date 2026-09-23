@@ -89,19 +89,20 @@ if (clubs.ok) {
 }
 
 // Filters are applied server-side — always prefer one over walking a full catalog
+const williamstown = await listAllClubs(client, { name: "Williamstown" });
 const teams = await listAllTeams(client, { clubId: "clb_V1StGXR8Z5" });
 const leagues = await listAllLeagues(client, { seasonId: "sea_V1StGXR8Z5" });
 ```
 
 | Function                            | Returns                                             |
 | ----------------------------------- | --------------------------------------------------- |
-| `listAllClubs(client)`              | every club                                          |
+| `listAllClubs(client, { name? })`   | every club, optionally those whose name contains it |
 | `listAllTeams(client, { clubId? })` | every team, optionally scoped to one club           |
 | `listAllCompetitions(client)`       | every competition                                   |
 | `listAllSeasons(client)`            | every season                                        |
 | `listAllLeagues(client, filter)`    | every league by `competitionId`/`seasonId`/`clubId` |
 
-Each helper takes an optional third argument, `{ signal, limit, maxPages }`. `limit` defaults to
+Each helper takes an optional last argument, `{ signal, limit, maxPages }`. `limit` defaults to
 500, the server's maximum, so a walk costs the fewest round trips. `maxPages` defaults to 100, and
 past that you get an `err` Result rather than an endless loop. If any page fails, you get that
 failure back — never a partial list that looks complete.

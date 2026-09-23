@@ -16,13 +16,17 @@ type Team = components["schemas"]["Team"];
 /** Server-side filters for `GET /teams`, minus the paging params `PagingInit` already covers. */
 export type TeamFilter = Pick<NonNullable<paths["/teams"]["get"]["parameters"]["query"]>, "clubId">;
 
-/** Every club, ~1200 rows. */
+/** Server-side filters for `GET /clubs`, minus the paging params `PagingInit` already covers. */
+export type ClubFilter = Pick<NonNullable<paths["/clubs"]["get"]["parameters"]["query"]>, "name">;
+
+/** Every club, optionally only those whose name contains `name`. Unfiltered this is ~1200 rows. */
 export async function listAllClubs(
   client: MatchdayClient,
+  filter: ClubFilter = {},
   init: PagingInit = {},
 ): Promise<Result<Club[]>> {
   return fetchAllPages<Club>(
-    (query, signal) => client.GET("/clubs", { params: { query }, signal }),
+    (query, signal) => client.GET("/clubs", { params: { query: { ...filter, ...query } }, signal }),
     init,
   );
 }

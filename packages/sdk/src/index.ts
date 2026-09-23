@@ -34,6 +34,7 @@ export {
   listAllCompetitions,
   listAllSeasons,
   listAllTeams,
+  type ClubFilter,
   type TeamFilter,
 } from "#catalogTasks.ts";
 
