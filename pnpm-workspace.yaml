@@ -9,7 +9,7 @@ catalog:
   "@cloudflare/workers-types": 5.20260922.1
   "@hono/zod-openapi": 1.6.3
   "@neondatabase/serverless": 1.1.0
-  "@sentry/cloudflare": 10.75.2
+  "@sentry/cloudflare": 11.0.0
   "@sentry/hono": 10.75.2
   "@types/node": ^26.0.0
   aws4fetch: 1.0.20
