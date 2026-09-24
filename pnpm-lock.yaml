@@ -165,8 +165,8 @@ settings:
 catalogs:
   default:
     '@cloudflare/workers-types':
-      specifier: 5.20260922.1
-      version: 5.20260922.1
+      specifier: 5.20260923.1
+      version: 5.20260923.1
     '@hono/zod-openapi':
       specifier: 1.6.3
       version: 1.6.3
@@ -174,11 +174,11 @@ catalogs:
       specifier: 1.1.0
       version: 1.1.0
     '@sentry/cloudflare':
-      specifier: 10.75.2
-      version: 10.75.2
+      specifier: 10.75.3
+      version: 10.75.3
     '@sentry/hono':
-      specifier: 10.75.2
-      version: 10.75.2
+      specifier: 10.75.3
+      version: 10.75.3
     '@types/node':
       specifier: ^26.0.0
       version: 26.6.2
@@ -210,8 +210,8 @@ catalogs:
       specifier: 6.0.3
       version: 6.0.3
     wrangler:
-      specifier: 4.136.3
-      version: 4.136.3
+      specifier: 4.137.0
+      version: 4.137.0
     zod:
       specifier: 4.6.5
       version: 4.6.5
@@ -258,10 +258,10 @@ importers:
         version: link:../../packages/domain
       '@sentry/cloudflare':
         specifier: 'catalog:'
-        version: 10.75.2(@cloudflare/workers-types@5.20260922.1)(wrangler@4.136.3(@cloudflare/workers-types@5.20260922.1)(@types/node@26.6.2))
+        version: 10.75.3(@cloudflare/workers-types@5.20260923.1)(wrangler@4.137.0(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2))
       '@sentry/hono':
         specifier: 'catalog:'
-        version: 10.75.2(@cloudflare/workers-types@5.20260922.1)(@sentry/cloudflare@10.75.2(@cloudflare/workers-types@5.20260922.1)(wrangler@4.136.3(@cloudflare/workers-types@5.20260922.1)(@types/node@26.6.2)))(hono@4.13.8)
+        version: 10.75.3(@cloudflare/workers-types@5.20260923.1)(@sentry/cloudflare@10.75.3(@cloudflare/workers-types@5.20260923.1)(wrangler@4.137.0(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2)))(hono@4.13.8)
       hono:
         specifier: 'catalog:'
         version: 4.13.8
@@ -271,7 +271,7 @@ importers:
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 'catalog:'
-        version: 5.20260922.1
+        version: 5.20260923.1
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.2
@@ -283,7 +283,7 @@ importers:
         version: 0.3.3(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(@vitest/coverage-v8@5.0.1)(esbuild@0.28.2)(tsx@4.23.13)(typescript@6.0.3)(yaml@2.9.0)
       wrangler:
         specifier: 'catalog:'
-        version: 4.136.3(@cloudflare/workers-types@5.20260922.1)(@types/node@26.6.2)
+        version: 4.137.0(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2)
 
   apps/cli:
     dependencies:
@@ -327,7 +327,7 @@ importers:
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 'catalog:'
-        version: 5.20260922.1
+        version: 5.20260923.1
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.2
@@ -339,7 +339,7 @@ importers:
         version: 0.3.3(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(@vitest/coverage-v8@5.0.1)(esbuild@0.28.2)(tsx@4.23.13)(typescript@6.0.3)(yaml@2.9.0)
       wrangler:
         specifier: 'catalog:'
-        version: 4.136.3(@cloudflare/workers-types@5.20260922.1)(@types/node@26.6.2)
+        version: 4.137.0(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2)
 
   packages/db:
     dependencies:
@@ -564,8 +564,8 @@ packages:
   '@cloudflare/workers-types@5.20260908.1':
     resolution: {integrity: sha512-cILmYEd/YtL+Hlwytc5n+QVV8F+E5doQOtc6QiBtPb51kK+5fkk909db+G8dxeUsMd2ytJgdpAt/lyciUEobcw==}
 
-  '@cloudflare/workers-types@5.20260922.1':
-    resolution: {integrity: sha512-zZVBBFJan5Kw+flEgSHqqCZ0LvHPv5LvfP2igmQiLvZ4fFQYsI4epN9cGiCQqaCyhCzQuqWEyK1Lamzm3QJAmw==}
+  '@cloudflare/workers-types@5.20260923.1':
+    resolution: {integrity: sha512-zuOqyxfhzhN2LlxxcpnAS79aGVm9ku3ZcWKyvVLHyjPV6oHsuHSFidzSHhHE9ho9UTcUxU1IdtpdVuFXluKB+g==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -1744,8 +1744,8 @@ packages:
     resolution: {integrity: sha512-ypeBZ/6BKXR9+7/TtbKhbl4UgD7raHhPS12oknlKno2A8+lnFkxIwiE/Aklu6L2cd/ioH+fCWuMxi9/p3EyAPw==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
-  '@sentry/cloudflare@10.75.2':
-    resolution: {integrity: sha512-gazwTJHVkEElApAsjjtkaNI2cNsrjQgSwf8vb+vLAxfGN2/2tSRZRUwrjK765pM8hE+opLzvjXr6Z+CZfmrGpA==}
+  '@sentry/cloudflare@10.75.3':
+    resolution: {integrity: sha512-3FIokLHRTkP7g23gW6kyoshkrdVA740J016wsUhUQxL8blWVB4kRT9QmfIXHlKxgztQk8o17p82Nnjt5013i+A==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cloudflare/workers-types': ^4.x || ^5.x
@@ -1760,20 +1760,20 @@ packages:
     resolution: {integrity: sha512-fO9PLmHdVURcSPUpWCItWAtgKiMwGdJHbovoSEyLplX5sxs2ugvI4CBPTrkkgqhObnZOD0CnWBKDzSVQYBKEyQ==}
     engines: {node: '>=14'}
 
-  '@sentry/core@10.75.2':
-    resolution: {integrity: sha512-KXzNf2c430cJIOMv84+MKpkXgave1DBNMNNwn073olVD773NME5IhDv/9VQyiFM2wIU+6bm4FEBVEVSuzqgjJw==}
+  '@sentry/core@10.75.3':
+    resolution: {integrity: sha512-QHgzobetM4UgEVbyqx9WPJzRq0YzyNg2CeeoM1Bf84ivYJXXiiVWxjzc0RHk3c0DHY5/6O6nJqos1xVL55dgZA==}
     engines: {node: '>=18'}
 
-  '@sentry/hono@10.75.2':
-    resolution: {integrity: sha512-97L1yJJEBNSRj8OpitU535eV/ktWmKQMNQi5VO82kMEoefdRTfw/3Izytk2z91WJvmLbn5oymFqdzy6KtxoSgg==}
+  '@sentry/hono@10.75.3':
+    resolution: {integrity: sha512-c7R8sLLbhKBqtLhCcl2Ts5mYNri873hROBPYsFuDnFciplGN2hqkI1WlMTiibpS0mCR6vEt9pe6TO9E4OdZMIg==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cloudflare/workers-types': ^4.x || ^5.x
       '@hono/node-server': ^1.x || ^2.x
-      '@sentry/bun': 10.75.2
-      '@sentry/cloudflare': 10.75.2
-      '@sentry/deno': 10.75.2
-      '@sentry/node': 10.75.2
+      '@sentry/bun': 10.75.3
+      '@sentry/cloudflare': 10.75.3
+      '@sentry/deno': 10.75.3
+      '@sentry/node': 10.75.3
       hono: ^4.x
     peerDependenciesMeta:
       '@cloudflare/workers-types':
@@ -1789,8 +1789,8 @@ packages:
       '@sentry/node':
         optional: true
 
-  '@sentry/server-utils@10.75.2':
-    resolution: {integrity: sha512-ep8Ntj/vsLHbql1jUMFiRYrleuQ3dENb8oD4Nkjv7hou2j0UKLct1eLbx+TckeVOhYdWmFeO7WJWjRio/a4TOg==}
+  '@sentry/server-utils@10.75.3':
+    resolution: {integrity: sha512-PG3a+3GxurYYipLykRM3qezWjkIBYuqBjn8EuXzzlG6mpucMVtU8SRgr3EB0wdVaj1Pz+mhz+MLh8CGnLfKhCQ==}
     engines: {node: '>=18'}
 
   '@sindresorhus/is@7.2.0':
@@ -3124,8 +3124,8 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  wrangler@4.136.3:
-    resolution: {integrity: sha512-L1bS8BI9xoEk3RRr5XoZn5q5k1jCRo8+37ZEEab/jsUFzE1Ea2sIBAbmP1CdwSeD6mZYmnUtR6xpi9esHIl6GA==}
+  wrangler@4.137.0:
+    resolution: {integrity: sha512-vq2JmxkvwOjnsMUejQwd89/EK6u1d20OMlGUVVmb55gVi2zSBKp2rvmxUiPqrSEntK8NwzpTF3DQ/S2I9/TLsg==}
     engines: {node: '>=22.0.0'}
     hasBin: true
     peerDependencies:
@@ -3362,7 +3362,7 @@ snapshots:
   '@cloudflare/workers-types@5.20260908.1':
     optional: true
 
-  '@cloudflare/workers-types@5.20260922.1': {}
+  '@cloudflare/workers-types@5.20260923.1': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
@@ -4038,36 +4038,36 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sentry/cloudflare@10.75.2(@cloudflare/workers-types@5.20260922.1)(wrangler@4.136.3(@cloudflare/workers-types@5.20260922.1)(@types/node@26.6.2))':
+  '@sentry/cloudflare@10.75.3(@cloudflare/workers-types@5.20260923.1)(wrangler@4.137.0(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2))':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@sentry/core': 10.75.2
-      '@sentry/server-utils': 10.75.2
+      '@sentry/core': 10.75.3
+      '@sentry/server-utils': 10.75.3
       magic-string: 0.30.21
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260922.1
-      wrangler: 4.136.3(@cloudflare/workers-types@5.20260922.1)(@types/node@26.6.2)
+      '@cloudflare/workers-types': 5.20260923.1
+      wrangler: 4.137.0(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2)
 
   '@sentry/conventions@0.16.0': {}
 
-  '@sentry/core@10.75.2':
+  '@sentry/core@10.75.3':
     dependencies:
       '@sentry/conventions': 0.16.0
 
-  '@sentry/hono@10.75.2(@cloudflare/workers-types@5.20260922.1)(@sentry/cloudflare@10.75.2(@cloudflare/workers-types@5.20260922.1)(wrangler@4.136.3(@cloudflare/workers-types@5.20260922.1)(@types/node@26.6.2)))(hono@4.13.8)':
+  '@sentry/hono@10.75.3(@cloudflare/workers-types@5.20260923.1)(@sentry/cloudflare@10.75.3(@cloudflare/workers-types@5.20260923.1)(wrangler@4.137.0(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2)))(hono@4.13.8)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@sentry/conventions': 0.16.0
-      '@sentry/core': 10.75.2
+      '@sentry/core': 10.75.3
       hono: 4.13.8
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260922.1
-      '@sentry/cloudflare': 10.75.2(@cloudflare/workers-types@5.20260922.1)(wrangler@4.136.3(@cloudflare/workers-types@5.20260922.1)(@types/node@26.6.2))
+      '@cloudflare/workers-types': 5.20260923.1
+      '@sentry/cloudflare': 10.75.3(@cloudflare/workers-types@5.20260923.1)(wrangler@4.137.0(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2))
 
-  '@sentry/server-utils@10.75.2':
+  '@sentry/server-utils@10.75.3':
     dependencies:
       '@sentry/conventions': 0.16.0
-      '@sentry/core': 10.75.2
+      '@sentry/core': 10.75.3
 
   '@sindresorhus/is@7.2.0': {}
 
@@ -5255,7 +5255,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260921.1
       '@cloudflare/workerd-windows-64': 1.20260921.1
 
-  wrangler@4.136.3(@cloudflare/workers-types@5.20260922.1)(@types/node@26.6.2):
+  wrangler@4.137.0(@cloudflare/workers-types@5.20260923.1)(@types/node@26.6.2):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20260921.1)
@@ -5266,7 +5266,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       workerd: 1.20260921.1
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260922.1
+      '@cloudflare/workers-types': 5.20260923.1
       fsevents: 2.3.3
     transitivePeerDependencies:
       - '@types/node'
