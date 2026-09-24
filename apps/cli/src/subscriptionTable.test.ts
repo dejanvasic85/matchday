@@ -10,6 +10,7 @@ function makeSubscription(overrides: Partial<SubscriptionWithLeague> = {}): Subs
     leagueName: "Div 1 North",
     seasonId: "sea_2026000000",
     seasonName: "2026",
+    seasonEndsOn: "2026-09-30",
     ...overrides,
   };
 }
@@ -17,7 +18,7 @@ function makeSubscription(overrides: Partial<SubscriptionWithLeague> = {}): Subs
 function makePlan(overrides: Partial<SubscriptionSyncPlan> = {}): SubscriptionSyncPlan {
   return {
     client: "Williamstown SC",
-    season: { id: "sea_2026000000", name: "2026" },
+    seasonId: null,
     clubs: ["Williamstown SC"],
     additions: [],
     removals: [],

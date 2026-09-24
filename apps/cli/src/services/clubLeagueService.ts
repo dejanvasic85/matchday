@@ -1,7 +1,7 @@
 // Club -> league resolution: listLeaguesByClubId returns one row per (team, league) pair,
 // undeduplicated; dedup is a business rule so it lives here, not in a SQL DISTINCT.
 
-import { ok, type Result } from "@matchday/domain";
+import { ok, type IsoDate, type Result } from "@matchday/domain";
 import type { listLeaguesByClubId } from "@matchday/db";
 import { resolveClub, type ClubResolverDeps, type ResolvedClub } from "#services/clubResolver.ts";
 
@@ -16,6 +16,9 @@ export type ClubLeagueServiceDeps = ClubResolverDeps & {
 export type LeagueSummary = {
   id: string;
   name: string;
+  /** The league's season end date, nullable. Carried so a caller deciding whether to *subscribe*
+   * can skip a finished season without a second lookup. */
+  seasonEndsOn?: IsoDate | null;
 };
 
 export type ClubLeagues = {

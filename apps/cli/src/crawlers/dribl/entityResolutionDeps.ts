@@ -9,6 +9,7 @@ import {
   findExternalRefByInternalId,
   getClubById,
   getLeagueById,
+  getSeasonById,
   getTeamById,
   updateClubEnrichmentFields,
   upsertClub,
@@ -45,6 +46,7 @@ export type EntityResolutionDeps = {
   findExternalRefByInternalId: WithoutDb<typeof findExternalRefByInternalId>;
   upsertExternalRef: WithoutDb<typeof upsertExternalRef>;
   getLeagueById: WithoutDb<typeof getLeagueById>;
+  getSeasonById: WithoutDb<typeof getSeasonById>;
 };
 
 /** Binds `db` into every @matchday/db query function this module's resolvers need. */
@@ -71,5 +73,6 @@ export function createEntityResolutionDeps(
       findExternalRefByInternalId(db, entityType, internalId, source),
     upsertExternalRef: (values) => upsertExternalRef(db, values),
     getLeagueById: (id) => getLeagueById(db, id),
+    getSeasonById: (id) => getSeasonById(db, id),
   };
 }
