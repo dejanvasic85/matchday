@@ -10,7 +10,7 @@ catalog:
   "@hono/zod-openapi": 1.6.3
   "@neondatabase/serverless": 1.1.0
   "@sentry/cloudflare": 11.0.0
-  "@sentry/hono": 10.75.3
+  "@sentry/hono": 11.0.0
   "@types/node": ^26.0.0
   aws4fetch: 1.0.20
   commander: 15.0.0
