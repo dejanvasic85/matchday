@@ -2,6 +2,7 @@
 // what it is subscribed to, and (on apply) writes the difference. Seasons resolve per club.
 
 import {
+  badRequest,
   generateId,
   hasSeasonFinished,
   ok,
@@ -53,7 +54,7 @@ export type SubscriptionSyncPlan = {
   client: string;
   /** The season the sync was pinned to, or `null` when it reconciled across every season the
    * followed clubs play in. */
-  seasonId: string | null;
+  season: { id: string; name: string } | null;
   clubs: string[];
   additions: SubscriptionAddition[];
   removals: SubscriptionRemoval[];
@@ -63,9 +64,8 @@ export type SubscriptionSyncPlan = {
   applied: boolean;
 };
 
-/** Leagues the followed clubs play in, keyed by league id — scoped to one season when `seasonId`
- * is set, otherwise every season the club has history in. A league two followed clubs both play in
- * is one subscription, credited to the first club by name. */
+/** Leagues the followed clubs play in, keyed by league id. Scoped to one season when `seasonId`
+ * is set, otherwise every season the club has history in; finished seasons are skipped. */
 async function deriveTargetLeagues(
   deps: Pick<SubscriptionSyncDeps, "listLeaguesByClubId">,
   clubs: { clubId: string; clubName: string }[],
@@ -84,8 +84,7 @@ async function deriveTargetLeagues(
     for (const league of leaguesResult.value) {
       // Pinned scope is explicit, so honour it; unpinned, skip a season that already ended or we
       // would re-subscribe the very leagues the removals below just pruned.
-      const finished =
-        seasonId === undefined && hasSeasonFinished(league.seasonEndsOn ?? null, today);
+      const finished = seasonId === undefined && hasSeasonFinished(league.seasonEndsOn, today);
       if (!finished && !byLeagueId.has(league.id)) {
         byLeagueId.set(league.id, {
           leagueId: league.id,
@@ -112,27 +111,6 @@ export type SyncSubscriptionsInput = {
   today?: IsoDate;
 };
 
-/**
- * Reconcile a client's subscriptions against the clubs it follows.
- *
- * - **Add** every league a followed club plays in the target season(s) that the client isn't
- *   subscribed to.
- * - **Remove** active subscriptions whose season has finished — its `ends_on` is before today.
- *
- * The target season(s) are derived per club: unless `seasonName` pins one, they are the seasons
- * the followed clubs' leagues belong to. That keeps a second source's season out of a Dribl
- * client's target set, where a global "latest season" would have pruned live subscriptions.
- *
- * Removal is date-based, not name-based: a subscription is only dropped once its league's season
- * has ended. A season with no `ends_on` is never finished, so a hand-set subscription on an
- * undated season survives every sync until its dates are known.
- *
- * Subscriptions are derived state, so `remove-subscription` on a *followed* club's current-season
- * league is undone by the next sync. Unfollow the club to drop it for good.
- *
- * Additions are written before removals, and a failed write returns immediately — leaving the
- * earlier writes in place. Every write is an idempotent upsert, so re-running finishes the job.
- */
 /** The active subscriptions whose season has finished — the ones the sync prunes. */
 function planRemovals(current: SubscriptionWithLeague[], today: IsoDate): SubscriptionRemoval[] {
   return current
@@ -174,6 +152,10 @@ async function applyPlan(
   return ok(undefined);
 }
 
+/**
+ * Reconcile a client's subscriptions against the clubs it follows: add every league a followed
+ * club plays in, and remove subscriptions whose season has ended. Plans only unless `apply`.
+ */
 export async function syncSubscriptions(
   input: SyncSubscriptionsInput,
 ): Promise<Result<SubscriptionSyncPlan>> {
@@ -183,12 +165,21 @@ export async function syncSubscriptions(
   // Resolve a pinned season first: an unknown `--season` is a typo that should fail before any
   // client or club lookup, and the CLI's other commands order it the same way.
   let pinnedSeasonId: string | undefined;
+  let pinnedSeason: { id: string; name: string } | null = null;
   if (seasonName !== undefined) {
     const seasonResult = await resolveSeason(deps, seasonName);
     if (!seasonResult.ok) {
       return seasonResult;
     }
+    // A pin on a finished season would re-add leagues the next unpinned run prunes — flap. Fail
+    // instead of writing rows we know are immediately stale.
+    if (hasSeasonFinished(seasonResult.value.endsOn, today)) {
+      return badRequest(
+        `Season "${seasonResult.value.name}" finished on ${seasonResult.value.endsOn} — nothing to sync`,
+      );
+    }
     pinnedSeasonId = seasonResult.value.id;
+    pinnedSeason = { id: seasonResult.value.id, name: seasonResult.value.name };
   }
 
   const clientResult = await resolveClient(deps, clientName);
@@ -203,9 +194,8 @@ export async function syncSubscriptions(
   }
   const clubs = clubsResult.value;
 
-  // Unpinned, the target is every league the followed clubs have ever played in — their own
-  // history bounds it, so a second source's season is never dragged in. `seasonId` is undefined
-  // for that case, which the league query reads as "all seasons".
+  // Unpinned, the target is every league the followed clubs have ever played in, so a second
+  // source's season is never dragged in. `undefined` reads as "all seasons" in the query.
   const targetResult = await deriveTargetLeagues(deps, clubs, pinnedSeasonId, today);
   if (!targetResult.ok) {
     return targetResult;
@@ -225,7 +215,7 @@ export async function syncSubscriptions(
 
   const plan: SubscriptionSyncPlan = {
     client: clientName,
-    seasonId: pinnedSeasonId ?? null,
+    season: pinnedSeason,
     clubs: clubs.map((club) => club.clubName),
     additions,
     removals,

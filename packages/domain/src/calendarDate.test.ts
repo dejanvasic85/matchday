@@ -1,4 +1,19 @@
-import { hasSeasonFinished, isIsoDate, todayInMelbourne } from "#calendarDate.ts";
+import {
+  hasSeasonFinished,
+  isIsoDate,
+  parseIsoDate,
+  todayInMelbourne,
+  type IsoDate,
+} from "#calendarDate.ts";
+
+/** Validated literal, so a fixture typo fails loudly rather than needing an `as` cast. */
+function iso(value: string): IsoDate {
+  const parsed = parseIsoDate(value);
+  if (parsed === undefined) {
+    throw new Error(`Fixture date is not YYYY-MM-DD: ${value}`);
+  }
+  return parsed;
+}
 
 describe("isIsoDate", () => {
   it("accepts a YYYY-MM-DD string", () => {
@@ -30,14 +45,14 @@ describe("todayInMelbourne", () => {
 
 describe("hasSeasonFinished", () => {
   it("is true once the end date is before today", () => {
-    expect(hasSeasonFinished("2026-09-30", "2026-10-01")).toBe(true);
+    expect(hasSeasonFinished(iso("2026-09-30"), iso("2026-10-01"))).toBe(true);
   });
 
   it("is false on the end date itself, so a season finishes the day after", () => {
-    expect(hasSeasonFinished("2026-09-30", "2026-09-30")).toBe(false);
+    expect(hasSeasonFinished(iso("2026-09-30"), iso("2026-09-30"))).toBe(false);
   });
 
   it("is false for a season with no end date", () => {
-    expect(hasSeasonFinished(null, "2026-10-01")).toBe(false);
+    expect(hasSeasonFinished(null, iso("2026-10-01"))).toBe(false);
   });
 });

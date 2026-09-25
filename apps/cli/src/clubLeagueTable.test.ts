@@ -1,10 +1,14 @@
 import { renderClubLeagueTable } from "#clubLeagueTable.ts";
-import type { ClubLeagues } from "#services/clubLeagueService.ts";
+import type { ClubLeagues, LeagueSummary } from "#services/clubLeagueService.ts";
+
+function makeLeague(overrides: Partial<LeagueSummary> = {}): LeagueSummary {
+  return { id: "lea_abc123", name: "Div 1 North", seasonEndsOn: null, ...overrides };
+}
 
 function makeClubLeagues(overrides: Partial<ClubLeagues> = {}): ClubLeagues {
   return {
     club: { id: "clb_willy00000", name: "Williamstown SC" },
-    leagues: [{ id: "lea_abc123", name: "Div 1 North" }],
+    leagues: [makeLeague()],
     ...overrides,
   };
 }
@@ -19,10 +23,7 @@ describe("renderClubLeagueTable", () => {
   it("renders each league's id and name on its own row", () => {
     const output = renderClubLeagueTable(
       makeClubLeagues({
-        leagues: [
-          { id: "lea_abc123", name: "Div 1 North" },
-          { id: "lea_def456", name: "Div 2 South" },
-        ],
+        leagues: [makeLeague(), makeLeague({ id: "lea_def456", name: "Div 2 South" })],
       }),
     );
     const lines = output.split("\n");
@@ -44,8 +45,8 @@ describe("renderClubLeagueTable", () => {
     const output = renderClubLeagueTable(
       makeClubLeagues({
         leagues: [
-          { id: "lea_abc123", name: "A" },
-          { id: "lea_def456", name: "A Much Longer League Name" },
+          makeLeague({ name: "A" }),
+          makeLeague({ id: "lea_def456", name: "A Much Longer League Name" }),
         ],
       }),
     );

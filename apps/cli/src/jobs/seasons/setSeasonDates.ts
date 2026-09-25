@@ -4,7 +4,7 @@
 import { type Logger, type Result } from "@matchday/domain";
 import { createDbClient, setSeasonDatesByName } from "@matchday/db";
 import type { CliConfig } from "#config.ts";
-import { setSeasonDates, type SeasonDates } from "#services/seasonDateService.ts";
+import { setSeasonDates, type SeasonDatesWrite } from "#services/seasonDateService.ts";
 
 export type RunSetSeasonDatesJobInput = {
   logger: Logger;
@@ -14,10 +14,9 @@ export type RunSetSeasonDatesJobInput = {
   endsOn: string;
 };
 
-/** `null` when no season has that name — the caller reports "no such season" and exits non-zero. */
 export async function runSetSeasonDatesJob(
   input: RunSetSeasonDatesJobInput,
-): Promise<Result<SeasonDates | null>> {
+): Promise<Result<SeasonDatesWrite>> {
   const { logger, config, seasonName, startsOn, endsOn } = input;
 
   const db = createDbClient(config.DATABASE_URL);
@@ -28,7 +27,7 @@ export async function runSetSeasonDatesJob(
     endsOn,
   );
 
-  if (result.ok && result.value !== null) {
+  if (result.ok && result.value.status === "written") {
     logger.info("season.dates.set", "set season dates", {
       seasonName: result.value.seasonName,
       startsOn: result.value.startsOn,

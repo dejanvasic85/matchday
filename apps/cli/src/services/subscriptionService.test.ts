@@ -5,6 +5,8 @@ import {
   removeSubscription,
   type SubscriptionServiceDeps,
 } from "#services/subscriptionService.ts";
+import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
+import { makeLeagueWithRefs } from "#test/fixtures/league.ts";
 
 function makeDeps(overrides: Partial<SubscriptionServiceDeps> = {}): SubscriptionServiceDeps {
   return {
@@ -12,20 +14,36 @@ function makeDeps(overrides: Partial<SubscriptionServiceDeps> = {}): Subscriptio
     upsertSubscription: vi.fn().mockResolvedValue(ok({ id: "sub_generated" })),
     deleteSubscription: vi.fn().mockResolvedValue(ok({ id: "sub_existing00" })),
     upsertClientClub: vi.fn().mockResolvedValue(ok({ id: "ccl_existing00" })),
-    findLatestSeason: vi.fn().mockResolvedValue(ok({ id: "sea_2026000000", name: "2026" })),
-    findSeasonByName: vi.fn().mockResolvedValue(ok({ id: "sea_2026000000", name: "2026" })),
+    findLatestSeason: vi.fn().mockResolvedValue(
+      ok({
+        id: "sea_2026000000",
+        name: "2026",
+        startsOn: makeIsoDate("2026-02-12"),
+        endsOn: makeIsoDate("2026-09-20"),
+      }),
+    ),
+    findSeasonByName: vi.fn().mockResolvedValue(
+      ok({
+        id: "sea_2026000000",
+        name: "2026",
+        startsOn: makeIsoDate("2026-02-12"),
+        endsOn: makeIsoDate("2026-09-20"),
+      }),
+    ),
     findClientByName: vi
       .fn()
       .mockResolvedValue(ok({ id: "cli_existing000", name: "Williamstown SC" })),
     findClubsByName: vi
       .fn()
       .mockResolvedValue(ok([{ id: "clb_existing000", name: "Williamstown SC" }])),
-    listLeaguesByClubId: vi.fn().mockResolvedValue(
-      ok([
-        { id: "lea_div1north", name: "Div 1 North" },
-        { id: "lea_div2south", name: "Div 2 South" },
-      ]),
-    ),
+    listLeaguesByClubId: vi
+      .fn()
+      .mockResolvedValue(
+        ok([
+          makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" }),
+          makeLeagueWithRefs({ id: "lea_div2south", name: "Div 2 South" }),
+        ]),
+      ),
     ...overrides,
   };
 }
@@ -166,8 +184,8 @@ describe("createSubscriptionsForClub", () => {
       ok({
         club: { id: "clb_existing000", name: "Williamstown SC" },
         leagues: [
-          { id: "lea_div1north", name: "Div 1 North" },
-          { id: "lea_div2south", name: "Div 2 South" },
+          { id: "lea_div1north", name: "Div 1 North", seasonEndsOn: makeIsoDate("2026-09-20") },
+          { id: "lea_div2south", name: "Div 2 South", seasonEndsOn: makeIsoDate("2026-09-20") },
         ],
         season: { id: "sea_2026000000", name: "2026" },
         subscriptionIds: ["sub_generated01", "sub_generated02"],
@@ -198,8 +216,8 @@ describe("createSubscriptionsForClub", () => {
       ok({
         club: { id: "clb_existing000", name: "Williamstown SC" },
         leagues: [
-          { id: "lea_div1north", name: "Div 1 North" },
-          { id: "lea_div2south", name: "Div 2 South" },
+          { id: "lea_div1north", name: "Div 1 North", seasonEndsOn: makeIsoDate("2026-09-20") },
+          { id: "lea_div2south", name: "Div 2 South", seasonEndsOn: makeIsoDate("2026-09-20") },
         ],
         season: { id: "sea_2026000000", name: "2026" },
         subscriptionIds: [],

@@ -26,6 +26,10 @@ export type PersistCatalogInput = {
   leagues: CrawlCatalogLeagueResult[];
 };
 
+/** Season ids already warned about in this crawl, so one undated season logs one line, not one per
+ * league that happens to reference it. */
+export type WarnedSeasons = Set<string>;
+
 export type PersistLeagueSummary = {
   tableEntries: number;
   fixtureTeams: number;
@@ -37,13 +41,19 @@ export type PersistCatalogSummary = {
   fixtureTeams: number;
 };
 
-/** Warn once when a season has no calendar window: per-club season resolution can't place it on
- * "today". Cleared by `mday season set-dates`; a generated source writes its own dates. */
+/** Warn once per season when it has no calendar window: per-club season resolution can't place it
+ * on "today". Cleared by `mday season set-dates`; a generated source writes its own dates. */
 async function warnIfSeasonUndated(
   deps: EntityResolutionDeps,
   logger: Logger,
   seasonId: string,
+  warned: WarnedSeasons,
 ): Promise<void> {
+  if (warned.has(seasonId)) {
+    return;
+  }
+  warned.add(seasonId);
+
   const seasonResult = await deps.getSeasonById(seasonId);
   if (!seasonResult.ok || seasonResult.value === null) {
     return;
@@ -61,6 +71,7 @@ async function warnIfSeasonUndated(
 
 export async function persistLeague(
   input: PersistLeagueInput,
+  warned: WarnedSeasons = new Set(),
 ): Promise<Result<PersistLeagueSummary>> {
   const { deps, logger, league } = input;
 
@@ -86,7 +97,7 @@ export async function persistLeague(
 
   // Per-club season resolution can't place a dateless season on "today", so warn an operator to
   // run `mday season set-dates`. A generated source writes its own dates, so this stays quiet.
-  await warnIfSeasonUndated(deps, logger, seasonResult.value);
+  await warnIfSeasonUndated(deps, logger, seasonResult.value, warned);
 
   const leagueResult = await resolveEntityByExternalRef({
     deps,
@@ -160,9 +171,10 @@ export async function persistCatalog(
 
   let tableEntryCount = 0;
   let fixtureTeamCount = 0;
+  const warned: WarnedSeasons = new Set();
 
   for (const league of leagues) {
-    const result = await persistLeague({ deps, logger, league });
+    const result = await persistLeague({ deps, logger, league }, warned);
     if (!result.ok) {
       return result;
     }

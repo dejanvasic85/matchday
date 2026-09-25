@@ -1,5 +1,7 @@
 import { badRequest, notFound, ok, serverError } from "@matchday/domain";
 import { listLeaguesForClub, type ClubLeagueServiceDeps } from "#services/clubLeagueService.ts";
+import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
+import { makeLeagueWithRefs } from "#test/fixtures/league.ts";
 
 function makeDeps(overrides: Partial<ClubLeagueServiceDeps> = {}): ClubLeagueServiceDeps {
   return {
@@ -8,13 +10,13 @@ function makeDeps(overrides: Partial<ClubLeagueServiceDeps> = {}): ClubLeagueSer
       .mockResolvedValue(ok([{ id: "clb_existing000", name: "Williamstown SC" }])),
     listLeaguesByClubId: vi
       .fn()
-      .mockResolvedValue(ok([{ id: "lea_div1north", name: "Div 1 North" }])),
+      .mockResolvedValue(ok([makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" })])),
     ...overrides,
   };
 }
 
 describe("listLeaguesForClub", () => {
-  it("returns the resolved club with its distinct leagues", async () => {
+  it("returns the resolved club with its distinct leagues and their season end dates", async () => {
     const deps = makeDeps();
 
     const result = await listLeaguesForClub(deps, "Williamstown");
@@ -22,7 +24,13 @@ describe("listLeaguesForClub", () => {
     expect(result).toEqual(
       ok({
         club: { id: "clb_existing000", name: "Williamstown SC" },
-        leagues: [{ id: "lea_div1north", name: "Div 1 North" }],
+        leagues: [
+          {
+            id: "lea_div1north",
+            name: "Div 1 North",
+            seasonEndsOn: makeIsoDate("2026-09-20"),
+          },
+        ],
       }),
     );
     expect(deps.listLeaguesByClubId).toHaveBeenCalledWith("clb_existing000", undefined);
@@ -37,10 +45,12 @@ describe("listLeaguesForClub", () => {
   });
 
   it("dedupes leagues shared by more than one team (19 teams, 18 distinct leagues)", async () => {
-    const rows = Array.from({ length: 18 }, (_, index) => ({
-      id: `lea_league${String(index).padStart(4, "0")}`,
-      name: `League ${String(index).padStart(2, "0")}`,
-    }));
+    const rows = Array.from({ length: 18 }, (_, index) =>
+      makeLeagueWithRefs({
+        id: `lea_league${String(index).padStart(4, "0")}`,
+        name: `League ${String(index).padStart(2, "0")}`,
+      }),
+    );
     // A 19th team plays in the same league as the first — one row per (team, league) pair, so
     // this league appears twice in the raw join result.
     const deps = makeDeps({

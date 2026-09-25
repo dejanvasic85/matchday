@@ -26,7 +26,7 @@ export function renderSubscriptionTable(subscriptions: SubscriptionWithLeague[])
 export function renderSyncPlan(plan: SubscriptionSyncPlan): string {
   const verb = plan.applied ? "Synced" : "Dry run — would sync";
   const clubs = plan.clubs.length === 0 ? "no followed clubs" : plan.clubs.join(", ");
-  const scope = plan.seasonId === null ? "all seasons" : `season ${plan.seasonId}`;
+  const scope = plan.season === null ? "all seasons" : `season ${plan.season.name}`;
   const lines = [
     `${verb} "${plan.client}" (following: ${clubs})`,
     `  scope: ${scope}`,

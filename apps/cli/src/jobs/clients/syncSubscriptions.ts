@@ -49,7 +49,7 @@ export async function runSyncSubscriptionsJob(
   if (result.ok && result.value.applied) {
     logger.info("subscription.synced", "reconciled subscriptions against followed clubs", {
       clientName,
-      seasonId: result.value.seasonId,
+      season: result.value.season?.name,
       added: result.value.additions.length,
       removed: result.value.removals.length,
     });

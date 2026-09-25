@@ -86,22 +86,46 @@ export async function upsertSeason(db: Db, values: SeasonInsert): Promise<Result
   );
 }
 
-/** Write a season's calendar window, by season name (a year like `"2026"`). Returns `null` when
- * no season has that name — a typo reports itself instead of silently writing nothing. */
+/** Which season a name resolved to, once we know how many matched. */
+export type SeasonDatesWrite =
+  | { status: "written"; season: Season }
+  | { status: "missing" }
+  | { status: "ambiguous"; count: number };
+
+/** Write a season's calendar window, by season name (a year like `"2026"`). Season names aren't
+ * unique — two sources can both have a `"2026"` — so an ambiguous name fails rather than
+ * updating every match and reporting the first, which would set the wrong season's dates. */
 export async function setSeasonDatesByName(
   db: Db,
   name: string,
   startsOn: IsoDate,
   endsOn: IsoDate,
-): Promise<Result<Season | null>> {
-  const result = await runQuery(
+): Promise<Result<SeasonDatesWrite>> {
+  const matches = await runQuery(
+    () => db.select().from(season).where(eq(season.name, name)).limit(2),
+    "Failed to find season by name",
+  );
+  if (!matches.ok) {
+    return matches;
+  }
+  if (matches.value.length === 0) {
+    return ok({ status: "missing" });
+  }
+  if (matches.value.length > 1) {
+    return ok({ status: "ambiguous", count: matches.value.length });
+  }
+
+  const updated = await runQuery(
     () =>
       db
         .update(season)
         .set({ startsOn, endsOn, updatedAt: new Date() })
-        .where(eq(season.name, name))
+        .where(eq(season.id, matches.value[0].id))
         .returning(),
     "Failed to set season dates",
   );
-  return result.ok ? ok(result.value[0] ?? null) : result;
+  if (!updated.ok) {
+    return updated;
+  }
+  return ok({ status: "written", season: updated.value[0] });
 }

@@ -788,8 +788,8 @@ export function createCli(): Command {
     .command("list")
     .description(
       "List seasons with their start and end dates, so a season still missing dates is obvious " +
-        "before a `client sync-subscriptions` relies on it. Filtered server-side; --json prints " +
-        "the rows alone for piping into jq.",
+        "before a `client sync-subscriptions` relies on it. --json prints the rows alone for " +
+        "piping into jq.",
     )
     .option("--json", "print the rows as JSON instead of a table", false)
     .action(async (options: { json: boolean }) => {
@@ -802,8 +802,8 @@ export function createCli(): Command {
         return;
       }
       const output = options.json
-        ? JSON.stringify(result.value.rows, null, 2)
-        : renderSeasonTable(result.value.rows);
+        ? JSON.stringify(result.value, null, 2)
+        : renderSeasonTable(result.value);
       process.stdout.write(`${output}\n`);
     });
 
@@ -833,10 +833,19 @@ export function createCli(): Command {
         process.exitCode = 1;
         return;
       }
-      if (result.value === null) {
+      if (result.value.status === "missing") {
         logger.error("season.setdatesfailed", `No season named "${name}"`, {
           hint: "run `mday catalog` first, or `mday season list` to see what exists",
         });
+        process.exitCode = 1;
+        return;
+      }
+      if (result.value.status === "ambiguous") {
+        logger.error(
+          "season.setdatesfailed",
+          `More than one season is named "${name}" (${result.value.count} matched)`,
+          { hint: "disambiguate by season id; `mday season list` shows the ids" },
+        );
         process.exitCode = 1;
         return;
       }

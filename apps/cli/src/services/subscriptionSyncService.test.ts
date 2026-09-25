@@ -1,13 +1,29 @@
 import { ok, serverError } from "@matchday/domain";
 import { syncSubscriptions, type SubscriptionSyncDeps } from "#services/subscriptionSyncService.ts";
+import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
+import { makeLeagueWithRefs } from "#test/fixtures/league.ts";
 
 function makeDeps(overrides: Partial<SubscriptionSyncDeps> = {}): SubscriptionSyncDeps {
   return {
     findClientByName: vi
       .fn()
       .mockResolvedValue(ok({ id: "cli_existing000", name: "Williamstown SC" })),
-    findLatestSeason: vi.fn().mockResolvedValue(ok({ id: "sea_2026000000", name: "2026" })),
-    findSeasonByName: vi.fn().mockResolvedValue(ok({ id: "sea_2026000000", name: "2026" })),
+    findLatestSeason: vi.fn().mockResolvedValue(
+      ok({
+        id: "sea_2026000000",
+        name: "2026",
+        startsOn: makeIsoDate("2026-02-12"),
+        endsOn: makeIsoDate("2026-09-20"),
+      }),
+    ),
+    findSeasonByName: vi.fn().mockResolvedValue(
+      ok({
+        id: "sea_2026000000",
+        name: "2026",
+        startsOn: makeIsoDate("2026-02-12"),
+        endsOn: makeIsoDate("2026-09-20"),
+      }),
+    ),
     listClientClubsByClientId: vi.fn().mockResolvedValue(
       ok([
         {
@@ -19,12 +35,14 @@ function makeDeps(overrides: Partial<SubscriptionSyncDeps> = {}): SubscriptionSy
         },
       ]),
     ),
-    listLeaguesByClubId: vi.fn().mockResolvedValue(
-      ok([
-        { id: "lea_div1north", name: "Div 1 North", seasonId: "sea_2026000000" },
-        { id: "lea_div2south", name: "Div 2 South", seasonId: "sea_2026000000" },
-      ]),
-    ),
+    listLeaguesByClubId: vi
+      .fn()
+      .mockResolvedValue(
+        ok([
+          makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" }),
+          makeLeagueWithRefs({ id: "lea_div2south", name: "Div 2 South" }),
+        ]),
+      ),
     listSubscriptionsWithLeague: vi.fn().mockResolvedValue(ok([])),
     upsertSubscription: vi.fn().mockResolvedValue(ok({ id: "sub_generated0" })),
     deleteSubscription: vi.fn().mockResolvedValue(ok({ id: "sub_removed000" })),
@@ -33,7 +51,7 @@ function makeDeps(overrides: Partial<SubscriptionSyncDeps> = {}): SubscriptionSy
 }
 
 /** Today, pinned so a test's "finished" outcome never depends on the wall clock. */
-const today = "2026-08-01";
+const today = makeIsoDate("2026-08-01");
 
 const currentSubscription = {
   id: "sub_current000",
@@ -42,7 +60,7 @@ const currentSubscription = {
   leagueName: "Div 1 North",
   seasonId: "sea_2026000000",
   seasonName: "2026",
-  seasonEndsOn: "2026-09-30",
+  seasonEndsOn: makeIsoDate("2026-09-30"),
 };
 
 /** A subscription whose season ended before `today`, so the sync prunes it. */
@@ -53,7 +71,7 @@ const finishedSubscription = {
   leagueName: "Div 1 North",
   seasonId: "sea_2025000000",
   seasonName: "2025",
-  seasonEndsOn: "2025-09-30",
+  seasonEndsOn: makeIsoDate("2025-09-30"),
 };
 
 describe("syncSubscriptions", () => {
@@ -64,6 +82,7 @@ describe("syncSubscriptions", () => {
       deps,
       clientName: "Williamstown SC",
       apply: false,
+      today,
     });
 
     expect(result.ok).toBe(true);
@@ -186,6 +205,7 @@ describe("syncSubscriptions", () => {
       deps,
       clientName: "Williamstown SC",
       apply: false,
+      today,
     });
 
     expect(result.ok).toBe(true);
@@ -199,7 +219,7 @@ describe("syncSubscriptions", () => {
     const deps = makeDeps({
       listLeaguesByClubId: vi
         .fn()
-        .mockResolvedValue(ok([{ id: "lea_div1north", name: "Div 1 North" }])),
+        .mockResolvedValue(ok([makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" })])),
       listSubscriptionsWithLeague: vi.fn().mockResolvedValue(ok([currentSubscription])),
     });
 
@@ -207,6 +227,7 @@ describe("syncSubscriptions", () => {
       deps,
       clientName: "Williamstown SC",
       apply: false,
+      today,
     });
 
     expect(result.ok).toBe(true);
@@ -238,13 +259,14 @@ describe("syncSubscriptions", () => {
       ),
       listLeaguesByClubId: vi
         .fn()
-        .mockResolvedValue(ok([{ id: "lea_shared0000", name: "Div 1 North" }])),
+        .mockResolvedValue(ok([makeLeagueWithRefs({ id: "lea_shared0000", name: "Div 1 North" })])),
     });
 
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
       apply: false,
+      today,
     });
 
     expect(result.ok).toBe(true);
@@ -272,6 +294,7 @@ describe("syncSubscriptions", () => {
       clientName: "Williamstown SC",
       seasonName: "2026",
       apply: false,
+      today,
     });
 
     expect(deps.listLeaguesByClubId).toHaveBeenCalledWith("clb_willy00000", "sea_2026000000");
@@ -283,20 +306,19 @@ describe("syncSubscriptions", () => {
     const deps = makeDeps({
       listLeaguesByClubId: vi
         .fn()
-        .mockResolvedValue(
-          ok([{ id: "lea_div1north", name: "Div 1 North", seasonId: "sea_2026000000" }]),
-        ),
+        .mockResolvedValue(ok([makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" })])),
     });
 
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
       apply: false,
+      today,
     });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value.seasonId).toBeNull();
+      expect(result.value.season).toBeNull();
       expect(result.value.removals).toEqual([]);
     }
   });
@@ -304,21 +326,14 @@ describe("syncSubscriptions", () => {
   it("does not add leagues from a season that has already finished", async () => {
     // Two sources' seasons coexist; only the live one should be subscribed to. Re-adding the
     // finished season's league would undo the removal in the same run.
+    const live = makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" });
+    const finished = makeLeagueWithRefs({
+      id: "lea_finished000",
+      name: "Div 1 North (2025)",
+      season: { ...live.season, endsOn: makeIsoDate("2025-09-30") },
+    });
     const deps = makeDeps({
-      listLeaguesByClubId: vi.fn().mockResolvedValue(
-        ok([
-          {
-            id: "lea_div1north",
-            name: "Div 1 North",
-            seasonEndsOn: "2026-09-30",
-          },
-          {
-            id: "lea_finished000",
-            name: "Div 1 North (2025)",
-            seasonEndsOn: "2025-09-30",
-          },
-        ]),
-      ),
+      listLeaguesByClubId: vi.fn().mockResolvedValue(ok([live, finished])),
     });
 
     const result = await syncSubscriptions({
@@ -343,6 +358,7 @@ describe("syncSubscriptions", () => {
       deps,
       clientName: "Williamstown SC",
       apply: true,
+      today,
     });
 
     expect(result.ok).toBe(true);
@@ -360,6 +376,7 @@ describe("syncSubscriptions", () => {
       deps,
       clientName: "Typo FC",
       apply: true,
+      today,
     });
 
     expect(result.ok).toBe(false);
@@ -374,9 +391,29 @@ describe("syncSubscriptions", () => {
       clientName: "Williamstown SC",
       seasonName: "2027",
       apply: true,
+      today,
     });
 
     expect(result.ok).toBe(false);
+    expect(deps.listClientClubsByClientId).not.toHaveBeenCalled();
+  });
+
+  it("rejects a pin on a season that has already finished", async () => {
+    // Pinning a finished season would re-add leagues the next unpinned run prunes — fail fast.
+    const deps = makeDeps();
+
+    const result = await syncSubscriptions({
+      deps,
+      clientName: "Williamstown SC",
+      seasonName: "2026",
+      apply: false,
+      today: makeIsoDate("2026-10-01"),
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain("finished on 2026-09-20");
+    }
     expect(deps.listClientClubsByClientId).not.toHaveBeenCalled();
   });
 
@@ -393,6 +430,7 @@ describe("syncSubscriptions", () => {
       deps,
       clientName: "Williamstown SC",
       apply: true,
+      today,
     });
 
     expect(result).toEqual(upsertError);

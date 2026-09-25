@@ -14,6 +14,7 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
+import type { IsoDate } from "@matchday/domain";
 import type { FixtureStatus, Source } from "#constants.ts";
 
 /** Open-ended `platform -> url` map for a club's social links. */
@@ -62,8 +63,8 @@ export const competition = pgTable("competition", {
 export const season = pgTable("season", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  startsOn: date("starts_on"),
-  endsOn: date("ends_on"),
+  startsOn: date("starts_on").$type<IsoDate>(),
+  endsOn: date("ends_on").$type<IsoDate>(),
   ...timestamps,
 });
 

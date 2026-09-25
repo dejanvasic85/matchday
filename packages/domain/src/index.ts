@@ -20,7 +20,9 @@ export { parseEnv } from "#config.ts";
 export {
   hasSeasonFinished,
   isIsoDate,
+  isoDateSchema,
   melbourneTimeZone,
+  parseIsoDate,
   todayInMelbourne,
   type IsoDate,
 } from "#calendarDate.ts";

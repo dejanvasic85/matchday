@@ -1,48 +1,36 @@
-import { ok } from "@matchday/domain";
-import { listSeasonSummaries } from "#services/seasonService.ts";
+import { toSeasonSummary } from "#services/seasonService.ts";
+import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
 
-describe("listSeasonSummaries", () => {
-  it("keeps the calendar fields and drops the timestamp columns", async () => {
-    const page = {
-      rows: [
-        {
-          id: "sea_2026000000",
-          name: "2026",
-          startsOn: "2026-03-01",
-          endsOn: "2026-09-30",
-          createdAt: new Date("2026-01-01T00:00:00Z"),
-          updatedAt: new Date("2026-01-02T00:00:00Z"),
-        },
-      ],
-      nextCursor: null,
-    };
+describe("toSeasonSummary", () => {
+  it("keeps the calendar fields and drops the timestamp columns", () => {
+    const summary = toSeasonSummary({
+      id: "sea_2026000000",
+      name: "2026",
+      startsOn: makeIsoDate("2026-03-01"),
+      endsOn: makeIsoDate("2026-09-30"),
+    });
 
-    const result = listSeasonSummaries(page);
-
-    expect(result).toEqual(
-      ok({
-        rows: [
-          { id: "sea_2026000000", name: "2026", startsOn: "2026-03-01", endsOn: "2026-09-30" },
-        ],
-        nextCursor: null,
-      }),
-    );
+    expect(summary).toEqual({
+      id: "sea_2026000000",
+      name: "2026",
+      startsOn: makeIsoDate("2026-03-01"),
+      endsOn: makeIsoDate("2026-09-30"),
+    });
   });
 
   it("carries null dates through for a season still missing them", () => {
-    const result = listSeasonSummaries({
-      rows: [{ id: "sea_2027000000", name: "2027", startsOn: null, endsOn: null }],
-      nextCursor: null,
+    const summary = toSeasonSummary({
+      id: "sea_2027000000",
+      name: "2027",
+      startsOn: null,
+      endsOn: null,
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value.rows[0]).toEqual({
-        id: "sea_2027000000",
-        name: "2027",
-        startsOn: null,
-        endsOn: null,
-      });
-    }
+    expect(summary).toEqual({
+      id: "sea_2027000000",
+      name: "2027",
+      startsOn: null,
+      endsOn: null,
+    });
   });
 });
