@@ -284,6 +284,17 @@ With no UI, unit tests are the primary safety net — hold them to a high standa
 - **Coverage:** run `vp test --coverage` (v8); exclude generated/wiring files in `vite.config.ts`
   rather than writing throwaway tests to lift a number. (Threshold TBD in the testing-setup task.)
 
+### Integration tests
+
+Integration tests exercise the real stack: the Hono app over the real neon-http driver against a real
+Neon branch. They live under `apps/api/test/integration/` and gate on the integration database URL
+documented in `.env.example` — set it and they run, leave it unset and they skip, so `vp test` and
+`vp run -r test` stay database-free. Run them with `vp run --filter @matchday/api test:integration`.
+
+On a pull request, CI creates a Neon branch named `pr-<number>` (copy-on-write of `production`),
+migrates it, and runs these tests; the branch is deleted when the PR closes. `pr-` branches are
+excluded from `db:branch:clean`, so local cleanup never touches a CI branch.
+
 ## Dependency management
 
 - Check for the current stable version before adding a dependency; avoid deprecated packages/APIs.

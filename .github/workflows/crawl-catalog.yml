@@ -41,8 +41,6 @@ jobs:
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
-        with:
-          cache: true
 
       - name: Install dependencies
         run: vp install --frozen-lockfile
@@ -114,8 +112,6 @@ jobs:
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
-        with:
-          cache: true
 
       - name: Install dependencies
         run: vp install --frozen-lockfile
@@ -169,8 +165,6 @@ jobs:
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
-        with:
-          cache: true
 
       - name: Install dependencies
         run: vp install --frozen-lockfile
