@@ -76,10 +76,12 @@ export { upsertLeagueTeam, listClubIdsByLeagueId } from "#leagueTeamDb.ts";
 export {
   upsertCrawlTarget,
   listCrawlTargets,
+  listCrawlTargetLeagueCandidates,
   deleteCrawlTargetById,
   deleteCrawlTargetByLeague,
   type CrawlTargetInsert,
   type CrawlTargetWithCompetition,
+  type CrawlTargetLeagueCandidate,
 } from "#crawlTargetDb.ts";
 export { upsertExternalRef, findExternalRef, findExternalRefByInternalId } from "#externalRefDb.ts";
 export {

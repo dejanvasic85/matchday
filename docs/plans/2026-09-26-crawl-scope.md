@@ -45,10 +45,11 @@ Each slice is its own pull request, green before the next. The decision record l
 
 ### Slice 3 — the crawl reads targets
 
-- [ ] `subscribed-leagues` returns the current season's league id for each target, resolved by
-      competition and league name. Keep the command name so the workflow is unchanged.
-- [ ] A target with no league in the current season logs a warning and is skipped.
-- [ ] Tests cover a target with a matching league and one without.
+- [x] `subscribed-leagues` returns the current season's league id for each target, resolved by
+      competition and league name. The command name is unchanged, so the workflow still works.
+- [x] A target with no league to crawl is warn-logged (stderr) and skipped, leaving the workflow's
+      parsed stdout line clean.
+- [x] Tests cover a target with a matching league and one without.
 
 ### Slice 4 — notification stops using subscriptions
 
