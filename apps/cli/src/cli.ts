@@ -6,12 +6,14 @@ import {
   createConsoleLogger,
   parseId,
   type ApiTokenId,
+  type CrawlTargetId,
   type LeagueId,
   type SubscriptionId,
 } from "@matchday/domain";
 import { Command, InvalidArgumentError, Option } from "commander";
 import { renderApiTokenTable } from "#apiTokenTable.ts";
 import { renderClientTable } from "#clientTable.ts";
+import { renderCrawlTargetTable } from "#crawlTargetTable.ts";
 import { renderSubscriptionTable, renderSyncPlan } from "#subscriptionTable.ts";
 import { renderSeasonTable } from "#seasonTable.ts";
 import { renderClubLeagueTable } from "#clubLeagueTable.ts";
@@ -19,6 +21,12 @@ import { getCliConfig } from "#config.ts";
 import { crawlSourceValue, type CrawlSource } from "#crawlers/constants.ts";
 import { runCatalogJob } from "#jobs/crawls/catalog.ts";
 import { runCountCatalogLeaguesJob } from "#jobs/crawls/countCatalogLeagues.ts";
+import { runAddCrawlTargetJob } from "#jobs/crawlTargets/addCrawlTarget.ts";
+import { runListCrawlTargetsJob } from "#jobs/crawlTargets/listCrawlTargets.ts";
+import {
+  runRemoveCrawlTargetJob,
+  type RemoveCrawlTargetTarget,
+} from "#jobs/crawlTargets/removeCrawlTarget.ts";
 import { runClubEnrichmentJob } from "#jobs/clubs/enrichClubs.ts";
 import { runListClubLeaguesJob } from "#jobs/clubs/listClubLeagues.ts";
 import { runListApiTokenUsageJob } from "#jobs/clients/apiTokenUsage.ts";
@@ -41,6 +49,10 @@ import { runRevokeApiTokenJob } from "#jobs/clients/revokeApiToken.ts";
 import { runListSeasonsJob } from "#jobs/seasons/listSeasons.ts";
 import { runSetSeasonDatesJob } from "#jobs/seasons/setSeasonDates.ts";
 import { describeSeasonDatesFailure } from "#services/seasonDateService.ts";
+import {
+  describeAddCrawlTargetFailure,
+  describeRemoveCrawlTargetFailure,
+} from "#services/crawlTargetService.ts";
 import { runSubscribedLeaguesJob } from "#jobs/crawls/subscribedLeagues.ts";
 
 const currentYear = new Date().getFullYear().toString();
@@ -86,6 +98,14 @@ function parseSubscriptionId(value: string): SubscriptionId {
   const id = parseId(value, "subscription");
   if (id === undefined) {
     throw new InvalidArgumentError('must be a "sub_"-prefixed subscription id');
+  }
+  return id;
+}
+
+function parseCrawlTargetId(value: string): CrawlTargetId {
+  const id = parseId(value, "crawlTarget");
+  if (id === undefined) {
+    throw new InvalidArgumentError('must be a "crt_"-prefixed crawl target id');
   }
   return id;
 }
@@ -900,6 +920,147 @@ export function createCli(): Command {
           `${result.value.source} ${result.value.seasonName} / ${result.value.competitionName}: ` +
             `${result.value.startsOn} → ${result.value.endsOn}\n`,
         );
+      },
+    );
+
+  const crawlTarget = program
+    .command("crawl-target")
+    .description(
+      "Manage the leagues the system crawls. This is the system's crawl scope, separate from " +
+        "what any client follows.",
+    );
+
+  crawlTarget
+    .command("add")
+    .description(
+      "Add a league to the crawl scope. The competition and league are matched by exact name " +
+        "from the source, so run `mday catalog` first and check names with `mday season list`. " +
+        "The league name must already exist under the competition: adding it stores the exact " +
+        "text the crawl looks up again, so a typo fails instead of silently never matching.",
+    )
+    .requiredOption("--competition <name>", "the competition whose league to crawl (exact name)")
+    .requiredOption("--league <name>", "the league to crawl (exact name under that competition)")
+    .addOption(seasonSourceOption("the source whose competition to target"))
+    .action(async (options: { competition: string; league: string; source: CrawlSource }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runAddCrawlTargetJob({
+        logger,
+        config,
+        source: options.source,
+        competitionName: options.competition,
+        leagueName: options.league,
+      });
+      if (!result.ok) {
+        logger.error("crawltarget.addfailed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+        return;
+      }
+      if (result.value.status !== "added") {
+        const failure = describeAddCrawlTargetFailure(
+          result.value,
+          options.source,
+          options.competition,
+          options.league,
+        );
+        logger.error("crawltarget.addfailed", failure.message, { hint: failure.hint });
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(
+        `Added crawl target: ${result.value.competitionName} / ${result.value.leagueName} ` +
+          `(${result.value.id})\n`,
+      );
+    });
+
+  crawlTarget
+    .command("list")
+    .description(
+      "List the crawl scope: each target's id, competition and league. --json prints the rows " +
+        "alone for piping into jq.",
+    )
+    .option("--json", "print the rows as JSON instead of a table", false)
+    .action(async (options: { json: boolean }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runListCrawlTargetsJob({ config });
+      if (!result.ok) {
+        logger.error("crawltarget.listfailed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+        return;
+      }
+      const output = options.json
+        ? JSON.stringify(result.value, null, 2)
+        : renderCrawlTargetTable(result.value);
+      process.stdout.write(`${output}\n`);
+    });
+
+  crawlTarget
+    .command("remove")
+    .description(
+      "Remove a crawl target by its `crt_` id, or by its competition and league names. Provide " +
+        "either --id, or both --competition and --league.",
+    )
+    .option("--id <id>", "the target id to remove", parseCrawlTargetId)
+    .option("--competition <name>", "the competition the league belongs to (with --league)")
+    .option("--league <name>", "the league to stop crawling (with --competition)")
+    .addOption(seasonSourceOption("the source whose competition to match (with --league)"))
+    .action(
+      async (options: {
+        id?: CrawlTargetId;
+        competition?: string;
+        league?: string;
+        source: CrawlSource;
+      }) => {
+        const config = getCliConfig();
+        const logger = createConsoleLogger();
+        const { id, competition, league, source } = options;
+
+        let target: RemoveCrawlTargetTarget;
+        if (id !== undefined && (competition !== undefined || league !== undefined)) {
+          logger.error(
+            "crawltarget.removefailed",
+            "Provide either --id, or the --competition and --league pair, not both",
+          );
+          process.exitCode = 1;
+          return;
+        } else if (id !== undefined) {
+          target = { kind: "id", id };
+        } else if (competition !== undefined && league !== undefined) {
+          target = { kind: "league", source, competitionName: competition, leagueName: league };
+        } else {
+          logger.error(
+            "crawltarget.removefailed",
+            "Provide either --id, or both --competition and --league",
+          );
+          process.exitCode = 1;
+          return;
+        }
+
+        const result = await runRemoveCrawlTargetJob({ logger, config, target });
+        if (!result.ok) {
+          logger.error("crawltarget.removefailed", result.error.message, {
+            cause: result.error.cause,
+          });
+          process.exitCode = 1;
+          return;
+        }
+        if (result.value.status !== "removed") {
+          if (target.kind === "id") {
+            logger.error("crawltarget.removefailed", `No crawl target with id "${target.id}"`);
+          } else {
+            const failure = describeRemoveCrawlTargetFailure(
+              result.value,
+              target.source,
+              target.competitionName,
+              target.leagueName,
+            );
+            logger.error("crawltarget.removefailed", failure.message, { hint: failure.hint });
+          }
+          process.exitCode = 1;
+          return;
+        }
+        process.stdout.write(`Removed crawl target: ${result.value.id}\n`);
       },
     );
 

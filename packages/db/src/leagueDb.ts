@@ -165,6 +165,25 @@ export async function listLeaguesByClubId(
   );
 }
 
+/** Distinct league names under one competition, sorted. A crawl target stores the league by name,
+ * so `crawl-target add` matches an operator's input against these and stores the exact text that
+ * the crawl will look up again. */
+export async function listLeagueNamesByCompetitionId(
+  db: Db,
+  competitionId: string,
+): Promise<Result<string[]>> {
+  const result = await runQuery(
+    () =>
+      db
+        .selectDistinct({ name: league.name })
+        .from(league)
+        .where(eq(league.competitionId, competitionId))
+        .orderBy(asc(league.name)),
+    "Failed to list league names by competition id",
+  );
+  return result.ok ? ok(result.value.map((row) => row.name)) : result;
+}
+
 export async function upsertLeague(db: Db, values: LeagueInsert): Promise<Result<League>> {
   return runUpsert(
     () =>
