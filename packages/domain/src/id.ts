@@ -14,6 +14,7 @@ export const idPrefixValue = {
   fixture: "mtc",
   tableEntry: "tab",
   leagueTeam: "lgt",
+  crawlTarget: "crt",
   externalRef: "ext",
   subscription: "sub",
   client: "cli",
@@ -39,6 +40,7 @@ export type LeagueId = EntityId<"league">;
 export type FixtureId = EntityId<"fixture">;
 export type TableEntryId = EntityId<"tableEntry">;
 export type LeagueTeamId = EntityId<"leagueTeam">;
+export type CrawlTargetId = EntityId<"crawlTarget">;
 export type ExternalRefId = EntityId<"externalRef">;
 export type SubscriptionId = EntityId<"subscription">;
 export type ClientId = EntityId<"client">;

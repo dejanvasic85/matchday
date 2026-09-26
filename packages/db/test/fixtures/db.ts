@@ -5,6 +5,7 @@ import { schema, sourceValue } from "@matchday/db";
 
 type ClubRow = typeof schema.club.$inferSelect;
 type ExternalRefRow = typeof schema.externalRef.$inferSelect;
+type CrawlTargetRow = typeof schema.crawlTarget.$inferSelect;
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 
@@ -36,6 +37,17 @@ export function makeExternalRefRow(overrides: Partial<ExternalRefRow> = {}): Ext
     source: sourceValue.dribl,
     sourceId: "dribl-hash-000",
     sourceUrl: null,
+    createdAt: epoch,
+    updatedAt: epoch,
+    ...overrides,
+  };
+}
+
+export function makeCrawlTargetRow(overrides: Partial<CrawlTargetRow> = {}): CrawlTargetRow {
+  return {
+    id: "crt_test000000",
+    competitionId: "cmp_test000000",
+    leagueName: "U13 YPL1 Boys",
     createdAt: epoch,
     updatedAt: epoch,
     ...overrides,

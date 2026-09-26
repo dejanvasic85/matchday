@@ -71,6 +71,14 @@ export {
   type TableEntryTeamPair,
 } from "#tableEntryDb.ts";
 export { upsertLeagueTeam, listClubIdsByLeagueId } from "#leagueTeamDb.ts";
+export {
+  upsertCrawlTarget,
+  listCrawlTargets,
+  deleteCrawlTargetById,
+  deleteCrawlTargetByLeague,
+  type CrawlTargetInsert,
+  type CrawlTargetWithCompetition,
+} from "#crawlTargetDb.ts";
 export { upsertExternalRef, findExternalRef, findExternalRefByInternalId } from "#externalRefDb.ts";
 export {
   upsertSubscription,
