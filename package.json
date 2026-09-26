@@ -3,17 +3,24 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "imports": {
+    "#scripts/*": "./scripts/*"
+  },
   "scripts": {
     "mday": "vp run --filter @matchday/cli mday",
     "changeset": "changeset",
     "version:sdk": "changeset version && pnpm --filter matchday-sdk run generate && vp check --fix",
     "release:sdk": "pnpm --filter matchday-sdk run build && pnpm changeset publish",
-    "test": "vp run -r test",
+    "db:branch:run": "node scripts/neonBranchUse.ts",
+    "db:branch:clean:run": "node scripts/neonBranchClean.ts",
+    "wt:run": "node scripts/worktree.ts",
+    "wt:remove:run": "node scripts/worktreeRemove.ts",
     "ready": "vp check && vp run -r test && vp run -r build",
     "fallow": "fallow"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",
+    "@types/node": "catalog:",
     "@vitest/coverage-v8": "5.0.1",
     "fallow": "catalog:",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.3.3",

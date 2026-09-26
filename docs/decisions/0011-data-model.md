@@ -12,6 +12,9 @@
   club/league membership from `table_entry` silently misses table-less divisions (e.g. MiniRoos age
   groups, which publish fixtures but no ladder) — `league_team` is written for every discovered
   team regardless of that.
+- Reshaped by: [0015](0015-season-scope.md) — `season` gains a `source` column (`(source, name)`
+  unique) and drops its dates; a competition's run in a season becomes `competition_season`, which
+  owns `starts_on`/`ends_on`.
 
 ## Context
 

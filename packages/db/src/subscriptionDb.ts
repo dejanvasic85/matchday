@@ -1,11 +1,11 @@
 // Subscription data access: build a query, execute it, return a `Result` of rows. No business
 // rules here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
-import { ok, type Result } from "@matchday/domain";
+import { ok, type IsoDate, type Result } from "@matchday/domain";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
-import { league, season, subscription } from "#schema.ts";
+import { competitionSeason, league, season, subscription } from "#schema.ts";
 
 type Subscription = typeof subscription.$inferSelect;
 type SubscriptionInsert = typeof subscription.$inferInsert;
@@ -20,6 +20,10 @@ export type SubscriptionWithLeague = {
   leagueName: string;
   seasonId: string;
   seasonName: string;
+  /** The competition's window end, nullable — `sync-subscriptions` uses it to decide a
+   * subscription's season has finished without a second lookup. Dates are per competition, so two
+   * leagues in the same season can finish on different days. */
+  seasonEndsOn: IsoDate | null;
 };
 
 /** Filters for {@link listSubscriptionsWithLeague} — applied in SQL, never by making the caller
@@ -100,10 +104,18 @@ export async function listSubscriptionsWithLeague(
           leagueName: league.name,
           seasonId: league.seasonId,
           seasonName: season.name,
+          seasonEndsOn: competitionSeason.endsOn,
         })
         .from(subscription)
         .innerJoin(league, eq(subscription.leagueId, league.id))
         .innerJoin(season, eq(season.id, league.seasonId))
+        .leftJoin(
+          competitionSeason,
+          and(
+            eq(competitionSeason.competitionId, league.competitionId),
+            eq(competitionSeason.seasonId, league.seasonId),
+          ),
+        )
         .where(and(...conditions))
         .orderBy(asc(season.name), asc(league.name)),
     "Failed to list subscriptions with league",

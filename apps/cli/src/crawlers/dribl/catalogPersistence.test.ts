@@ -64,6 +64,7 @@ describe("persistCatalog", () => {
 
     const result = await persistCatalog({
       deps,
+      source: "dribl",
       logger: makeFakeLogger(),
       leagues: [makeLeague()],
     });
@@ -104,7 +105,12 @@ describe("persistCatalog", () => {
   it("writes an external_ref for each newly-created catalog entity", async () => {
     const deps = makeHappyPathDeps();
 
-    await persistCatalog({ deps, logger: makeFakeLogger(), leagues: [makeLeague()] });
+    await persistCatalog({
+      deps,
+      source: "dribl",
+      logger: makeFakeLogger(),
+      leagues: [makeLeague()],
+    });
 
     const entityTypes = vi.mocked(deps.upsertExternalRef).mock.calls.map(([ref]) => ref.entityType);
     expect(entityTypes).toEqual(
@@ -117,6 +123,7 @@ describe("persistCatalog", () => {
 
     const result = await persistCatalog({
       deps,
+      source: "dribl",
       logger: makeFakeLogger(),
       leagues: [
         makeLeague({ tableEntries: [makeTableEntry(), makeTableEntry({ position: 2 })] }),
@@ -132,6 +139,7 @@ describe("persistCatalog", () => {
 
     const result = await persistCatalog({
       deps,
+      source: "dribl",
       logger: makeFakeLogger(),
       leagues: [
         makeLeague({
@@ -168,6 +176,7 @@ describe("persistCatalog", () => {
 
     await persistCatalog({
       deps,
+      source: "dribl",
       logger: makeFakeLogger(),
       leagues: [
         makeLeague({
@@ -194,6 +203,7 @@ describe("persistCatalog", () => {
 
     const result = await persistCatalog({
       deps,
+      source: "dribl",
       logger: makeFakeLogger(),
       leagues: [
         makeLeague({
@@ -214,6 +224,7 @@ describe("persistCatalog", () => {
 
     const result = await persistCatalog({
       deps,
+      source: "dribl",
       logger: makeFakeLogger(),
       leagues: [makeLeague()],
     });
@@ -221,5 +232,49 @@ describe("persistCatalog", () => {
     expect(result.ok).toBe(false);
     expect(deps.upsertLeague).not.toHaveBeenCalled();
     expect(deps.upsertTableEntry).not.toHaveBeenCalled();
+  });
+
+  it("warns when a crawled competition-season has no dates", async () => {
+    const deps = makeHappyPathDeps();
+    deps.getCompetitionSeason = vi.fn().mockResolvedValue(
+      ok({
+        id: "cse_new00000001",
+        competitionId: "cmp_new00000001",
+        seasonId: "sea_new00000001",
+        startsOn: null,
+        endsOn: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
+    const logger = makeFakeLogger();
+
+    await persistCatalog({ deps, source: "dribl", logger, leagues: [makeLeague()] });
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "catalog.competitionSeason.undated",
+      "competition season has no dates",
+      expect.objectContaining({ season: "2026" }),
+    );
+  });
+
+  it("stays quiet when the competition-season already has dates", async () => {
+    const deps = makeHappyPathDeps();
+    deps.getCompetitionSeason = vi.fn().mockResolvedValue(
+      ok({
+        id: "cse_new00000001",
+        competitionId: "cmp_new00000001",
+        seasonId: "sea_new00000001",
+        startsOn: "2026-03-01",
+        endsOn: "2026-09-30",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
+    const logger = makeFakeLogger();
+
+    await persistCatalog({ deps, source: "dribl", logger, leagues: [makeLeague()] });
+
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 });

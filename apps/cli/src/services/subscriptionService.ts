@@ -9,6 +9,7 @@ import {
   serverError,
   type LeagueId,
   type Result,
+  type Source,
   type SubscriptionId,
 } from "@matchday/domain";
 import type {
@@ -94,6 +95,8 @@ export type CreateSubscriptionsForClubInput = {
   >;
   clientName: string;
   clubName: string;
+  /** The source whose seasons to resolve `seasonName` against. */
+  source: Source;
   /** Season year to subscribe for; defaults to the latest season we hold. */
   seasonName?: string;
   /** Resolve the club and its leagues without writing anything — the safe-by-default habit for a
@@ -114,9 +117,9 @@ export type ClubSubscriptionResult = ClubLeagues & {
 export async function createSubscriptionsForClub(
   input: CreateSubscriptionsForClubInput,
 ): Promise<Result<ClubSubscriptionResult>> {
-  const { deps, clientName, clubName, seasonName, dryRun } = input;
+  const { deps, clientName, clubName, source, seasonName, dryRun } = input;
 
-  const seasonResult = await resolveSeason(deps, seasonName);
+  const seasonResult = await resolveSeason(deps, source, seasonName);
   if (!seasonResult.ok) {
     return seasonResult;
   }
@@ -127,6 +130,7 @@ export async function createSubscriptionsForClub(
     return clubLeaguesResult;
   }
   const { club, leagues } = clubLeaguesResult.value;
+  const seasonSummary = { id: season.id, name: season.name };
 
   const clientResult = await resolveClient(deps, clientName);
   if (!clientResult.ok) {
@@ -134,7 +138,7 @@ export async function createSubscriptionsForClub(
   }
 
   if (dryRun) {
-    return ok({ club, leagues, season, subscriptionIds: [] });
+    return ok({ club, leagues, season: seasonSummary, subscriptionIds: [] });
   }
 
   // Record the follow first: if a later upsert fails, the provenance is still there and a
@@ -168,7 +172,7 @@ export async function createSubscriptionsForClub(
     subscriptionIds.push(subscriptionId.value);
   }
 
-  return ok({ club, leagues, season, subscriptionIds });
+  return ok({ club, leagues, season: seasonSummary, subscriptionIds });
 }
 
 /** Soft-delete a subscription, narrowing an unknown (or already-removed) id to a `notFound`

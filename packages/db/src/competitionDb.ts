@@ -1,12 +1,12 @@
 // Competition data access: build a query, execute it, return a `Result` of rows. No business
 // rules here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
-import { ok, type Result } from "@matchday/domain";
-import { asc, eq, gt } from "drizzle-orm";
+import { externalRefEntityTypeValue, ok, type Result, type Source } from "@matchday/domain";
+import { and, asc, eq, gt } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { decodeCursor, resolveLimit, toPage, type Page, type PageRequest } from "#paging.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
-import { competition } from "#schema.ts";
+import { competition, competitionSeason, externalRef } from "#schema.ts";
 
 type Competition = typeof competition.$inferSelect;
 type CompetitionInsert = typeof competition.$inferInsert;
@@ -41,6 +41,63 @@ export async function getCompetitionById(db: Db, id: string): Promise<Result<Com
     "Failed to get competition by id",
   );
   return result.ok ? ok(result.value[0] ?? null) : result;
+}
+
+/** Competitions with an exact name that already have a window in the given season, so an operator
+ * setting dates can only target a competition that actually runs that season. Returns every match
+ * so a caller can fail on ambiguity rather than pick one. */
+export async function findCompetitionsForSeasonByName(
+  db: Db,
+  seasonId: string,
+  name: string,
+): Promise<Result<Competition[]>> {
+  const result = await runQuery(
+    () =>
+      db
+        .selectDistinct({
+          id: competition.id,
+          name: competition.name,
+          createdAt: competition.createdAt,
+          updatedAt: competition.updatedAt,
+        })
+        .from(competition)
+        .innerJoin(competitionSeason, eq(competitionSeason.competitionId, competition.id))
+        .where(and(eq(competitionSeason.seasonId, seasonId), eq(competition.name, name))),
+    "Failed to find competitions for season by name",
+  );
+  return result.ok ? ok(result.value) : result;
+}
+
+/** Competitions with an exact name in one source. Competitions carry no source column, so the
+ * source comes from the competition's `external_ref`. Returns every match so a caller can fail on
+ * ambiguity rather than pick one. */
+export async function findCompetitionsBySourceAndName(
+  db: Db,
+  source: Source,
+  name: string,
+): Promise<Result<Competition[]>> {
+  const result = await runQuery(
+    () =>
+      db
+        .selectDistinct({
+          id: competition.id,
+          name: competition.name,
+          createdAt: competition.createdAt,
+          updatedAt: competition.updatedAt,
+        })
+        .from(competition)
+        .innerJoin(
+          externalRef,
+          and(
+            eq(externalRef.internalId, competition.id),
+            eq(externalRef.entityType, externalRefEntityTypeValue.competition),
+            eq(externalRef.source, source),
+          ),
+        )
+        .where(eq(competition.name, name)),
+    "Failed to find competitions by source and name",
+  );
+  return result.ok ? ok(result.value) : result;
 }
 
 export async function upsertCompetition(

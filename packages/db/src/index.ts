@@ -32,19 +32,36 @@ export {
   upsertTeam,
   type TeamWithClub,
 } from "#teamDb.ts";
-export { listCompetitions, getCompetitionById, upsertCompetition } from "#competitionDb.ts";
+export {
+  listCompetitions,
+  getCompetitionById,
+  findCompetitionsForSeasonByName,
+  findCompetitionsBySourceAndName,
+  upsertCompetition,
+} from "#competitionDb.ts";
 export {
   listSeasons,
   getSeasonById,
   findLatestSeason,
   findSeasonByName,
   upsertSeason,
+  type ListSeasonsFilter,
 } from "#seasonDb.ts";
+export {
+  ensureCompetitionSeason,
+  updateCompetitionSeasonDates,
+  listSeasonWindows,
+  getCompetitionSeason,
+  type CompetitionSeasonInsert,
+  type CompetitionSeasonDatesInput,
+  type CompetitionSeasonWindow,
+} from "#competitionSeasonDb.ts";
 export {
   listLeagues,
   upsertLeague,
   getLeagueById,
   listLeaguesByClubId,
+  listLeagueNamesByCompetitionId,
   type LeagueWithRefs,
   type ListLeaguesFilter,
 } from "#leagueDb.ts";
@@ -56,6 +73,14 @@ export {
   type TableEntryTeamPair,
 } from "#tableEntryDb.ts";
 export { upsertLeagueTeam, listClubIdsByLeagueId } from "#leagueTeamDb.ts";
+export {
+  upsertCrawlTarget,
+  listCrawlTargets,
+  deleteCrawlTargetById,
+  deleteCrawlTargetByLeague,
+  type CrawlTargetInsert,
+  type CrawlTargetWithCompetition,
+} from "#crawlTargetDb.ts";
 export { upsertExternalRef, findExternalRef, findExternalRefByInternalId } from "#externalRefDb.ts";
 export {
   upsertSubscription,

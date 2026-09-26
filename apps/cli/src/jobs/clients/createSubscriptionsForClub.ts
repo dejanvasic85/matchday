@@ -1,7 +1,7 @@
 // Create-subscriptions-for-club job: transport glue (AGENTS.md); onboarding a club is one
 // call instead of one `add-subscription` per league.
 
-import { type Logger, type Result } from "@matchday/domain";
+import { type Logger, type Result, type Source } from "@matchday/domain";
 import {
   createDbClient,
   findClientByName,
@@ -23,6 +23,7 @@ export type RunCreateSubscriptionsForClubJobInput = {
   config: CliConfig;
   clientName: string;
   clubName: string;
+  source: Source;
   seasonName?: string;
   dryRun: boolean;
 };
@@ -30,21 +31,22 @@ export type RunCreateSubscriptionsForClubJobInput = {
 export async function runCreateSubscriptionsForClubJob(
   input: RunCreateSubscriptionsForClubJobInput,
 ): Promise<Result<ClubSubscriptionResult>> {
-  const { logger, config, clientName, clubName, seasonName, dryRun } = input;
+  const { logger, config, clientName, clubName, source, seasonName, dryRun } = input;
 
   const db = createDbClient(config.DATABASE_URL);
   const result = await createSubscriptionsForClub({
     deps: {
       findClientByName: (name) => findClientByName(db, name),
       findClubsByName: (name) => findClubsByName(db, name),
-      findLatestSeason: () => findLatestSeason(db),
-      findSeasonByName: (name) => findSeasonByName(db, name),
+      findLatestSeason: (seasonSource) => findLatestSeason(db, seasonSource),
+      findSeasonByName: (seasonSource, name) => findSeasonByName(db, seasonSource, name),
       listLeaguesByClubId: (id, seasonId) => listLeaguesByClubId(db, id, seasonId),
       upsertClientClub: (values) => upsertClientClub(db, values),
       upsertSubscription: (values) => upsertSubscription(db, values),
     },
     clientName,
     clubName,
+    source,
     seasonName,
     dryRun,
   });

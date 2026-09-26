@@ -9,10 +9,12 @@ export const idPrefixValue = {
   team: "tea",
   competition: "cmp",
   season: "sea",
+  competitionSeason: "cse",
   league: "lea",
   fixture: "mtc",
   tableEntry: "tab",
   leagueTeam: "lgt",
+  crawlTarget: "crt",
   externalRef: "ext",
   subscription: "sub",
   client: "cli",
@@ -33,10 +35,12 @@ export type ClubId = EntityId<"club">;
 export type TeamId = EntityId<"team">;
 export type CompetitionId = EntityId<"competition">;
 export type SeasonId = EntityId<"season">;
+export type CompetitionSeasonId = EntityId<"competitionSeason">;
 export type LeagueId = EntityId<"league">;
 export type FixtureId = EntityId<"fixture">;
 export type TableEntryId = EntityId<"tableEntry">;
 export type LeagueTeamId = EntityId<"leagueTeam">;
+export type CrawlTargetId = EntityId<"crawlTarget">;
 export type ExternalRefId = EntityId<"externalRef">;
 export type SubscriptionId = EntityId<"subscription">;
 export type ClientId = EntityId<"client">;

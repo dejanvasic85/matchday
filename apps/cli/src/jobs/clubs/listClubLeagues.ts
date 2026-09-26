@@ -1,7 +1,7 @@
 // List-club-leagues job: read-only discovery for onboarding — "which leagues does this
 // club's teams actually play in?"
 
-import { ok, type Result } from "@matchday/domain";
+import { ok, type Result, type Source } from "@matchday/domain";
 import {
   createDbClient,
   findClubsByName,
@@ -17,6 +17,7 @@ import { resolveSeason } from "#services/seasonResolver.ts";
 /** `undefined` when no season was asked for, so the caller passes one argument shape either way. */
 async function resolveSeasonId(
   db: Db,
+  source: Source,
   seasonName: string | undefined,
 ): Promise<Result<string | undefined>> {
   if (seasonName === undefined) {
@@ -24,9 +25,10 @@ async function resolveSeasonId(
   }
   const resolved = await resolveSeason(
     {
-      findLatestSeason: () => findLatestSeason(db),
-      findSeasonByName: (name) => findSeasonByName(db, name),
+      findLatestSeason: (seasonSource) => findLatestSeason(db, seasonSource),
+      findSeasonByName: (seasonSource, name) => findSeasonByName(db, seasonSource, name),
     },
+    source,
     seasonName,
   );
   return resolved.ok ? ok(resolved.value.id) : resolved;
@@ -35,6 +37,7 @@ async function resolveSeasonId(
 export type RunListClubLeaguesJobInput = {
   config: CliConfig;
   clubName: string;
+  source: Source;
   /** A season year to scope to. Omitted lists every season the club has ever played in — right
    * for browsing history, which is why `add-subscription` resolves a season instead. */
   seasonName?: string;
@@ -45,10 +48,10 @@ export type RunListClubLeaguesJobInput = {
 export async function runListClubLeaguesJob(
   input: RunListClubLeaguesJobInput,
 ): Promise<Result<ClubLeagues>> {
-  const { config, clubName, seasonName } = input;
+  const { config, clubName, source, seasonName } = input;
 
   const db = createDbClient(config.DATABASE_URL);
-  const seasonId = await resolveSeasonId(db, seasonName);
+  const seasonId = await resolveSeasonId(db, source, seasonName);
   if (!seasonId.ok) {
     return seasonId;
   }

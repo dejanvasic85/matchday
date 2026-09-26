@@ -3,6 +3,7 @@ import { seasonSchema } from "#entities/season.ts";
 function makeValidSeason() {
   return {
     id: "sea_abc123",
+    source: "dribl",
     name: "2026",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -20,6 +21,14 @@ describe("seasonSchema", () => {
     const { name: _name, ...withoutName } = makeValidSeason();
 
     const result = seasonSchema.safeParse(withoutName);
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a season missing a source", () => {
+    const { source: _source, ...withoutSource } = makeValidSeason();
+
+    const result = seasonSchema.safeParse(withoutSource);
 
     expect(result.success).toBe(false);
   });

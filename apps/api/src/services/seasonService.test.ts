@@ -76,9 +76,9 @@ describe("createSeasonServiceDeps", () => {
   it("forwards the page to the real listSeasons", async () => {
     const page = { limit: 25, cursor: "c2VhX2FiYzEyMw" };
 
-    await createSeasonServiceDeps(db).listSeasons(page);
+    await createSeasonServiceDeps(db).listSeasons({}, page);
 
-    expect(vi.mocked(listSeasons)).toHaveBeenCalledWith(db, page);
+    expect(vi.mocked(listSeasons)).toHaveBeenCalledWith(db, {}, page);
   });
 });
 

@@ -18,7 +18,7 @@ export type SeasonServiceDeps = {
  * layer should reach into @matchday/db (AGENTS.md: routes are glue, services own the logic). */
 export function createSeasonServiceDeps(db: Db): SeasonServiceDeps {
   return {
-    listSeasons: (page) => listSeasons(db, page),
+    listSeasons: (filter, page) => listSeasons(db, filter, page),
     getSeasonById: (id) => getSeasonById(db, id),
   };
 }
@@ -43,7 +43,7 @@ export async function listAllSeasons(
   deps: Pick<SeasonServiceDeps, "listSeasons">,
   page?: PageRequest,
 ): Promise<Result<PagedResponse<SeasonResponse>>> {
-  return mapPage(await deps.listSeasons(page), mapToSeasonResponse);
+  return mapPage(await deps.listSeasons({}, page), mapToSeasonResponse);
 }
 
 export async function getSeason(

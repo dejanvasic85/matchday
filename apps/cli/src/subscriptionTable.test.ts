@@ -1,6 +1,7 @@
 import type { SubscriptionWithLeague } from "@matchday/db";
 import { renderSubscriptionTable, renderSyncPlan } from "#subscriptionTable.ts";
 import type { SubscriptionSyncPlan } from "#services/subscriptionSyncService.ts";
+import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
 
 function makeSubscription(overrides: Partial<SubscriptionWithLeague> = {}): SubscriptionWithLeague {
   return {
@@ -10,6 +11,7 @@ function makeSubscription(overrides: Partial<SubscriptionWithLeague> = {}): Subs
     leagueName: "Div 1 North",
     seasonId: "sea_2026000000",
     seasonName: "2026",
+    seasonEndsOn: makeIsoDate("2026-09-30"),
     ...overrides,
   };
 }
@@ -17,7 +19,7 @@ function makeSubscription(overrides: Partial<SubscriptionWithLeague> = {}): Subs
 function makePlan(overrides: Partial<SubscriptionSyncPlan> = {}): SubscriptionSyncPlan {
   return {
     client: "Williamstown SC",
-    season: { id: "sea_2026000000", name: "2026" },
+    season: null,
     clubs: ["Williamstown SC"],
     additions: [],
     removals: [],
