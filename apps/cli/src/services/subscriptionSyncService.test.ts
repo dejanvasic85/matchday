@@ -9,8 +9,6 @@ function makeSeason() {
     id: "sea_2026000000",
     source: "dribl" as const,
     name: "2026",
-    startsOn: null,
-    endsOn: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

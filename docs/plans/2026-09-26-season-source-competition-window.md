@@ -45,9 +45,9 @@ Two pull requests. The first is expand-only and reversible; the second contracts
 
 ### PR 2 — Contract: remove the old season dates
 
-- [ ] Drop `starts_on` / `ends_on` from `season` (schema + migration).
-- [ ] Delete dead code, comments and fixtures left over from the old columns.
-- [ ] Final pass on the ADR cross-references and the tracking issue.
+- [x] Drop `starts_on` / `ends_on` from `season` (schema + migration).
+- [x] Delete dead code, comments and fixtures left over from the old columns.
+- [x] Final pass on the ADR cross-references and the tracking issue.
 
 ## Open questions
 
