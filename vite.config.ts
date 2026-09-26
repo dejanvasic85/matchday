@@ -21,6 +21,12 @@ export default defineConfig({
         env: { node: true },
       },
       {
+        // Repo-root dev scripts print to stdout for the operator; Node env for their imports.
+        files: ["scripts/**"],
+        env: { node: true },
+        rules: { "no-console": "off" },
+      },
+      {
         files: ["**/*.test.ts", "**/*.spec.ts"],
         plugins: ["typescript", "vitest"],
         rules: {
@@ -33,11 +39,30 @@ export default defineConfig({
     environment: "node",
     globals: true,
     clearMocks: true,
+    // Root scripts are a workspace of one; package tests run from their own configs.
+    include: ["scripts/**/*.{test,spec}.ts"],
   },
   staged: {
     "*.{js,ts,md}": "vp check --fix",
   },
   run: {
     cache: true,
+    tasks: {
+      // Root scripts' tests, picked up by `vp run -r test` alongside every package.
+      test: {
+        command: "vp test run",
+        input: [{ auto: true }],
+      },
+      // Points the root .env at this git branch's own Neon database. Talks to the Neon
+      // CLI, so it never caches.
+      "db:branch": {
+        command: "pnpm run db:branch:run",
+        cache: false,
+      },
+      "db:branch:clean": {
+        command: "pnpm run db:branch:clean:run",
+        cache: false,
+      },
+    },
   },
 });

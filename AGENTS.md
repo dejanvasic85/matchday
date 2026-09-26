@@ -98,19 +98,26 @@ install/link layer underneath.
   wins, so CI beats any stray local file. `--env-file` replaces wrangler's own `.dev.vars` lookup
   — don't reintroduce that file.
 
-- **Treat every local write as a production write.** Reads are free; anything that inserts,
-  updates or deletes is hitting live data. Before running a write command or an ad-hoc script,
-  say so and get the go-ahead. Never write test/scratch rows to "try something out" — and if you
-  do create any, delete them in the same session.
+- ⚠️ **Until you opt in to a branch, the root `.env` points at PRODUCTION.** Out of the box there
+  is no separate dev database, so every write is live. Treat reads as free; before running a
+  command or ad-hoc script that inserts, updates or deletes, say so and get the go-ahead. Never
+  write test/scratch rows to "try something out" — and if you do create any, delete them in the
+  same session.
+- **Give your work its own database: `vp run db:branch`.** It creates or resets a copy-on-write
+  Neon branch of `production` named `<machine>/<git-branch>`, points the root `.env` at it, and
+  migrates it — no re-crawl, no effect on live data. `--days N` sets the expiry (default and cap:
+  7 days). Machines are isolated automatically; set `MATCHDAY_MACHINE` if the detected name would
+  collide with another machine's.
+- **Reclaim stale branches with `vp run db:branch:clean`** (`--dry-run` to preview). It deletes
+  only this machine's branches whose git branch has gone; `production`, `main` and `pr-*` are
+  never touched.
 - **There is no local Docker Postgres.** The **neon-http/serverless driver** speaks Neon's
   HTTP/WebSocket protocol and **cannot** connect to a raw-TCP local Postgres, so don't introduce
   one or add a `pg` driver for it.
-- **Migrations** run via drizzle-kit: `cd packages/db && vp run db:migrate`. `drizzle.config.ts`
-  falls back to the root `.env`, which holds the Neon **pooled** host. **Don't run migrations
-  locally** — that is now a prod DDL change. They run in CI (`.github/workflows/deploy.yml`, on
-  push to `main`) from the `DATABASE_URL` secret, which uses the direct host.
-- **Want isolation?** Neon branching is the intended fix (a copy-on-write branch of `matchday`,
-  no re-crawl) — not yet set up. Until it is, the above stands.
+- **Migrations** run via drizzle-kit: `cd packages/db && vp run db:migrate`, against whatever the
+  root `.env` points at. Your own branch is fine; production is not — prod migrations run in CI
+  (`.github/workflows/deploy.yml`, on push to `main`) from the `DATABASE_URL` secret, which uses
+  the direct host.
 
 ## Quality gates (before every PR/push)
 
