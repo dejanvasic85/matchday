@@ -40,6 +40,7 @@ import { runRemoveSubscriptionJob } from "#jobs/clients/removeSubscription.ts";
 import { runRevokeApiTokenJob } from "#jobs/clients/revokeApiToken.ts";
 import { runListSeasonsJob } from "#jobs/seasons/listSeasons.ts";
 import { runSetSeasonDatesJob } from "#jobs/seasons/setSeasonDates.ts";
+import { describeSeasonDatesFailure } from "#services/seasonDateService.ts";
 import { runSubscribedLeaguesJob } from "#jobs/crawls/subscribedLeagues.ts";
 
 const currentYear = new Date().getFullYear().toString();
@@ -95,6 +96,15 @@ function parseCrawlSource(value: string): CrawlSource {
     throw new InvalidArgumentError(`must be one of: ${crawlSources.join(", ")}`);
   }
   return source;
+}
+
+/** A `--source` selector for commands that resolve a season. Seasons are scoped to a source, so a
+ * season name alone is ambiguous. Returns a fresh `Option` per call: commander mutates the
+ * instance it is given. */
+function seasonSourceOption(): Option {
+  return new Option("--source <name>", `source whose seasons to use (${crawlSources.join(", ")})`)
+    .argParser(parseCrawlSource)
+    .default(crawlSourceValue.dribl);
 }
 
 export function createCli(): Command {
@@ -302,26 +312,30 @@ export function createCli(): Command {
         "A name matching more than one club fails listing every candidate rather than guessing.",
     )
     .argument("<name>", "a club name, or a fragment of one")
+    .addOption(seasonSourceOption())
     .option("--season <year>", "only show leagues in this season (default: all seasons)")
     .option("--json", "print the result as JSON instead of a table", false)
-    .action(async (name: string, options: { season?: string; json: boolean }) => {
-      const config = getCliConfig();
-      const logger = createConsoleLogger();
-      const result = await runListClubLeaguesJob({
-        config,
-        clubName: name,
-        seasonName: options.season,
-      });
-      if (!result.ok) {
-        logger.error("club.leaguesfailed", result.error.message, { cause: result.error.cause });
-        process.exitCode = 1;
-        return;
-      }
-      const output = options.json
-        ? JSON.stringify(result.value, null, 2)
-        : renderClubLeagueTable(result.value);
-      process.stdout.write(`${output}\n`);
-    });
+    .action(
+      async (name: string, options: { source: CrawlSource; season?: string; json: boolean }) => {
+        const config = getCliConfig();
+        const logger = createConsoleLogger();
+        const result = await runListClubLeaguesJob({
+          config,
+          clubName: name,
+          source: options.source,
+          seasonName: options.season,
+        });
+        if (!result.ok) {
+          logger.error("club.leaguesfailed", result.error.message, { cause: result.error.cause });
+          process.exitCode = 1;
+          return;
+        }
+        const output = options.json
+          ? JSON.stringify(result.value, null, 2)
+          : renderClubLeagueTable(result.value);
+        process.stdout.write(`${output}\n`);
+      },
+    );
 
   const client = program
     .command("client")
@@ -512,34 +526,44 @@ export function createCli(): Command {
         "sync; use `unfollow-club` to drop one for good.",
     )
     .requiredOption("--client <name>", "the client name")
+    .addOption(seasonSourceOption())
     .option(
       "--season <year>",
       "pin the sync to one season by name (default: every season the followed clubs play in)",
     )
     .option("--apply", "write the diff instead of only printing it", false)
     .option("--json", "print the plan as JSON instead of a table", false)
-    .action(async (options: { client: string; season?: string; apply: boolean; json: boolean }) => {
-      const config = getCliConfig();
-      const logger = createConsoleLogger();
-      const result = await runSyncSubscriptionsJob({
-        logger,
-        config,
-        clientName: options.client,
-        seasonName: options.season,
-        apply: options.apply,
-      });
-      if (!result.ok) {
-        logger.error("subscription.syncfailed", result.error.message, {
-          cause: result.error.cause,
+    .action(
+      async (options: {
+        client: string;
+        source: CrawlSource;
+        season?: string;
+        apply: boolean;
+        json: boolean;
+      }) => {
+        const config = getCliConfig();
+        const logger = createConsoleLogger();
+        const result = await runSyncSubscriptionsJob({
+          logger,
+          config,
+          clientName: options.client,
+          source: options.source,
+          seasonName: options.season,
+          apply: options.apply,
         });
-        process.exitCode = 1;
-        return;
-      }
-      const output = options.json
-        ? JSON.stringify(result.value, null, 2)
-        : renderSyncPlan(result.value);
-      process.stdout.write(`${output}\n`);
-    });
+        if (!result.ok) {
+          logger.error("subscription.syncfailed", result.error.message, {
+            cause: result.error.cause,
+          });
+          process.exitCode = 1;
+          return;
+        }
+        const output = options.json
+          ? JSON.stringify(result.value, null, 2)
+          : renderSyncPlan(result.value);
+        process.stdout.write(`${output}\n`);
+      },
+    );
 
   client
     .command("list-subscriptions")
@@ -549,28 +573,32 @@ export function createCli(): Command {
         "--json prints the rows alone for piping into jq.",
     )
     .requiredOption("--client <name>", "the client name")
+    .addOption(seasonSourceOption())
     .option("--season <year>", "only show subscriptions in this season (default: all seasons)")
     .option("--json", "print the rows as JSON instead of a table", false)
-    .action(async (options: { client: string; season?: string; json: boolean }) => {
-      const config = getCliConfig();
-      const logger = createConsoleLogger();
-      const result = await runListSubscriptionsJob({
-        config,
-        clientName: options.client,
-        seasonName: options.season,
-      });
-      if (!result.ok) {
-        logger.error("subscription.listfailed", result.error.message, {
-          cause: result.error.cause,
+    .action(
+      async (options: { client: string; source: CrawlSource; season?: string; json: boolean }) => {
+        const config = getCliConfig();
+        const logger = createConsoleLogger();
+        const result = await runListSubscriptionsJob({
+          config,
+          clientName: options.client,
+          source: options.source,
+          seasonName: options.season,
         });
-        process.exitCode = 1;
-        return;
-      }
-      const output = options.json
-        ? JSON.stringify(result.value, null, 2)
-        : renderSubscriptionTable(result.value);
-      process.stdout.write(`${output}\n`);
-    });
+        if (!result.ok) {
+          logger.error("subscription.listfailed", result.error.message, {
+            cause: result.error.cause,
+          });
+          process.exitCode = 1;
+          return;
+        }
+        const output = options.json
+          ? JSON.stringify(result.value, null, 2)
+          : renderSubscriptionTable(result.value);
+        process.stdout.write(`${output}\n`);
+      },
+    );
 
   client
     .command("add-subscription")
@@ -599,6 +627,14 @@ export function createCli(): Command {
       "--season <year>",
       "with --club, the season to subscribe for (default: the latest season we hold)",
     )
+    .addOption(
+      new Option(
+        "--source <name>",
+        `with --club, the source whose seasons to use (${crawlSources.join(", ")})`,
+      )
+        .argParser(parseCrawlSource)
+        .default(crawlSourceValue.dribl),
+    )
     .option(
       "--dry-run",
       "with --club, resolve and print the club + leagues without subscribing to anything",
@@ -610,6 +646,7 @@ export function createCli(): Command {
         league?: LeagueId;
         club?: string;
         season?: string;
+        source: CrawlSource;
         dryRun: boolean;
       }) => {
         const logger = createConsoleLogger();
@@ -666,6 +703,7 @@ export function createCli(): Command {
           config,
           clientName: options.client,
           clubName,
+          source: options.source,
           seasonName: options.season,
           dryRun: options.dryRun,
         });
@@ -787,15 +825,20 @@ export function createCli(): Command {
   season
     .command("list")
     .description(
-      "List seasons with their start and end dates, so a season still missing dates is obvious " +
-        "before a `client sync-subscriptions` relies on it. --json prints the rows alone for " +
-        "piping into jq.",
+      "List each season window: the source, the season, the competition that runs it, and its " +
+        "start/end dates. A window still missing dates is obvious before a " +
+        "`client sync-subscriptions` relies on it. --json prints the rows alone for piping into jq.",
+    )
+    .option(
+      "--source <name>",
+      `only show this source's seasons (${crawlSources.join(", ")})`,
+      parseCrawlSource,
     )
     .option("--json", "print the rows as JSON instead of a table", false)
-    .action(async (options: { json: boolean }) => {
+    .action(async (options: { source?: CrawlSource; json: boolean }) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
-      const result = await runListSeasonsJob({ config });
+      const result = await runListSeasonsJob({ config, source: options.source });
       if (!result.ok) {
         logger.error("season.listfailed", result.error.message, { cause: result.error.cause });
         process.exitCode = 1;
@@ -810,49 +853,52 @@ export function createCli(): Command {
   season
     .command("set-dates")
     .description(
-      "Set a season's start and end dates (YYYY-MM-DD). Run this after `mday catalog` has " +
-        "created the season — Dribl names seasons by year but gives no dates, so they are entered " +
-        "by hand here. Both dates are required; a sync treats a season as finished only once " +
-        "today is past its end date, so a season with no end date is never pruned.",
+      "Set a competition's season window (YYYY-MM-DD). Run this after `mday catalog` has created " +
+        "the season and competition — Dribl names seasons by year but gives no dates, so they are " +
+        "entered by hand here, one window per competition. Both dates are required; a sync treats " +
+        "a window as finished only once today is past its end date, so a window with no end date " +
+        "is never pruned.",
     )
     .argument("<name>", "the season name (a year, e.g. 2026)")
-    .requiredOption("--starts <date>", "the season's first day, as YYYY-MM-DD")
-    .requiredOption("--ends <date>", "the season's last day, as YYYY-MM-DD")
-    .action(async (name: string, options: { starts: string; ends: string }) => {
-      const config = getCliConfig();
-      const logger = createConsoleLogger();
-      const result = await runSetSeasonDatesJob({
-        logger,
-        config,
-        seasonName: name,
-        startsOn: options.starts,
-        endsOn: options.ends,
-      });
-      if (!result.ok) {
-        logger.error("season.setdatesfailed", result.error.message, { cause: result.error.cause });
-        process.exitCode = 1;
-        return;
-      }
-      if (result.value.status === "missing") {
-        logger.error("season.setdatesfailed", `No season named "${name}"`, {
-          hint: "run `mday catalog` first, or `mday season list` to see what exists",
+    .requiredOption("--competition <name>", "the competition whose window to set")
+    .requiredOption("--starts <date>", "the window's first day, as YYYY-MM-DD")
+    .requiredOption("--ends <date>", "the window's last day, as YYYY-MM-DD")
+    .addOption(seasonSourceOption())
+    .action(
+      async (
+        name: string,
+        options: { competition: string; starts: string; ends: string; source: CrawlSource },
+      ) => {
+        const config = getCliConfig();
+        const logger = createConsoleLogger();
+        const result = await runSetSeasonDatesJob({
+          logger,
+          config,
+          source: options.source,
+          seasonName: name,
+          competitionName: options.competition,
+          startsOn: options.starts,
+          endsOn: options.ends,
         });
-        process.exitCode = 1;
-        return;
-      }
-      if (result.value.status === "ambiguous") {
-        logger.error(
-          "season.setdatesfailed",
-          `More than one season is named "${name}" (${result.value.count} matched)`,
-          { hint: "disambiguate by season id; `mday season list` shows the ids" },
+        if (!result.ok) {
+          logger.error("season.setdatesfailed", result.error.message, {
+            cause: result.error.cause,
+          });
+          process.exitCode = 1;
+          return;
+        }
+        if (result.value.status !== "written") {
+          const failure = describeSeasonDatesFailure(result.value, name, options.competition);
+          logger.error("season.setdatesfailed", failure.message, { hint: failure.hint });
+          process.exitCode = 1;
+          return;
+        }
+        process.stdout.write(
+          `${result.value.source} ${result.value.seasonName} / ${result.value.competitionName}: ` +
+            `${result.value.startsOn} → ${result.value.endsOn}\n`,
         );
-        process.exitCode = 1;
-        return;
-      }
-      process.stdout.write(
-        `Season ${result.value.seasonName}: ${result.value.startsOn} → ${result.value.endsOn}\n`,
-      );
-    });
+      },
+    );
 
   const leagueTeam = program
     .command("league-team")

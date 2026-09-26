@@ -43,6 +43,16 @@ export async function getCompetitionById(db: Db, id: string): Promise<Result<Com
   return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
+/** Every competition with an exact name, so a caller can fail on ambiguity rather than pick one.
+ * Names are not unique across sources, and nothing ties a competition to a source yet. */
+export async function findCompetitionsByName(db: Db, name: string): Promise<Result<Competition[]>> {
+  const result = await runQuery(
+    () => db.select().from(competition).where(eq(competition.name, name)),
+    "Failed to find competitions by name",
+  );
+  return result.ok ? ok(result.value) : result;
+}
+
 export async function upsertCompetition(
   db: Db,
   values: CompetitionInsert,

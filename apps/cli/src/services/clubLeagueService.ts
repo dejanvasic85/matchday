@@ -16,8 +16,8 @@ export type ClubLeagueServiceDeps = ClubResolverDeps & {
 export type LeagueSummary = {
   id: string;
   name: string;
-  /** The league's season end date, nullable. Carried so a caller deciding whether to *subscribe*
-   * can skip a finished season without a second lookup. */
+  /** The league's competition-season end date, nullable. Carried so a caller deciding whether to
+   * *subscribe* can skip a finished window without a second lookup. */
   seasonEndsOn: IsoDate | null;
 };
 
@@ -26,10 +26,10 @@ export type ClubLeagues = {
   leagues: LeagueSummary[];
 };
 
-/** `listLeaguesByClubId` nests the joined season, so the end date has to be lifted onto the
- * summary here — a caller can't read `row.season.endsOn` off a `LeagueSummary`. */
+/** `listLeaguesByClubId` nests the joined competition-season, so the end date has to be lifted onto
+ * the summary here — a caller can't read `row.competitionSeason.endsOn` off a `LeagueSummary`. */
 function toLeagueSummary(row: LeagueWithRefs): LeagueSummary {
-  return { id: row.id, name: row.name, seasonEndsOn: row.season.endsOn };
+  return { id: row.id, name: row.name, seasonEndsOn: row.competitionSeason.endsOn };
 }
 
 /** Distinct leagues by id, name-ordered — collapses the one-row-per-team duplicates from

@@ -3,27 +3,26 @@ import { syncSubscriptions, type SubscriptionSyncDeps } from "#services/subscrip
 import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
 import { makeLeagueWithRefs } from "#test/fixtures/league.ts";
 
+/** A season row as `resolveSeason` sees it — source and name, no window (that's per competition). */
+function makeSeason() {
+  return {
+    id: "sea_2026000000",
+    source: "dribl" as const,
+    name: "2026",
+    startsOn: null,
+    endsOn: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+}
+
 function makeDeps(overrides: Partial<SubscriptionSyncDeps> = {}): SubscriptionSyncDeps {
   return {
     findClientByName: vi
       .fn()
       .mockResolvedValue(ok({ id: "cli_existing000", name: "Williamstown SC" })),
-    findLatestSeason: vi.fn().mockResolvedValue(
-      ok({
-        id: "sea_2026000000",
-        name: "2026",
-        startsOn: makeIsoDate("2026-02-12"),
-        endsOn: makeIsoDate("2026-09-20"),
-      }),
-    ),
-    findSeasonByName: vi.fn().mockResolvedValue(
-      ok({
-        id: "sea_2026000000",
-        name: "2026",
-        startsOn: makeIsoDate("2026-02-12"),
-        endsOn: makeIsoDate("2026-09-20"),
-      }),
-    ),
+    findLatestSeason: vi.fn().mockResolvedValue(ok(makeSeason())),
+    findSeasonByName: vi.fn().mockResolvedValue(ok(makeSeason())),
     listClientClubsByClientId: vi.fn().mockResolvedValue(
       ok([
         {
@@ -81,6 +80,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: false,
       today,
     });
@@ -98,7 +98,7 @@ describe("syncSubscriptions", () => {
   it("writes nothing unless apply is set", async () => {
     const deps = makeDeps();
 
-    await syncSubscriptions({ deps, clientName: "Williamstown SC", apply: false });
+    await syncSubscriptions({ deps, clientName: "Williamstown SC", source: "dribl", apply: false });
 
     expect(deps.upsertSubscription).not.toHaveBeenCalled();
     expect(deps.deleteSubscription).not.toHaveBeenCalled();
@@ -112,6 +112,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: true,
       today,
     });
@@ -132,6 +133,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: false,
       today,
     });
@@ -158,6 +160,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: false,
       today,
     });
@@ -178,6 +181,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: false,
       today,
     });
@@ -204,6 +208,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: false,
       today,
     });
@@ -226,6 +231,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: false,
       today,
     });
@@ -265,6 +271,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: false,
       today,
     });
@@ -280,7 +287,7 @@ describe("syncSubscriptions", () => {
   it("scopes the derivation to the seasons the followed clubs play in", async () => {
     const deps = makeDeps();
 
-    await syncSubscriptions({ deps, clientName: "Williamstown SC", apply: false });
+    await syncSubscriptions({ deps, clientName: "Williamstown SC", source: "dribl", apply: false });
 
     // Unpinned: no season filter, so the club's own history bounds the target set.
     expect(deps.listLeaguesByClubId).toHaveBeenCalledWith("clb_willy00000", undefined);
@@ -292,6 +299,7 @@ describe("syncSubscriptions", () => {
     await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       seasonName: "2026",
       apply: false,
       today,
@@ -312,6 +320,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: false,
       today,
     });
@@ -330,7 +339,7 @@ describe("syncSubscriptions", () => {
     const finished = makeLeagueWithRefs({
       id: "lea_finished000",
       name: "Div 1 North (2025)",
-      season: { ...live.season, endsOn: makeIsoDate("2025-09-30") },
+      competitionSeason: { ...live.competitionSeason, endsOn: makeIsoDate("2025-09-30") },
     });
     const deps = makeDeps({
       listLeaguesByClubId: vi.fn().mockResolvedValue(ok([live, finished])),
@@ -339,6 +348,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: false,
       today,
     });
@@ -357,6 +367,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: true,
       today,
     });
@@ -375,6 +386,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Typo FC",
+      source: "dribl",
       apply: true,
       today,
     });
@@ -389,6 +401,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       seasonName: "2027",
       apply: true,
       today,
@@ -398,23 +411,34 @@ describe("syncSubscriptions", () => {
     expect(deps.listClientClubsByClientId).not.toHaveBeenCalled();
   });
 
-  it("rejects a pin on a season that has already finished", async () => {
-    // Pinning a finished season would re-add leagues the next unpinned run prunes — fail fast.
-    const deps = makeDeps();
+  it("skips a finished window even when the season is pinned", async () => {
+    // A pinned season can hold several competitions with different windows; a finished one must
+    // not be re-added while its live sibling is subscribed.
+    const live = makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" });
+    const finished = makeLeagueWithRefs({
+      id: "lea_finished000",
+      name: "Summer Cup",
+      competitionSeason: { ...live.competitionSeason, endsOn: makeIsoDate("2025-09-30") },
+    });
+    const deps = makeDeps({
+      listLeaguesByClubId: vi.fn().mockResolvedValue(ok([live, finished])),
+    });
 
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       seasonName: "2026",
       apply: false,
-      today: makeIsoDate("2026-10-01"),
+      today,
     });
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.message).toContain("finished on 2026-09-20");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.additions.map((addition) => addition.leagueId)).toEqual([
+        "lea_div1north",
+      ]);
     }
-    expect(deps.listClientClubsByClientId).not.toHaveBeenCalled();
   });
 
   it("stops at the first upsert failure instead of writing the rest", async () => {
@@ -429,6 +453,7 @@ describe("syncSubscriptions", () => {
     const result = await syncSubscriptions({
       deps,
       clientName: "Williamstown SC",
+      source: "dribl",
       apply: true,
       today,
     });

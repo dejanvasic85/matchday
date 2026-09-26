@@ -1,7 +1,7 @@
 // The Dribl `SourceAdapter`: opens a Cloudflare-cleared browser session and exposes the
 // crawl operations plus countCatalogLeagues, a cheap listing-only sizer for crawl-catalog.yml.
 
-import { ok, type Result } from "@matchday/domain";
+import { ok, sourceValue, type Result } from "@matchday/domain";
 import type {
   CountCatalogLeaguesParams,
   CountCatalogLeaguesSummary,
@@ -129,7 +129,7 @@ async function runCatalogCrawl(
     offset,
     limit,
     onLeague: async (league) => {
-      const persisted = await persistLeague({ deps, logger, league });
+      const persisted = await persistLeague({ deps, logger, source: sourceValue.dribl, league });
       if (persisted.ok) {
         addLeagueToCatalogStats(stats, league);
       }

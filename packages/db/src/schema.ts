@@ -58,15 +58,46 @@ export const competition = pgTable("competition", {
   ...timestamps,
 });
 
-// A season's calendar, nullable until set: Dribl names a season by year and gives no dates, so an
-// operator sets them by hand; a generated source writes them from its own calendar.
-export const season = pgTable("season", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  startsOn: date("starts_on").$type<IsoDate>(),
-  endsOn: date("ends_on").$type<IsoDate>(),
-  ...timestamps,
-});
+// A season is a source-wide time label. It carries no window: the calendar belongs to each
+// competition's run (see `competitionSeason`). The old `starts_on`/`ends_on` columns are kept only
+// until the migration that drops them lands.
+export const season = pgTable(
+  "season",
+  {
+    id: text("id").primaryKey(),
+    source: text("source").$type<Source>().notNull(),
+    name: text("name").notNull(),
+    startsOn: date("starts_on").$type<IsoDate>(),
+    endsOn: date("ends_on").$type<IsoDate>(),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("season_source_name_key").on(table.source, table.name)],
+);
+
+// A competition's run in a season — the "competition edition". Owns the calendar window, because
+// one season label covers competitions that run on different calendars. A league joins here by its
+// `(competition_id, season_id)` pair.
+export const competitionSeason = pgTable(
+  "competition_season",
+  {
+    id: text("id").primaryKey(),
+    competitionId: text("competition_id")
+      .notNull()
+      .references(() => competition.id),
+    seasonId: text("season_id")
+      .notNull()
+      .references(() => season.id),
+    startsOn: date("starts_on").$type<IsoDate>(),
+    endsOn: date("ends_on").$type<IsoDate>(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("competition_season_competition_season_key").on(
+      table.competitionId,
+      table.seasonId,
+    ),
+  ],
+);
 
 export const league = pgTable("league", {
   id: text("id").primaryKey(),
@@ -276,8 +307,20 @@ export const teamRelations = relations(team, ({ one }) => ({
 }));
 
 export const competitionRelations = relations(competition, ({ many }) => ({
-  seasons: many(season),
+  competitionSeasons: many(competitionSeason),
   leagues: many(league),
+}));
+
+export const seasonRelations = relations(season, ({ many }) => ({
+  competitionSeasons: many(competitionSeason),
+}));
+
+export const competitionSeasonRelations = relations(competitionSeason, ({ one }) => ({
+  competition: one(competition, {
+    fields: [competitionSeason.competitionId],
+    references: [competition.id],
+  }),
+  season: one(season, { fields: [competitionSeason.seasonId], references: [season.id] }),
 }));
 
 export const leagueRelations = relations(league, ({ one, many }) => ({

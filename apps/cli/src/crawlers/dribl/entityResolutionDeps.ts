@@ -2,12 +2,14 @@
 // bound — DI over mocking the DB, so tests pass vi.fn() fakes instead of vi.mock("@matchday/db").
 
 import {
+  ensureCompetitionSeason,
   findClubByExternalRefSourceUrl,
   findClubByLogoUrl,
   findClubByName,
   findExternalRef,
   findExternalRefByInternalId,
   getClubById,
+  getCompetitionSeason,
   getLeagueById,
   getSeasonById,
   getTeamById,
@@ -38,6 +40,7 @@ export type EntityResolutionDeps = {
   upsertTeam: WithoutDb<typeof upsertTeam>;
   upsertCompetition: WithoutDb<typeof upsertCompetition>;
   upsertSeason: WithoutDb<typeof upsertSeason>;
+  ensureCompetitionSeason: WithoutDb<typeof ensureCompetitionSeason>;
   upsertLeague: WithoutDb<typeof upsertLeague>;
   upsertFixture: WithoutDb<typeof upsertFixture>;
   upsertTableEntry: WithoutDb<typeof upsertTableEntry>;
@@ -47,6 +50,7 @@ export type EntityResolutionDeps = {
   upsertExternalRef: WithoutDb<typeof upsertExternalRef>;
   getLeagueById: WithoutDb<typeof getLeagueById>;
   getSeasonById: WithoutDb<typeof getSeasonById>;
+  getCompetitionSeason: WithoutDb<typeof getCompetitionSeason>;
 };
 
 /** Binds `db` into every @matchday/db query function this module's resolvers need. */
@@ -64,6 +68,7 @@ export function createEntityResolutionDeps(
     upsertTeam: (values) => upsertTeam(db, values),
     upsertCompetition: (values) => upsertCompetition(db, values),
     upsertSeason: (values) => upsertSeason(db, values),
+    ensureCompetitionSeason: (values) => ensureCompetitionSeason(db, values),
     upsertLeague: (values) => upsertLeague(db, values),
     upsertFixture: (values) => upsertFixture(db, values),
     upsertTableEntry: (values) => upsertTableEntry(db, values),
@@ -74,5 +79,7 @@ export function createEntityResolutionDeps(
     upsertExternalRef: (values) => upsertExternalRef(db, values),
     getLeagueById: (id) => getLeagueById(db, id),
     getSeasonById: (id) => getSeasonById(db, id),
+    getCompetitionSeason: (competitionId, seasonId) =>
+      getCompetitionSeason(db, competitionId, seasonId),
   };
 }

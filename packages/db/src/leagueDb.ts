@@ -6,16 +6,22 @@ import { and, asc, eq, gt } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { decodeCursor, resolveLimit, toPage, type Page, type PageRequest } from "#paging.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
-import { competition, league, leagueTeam, season, team } from "#schema.ts";
+import { competition, competitionSeason, league, leagueTeam, season, team } from "#schema.ts";
 
 type League = typeof league.$inferSelect;
 type LeagueInsert = typeof league.$inferInsert;
 type Competition = typeof competition.$inferSelect;
 type Season = typeof season.$inferSelect;
+type CompetitionSeason = typeof competitionSeason.$inferSelect;
 
-/** A league with its competition and season embedded. Both are `notNull` FKs, so the inner joins
- * below can't drop a league and neither side is nullable — unlike `TeamWithClub`. */
-export type LeagueWithRefs = League & { competition: Competition; season: Season };
+/** A league with its competition, season and competition-season embedded. All are `notNull` FKs, so
+ * the inner joins below can't drop a league and neither side is nullable — unlike `TeamWithClub`.
+ * The competition-season carries the calendar window, which `league` deliberately doesn't. */
+export type LeagueWithRefs = League & {
+  competition: Competition;
+  season: Season;
+  competitionSeason: CompetitionSeason;
+};
 
 export type ListLeaguesFilter = { competitionId?: string; seasonId?: string; clubId?: string };
 
@@ -31,6 +37,7 @@ const leagueSelection = {
   updatedAt: league.updatedAt,
   competition,
   season,
+  competitionSeason,
 };
 
 /**
@@ -73,6 +80,13 @@ export async function listLeagues(
             .from(league)
             .innerJoin(competition, eq(competition.id, league.competitionId))
             .innerJoin(season, eq(season.id, league.seasonId))
+            .innerJoin(
+              competitionSeason,
+              and(
+                eq(competitionSeason.competitionId, league.competitionId),
+                eq(competitionSeason.seasonId, league.seasonId),
+              ),
+            )
             .where(where)
             .orderBy(asc(league.id))
             .limit(limit + 1)
@@ -81,6 +95,13 @@ export async function listLeagues(
             .from(league)
             .innerJoin(competition, eq(competition.id, league.competitionId))
             .innerJoin(season, eq(season.id, league.seasonId))
+            .innerJoin(
+              competitionSeason,
+              and(
+                eq(competitionSeason.competitionId, league.competitionId),
+                eq(competitionSeason.seasonId, league.seasonId),
+              ),
+            )
             .innerJoin(leagueTeam, eq(leagueTeam.leagueId, league.id))
             .innerJoin(team, eq(team.id, leagueTeam.teamId))
             .where(where)
@@ -127,6 +148,13 @@ export async function listLeaguesByClubId(
         .from(league)
         .innerJoin(competition, eq(competition.id, league.competitionId))
         .innerJoin(season, eq(season.id, league.seasonId))
+        .innerJoin(
+          competitionSeason,
+          and(
+            eq(competitionSeason.competitionId, league.competitionId),
+            eq(competitionSeason.seasonId, league.seasonId),
+          ),
+        )
         .innerJoin(leagueTeam, eq(leagueTeam.leagueId, league.id))
         .innerJoin(team, eq(team.id, leagueTeam.teamId))
         .where(and(...conditions))
@@ -165,6 +193,13 @@ export async function getLeagueById(db: Db, id: string): Promise<Result<LeagueWi
         .from(league)
         .innerJoin(competition, eq(competition.id, league.competitionId))
         .innerJoin(season, eq(season.id, league.seasonId))
+        .innerJoin(
+          competitionSeason,
+          and(
+            eq(competitionSeason.competitionId, league.competitionId),
+            eq(competitionSeason.seasonId, league.seasonId),
+          ),
+        )
         .where(eq(league.id, id))
         .limit(1),
     "Failed to get league by id",

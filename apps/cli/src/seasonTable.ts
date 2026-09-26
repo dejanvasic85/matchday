@@ -1,26 +1,27 @@
 // Terminal rendering for `mday season list` — presentation only, so `--json` prints the
 // service's shape untouched.
 
-import type { SeasonSummary } from "#services/seasonService.ts";
+import type { SeasonWindowSummary } from "#services/seasonService.ts";
 import { renderTable } from "#terminalTable.ts";
 
-/** "unset" rather than a blank cell: a season without dates is the thing the operator is looking
+/** "unset" rather than a blank cell: a window without dates is the thing the operator is looking
  * for before a sync, so it should be unmistakable. */
 function dateCell(value: string | null): string {
   return value ?? "unset";
 }
 
-export function renderSeasonTable(seasons: SeasonSummary[]): string {
-  if (seasons.length === 0) {
-    return "No seasons yet — run `mday catalog` first.";
+export function renderSeasonTable(windows: SeasonWindowSummary[]): string {
+  if (windows.length === 0) {
+    return "No season windows yet — run `mday catalog` first.";
   }
   return renderTable(
-    ["SEASON ID", "NAME", "STARTS", "ENDS"],
-    seasons.map((season) => [
-      season.id,
-      season.name,
-      dateCell(season.startsOn),
-      dateCell(season.endsOn),
+    ["SOURCE", "SEASON", "COMPETITION", "STARTS", "ENDS"],
+    windows.map((window) => [
+      window.source,
+      window.seasonName,
+      window.competitionName,
+      dateCell(window.startsOn),
+      dateCell(window.endsOn),
     ]),
   );
 }

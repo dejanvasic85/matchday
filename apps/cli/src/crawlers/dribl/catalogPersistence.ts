@@ -7,6 +7,7 @@ import {
   ok,
   type Logger,
   type Result,
+  type Source,
 } from "@matchday/domain";
 import type { CrawlCatalogLeagueResult } from "#crawlers/dribl/catalogCrawler.ts";
 import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
@@ -17,12 +18,15 @@ import { resolveTeamForFixture } from "#crawlers/dribl/teamResolver.ts";
 export type PersistLeagueInput = {
   deps: EntityResolutionDeps;
   logger: Logger;
+  /** The source the crawl is reading — written onto the season and the external refs. */
+  source: Source;
   league: CrawlCatalogLeagueResult;
 };
 
 export type PersistCatalogInput = {
   deps: EntityResolutionDeps;
   logger: Logger;
+  source: Source;
   leagues: CrawlCatalogLeagueResult[];
 };
 
@@ -41,31 +45,37 @@ export type PersistCatalogSummary = {
   fixtureTeams: number;
 };
 
-/** Warn once per season when it has no calendar window: per-club season resolution can't place it
- * on "today". Cleared by `mday season set-dates`; a generated source writes its own dates. */
-async function warnIfSeasonUndated(
+/** Warn once per competition-season when it has no calendar window: per-club season resolution
+ * can't place it on "today". Cleared by `mday season set-dates`; a generated source writes its own
+ * dates during the crawl. */
+async function warnIfCompetitionSeasonUndated(
   deps: EntityResolutionDeps,
   logger: Logger,
+  competitionId: string,
   seasonId: string,
   warned: WarnedSeasons,
 ): Promise<void> {
-  if (warned.has(seasonId)) {
+  const key = `${competitionId}:${seasonId}`;
+  if (warned.has(key)) {
     return;
   }
-  warned.add(seasonId);
+  warned.add(key);
 
-  const seasonResult = await deps.getSeasonById(seasonId);
-  if (!seasonResult.ok || seasonResult.value === null) {
+  const noteResult = await deps.getCompetitionSeason(competitionId, seasonId);
+  if (!noteResult.ok || noteResult.value === null) {
     return;
   }
-  const { name, startsOn, endsOn } = seasonResult.value;
+  const { startsOn, endsOn } = noteResult.value;
   if (startsOn !== null && endsOn !== null) {
     return;
   }
-  logger.warn("catalog.season.undated", "season has no dates", {
-    season: name,
+  const seasonResult = await deps.getSeasonById(seasonId);
+  const seasonName = seasonResult.ok && seasonResult.value !== null ? seasonResult.value.name : "";
+  logger.warn("catalog.competitionSeason.undated", "competition season has no dates", {
+    season: seasonName,
     seasonId,
-    hint: `run \`mday season set-dates ${name} --starts <date> --ends <date>\``,
+    competitionId,
+    hint: `run \`mday season set-dates ${seasonName} --source <source> --competition <name> --starts <date> --ends <date>\``,
   });
 }
 
@@ -73,11 +83,12 @@ export async function persistLeague(
   input: PersistLeagueInput,
   warned: WarnedSeasons = new Set(),
 ): Promise<Result<PersistLeagueSummary>> {
-  const { deps, logger, league } = input;
+  const { deps, logger, source, league } = input;
 
   const competitionResult = await resolveEntityByExternalRef({
     deps,
     entityType: externalRefEntityTypeValue.competition,
+    source,
     sourceId: league.competitionSourceId,
     upsertEntity: (id) => deps.upsertCompetition({ id, name: league.competitionName }),
   });
@@ -88,20 +99,37 @@ export async function persistLeague(
   const seasonResult = await resolveEntityByExternalRef({
     deps,
     entityType: externalRefEntityTypeValue.season,
+    source,
     sourceId: league.seasonSourceId,
-    upsertEntity: (id) => deps.upsertSeason({ id, name: league.seasonName }),
+    upsertEntity: (id) => deps.upsertSeason({ id, source, name: league.seasonName }),
   });
   if (!seasonResult.ok) {
     return seasonResult;
   }
 
-  // Per-club season resolution can't place a dateless season on "today", so warn an operator to
-  // run `mday season set-dates`. A generated source writes its own dates, so this stays quiet.
-  await warnIfSeasonUndated(deps, logger, seasonResult.value, warned);
+  // The competition-season owns the calendar window. A Dribl crawl creates it blank; an operator
+  // fills the window in with `mday season set-dates`, or a generated source writes its own.
+  const ensured = await deps.ensureCompetitionSeason({
+    id: generateId("competitionSeason"),
+    competitionId: competitionResult.value,
+    seasonId: seasonResult.value,
+  });
+  if (!ensured.ok) {
+    return ensured;
+  }
+
+  await warnIfCompetitionSeasonUndated(
+    deps,
+    logger,
+    competitionResult.value,
+    seasonResult.value,
+    warned,
+  );
 
   const leagueResult = await resolveEntityByExternalRef({
     deps,
     entityType: externalRefEntityTypeValue.league,
+    source,
     sourceId: league.leagueSourceId,
     upsertEntity: (id) =>
       deps.upsertLeague({
@@ -167,14 +195,14 @@ export async function persistLeague(
 export async function persistCatalog(
   input: PersistCatalogInput,
 ): Promise<Result<PersistCatalogSummary>> {
-  const { deps, logger, leagues } = input;
+  const { deps, logger, source, leagues } = input;
 
   let tableEntryCount = 0;
   let fixtureTeamCount = 0;
   const warned: WarnedSeasons = new Set();
 
   for (const league of leagues) {
-    const result = await persistLeague({ deps, logger, league }, warned);
+    const result = await persistLeague({ deps, logger, source, league }, warned);
     if (!result.ok) {
       return result;
     }
