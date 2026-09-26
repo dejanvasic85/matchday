@@ -96,6 +96,23 @@ export const competitionSeason = pgTable(
   ],
 );
 
+// A league the system crawls. The competition id is stable across years and the league name repeats
+// each season, so a target survives a season rollover without an edit.
+export const crawlTarget = pgTable(
+  "crawl_target",
+  {
+    id: text("id").primaryKey(),
+    competitionId: text("competition_id")
+      .notNull()
+      .references(() => competition.id),
+    leagueName: text("league_name").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("crawl_target_competition_league_key").on(table.competitionId, table.leagueName),
+  ],
+);
+
 export const league = pgTable("league", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -306,6 +323,7 @@ export const teamRelations = relations(team, ({ one }) => ({
 export const competitionRelations = relations(competition, ({ many }) => ({
   competitionSeasons: many(competitionSeason),
   leagues: many(league),
+  crawlTargets: many(crawlTarget),
 }));
 
 export const seasonRelations = relations(season, ({ many }) => ({
@@ -318,6 +336,13 @@ export const competitionSeasonRelations = relations(competitionSeason, ({ one })
     references: [competition.id],
   }),
   season: one(season, { fields: [competitionSeason.seasonId], references: [season.id] }),
+}));
+
+export const crawlTargetRelations = relations(crawlTarget, ({ one }) => ({
+  competition: one(competition, {
+    fields: [crawlTarget.competitionId],
+    references: [competition.id],
+  }),
 }));
 
 export const leagueRelations = relations(league, ({ one, many }) => ({

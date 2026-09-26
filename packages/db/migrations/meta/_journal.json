@@ -127,6 +127,13 @@
       "when": 1790398703377,
       "tag": "0017_needy_blizzard",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790410843788,
+      "tag": "0018_remarkable_major_mapleleaf",
+      "breakpoints": true
     }
   ]
 }

@@ -50,6 +50,7 @@ export {
   type IdPrefix,
   type LeagueId,
   type LeagueTeamId,
+  type CrawlTargetId,
   type SeasonId,
   type SubscriptionId,
   type TableEntryId,
@@ -79,6 +80,7 @@ export { leagueSchema, type League } from "#entities/league.ts";
 export { fixtureSchema, type Fixture } from "#entities/fixture.ts";
 export { tableEntrySchema, type TableEntry } from "#entities/tableEntry.ts";
 export { externalRefSchema, type ExternalRef } from "#entities/externalRef.ts";
+export { crawlTargetSchema, type CrawlTarget } from "#entities/crawlTarget.ts";
 export { subscriptionSchema, type Subscription } from "#entities/subscription.ts";
 export { clientSchema, type Client } from "#entities/client.ts";
 export { apiTokenSchema, type ApiToken } from "#entities/apiToken.ts";

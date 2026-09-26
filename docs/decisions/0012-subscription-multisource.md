@@ -21,6 +21,9 @@
   repo; its findings are summarised in the Context below.
 - Reshaped by: [0015](0015-season-scope.md) — seasons are scoped to their source, and a league's
   calendar window comes from its competition's run in that season, not from a global season row.
+- Superseded by: [0016](0016-crawl-scope.md) — the subscription is no longer the crawl scope. Scope
+  moves to a system-owned `crawl_target` table, and a follow decides only who we notify. The
+  multi-source and catalogue/deep-crawl split below carry forward.
 
 ## Context
 
