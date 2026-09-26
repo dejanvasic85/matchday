@@ -29,8 +29,6 @@ jobs:
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
-        with:
-          cache: true
 
       - name: Install dependencies
         run: vp install --frozen-lockfile
@@ -47,6 +45,43 @@ jobs:
       - name: Build
         run: vp run -r build
 
+  integration:
+    name: Integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Fork PRs get no secrets, so they cannot create a branch.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      # One Neon branch per PR, named deterministically so cleanup can find it.
+      - name: Create Neon branch
+        id: neon
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch_name: pr-${{ github.event.pull_request.number }}
+          parent_branch: production
+          database: matchday
+
+      - name: Apply migrations
+        run: vp run --filter @matchday/db db:migrate
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url_pooled }}
+
+      - name: Integration tests
+        run: vp run --filter @matchday/api test:integration
+        env:
+          INTEGRATION_DATABASE_URL: ${{ steps.neon.outputs.db_url_pooled }}
+
   fallow:
     name: Fallow audit
     runs-on: ubuntu-latest
@@ -60,8 +95,6 @@ jobs:
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
-        with:
-          cache: true
 
       - name: Install dependencies
         run: vp install --frozen-lockfile
