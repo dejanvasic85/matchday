@@ -25,6 +25,7 @@ export function makeFakeEntityResolutionDeps(
     findExternalRefByInternalId: vi.fn(),
     upsertExternalRef: vi.fn(),
     getLeagueById: vi.fn(),
+    getSeasonById: vi.fn().mockResolvedValue(ok(null)),
     ...overrides,
   };
 }

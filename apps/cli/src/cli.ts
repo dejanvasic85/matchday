@@ -13,6 +13,7 @@ import { Command, InvalidArgumentError, Option } from "commander";
 import { renderApiTokenTable } from "#apiTokenTable.ts";
 import { renderClientTable } from "#clientTable.ts";
 import { renderSubscriptionTable, renderSyncPlan } from "#subscriptionTable.ts";
+import { renderSeasonTable } from "#seasonTable.ts";
 import { renderClubLeagueTable } from "#clubLeagueTable.ts";
 import { getCliConfig } from "#config.ts";
 import { crawlSourceValue, type CrawlSource } from "#crawlers/constants.ts";
@@ -37,6 +38,8 @@ import { runListClientsJob } from "#jobs/clients/listClients.ts";
 import { runBackfillLeagueTeamsJob } from "#jobs/maintenance/backfillLeagueTeams.ts";
 import { runRemoveSubscriptionJob } from "#jobs/clients/removeSubscription.ts";
 import { runRevokeApiTokenJob } from "#jobs/clients/revokeApiToken.ts";
+import { runListSeasonsJob } from "#jobs/seasons/listSeasons.ts";
+import { runSetSeasonDatesJob } from "#jobs/seasons/setSeasonDates.ts";
 import { runSubscribedLeaguesJob } from "#jobs/crawls/subscribedLeagues.ts";
 
 const currentYear = new Date().getFullYear().toString();
@@ -499,16 +502,20 @@ export function createCli(): Command {
   client
     .command("sync-subscriptions")
     .description(
-      "Reconcile a client's subscriptions against the clubs it follows, for one season. Adds " +
-        "every league a followed club plays in this season that isn't subscribed yet, and " +
-        "removes subscriptions belonging to *older* seasons — so a season rollover is this one " +
-        "command. Prints the diff and writes nothing unless --apply is passed. Subscriptions are " +
-        "derived, so a `remove-subscription` on a followed club's current-season league comes " +
-        "back on the next sync; use `unfollow-club` to drop one for good. Requires the catalog " +
-        "crawl to have run for the target season first.",
+      "Reconcile a client's subscriptions against the clubs it follows, for the seasons its " +
+        "clubs play in. Adds every league a followed club plays in that isn't subscribed yet, " +
+        "and removes subscriptions whose season has finished (its end date is in the past) — so " +
+        "a season rollover is this one command. Seasons are resolved per club, never globally, " +
+        "so a second source's season can't prune a Dribl client's live subscriptions. Prints the " +
+        "diff and writes nothing unless --apply is passed. Subscriptions are derived, so a " +
+        "`remove-subscription` on a followed club's current-season league comes back on the next " +
+        "sync; use `unfollow-club` to drop one for good.",
     )
     .requiredOption("--client <name>", "the client name")
-    .option("--season <year>", "season to sync to (default: the latest season we hold)")
+    .option(
+      "--season <year>",
+      "pin the sync to one season by name (default: every season the followed clubs play in)",
+    )
     .option("--apply", "write the diff instead of only printing it", false)
     .option("--json", "print the plan as JSON instead of a table", false)
     .action(async (options: { client: string; season?: string; apply: boolean; json: boolean }) => {
@@ -771,6 +778,80 @@ export function createCli(): Command {
         return;
       }
       process.stdout.write(`Cleared webhook for club: ${result.value.name}\n`);
+    });
+
+  const season = program
+    .command("season")
+    .description("Season calendar windows, used to work out which season is current.");
+
+  season
+    .command("list")
+    .description(
+      "List seasons with their start and end dates, so a season still missing dates is obvious " +
+        "before a `client sync-subscriptions` relies on it. --json prints the rows alone for " +
+        "piping into jq.",
+    )
+    .option("--json", "print the rows as JSON instead of a table", false)
+    .action(async (options: { json: boolean }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runListSeasonsJob({ config });
+      if (!result.ok) {
+        logger.error("season.listfailed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+        return;
+      }
+      const output = options.json
+        ? JSON.stringify(result.value, null, 2)
+        : renderSeasonTable(result.value);
+      process.stdout.write(`${output}\n`);
+    });
+
+  season
+    .command("set-dates")
+    .description(
+      "Set a season's start and end dates (YYYY-MM-DD). Run this after `mday catalog` has " +
+        "created the season — Dribl names seasons by year but gives no dates, so they are entered " +
+        "by hand here. Both dates are required; a sync treats a season as finished only once " +
+        "today is past its end date, so a season with no end date is never pruned.",
+    )
+    .argument("<name>", "the season name (a year, e.g. 2026)")
+    .requiredOption("--starts <date>", "the season's first day, as YYYY-MM-DD")
+    .requiredOption("--ends <date>", "the season's last day, as YYYY-MM-DD")
+    .action(async (name: string, options: { starts: string; ends: string }) => {
+      const config = getCliConfig();
+      const logger = createConsoleLogger();
+      const result = await runSetSeasonDatesJob({
+        logger,
+        config,
+        seasonName: name,
+        startsOn: options.starts,
+        endsOn: options.ends,
+      });
+      if (!result.ok) {
+        logger.error("season.setdatesfailed", result.error.message, { cause: result.error.cause });
+        process.exitCode = 1;
+        return;
+      }
+      if (result.value.status === "missing") {
+        logger.error("season.setdatesfailed", `No season named "${name}"`, {
+          hint: "run `mday catalog` first, or `mday season list` to see what exists",
+        });
+        process.exitCode = 1;
+        return;
+      }
+      if (result.value.status === "ambiguous") {
+        logger.error(
+          "season.setdatesfailed",
+          `More than one season is named "${name}" (${result.value.count} matched)`,
+          { hint: "disambiguate by season id; `mday season list` shows the ids" },
+        );
+        process.exitCode = 1;
+        return;
+      }
+      process.stdout.write(
+        `Season ${result.value.seasonName}: ${result.value.startsOn} → ${result.value.endsOn}\n`,
+      );
     });
 
   const leagueTeam = program

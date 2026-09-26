@@ -127,6 +127,7 @@ export async function createSubscriptionsForClub(
     return clubLeaguesResult;
   }
   const { club, leagues } = clubLeaguesResult.value;
+  const seasonSummary = { id: season.id, name: season.name };
 
   const clientResult = await resolveClient(deps, clientName);
   if (!clientResult.ok) {
@@ -134,7 +135,7 @@ export async function createSubscriptionsForClub(
   }
 
   if (dryRun) {
-    return ok({ club, leagues, season, subscriptionIds: [] });
+    return ok({ club, leagues, season: seasonSummary, subscriptionIds: [] });
   }
 
   // Record the follow first: if a later upsert fails, the provenance is still there and a
@@ -168,7 +169,7 @@ export async function createSubscriptionsForClub(
     subscriptionIds.push(subscriptionId.value);
   }
 
-  return ok({ club, leagues, season, subscriptionIds });
+  return ok({ club, leagues, season: seasonSummary, subscriptionIds });
 }
 
 /** Soft-delete a subscription, narrowing an unknown (or already-removed) id to a `notFound`

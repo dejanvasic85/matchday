@@ -17,6 +17,15 @@ export {
   type ResultError,
 } from "#result.ts";
 export { parseEnv } from "#config.ts";
+export {
+  hasSeasonFinished,
+  isIsoDate,
+  isoDateSchema,
+  melbourneTimeZone,
+  parseIsoDate,
+  todayInMelbourne,
+  type IsoDate,
+} from "#calendarDate.ts";
 export { generateApiToken, hashApiToken } from "#apiTokenHash.ts";
 export { generateWebhookSecret, signWebhookPayload } from "#webhookSignature.ts";
 export { describeCause } from "#errorCause.ts";

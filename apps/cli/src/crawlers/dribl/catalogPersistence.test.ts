@@ -222,4 +222,46 @@ describe("persistCatalog", () => {
     expect(deps.upsertLeague).not.toHaveBeenCalled();
     expect(deps.upsertTableEntry).not.toHaveBeenCalled();
   });
+
+  it("warns when a crawled season has no dates", async () => {
+    const deps = makeHappyPathDeps();
+    deps.getSeasonById = vi.fn().mockResolvedValue(
+      ok({
+        id: "sea_new00000001",
+        name: "2026",
+        startsOn: null,
+        endsOn: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
+    const logger = makeFakeLogger();
+
+    await persistCatalog({ deps, logger, leagues: [makeLeague()] });
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "catalog.season.undated",
+      "season has no dates",
+      expect.objectContaining({ season: "2026" }),
+    );
+  });
+
+  it("stays quiet when the season already has dates", async () => {
+    const deps = makeHappyPathDeps();
+    deps.getSeasonById = vi.fn().mockResolvedValue(
+      ok({
+        id: "sea_new00000001",
+        name: "2026",
+        startsOn: "2026-03-01",
+        endsOn: "2026-09-30",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
+    const logger = makeFakeLogger();
+
+    await persistCatalog({ deps, logger, leagues: [makeLeague()] });
+
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
 });

@@ -4,6 +4,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  date,
   integer,
   jsonb,
   numeric,
@@ -13,6 +14,7 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
+import type { IsoDate } from "@matchday/domain";
 import type { FixtureStatus, Source } from "#constants.ts";
 
 /** Open-ended `platform -> url` map for a club's social links. */
@@ -56,9 +58,13 @@ export const competition = pgTable("competition", {
   ...timestamps,
 });
 
+// A season's calendar, nullable until set: Dribl names a season by year and gives no dates, so an
+// operator sets them by hand; a generated source writes them from its own calendar.
 export const season = pgTable("season", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  startsOn: date("starts_on").$type<IsoDate>(),
+  endsOn: date("ends_on").$type<IsoDate>(),
   ...timestamps,
 });
 

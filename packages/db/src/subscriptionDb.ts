@@ -1,7 +1,7 @@
 // Subscription data access: build a query, execute it, return a `Result` of rows. No business
 // rules here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
-import { ok, type Result } from "@matchday/domain";
+import { ok, type IsoDate, type Result } from "@matchday/domain";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
@@ -20,6 +20,9 @@ export type SubscriptionWithLeague = {
   leagueName: string;
   seasonId: string;
   seasonName: string;
+  /** The season's end date, nullable — `sync-subscriptions` uses it to decide a subscription's
+   * season has finished without a second lookup. */
+  seasonEndsOn: IsoDate | null;
 };
 
 /** Filters for {@link listSubscriptionsWithLeague} — applied in SQL, never by making the caller
@@ -100,6 +103,7 @@ export async function listSubscriptionsWithLeague(
           leagueName: league.name,
           seasonId: league.seasonId,
           seasonName: season.name,
+          seasonEndsOn: season.endsOn,
         })
         .from(subscription)
         .innerJoin(league, eq(subscription.leagueId, league.id))

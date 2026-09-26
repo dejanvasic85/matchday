@@ -1,8 +1,15 @@
 // Season resolution: "which season does this command act on?" in one place. There is no
-// `is_current` flag on `season` — a season's name is the year the source gave us, so the current
-// one is simply the latest row, and `--season <year>` overrides it.
+// `is_current` flag — `--season <name>` overrides, otherwise the latest row wins.
 
-import { notFound, ok, parseId, serverError, type Result, type SeasonId } from "@matchday/domain";
+import {
+  notFound,
+  ok,
+  parseId,
+  serverError,
+  type IsoDate,
+  type Result,
+  type SeasonId,
+} from "@matchday/domain";
 import type { findLatestSeason, findSeasonByName } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -17,6 +24,9 @@ export type SeasonResolverDeps = {
 export type ResolvedSeason = {
   id: SeasonId;
   name: string;
+  /** Nullable: Dribl gives no dates, so a season may not have them yet. Callers that need to know
+   * whether it has ended read this; a date-less season is never finished. */
+  endsOn: IsoDate | null;
 };
 
 function toSeasonId(id: string): Result<SeasonId> {
@@ -56,5 +66,5 @@ export async function resolveSeason(
   if (!idResult.ok) {
     return idResult;
   }
-  return ok({ id: idResult.value, name: found.value.name });
+  return ok({ id: idResult.value, name: found.value.name, endsOn: found.value.endsOn });
 }

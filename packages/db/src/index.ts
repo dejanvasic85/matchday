@@ -39,6 +39,8 @@ export {
   findLatestSeason,
   findSeasonByName,
   upsertSeason,
+  setSeasonDatesByName,
+  type SeasonDatesWrite,
 } from "#seasonDb.ts";
 export {
   listLeagues,

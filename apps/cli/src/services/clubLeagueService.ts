@@ -1,8 +1,8 @@
 // Club -> league resolution: listLeaguesByClubId returns one row per (team, league) pair,
 // undeduplicated; dedup is a business rule so it lives here, not in a SQL DISTINCT.
 
-import { ok, type Result } from "@matchday/domain";
-import type { listLeaguesByClubId } from "@matchday/db";
+import { ok, type IsoDate, type Result } from "@matchday/domain";
+import type { listLeaguesByClubId, LeagueWithRefs } from "@matchday/db";
 import { resolveClub, type ClubResolverDeps, type ResolvedClub } from "#services/clubResolver.ts";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -16,12 +16,21 @@ export type ClubLeagueServiceDeps = ClubResolverDeps & {
 export type LeagueSummary = {
   id: string;
   name: string;
+  /** The league's season end date, nullable. Carried so a caller deciding whether to *subscribe*
+   * can skip a finished season without a second lookup. */
+  seasonEndsOn: IsoDate | null;
 };
 
 export type ClubLeagues = {
   club: ResolvedClub;
   leagues: LeagueSummary[];
 };
+
+/** `listLeaguesByClubId` nests the joined season, so the end date has to be lifted onto the
+ * summary here — a caller can't read `row.season.endsOn` off a `LeagueSummary`. */
+function toLeagueSummary(row: LeagueWithRefs): LeagueSummary {
+  return { id: row.id, name: row.name, seasonEndsOn: row.season.endsOn };
+}
 
 /** Distinct leagues by id, name-ordered — collapses the one-row-per-team duplicates from
  * `listLeaguesByClubId` (a club with 19 teams across 18 leagues has exactly one team sharing a
@@ -69,5 +78,5 @@ export async function listLeaguesForClubId(
   if (!leaguesResult.ok) {
     return leaguesResult;
   }
-  return ok(dedupeLeagues(leaguesResult.value));
+  return ok(dedupeLeagues(leaguesResult.value.map(toLeagueSummary)));
 }
