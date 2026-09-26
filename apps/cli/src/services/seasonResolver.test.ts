@@ -49,7 +49,7 @@ describe("resolveSeason", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('No season named "20227"');
+      expect(result.error.message).toContain('No dribl season named "20227"');
     }
   });
 
@@ -60,7 +60,7 @@ describe("resolveSeason", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain("No seasons exist yet");
+      expect(result.error.message).toContain("No dribl seasons exist yet");
     }
   });
 

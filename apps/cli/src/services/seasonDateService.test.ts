@@ -27,21 +27,23 @@ function makeCompetition() {
   };
 }
 
+function makeWindow() {
+  return {
+    id: "cse_written000",
+    competitionId: "cmp_npl0000000",
+    seasonId: "sea_2026000000",
+    startsOn: makeIsoDate("2026-03-01"),
+    endsOn: makeIsoDate("2026-09-30"),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+}
+
 function makeDeps(overrides: Partial<SeasonDateServiceDeps> = {}): SeasonDateServiceDeps {
   return {
     findSeasonByName: vi.fn().mockResolvedValue(ok(makeSeason())),
-    findCompetitionsByName: vi.fn().mockResolvedValue(ok([makeCompetition()])),
-    setCompetitionSeasonDates: vi.fn().mockResolvedValue(
-      ok({
-        id: "cse_written000",
-        competitionId: "cmp_npl0000000",
-        seasonId: "sea_2026000000",
-        startsOn: makeIsoDate("2026-03-01"),
-        endsOn: makeIsoDate("2026-09-30"),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
-    ),
+    findCompetitionsForSeasonByName: vi.fn().mockResolvedValue(ok([makeCompetition()])),
+    updateCompetitionSeasonDates: vi.fn().mockResolvedValue(ok(makeWindow())),
     ...overrides,
   };
 }
@@ -55,7 +57,7 @@ const validInput = {
 };
 
 describe("setSeasonDates", () => {
-  it("writes the window to the competition's season", async () => {
+  it("writes the window to the competition's existing season row", async () => {
     const deps = makeDeps();
 
     const result = await setSeasonDates(deps, validInput);
@@ -71,14 +73,16 @@ describe("setSeasonDates", () => {
       }),
     );
     expect(deps.findSeasonByName).toHaveBeenCalledWith("dribl", "2026");
-    expect(deps.setCompetitionSeasonDates).toHaveBeenCalledWith(
-      expect.objectContaining({
-        competitionId: "cmp_npl0000000",
-        seasonId: "sea_2026000000",
-        startsOn: "2026-03-01",
-        endsOn: "2026-09-30",
-      }),
+    expect(deps.findCompetitionsForSeasonByName).toHaveBeenCalledWith(
+      "sea_2026000000",
+      "NPL Victoria",
     );
+    expect(deps.updateCompetitionSeasonDates).toHaveBeenCalledWith({
+      competitionId: "cmp_npl0000000",
+      seasonId: "sea_2026000000",
+      startsOn: "2026-03-01",
+      endsOn: "2026-09-30",
+    });
   });
 
   it("fails on a malformed date before touching the database", async () => {
@@ -117,27 +121,47 @@ describe("setSeasonDates", () => {
     expect(result).toEqual(ok({ status: "missing-season" }));
   });
 
-  it("reports a missing competition", async () => {
-    const deps = makeDeps({ findCompetitionsByName: vi.fn().mockResolvedValue(ok([])) });
+  it("reports a competition that doesn't run the season", async () => {
+    const deps = makeDeps({ findCompetitionsForSeasonByName: vi.fn().mockResolvedValue(ok([])) });
 
     const result = await setSeasonDates(deps, { ...validInput, competitionName: "Typo Cup" });
 
     expect(result).toEqual(ok({ status: "missing-competition" }));
+    expect(deps.updateCompetitionSeasonDates).not.toHaveBeenCalled();
   });
 
-  it("reports an ambiguous competition name with the match count", async () => {
+  it("reports an ambiguous competition name with its candidates", async () => {
     const deps = makeDeps({
-      findCompetitionsByName: vi.fn().mockResolvedValue(ok([makeCompetition(), makeCompetition()])),
+      findCompetitionsForSeasonByName: vi.fn().mockResolvedValue(
+        ok([
+          makeCompetition(),
+          {
+            id: "cmp_other00000",
+            name: "NPL Victoria",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ]),
+      ),
     });
 
     const result = await setSeasonDates(deps, validInput);
 
-    expect(result).toEqual(ok({ status: "ambiguous-competition", count: 2 }));
+    expect(result).toEqual(
+      ok({
+        status: "ambiguous-competition",
+        candidates: [
+          { id: "cmp_npl0000000", name: "NPL Victoria" },
+          { id: "cmp_other00000", name: "NPL Victoria" },
+        ],
+      }),
+    );
+    expect(deps.updateCompetitionSeasonDates).not.toHaveBeenCalled();
   });
 
   it("propagates a write failure", async () => {
-    const writeError = serverError("Failed to upsert competition season");
-    const deps = makeDeps({ setCompetitionSeasonDates: vi.fn().mockResolvedValue(writeError) });
+    const writeError = serverError("Failed to update competition season dates");
+    const deps = makeDeps({ updateCompetitionSeasonDates: vi.fn().mockResolvedValue(writeError) });
 
     const result = await setSeasonDates(deps, validInput);
 
@@ -146,30 +170,44 @@ describe("setSeasonDates", () => {
 });
 
 describe("describeSeasonDatesFailure", () => {
-  it("names the missing season", () => {
-    const failure = describeSeasonDatesFailure({ status: "missing-season" }, "2099", "NPL");
+  it("names the source and season that is missing", () => {
+    const failure = describeSeasonDatesFailure(
+      { status: "missing-season" },
+      "dribl",
+      "2099",
+      "NPL",
+    );
 
-    expect(failure.message).toContain('No season named "2099"');
+    expect(failure.message).toContain('No dribl season named "2099"');
     expect(failure.hint).toContain("mday catalog");
   });
 
-  it("names the missing competition", () => {
+  it("names the competition and season that doesn't run it", () => {
     const failure = describeSeasonDatesFailure(
       { status: "missing-competition" },
+      "dribl",
       "2026",
       "Typo Cup",
     );
 
-    expect(failure.message).toContain('No competition named "Typo Cup"');
+    expect(failure.message).toContain('No competition named "Typo Cup" runs dribl season "2026"');
   });
 
-  it("reports the ambiguous competition count", () => {
+  it("lists the candidate ids for an ambiguous competition", () => {
     const failure = describeSeasonDatesFailure(
-      { status: "ambiguous-competition", count: 2 },
+      {
+        status: "ambiguous-competition",
+        candidates: [
+          { id: "cmp_a", name: "NPL Victoria" },
+          { id: "cmp_b", name: "NPL Victoria" },
+        ],
+      },
+      "dribl",
       "2026",
-      "NPL",
+      "NPL Victoria",
     );
 
-    expect(failure.message).toContain("(2 matched)");
+    expect(failure.hint).toContain("cmp_a");
+    expect(failure.hint).toContain("cmp_b");
   });
 });

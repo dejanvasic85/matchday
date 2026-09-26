@@ -59,8 +59,10 @@ export async function resolveSeason(
 
   if (found.value === null) {
     return name === undefined
-      ? notFound(`No seasons exist yet — run \`mday catalog\` before subscribing anyone`)
-      : notFound(`No season named "${name}" — run \`mday catalog --season ${name}\` first`);
+      ? notFound(`No ${source} seasons exist yet — run \`mday catalog\` before subscribing anyone`)
+      : notFound(
+          `No ${source} season named "${name}" — run \`mday catalog --season ${name}\` first`,
+        );
   }
 
   const idResult = toSeasonId(found.value.id);

@@ -109,7 +109,7 @@ export async function listSubscriptionsWithLeague(
         .from(subscription)
         .innerJoin(league, eq(subscription.leagueId, league.id))
         .innerJoin(season, eq(season.id, league.seasonId))
-        .innerJoin(
+        .leftJoin(
           competitionSeason,
           and(
             eq(competitionSeason.competitionId, league.competitionId),

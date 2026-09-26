@@ -27,9 +27,11 @@ export type ClubLeagues = {
 };
 
 /** `listLeaguesByClubId` nests the joined competition-season, so the end date has to be lifted onto
- * the summary here — a caller can't read `row.competitionSeason.endsOn` off a `LeagueSummary`. */
+ * the summary here — a caller can't read `row.competitionSeason.endsOn` off a `LeagueSummary`. A
+ * missing window reads as null, which the sync treats as "not finished", so the league is never
+ * pruned on a date we don't have. */
 function toLeagueSummary(row: LeagueWithRefs): LeagueSummary {
-  return { id: row.id, name: row.name, seasonEndsOn: row.competitionSeason.endsOn };
+  return { id: row.id, name: row.name, seasonEndsOn: row.competitionSeason?.endsOn ?? null };
 }
 
 /** Distinct leagues by id, name-ordered — collapses the one-row-per-team duplicates from

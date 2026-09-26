@@ -44,6 +44,31 @@ describe("listLeaguesForClub", () => {
     expect(deps.listLeaguesByClubId).toHaveBeenCalledWith("clb_existing000", "sea_2026000000");
   });
 
+  it("keeps a league whose competition-season row is missing, with no end date", async () => {
+    // The row is left-joined, so a missing window must not drop the league from the API; null reads
+    // as "not finished", so the sync never prunes it on a date we don't have.
+    const deps = makeDeps({
+      listLeaguesByClubId: vi.fn().mockResolvedValue(
+        ok([
+          makeLeagueWithRefs({
+            id: "lea_nowindow00",
+            name: "Div 1 North",
+            competitionSeason: null,
+          }),
+        ]),
+      ),
+    });
+
+    const result = await listLeaguesForClub(deps, "Williamstown");
+
+    expect(result).toEqual(
+      ok({
+        club: { id: "clb_existing000", name: "Williamstown SC" },
+        leagues: [{ id: "lea_nowindow00", name: "Div 1 North", seasonEndsOn: null }],
+      }),
+    );
+  });
+
   it("dedupes leagues shared by more than one team (19 teams, 18 distinct leagues)", async () => {
     const rows = Array.from({ length: 18 }, (_, index) =>
       makeLeagueWithRefs({

@@ -101,8 +101,11 @@ function parseCrawlSource(value: string): CrawlSource {
 /** A `--source` selector for commands that resolve a season. Seasons are scoped to a source, so a
  * season name alone is ambiguous. Returns a fresh `Option` per call: commander mutates the
  * instance it is given. */
-function seasonSourceOption(): Option {
-  return new Option("--source <name>", `source whose seasons to use (${crawlSources.join(", ")})`)
+function seasonSourceOption(description?: string): Option {
+  return new Option(
+    "--source <name>",
+    description ?? `source whose seasons to use (${crawlSources.join(", ")})`,
+  )
     .argParser(parseCrawlSource)
     .default(crawlSourceValue.dribl);
 }
@@ -526,7 +529,9 @@ export function createCli(): Command {
         "sync; use `unfollow-club` to drop one for good.",
     )
     .requiredOption("--client <name>", "the client name")
-    .addOption(seasonSourceOption())
+    .addOption(
+      seasonSourceOption("with --season, the source whose seasons to resolve (ignored otherwise)"),
+    )
     .option(
       "--season <year>",
       "pin the sync to one season by name (default: every season the followed clubs play in)",
@@ -627,14 +632,7 @@ export function createCli(): Command {
       "--season <year>",
       "with --club, the season to subscribe for (default: the latest season we hold)",
     )
-    .addOption(
-      new Option(
-        "--source <name>",
-        `with --club, the source whose seasons to use (${crawlSources.join(", ")})`,
-      )
-        .argParser(parseCrawlSource)
-        .default(crawlSourceValue.dribl),
-    )
+    .addOption(seasonSourceOption("with --club, the source whose seasons to use"))
     .option(
       "--dry-run",
       "with --club, resolve and print the club + leagues without subscribing to anything",
@@ -888,7 +886,12 @@ export function createCli(): Command {
           return;
         }
         if (result.value.status !== "written") {
-          const failure = describeSeasonDatesFailure(result.value, name, options.competition);
+          const failure = describeSeasonDatesFailure(
+            result.value,
+            options.source,
+            name,
+            options.competition,
+          );
           logger.error("season.setdatesfailed", failure.message, { hint: failure.hint });
           process.exitCode = 1;
           return;

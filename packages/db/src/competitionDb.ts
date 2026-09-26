@@ -2,11 +2,11 @@
 // rules here (AGENTS.md). Driver errors are captured into `err` rather than thrown.
 
 import { ok, type Result } from "@matchday/domain";
-import { asc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { decodeCursor, resolveLimit, toPage, type Page, type PageRequest } from "#paging.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
-import { competition } from "#schema.ts";
+import { competition, competitionSeason } from "#schema.ts";
 
 type Competition = typeof competition.$inferSelect;
 type CompetitionInsert = typeof competition.$inferInsert;
@@ -43,12 +43,27 @@ export async function getCompetitionById(db: Db, id: string): Promise<Result<Com
   return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
-/** Every competition with an exact name, so a caller can fail on ambiguity rather than pick one.
- * Names are not unique across sources, and nothing ties a competition to a source yet. */
-export async function findCompetitionsByName(db: Db, name: string): Promise<Result<Competition[]>> {
+/** Competitions with an exact name that already have a window in the given season, so an operator
+ * setting dates can only target a competition that actually runs that season. Returns every match
+ * so a caller can fail on ambiguity rather than pick one. */
+export async function findCompetitionsForSeasonByName(
+  db: Db,
+  seasonId: string,
+  name: string,
+): Promise<Result<Competition[]>> {
   const result = await runQuery(
-    () => db.select().from(competition).where(eq(competition.name, name)),
-    "Failed to find competitions by name",
+    () =>
+      db
+        .selectDistinct({
+          id: competition.id,
+          name: competition.name,
+          createdAt: competition.createdAt,
+          updatedAt: competition.updatedAt,
+        })
+        .from(competition)
+        .innerJoin(competitionSeason, eq(competitionSeason.competitionId, competition.id))
+        .where(and(eq(competitionSeason.seasonId, seasonId), eq(competition.name, name))),
+    "Failed to find competitions for season by name",
   );
   return result.ok ? ok(result.value) : result;
 }

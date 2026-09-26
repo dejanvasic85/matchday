@@ -1,7 +1,7 @@
 import { ok, serverError } from "@matchday/domain";
 import { syncSubscriptions, type SubscriptionSyncDeps } from "#services/subscriptionSyncService.ts";
 import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
-import { makeLeagueWithRefs } from "#test/fixtures/league.ts";
+import { makeCompetitionSeason, makeLeagueWithRefs } from "#test/fixtures/league.ts";
 
 /** A season row as `resolveSeason` sees it — source and name, no window (that's per competition). */
 function makeSeason() {
@@ -339,7 +339,7 @@ describe("syncSubscriptions", () => {
     const finished = makeLeagueWithRefs({
       id: "lea_finished000",
       name: "Div 1 North (2025)",
-      competitionSeason: { ...live.competitionSeason, endsOn: makeIsoDate("2025-09-30") },
+      competitionSeason: makeCompetitionSeason({ endsOn: makeIsoDate("2025-09-30") }),
     });
     const deps = makeDeps({
       listLeaguesByClubId: vi.fn().mockResolvedValue(ok([live, finished])),
@@ -418,7 +418,7 @@ describe("syncSubscriptions", () => {
     const finished = makeLeagueWithRefs({
       id: "lea_finished000",
       name: "Summer Cup",
-      competitionSeason: { ...live.competitionSeason, endsOn: makeIsoDate("2025-09-30") },
+      competitionSeason: makeCompetitionSeason({ endsOn: makeIsoDate("2025-09-30") }),
     });
     const deps = makeDeps({
       listLeaguesByClubId: vi.fn().mockResolvedValue(ok([live, finished])),

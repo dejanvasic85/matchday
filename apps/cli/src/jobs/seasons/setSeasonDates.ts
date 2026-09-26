@@ -4,9 +4,9 @@
 import { type Logger, type Result, type Source } from "@matchday/domain";
 import {
   createDbClient,
-  findCompetitionsByName,
+  findCompetitionsForSeasonByName,
   findSeasonByName,
-  setCompetitionSeasonDates,
+  updateCompetitionSeasonDates,
 } from "@matchday/db";
 import type { CliConfig } from "#config.ts";
 import { setSeasonDates, type SeasonDatesWrite } from "#services/seasonDateService.ts";
@@ -30,8 +30,9 @@ export async function runSetSeasonDatesJob(
   const result = await setSeasonDates(
     {
       findSeasonByName: (seasonSource, name) => findSeasonByName(db, seasonSource, name),
-      findCompetitionsByName: (name) => findCompetitionsByName(db, name),
-      setCompetitionSeasonDates: (values) => setCompetitionSeasonDates(db, values),
+      findCompetitionsForSeasonByName: (seasonId, name) =>
+        findCompetitionsForSeasonByName(db, seasonId, name),
+      updateCompetitionSeasonDates: (values) => updateCompetitionSeasonDates(db, values),
     },
     { source, seasonName, competitionName, startsOn, endsOn },
   );

@@ -30,9 +30,9 @@ export type PersistCatalogInput = {
   leagues: CrawlCatalogLeagueResult[];
 };
 
-/** Season ids already warned about in this crawl, so one undated season logs one line, not one per
- * league that happens to reference it. */
-export type WarnedSeasons = Set<string>;
+/** Competition-season keys (`competition:season`) already warned about in this crawl, so one
+ * undated window logs one line, not one per league that happens to reference it. */
+export type WarnedCompetitionSeasons = Set<string>;
 
 export type PersistLeagueSummary = {
   tableEntries: number;
@@ -51,9 +51,12 @@ export type PersistCatalogSummary = {
 async function warnIfCompetitionSeasonUndated(
   deps: EntityResolutionDeps,
   logger: Logger,
+  source: Source,
   competitionId: string,
+  competitionName: string,
   seasonId: string,
-  warned: WarnedSeasons,
+  seasonName: string,
+  warned: WarnedCompetitionSeasons,
 ): Promise<void> {
   const key = `${competitionId}:${seasonId}`;
   if (warned.has(key)) {
@@ -61,27 +64,25 @@ async function warnIfCompetitionSeasonUndated(
   }
   warned.add(key);
 
-  const noteResult = await deps.getCompetitionSeason(competitionId, seasonId);
-  if (!noteResult.ok || noteResult.value === null) {
+  const windowResult = await deps.getCompetitionSeason(competitionId, seasonId);
+  if (!windowResult.ok || windowResult.value === null) {
     return;
   }
-  const { startsOn, endsOn } = noteResult.value;
+  const { startsOn, endsOn } = windowResult.value;
   if (startsOn !== null && endsOn !== null) {
     return;
   }
-  const seasonResult = await deps.getSeasonById(seasonId);
-  const seasonName = seasonResult.ok && seasonResult.value !== null ? seasonResult.value.name : "";
   logger.warn("catalog.competitionSeason.undated", "competition season has no dates", {
     season: seasonName,
     seasonId,
     competitionId,
-    hint: `run \`mday season set-dates ${seasonName} --source <source> --competition <name> --starts <date> --ends <date>\``,
+    hint: `run \`mday season set-dates ${seasonName} --source ${source} --competition ${competitionName} --starts <date> --ends <date>\``,
   });
 }
 
 export async function persistLeague(
   input: PersistLeagueInput,
-  warned: WarnedSeasons = new Set(),
+  warned: WarnedCompetitionSeasons = new Set(),
 ): Promise<Result<PersistLeagueSummary>> {
   const { deps, logger, source, league } = input;
 
@@ -121,8 +122,11 @@ export async function persistLeague(
   await warnIfCompetitionSeasonUndated(
     deps,
     logger,
+    source,
     competitionResult.value,
+    league.competitionName,
     seasonResult.value,
+    league.seasonName,
     warned,
   );
 
@@ -199,7 +203,7 @@ export async function persistCatalog(
 
   let tableEntryCount = 0;
   let fixtureTeamCount = 0;
-  const warned: WarnedSeasons = new Set();
+  const warned: WarnedCompetitionSeasons = new Set();
 
   for (const league of leagues) {
     const result = await persistLeague({ deps, logger, source, league }, warned);

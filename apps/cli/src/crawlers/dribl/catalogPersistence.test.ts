@@ -247,17 +247,6 @@ describe("persistCatalog", () => {
         updatedAt: new Date(),
       }),
     );
-    deps.getSeasonById = vi.fn().mockResolvedValue(
-      ok({
-        id: "sea_new00000001",
-        source: "dribl",
-        name: "2026",
-        startsOn: null,
-        endsOn: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
-    );
     const logger = makeFakeLogger();
 
     await persistCatalog({ deps, source: "dribl", logger, leagues: [makeLeague()] });

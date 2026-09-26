@@ -3,7 +3,6 @@
 
 import {
   badRequest,
-  generateId,
   isIsoDate,
   ok,
   type IsoDate,
@@ -11,9 +10,9 @@ import {
   type Source,
 } from "@matchday/domain";
 import type {
-  findCompetitionsByName,
+  findCompetitionsForSeasonByName,
   findSeasonByName,
-  setCompetitionSeasonDates,
+  updateCompetitionSeasonDates,
 } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -22,8 +21,8 @@ type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
 
 export type SeasonDateServiceDeps = {
   findSeasonByName: WithoutDb<typeof findSeasonByName>;
-  findCompetitionsByName: WithoutDb<typeof findCompetitionsByName>;
-  setCompetitionSeasonDates: WithoutDb<typeof setCompetitionSeasonDates>;
+  findCompetitionsForSeasonByName: WithoutDb<typeof findCompetitionsForSeasonByName>;
+  updateCompetitionSeasonDates: WithoutDb<typeof updateCompetitionSeasonDates>;
 };
 
 export type SetSeasonDatesInput = {
@@ -33,6 +32,8 @@ export type SetSeasonDatesInput = {
   startsOn: string;
   endsOn: string;
 };
+
+export type SeasonDatesCandidate = { id: string; name: string };
 
 /** The outcome of a `set-dates` attempt: the validated window on success, or why nothing was
  * written, so the CLI can report a missing or ambiguous season or competition distinctly. */
@@ -47,11 +48,13 @@ export type SeasonDatesWrite =
     }
   | { status: "missing-season" }
   | { status: "missing-competition" }
-  | { status: "ambiguous-competition"; count: number };
+  | { status: "ambiguous-competition"; candidates: SeasonDatesCandidate[] };
 
 /** Set a competition's season window, rejecting a malformed or reversed range before the write.
- * The season and competition are resolved by name from the source; a name matching nothing, or
- * more than one competition, is reported rather than silently no-op'ing. */
+ * The season and competition are resolved by name from the source, and the competition is limited
+ * to ones that already run that season — so a window is never created for a competition that never
+ * ran it. A name matching nothing, or more than one competition, is reported rather than
+ * silently no-op'ing. */
 export async function setSeasonDates(
   deps: SeasonDateServiceDeps,
   input: SetSeasonDatesInput,
@@ -72,8 +75,9 @@ export async function setSeasonDates(
   if (seasonResult.value === null) {
     return ok({ status: "missing-season" });
   }
+  const seasonId = seasonResult.value.id;
 
-  const competitionsResult = await deps.findCompetitionsByName(competitionName);
+  const competitionsResult = await deps.findCompetitionsForSeasonByName(seasonId, competitionName);
   if (!competitionsResult.ok) {
     return competitionsResult;
   }
@@ -81,18 +85,23 @@ export async function setSeasonDates(
     return ok({ status: "missing-competition" });
   }
   if (competitionsResult.value.length > 1) {
-    return ok({ status: "ambiguous-competition", count: competitionsResult.value.length });
+    return ok({
+      status: "ambiguous-competition",
+      candidates: competitionsResult.value.map((row) => ({ id: row.id, name: row.name })),
+    });
   }
 
-  const written = await deps.setCompetitionSeasonDates({
-    id: generateId("competitionSeason"),
+  const updated = await deps.updateCompetitionSeasonDates({
     competitionId: competitionsResult.value[0].id,
-    seasonId: seasonResult.value.id,
+    seasonId,
     startsOn,
     endsOn,
   });
-  if (!written.ok) {
-    return written;
+  if (!updated.ok) {
+    return updated;
+  }
+  if (updated.value === null) {
+    return ok({ status: "missing-competition" });
   }
 
   return ok({ status: "written", source, seasonName, competitionName, startsOn, endsOn });
@@ -104,24 +113,26 @@ export type SeasonDatesFailure = { message: string; hint: string };
  * CLI action so its branching stays flat. */
 export function describeSeasonDatesFailure(
   outcome: Exclude<SeasonDatesWrite, { status: "written" }>,
+  source: Source,
   seasonName: string,
   competitionName: string,
 ): SeasonDatesFailure {
   switch (outcome.status) {
     case "missing-season":
       return {
-        message: `No season named "${seasonName}"`,
+        message: `No ${source} season named "${seasonName}"`,
         hint: "run `mday catalog` first, or `mday season list` to see what exists",
       };
     case "missing-competition":
       return {
-        message: `No competition named "${competitionName}"`,
-        hint: "`mday season list` shows the competitions already catalogued",
+        message: `No competition named "${competitionName}" runs ${source} season "${seasonName}"`,
+        hint: "run `mday catalog` for this season, or `mday season list` to see its competitions",
       };
     case "ambiguous-competition":
       return {
-        message: `More than one competition is named "${competitionName}" (${outcome.count} matched)`,
-        hint: "competition names aren't unique; rename one or set the window by id",
+        message: `More than one competition is named "${competitionName}" in ${source} season "${seasonName}"`,
+        // AGENTS.md: ambiguous input fails listing the candidates, never silently picks one.
+        hint: `candidates: ${outcome.candidates.map((row) => `${row.name} (${row.id})`).join(", ")}`,
       };
   }
 }
