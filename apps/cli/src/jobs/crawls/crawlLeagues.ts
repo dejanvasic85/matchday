@@ -1,6 +1,6 @@
-// Crawls fixtures + table for a chunk of subscribed leagues, discovering clubs/teams as it goes.
-// Transport glue: wires the real DB/R2 clients and one browser session, then hands the chunk to
-// `crawlLeagueBatch`.
+// Crawls fixtures + table for a chunk of leagues in the crawl scope, discovering clubs/teams as it
+// goes. Transport glue: wires the real DB/R2 clients and one browser session, then hands the chunk
+// to `crawlLeagueBatch`.
 
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";
 import {
@@ -8,7 +8,6 @@ import {
   listClientClubWebhooksForClubIds,
   listClubIdsByLeagueId,
   listFixturesByLeagueId,
-  listSubscriptionsWithLeague,
   listTableEntriesByLeagueId,
   type Db,
 } from "@matchday/db";
@@ -52,7 +51,6 @@ async function crawlOneLeague(input: CrawlOneInput): Promise<Result<void>> {
     {
       listClubIdsByLeagueId: (id) => listClubIdsByLeagueId(db, id),
       listClientClubWebhooksForClubIds: (clubIds) => listClientClubWebhooksForClubIds(db, clubIds),
-      listSubscriptionsWithLeague: (filter) => listSubscriptionsWithLeague(db, filter),
       listFixturesByLeagueId: (id) => listFixturesByLeagueId(db, id),
       listTableEntriesByLeagueId: (id) => listTableEntriesByLeagueId(db, id),
       sendWebhook,

@@ -1,11 +1,10 @@
-// Webhook notification service: notifies webhook-configured subscriptions after a crawl.
+// Webhook notification service: notifies webhook-configured follows after a crawl.
 // Each delivery is independent — a failing endpoint is logged and skipped, never fails the batch.
 
 import { signWebhookPayload, type Logger, type Result } from "@matchday/domain";
 
 /** One delivery target: a client's followed club with a webhook configured. Identified by the
- * `client_club` row, since that's what owns the webhook now — it outlives any one season's
- * subscriptions. */
+ * `client_club` row, which owns the webhook and outlives any one season. */
 export type WebhookTarget = {
   id: string;
   clientName: string;
@@ -38,7 +37,7 @@ export type NotificationOutcome = {
   delivered: boolean;
 };
 
-export type NotifyLeagueSubscribersInput = {
+export type NotifyLeagueWebhooksInput = {
   leagueId: string;
   hasChanges: boolean;
   crawledAt: Date;
@@ -54,9 +53,9 @@ export type NotifyLeagueSubscribersInput = {
  * URL as a query parameter: an unsigned copy of the same value invites a receiver to trust the
  * forgeable one.
  */
-export async function notifyLeagueSubscribers(
+export async function notifyLeagueWebhooks(
   deps: WebhookNotificationServiceDeps,
-  input: NotifyLeagueSubscribersInput,
+  input: NotifyLeagueWebhooksInput,
 ): Promise<NotificationOutcome[]> {
   const { leagueId, hasChanges, crawledAt, targets } = input;
   const payload: WebhookPayload = { leagueId, hasChanges, crawledAt: crawledAt.toISOString() };
