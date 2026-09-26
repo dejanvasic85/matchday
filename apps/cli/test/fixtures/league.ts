@@ -47,8 +47,6 @@ export function makeLeagueWithRefs(overrides: Partial<LeagueWithRefs> = {}): Lea
       id: seasonId,
       source: "dribl",
       name: "2026",
-      startsOn: null,
-      endsOn: null,
       createdAt: now,
       updatedAt: now,
     },
