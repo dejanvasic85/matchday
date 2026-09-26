@@ -6,8 +6,6 @@ function makeSeason(name: string, id: string) {
     id,
     source: "dribl" as const,
     name,
-    startsOn: null,
-    endsOn: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

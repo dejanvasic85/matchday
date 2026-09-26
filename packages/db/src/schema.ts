@@ -59,16 +59,13 @@ export const competition = pgTable("competition", {
 });
 
 // A season is a source-wide time label. It carries no window: the calendar belongs to each
-// competition's run (see `competitionSeason`). The old `starts_on`/`ends_on` columns are kept only
-// until the migration that drops them lands.
+// competition's run (see `competitionSeason`).
 export const season = pgTable(
   "season",
   {
     id: text("id").primaryKey(),
     source: text("source").$type<Source>().notNull(),
     name: text("name").notNull(),
-    startsOn: date("starts_on").$type<IsoDate>(),
-    endsOn: date("ends_on").$type<IsoDate>(),
     ...timestamps,
   },
   (table) => [uniqueIndex("season_source_name_key").on(table.source, table.name)],
