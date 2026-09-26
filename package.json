@@ -13,6 +13,8 @@
     "release:sdk": "pnpm --filter matchday-sdk run build && pnpm changeset publish",
     "db:branch:run": "node scripts/neonBranchUse.ts",
     "db:branch:clean:run": "node scripts/neonBranchClean.ts",
+    "wt:run": "node scripts/worktree.ts",
+    "wt:remove:run": "node scripts/worktreeRemove.ts",
     "ready": "vp check && vp run -r test && vp run -r build",
     "fallow": "fallow"
   },

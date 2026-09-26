@@ -63,6 +63,15 @@ export default defineConfig({
         command: "pnpm run db:branch:clean:run",
         cache: false,
       },
+      // A git worktree beside the repo with its own Neon branch and .env. Side effects, no cache.
+      wt: {
+        command: "pnpm run wt:run",
+        cache: false,
+      },
+      "wt:remove": {
+        command: "pnpm run wt:remove:run",
+        cache: false,
+      },
     },
   },
 });
