@@ -53,7 +53,7 @@ import {
   describeAddCrawlTargetFailure,
   describeRemoveCrawlTargetFailure,
 } from "#services/crawlTargetService.ts";
-import { runSubscribedLeaguesJob } from "#jobs/crawls/subscribedLeagues.ts";
+import { runCrawlScopeJob } from "#jobs/crawls/crawlScope.ts";
 
 const currentYear = new Date().getFullYear().toString();
 const crawlSources = Object.values(crawlSourceValue);
@@ -223,9 +223,10 @@ export function createCli(): Command {
   program
     .command("subscribed-leagues")
     .description(
-      "List the distinct set of league ids with >=1 subscription, as JSON — the scope the " +
-        "crawl-leagues GitHub Actions matrix crawls each run. With --max-chunks, also deals " +
-        "them into that many space-separated groups, one per matrix job.",
+      "List the league ids in the crawl scope for this run, as JSON — the scope the crawl-leagues " +
+        "GitHub Actions matrix crawls each run. Each crawl target resolves to its competition's " +
+        "current season; a target with no league to crawl is warn-logged and skipped. With " +
+        "--max-chunks, also deals them into that many space-separated groups, one per matrix job.",
     )
     .option(
       "--max-chunks <n>",
@@ -235,13 +236,13 @@ export function createCli(): Command {
     .action(async (options: { maxChunks?: number }) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
-      const result = await runSubscribedLeaguesJob({
+      const result = await runCrawlScopeJob({
         logger,
         config,
         maxChunks: options.maxChunks,
       });
       if (!result.ok) {
-        logger.error("subscribedleagues.failed", result.error.message, {
+        logger.error("crawlscope.failed", result.error.message, {
           cause: result.error.cause,
         });
         process.exitCode = 1;

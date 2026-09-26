@@ -1,11 +1,11 @@
 // Crawl-target data access: the leagues the system crawls. Build a query, execute it, return a
 // `Result` of rows. No business rules here (AGENTS.md).
 
-import { ok, type Result } from "@matchday/domain";
+import { ok, type IsoDate, type Result } from "@matchday/domain";
 import { and, asc, eq } from "drizzle-orm";
 import type { Db } from "#client.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
-import { competition, crawlTarget } from "#schema.ts";
+import { competition, competitionSeason, crawlTarget, league, season } from "#schema.ts";
 
 type CrawlTarget = typeof crawlTarget.$inferSelect;
 export type CrawlTargetInsert = typeof crawlTarget.$inferInsert;
@@ -55,6 +55,67 @@ export async function listCrawlTargets(db: Db): Promise<Result<CrawlTargetWithCo
         .innerJoin(competition, eq(competition.id, crawlTarget.competitionId))
         .orderBy(asc(competition.name), asc(crawlTarget.leagueName)),
     "Failed to list crawl targets",
+  );
+  return result.ok ? ok(result.value) : result;
+}
+
+/** One crawl target's candidate leagues: one row per season that has a league with the target's
+ * name, with the competition's calendar window. A target with no matching league still appears, with
+ * `leagueId` null, so the crawl can warn about it rather than drop it silently. */
+export type CrawlTargetLeagueCandidate = {
+  targetId: string;
+  competitionId: string;
+  competitionName: string;
+  /** The name stored on the target. */
+  targetLeagueName: string;
+  leagueId: string | null;
+  leagueName: string | null;
+  seasonId: string | null;
+  seasonName: string | null;
+  startsOn: IsoDate | null;
+  endsOn: IsoDate | null;
+};
+
+/** Every target's candidate leagues, so the crawl scope can pick each target's current edition. The
+ * league and its window are left-joined: a target whose name matches no league still returns one row
+ * with nulls, which the caller warns about rather than dropping silently. */
+export async function listCrawlTargetLeagueCandidates(
+  db: Db,
+): Promise<Result<CrawlTargetLeagueCandidate[]>> {
+  const result = await runQuery(
+    () =>
+      db
+        .select({
+          targetId: crawlTarget.id,
+          competitionId: crawlTarget.competitionId,
+          competitionName: competition.name,
+          targetLeagueName: crawlTarget.leagueName,
+          leagueId: league.id,
+          leagueName: league.name,
+          seasonId: league.seasonId,
+          seasonName: season.name,
+          startsOn: competitionSeason.startsOn,
+          endsOn: competitionSeason.endsOn,
+        })
+        .from(crawlTarget)
+        .innerJoin(competition, eq(competition.id, crawlTarget.competitionId))
+        .leftJoin(
+          league,
+          and(
+            eq(league.competitionId, crawlTarget.competitionId),
+            eq(league.name, crawlTarget.leagueName),
+          ),
+        )
+        .leftJoin(season, eq(season.id, league.seasonId))
+        .leftJoin(
+          competitionSeason,
+          and(
+            eq(competitionSeason.competitionId, crawlTarget.competitionId),
+            eq(competitionSeason.seasonId, league.seasonId),
+          ),
+        )
+        .orderBy(asc(crawlTarget.id), asc(season.name)),
+    "Failed to list crawl target league candidates",
   );
   return result.ok ? ok(result.value) : result;
 }
