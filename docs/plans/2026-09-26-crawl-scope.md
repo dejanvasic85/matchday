@@ -36,11 +36,12 @@ Each slice is its own pull request, green before the next. The decision record l
 
 ### Slice 2 — manage targets from the CLI
 
-- [ ] `mday crawl-target add --competition <name> --league <name>`: resolve the competition by name,
-      then upsert a target.
-- [ ] `mday crawl-target list [--json]`: show each target's competition and league.
-- [ ] `mday crawl-target remove`: remove by the same pair, or by id.
-- [ ] An ambiguous competition name fails listing the candidates.
+- [x] `mday crawl-target add --competition <name> --league <name>`: resolve the competition by name,
+      require the league name to exist under it, then upsert. Storing the real name keeps the crawl's
+      later lookup exact.
+- [x] `mday crawl-target list [--json]`: show each target's id, competition and league.
+- [x] `mday crawl-target remove`: remove by the competition-and-league pair, or by `--id`.
+- [x] An ambiguous competition name fails listing the candidates.
 
 ### Slice 3 — the crawl reads targets
 
@@ -70,9 +71,6 @@ Each slice is its own pull request, green before the next. The decision record l
 
 ## Open questions
 
-- The id prefix. This plan uses `crt_`; confirm it reads well.
-- Whether `remove` takes the competition-and-league pair, or an id. The pair matches how targets are
-  added.
 - `unfollow-club` currently relies on `sync-subscriptions` to prune the followed club's leagues.
   Once the subscription is gone, unfollowing only drops notification interest, so its help needs a
   new wording.

@@ -36,6 +36,7 @@ export {
   listCompetitions,
   getCompetitionById,
   findCompetitionsForSeasonByName,
+  findCompetitionsBySourceAndName,
   upsertCompetition,
 } from "#competitionDb.ts";
 export {
@@ -60,6 +61,7 @@ export {
   upsertLeague,
   getLeagueById,
   listLeaguesByClubId,
+  listLeagueNamesByCompetitionId,
   type LeagueWithRefs,
   type ListLeaguesFilter,
 } from "#leagueDb.ts";
