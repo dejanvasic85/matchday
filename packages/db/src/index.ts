@@ -35,7 +35,7 @@ export {
 export {
   listCompetitions,
   getCompetitionById,
-  findCompetitionsByName,
+  findCompetitionsForSeasonByName,
   upsertCompetition,
 } from "#competitionDb.ts";
 export {
@@ -48,10 +48,11 @@ export {
 } from "#seasonDb.ts";
 export {
   ensureCompetitionSeason,
-  setCompetitionSeasonDates,
+  updateCompetitionSeasonDates,
   listSeasonWindows,
   getCompetitionSeason,
   type CompetitionSeasonInsert,
+  type CompetitionSeasonDatesInput,
   type CompetitionSeasonWindow,
 } from "#competitionSeasonDb.ts";
 export {

@@ -4,7 +4,7 @@
 import { ok, type IsoDate, type Result, type Source } from "@matchday/domain";
 import { and, asc, eq } from "drizzle-orm";
 import type { Db } from "#client.ts";
-import { runQuery, runUpsert } from "#runQuery.ts";
+import { runQuery } from "#runQuery.ts";
 import { competition, competitionSeason, season } from "#schema.ts";
 
 type CompetitionSeason = typeof competitionSeason.$inferSelect;
@@ -23,7 +23,7 @@ export type CompetitionSeasonWindow = {
 };
 
 /** Create the competition-season row if it isn't there yet, leaving any dates an operator set
- * untouched. The catalog crawl calls this for every competition it sees, so a note exists even
+ * untouched. The catalog crawl calls this for every competition it sees, so a row exists even
  * before its window is known. Does nothing on conflict, so a re-crawl writes no rows. */
 export async function ensureCompetitionSeason(
   db: Db,
@@ -42,29 +42,35 @@ export async function ensureCompetitionSeason(
   return result.ok ? ok(undefined) : result;
 }
 
-/** Write a competition-season's window, creating the row when it doesn't exist yet (a season with
- * no league crawled, or a competition the catalog hasn't reached). */
-export async function setCompetitionSeasonDates(
+export type CompetitionSeasonDatesInput = {
+  competitionId: string;
+  seasonId: string;
+  startsOn: IsoDate;
+  endsOn: IsoDate;
+};
+
+/** Write the window on an existing competition-season, returning the updated row or `null` when
+ * there is none. Never creates one: a competition that didn't run the season has no window to set,
+ * so the caller reports that rather than writing an unread row. */
+export async function updateCompetitionSeasonDates(
   db: Db,
-  values: CompetitionSeasonInsert,
-): Promise<Result<CompetitionSeason>> {
-  return runUpsert(
+  values: CompetitionSeasonDatesInput,
+): Promise<Result<CompetitionSeason | null>> {
+  const result = await runQuery(
     () =>
       db
-        .insert(competitionSeason)
-        .values(values)
-        .onConflictDoUpdate({
-          target: [competitionSeason.competitionId, competitionSeason.seasonId],
-          set: {
-            startsOn: values.startsOn ?? null,
-            endsOn: values.endsOn ?? null,
-            updatedAt: new Date(),
-          },
-        })
+        .update(competitionSeason)
+        .set({ startsOn: values.startsOn, endsOn: values.endsOn, updatedAt: new Date() })
+        .where(
+          and(
+            eq(competitionSeason.competitionId, values.competitionId),
+            eq(competitionSeason.seasonId, values.seasonId),
+          ),
+        )
         .returning(),
-    "competition season",
-    values,
+    "Failed to update competition season dates",
   );
+  return result.ok ? ok(result.value[0] ?? null) : result;
 }
 
 /** Every competition-season window, joined to its season and competition, source-then-name

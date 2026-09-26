@@ -43,9 +43,10 @@ export async function listSeasons(
   return result.ok ? ok(toPage(result.value, limit)) : result;
 }
 
-/** The most recent season for a source, by name — or `null` when it has none yet. Season names are
- * the source's own labels (`"2026"`, `"2026 Spring"`), so they sort chronologically as text within
- * a source. Scoped to one source: a name from another source must never become the target. */
+/** The most recent season for a source, by name — or `null` when it has none yet. Names are the
+ * source's own labels, ordered as text, so a plain year (`"2026"` before `"2027"`) is chronological
+ * and a label like `"2026 Spring"` simply orders alphabetically. Scoped to one source: a name from
+ * another source must never become the target. */
 export async function findLatestSeason(db: Db, source: Source): Promise<Result<Season | null>> {
   const result = await runQuery(
     () =>

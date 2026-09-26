@@ -11,7 +11,6 @@ import {
   getClubById,
   getCompetitionSeason,
   getLeagueById,
-  getSeasonById,
   getTeamById,
   updateClubEnrichmentFields,
   upsertClub,
@@ -49,7 +48,6 @@ export type EntityResolutionDeps = {
   findExternalRefByInternalId: WithoutDb<typeof findExternalRefByInternalId>;
   upsertExternalRef: WithoutDb<typeof upsertExternalRef>;
   getLeagueById: WithoutDb<typeof getLeagueById>;
-  getSeasonById: WithoutDb<typeof getSeasonById>;
   getCompetitionSeason: WithoutDb<typeof getCompetitionSeason>;
 };
 
@@ -78,7 +76,6 @@ export function createEntityResolutionDeps(
       findExternalRefByInternalId(db, entityType, internalId, source),
     upsertExternalRef: (values) => upsertExternalRef(db, values),
     getLeagueById: (id) => getLeagueById(db, id),
-    getSeasonById: (id) => getSeasonById(db, id),
     getCompetitionSeason: (competitionId, seasonId) =>
       getCompetitionSeason(db, competitionId, seasonId),
   };
