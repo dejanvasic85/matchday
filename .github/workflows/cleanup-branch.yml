@@ -1,0 +1,28 @@
+name: Cleanup branch
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+permissions:
+  contents: read
+
+jobs:
+  delete-neon-branch:
+    name: Delete Neon branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Fork PRs never created a branch: their CI had no secrets.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      # One Neon branch per PR, created by CI and removed here. A branch already gone (cleanup
+      # re-run) fails the action, which is fine — the PR is closed either way.
+      - name: Delete Neon branch
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch: pr-${{ github.event.pull_request.number }}

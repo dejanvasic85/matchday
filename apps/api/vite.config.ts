@@ -16,6 +16,12 @@ export default defineConfig({
         command: "wrangler deploy",
         cache: false,
       },
+      // Integration tests against a real Neon branch. Never cached (side effect) and run from
+      // the package root so INTEGRATION_DATABASE_URL reaches the child Vitest process.
+      "test:integration": {
+        command: "vp test run test/integration",
+        cache: false,
+      },
     },
   },
   test: {
