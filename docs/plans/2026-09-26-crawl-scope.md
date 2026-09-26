@@ -53,10 +53,11 @@ Each slice is its own pull request, green before the next. The decision record l
 
 ### Slice 4 — notification stops using subscriptions
 
-- [ ] Post-crawl notification targets every webhook-configured follow whose club plays in the
+- [x] Post-crawl notification targets every webhook-configured follow whose club plays in the
       crawled league.
-- [ ] Remove the subscription lookup and its join from the notifier.
-- [ ] Update the notifier tests.
+- [x] Remove the subscription lookup and its join from the notifier, and rename the misleading
+      `notifyLeagueSubscribers` to `notifyLeagueWebhooks`.
+- [x] Update the notifier tests, including one for a follow shared by two clubs in the league.
 
 ### Slice 5 — remove the subscription model
 

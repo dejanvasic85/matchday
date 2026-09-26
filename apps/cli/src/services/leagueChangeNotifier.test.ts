@@ -20,14 +20,6 @@ const clientClubWebhook = {
   webhookUrl: "https://example.com/webhooks/matchday",
   webhookSecret: "whsec_test",
 };
-const subscriptionRow = {
-  id: "sub_abc123",
-  clientId,
-  leagueId: "lea_abc123",
-  leagueName: "Div 1 North",
-  seasonId: "sea_abc123",
-  seasonName: "2026",
-};
 
 function makeFixtureRow(overrides: Partial<FixtureRow> = {}): FixtureRow {
   return {
@@ -56,7 +48,6 @@ function makeDeps(overrides: Partial<LeagueWebhookNotifierDeps> = {}): LeagueWeb
   return {
     listClubIdsByLeagueId: vi.fn().mockResolvedValue(ok([clubId])),
     listClientClubWebhooksForClubIds: vi.fn().mockResolvedValue(ok([clientClubWebhook])),
-    listSubscriptionsWithLeague: vi.fn().mockResolvedValue(ok([subscriptionRow])),
     listFixturesByLeagueId: vi.fn().mockResolvedValue(ok([makeFixtureRow()])),
     listTableEntriesByLeagueId: vi.fn().mockResolvedValue(ok([])),
     sendWebhook: vi.fn().mockResolvedValue(ok(undefined)),
@@ -100,23 +91,31 @@ describe("withLeagueChangeNotification", () => {
     expect(deps.sendWebhook).not.toHaveBeenCalled();
   });
 
-  it("skips a followed club's webhook when the client isn't subscribed to the league", async () => {
-    const deps = makeDeps({ listSubscriptionsWithLeague: vi.fn().mockResolvedValue(ok([])) });
+  it("notifies every webhook-configured follow for the league's clubs", async () => {
+    const deps = makeDeps({
+      listClientClubWebhooksForClubIds: vi
+        .fn()
+        .mockResolvedValue(ok([clientClubWebhook, { ...clientClubWebhook, id: "ccl_other000" }])),
+    });
     const runCrawl = vi.fn().mockResolvedValue(ok({ fixtures: 1, tableEntries: 0 }));
 
     await withLeagueChangeNotification(deps, { leagueId: "lea_abc123", dryRun: false }, runCrawl);
 
-    expect(deps.listFixturesByLeagueId).not.toHaveBeenCalled();
-    expect(deps.sendWebhook).not.toHaveBeenCalled();
+    expect(deps.sendWebhook).toHaveBeenCalledTimes(2);
   });
 
-  it("scopes the subscription check to the crawled league in SQL", async () => {
-    const deps = makeDeps();
+  it("deduplicates the same follow returned for more than one club in the league", async () => {
+    const deps = makeDeps({
+      listClubIdsByLeagueId: vi.fn().mockResolvedValue(ok([clubId, "clb_other000"])),
+      listClientClubWebhooksForClubIds: vi
+        .fn()
+        .mockResolvedValue(ok([clientClubWebhook, clientClubWebhook])),
+    });
     const runCrawl = vi.fn().mockResolvedValue(ok({ fixtures: 1, tableEntries: 0 }));
 
     await withLeagueChangeNotification(deps, { leagueId: "lea_abc123", dryRun: false }, runCrawl);
 
-    expect(deps.listSubscriptionsWithLeague).toHaveBeenCalledWith({ leagueId: "lea_abc123" });
+    expect(deps.sendWebhook).toHaveBeenCalledTimes(1);
   });
 
   it("passes a failed crawl through without notifying anyone", async () => {

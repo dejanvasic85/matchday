@@ -1,7 +1,7 @@
 import { ok, serverError, signWebhookPayload } from "@matchday/domain";
 import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import {
-  notifyLeagueSubscribers,
+  notifyLeagueWebhooks,
   type WebhookNotificationServiceDeps,
   type WebhookTarget,
 } from "#services/webhookNotificationService.ts";
@@ -28,11 +28,11 @@ function makeDeps(
   };
 }
 
-describe("notifyLeagueSubscribers", () => {
+describe("notifyLeagueWebhooks", () => {
   it("returns an empty result for a league with no webhook targets", async () => {
     const deps = makeDeps();
 
-    const outcomes = await notifyLeagueSubscribers(deps, {
+    const outcomes = await notifyLeagueWebhooks(deps, {
       leagueId: "lea_abc123",
       hasChanges: true,
       crawledAt,
@@ -51,7 +51,7 @@ describe("notifyLeagueSubscribers", () => {
       makeTarget({ id: "ccl_two", webhookSecret: "whsec_two" }),
     ];
 
-    const outcomes = await notifyLeagueSubscribers(deps, {
+    const outcomes = await notifyLeagueWebhooks(deps, {
       leagueId: "lea_abc123",
       hasChanges: true,
       crawledAt,
@@ -97,7 +97,7 @@ describe("notifyLeagueSubscribers", () => {
       makeTarget({ id: "ccl_ok" }),
     ];
 
-    const outcomes = await notifyLeagueSubscribers(deps, {
+    const outcomes = await notifyLeagueWebhooks(deps, {
       leagueId: "lea_abc123",
       hasChanges: false,
       crawledAt,
@@ -114,7 +114,7 @@ describe("notifyLeagueSubscribers", () => {
     const sendWebhook = vi.fn().mockResolvedValue(serverError("Webhook POST failed: HTTP 500"));
     const deps = makeDeps({ sendWebhook });
 
-    await notifyLeagueSubscribers(deps, {
+    await notifyLeagueWebhooks(deps, {
       leagueId: "lea_abc123",
       hasChanges: false,
       crawledAt,

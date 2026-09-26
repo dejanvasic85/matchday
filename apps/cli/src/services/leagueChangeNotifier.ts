@@ -6,12 +6,11 @@ import type {
   listClientClubWebhooksForClubIds,
   listClubIdsByLeagueId,
   listFixturesByLeagueId,
-  listSubscriptionsWithLeague,
   listTableEntriesByLeagueId,
 } from "@matchday/db";
 import { detectLeagueChanges, type LeagueSnapshot } from "#services/leagueChangeDetector.ts";
 import {
-  notifyLeagueSubscribers,
+  notifyLeagueWebhooks,
   type SendWebhook,
   type WebhookTarget,
 } from "#services/webhookNotificationService.ts";
@@ -23,7 +22,6 @@ type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
 export type LeagueWebhookNotifierDeps = {
   listClubIdsByLeagueId: WithoutDb<typeof listClubIdsByLeagueId>;
   listClientClubWebhooksForClubIds: WithoutDb<typeof listClientClubWebhooksForClubIds>;
-  listSubscriptionsWithLeague: WithoutDb<typeof listSubscriptionsWithLeague>;
   listFixturesByLeagueId: WithoutDb<typeof listFixturesByLeagueId>;
   listTableEntriesByLeagueId: WithoutDb<typeof listTableEntriesByLeagueId>;
   sendWebhook: SendWebhook;
@@ -33,18 +31,16 @@ export type LeagueWebhookNotifierDeps = {
 };
 
 /**
- * Who should hear that this league changed: a client that (a) follows a club fielding a team in
- * the league, (b) has a webhook configured on that follow, and (c) actually subscribes to the
- * league. The subscription check keeps the follow from leaking data the client hasn't asked us to
- * crawl — a club plays in leagues a client may have unsubscribed from by hand.
+ * Who should hear that this league changed: every webhook-configured follow of a club that fields a
+ * team in the league. A follow decides who we notify, nothing else — it never widens the crawl.
  *
- * A client following two clubs that meet in the same league would otherwise be told twice, so
- * targets are deduplicated by `client_club` row.
+ * A client following two clubs that meet in the same league has one webhook per follow, so targets
+ * are deduplicated by `client_club` row.
  */
 async function resolveWebhookTargets(
   deps: Pick<
     LeagueWebhookNotifierDeps,
-    "listClubIdsByLeagueId" | "listClientClubWebhooksForClubIds" | "listSubscriptionsWithLeague"
+    "listClubIdsByLeagueId" | "listClientClubWebhooksForClubIds"
   >,
   leagueId: string,
 ): Promise<Result<WebhookTarget[]>> {
@@ -57,21 +53,9 @@ async function resolveWebhookTargets(
   if (!webhooksResult.ok) {
     return webhooksResult;
   }
-  if (webhooksResult.value.length === 0) {
-    return ok([]);
-  }
-
-  const subscriptionsResult = await deps.listSubscriptionsWithLeague({ leagueId });
-  if (!subscriptionsResult.ok) {
-    return subscriptionsResult;
-  }
-  const subscribedClientIds = new Set(subscriptionsResult.value.map((row) => row.clientId));
 
   const byId = new Map<string, WebhookTarget>();
   for (const webhook of webhooksResult.value) {
-    if (!subscribedClientIds.has(webhook.clientId)) {
-      continue;
-    }
     byId.set(webhook.id, {
       id: webhook.id,
       clientName: webhook.clientName,
@@ -116,9 +100,9 @@ async function snapshotLeague(
 }
 
 /**
- * Runs `runCrawl`, notifying the league's webhook-configured subscriptions afterwards if the
- * crawl succeeded and a before/after snapshot could both be taken. Notification is best-effort
- * and never changes the returned `Result` — it's exactly `runCrawl`'s own outcome, passed through.
+ * Runs `runCrawl`, notifying the league's webhook-configured follows afterwards if the crawl
+ * succeeded and a before/after snapshot could both be taken. Notification is best-effort and never
+ * changes the returned `Result` — it's exactly `runCrawl`'s own outcome, passed through.
  */
 export async function withLeagueChangeNotification<T>(
   deps: LeagueWebhookNotifierDeps,
@@ -159,7 +143,7 @@ export async function withLeagueChangeNotification<T>(
   }
 
   const { hasChanges, fixturesChanged, tableChanged } = detectLeagueChanges(before, after);
-  const outcomes = await notifyLeagueSubscribers(
+  const outcomes = await notifyLeagueWebhooks(
     { sendWebhook: deps.sendWebhook, logger: deps.logger },
     { leagueId, hasChanges, crawledAt: deps.now(), targets },
   );
