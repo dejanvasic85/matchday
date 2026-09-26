@@ -32,16 +32,28 @@ export {
   upsertTeam,
   type TeamWithClub,
 } from "#teamDb.ts";
-export { listCompetitions, getCompetitionById, upsertCompetition } from "#competitionDb.ts";
+export {
+  listCompetitions,
+  getCompetitionById,
+  findCompetitionsByName,
+  upsertCompetition,
+} from "#competitionDb.ts";
 export {
   listSeasons,
   getSeasonById,
   findLatestSeason,
   findSeasonByName,
   upsertSeason,
-  setSeasonDatesByName,
-  type SeasonDatesWrite,
+  type ListSeasonsFilter,
 } from "#seasonDb.ts";
+export {
+  ensureCompetitionSeason,
+  setCompetitionSeasonDates,
+  listSeasonWindows,
+  getCompetitionSeason,
+  type CompetitionSeasonInsert,
+  type CompetitionSeasonWindow,
+} from "#competitionSeasonDb.ts";
 export {
   listLeagues,
   upsertLeague,

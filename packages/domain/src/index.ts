@@ -42,6 +42,7 @@ export {
   type ClientId,
   type ClubId,
   type CompetitionId,
+  type CompetitionSeasonId,
   type EntityId,
   type EntityType,
   type ExternalRefId,
@@ -73,6 +74,7 @@ export {
 export { teamSchema, type Team } from "#entities/team.ts";
 export { competitionSchema, type Competition } from "#entities/competition.ts";
 export { seasonSchema, type Season } from "#entities/season.ts";
+export { competitionSeasonSchema, type CompetitionSeason } from "#entities/competitionSeason.ts";
 export { leagueSchema, type League } from "#entities/league.ts";
 export { fixtureSchema, type Fixture } from "#entities/fixture.ts";
 export { tableEntrySchema, type TableEntry } from "#entities/tableEntry.ts";

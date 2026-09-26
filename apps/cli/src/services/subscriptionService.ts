@@ -9,6 +9,7 @@ import {
   serverError,
   type LeagueId,
   type Result,
+  type Source,
   type SubscriptionId,
 } from "@matchday/domain";
 import type {
@@ -94,6 +95,8 @@ export type CreateSubscriptionsForClubInput = {
   >;
   clientName: string;
   clubName: string;
+  /** The source whose seasons to resolve `seasonName` against. */
+  source: Source;
   /** Season year to subscribe for; defaults to the latest season we hold. */
   seasonName?: string;
   /** Resolve the club and its leagues without writing anything — the safe-by-default habit for a
@@ -114,9 +117,9 @@ export type ClubSubscriptionResult = ClubLeagues & {
 export async function createSubscriptionsForClub(
   input: CreateSubscriptionsForClubInput,
 ): Promise<Result<ClubSubscriptionResult>> {
-  const { deps, clientName, clubName, seasonName, dryRun } = input;
+  const { deps, clientName, clubName, source, seasonName, dryRun } = input;
 
-  const seasonResult = await resolveSeason(deps, seasonName);
+  const seasonResult = await resolveSeason(deps, source, seasonName);
   if (!seasonResult.ok) {
     return seasonResult;
   }

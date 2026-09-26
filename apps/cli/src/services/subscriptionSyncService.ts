@@ -2,13 +2,13 @@
 // what it is subscribed to, and (on apply) writes the difference. Seasons resolve per club.
 
 import {
-  badRequest,
   generateId,
   hasSeasonFinished,
   ok,
   todayInMelbourne,
   type IsoDate,
   type Result,
+  type Source,
 } from "@matchday/domain";
 import type {
   deleteSubscription,
@@ -82,9 +82,9 @@ async function deriveTargetLeagues(
       return leaguesResult;
     }
     for (const league of leaguesResult.value) {
-      // Pinned scope is explicit, so honour it; unpinned, skip a season that already ended or we
-      // would re-subscribe the very leagues the removals below just pruned.
-      const finished = seasonId === undefined && hasSeasonFinished(league.seasonEndsOn, today);
+      // A finished window is never re-subscribed, pinned or not: re-adding it would undo the
+      // removals below in the same run.
+      const finished = hasSeasonFinished(league.seasonEndsOn, today);
       if (!finished && !byLeagueId.has(league.id)) {
         byLeagueId.set(league.id, {
           leagueId: league.id,
@@ -101,6 +101,9 @@ async function deriveTargetLeagues(
 export type SyncSubscriptionsInput = {
   deps: SubscriptionSyncDeps;
   clientName: string;
+  /** The source whose seasons the followed clubs play in. Required: a season name alone is
+   * ambiguous across sources. */
+  source: Source;
   /** Season name (a year like `"2026"`) to sync to. Omitted reconciles across every season the
    * followed clubs play in — the per-club default, which never targets another source's season. */
   seasonName?: string;
@@ -159,7 +162,7 @@ async function applyPlan(
 export async function syncSubscriptions(
   input: SyncSubscriptionsInput,
 ): Promise<Result<SubscriptionSyncPlan>> {
-  const { deps, clientName, seasonName, apply } = input;
+  const { deps, clientName, source, seasonName, apply } = input;
   const today = input.today ?? todayInMelbourne();
 
   // Resolve a pinned season first: an unknown `--season` is a typo that should fail before any
@@ -167,16 +170,9 @@ export async function syncSubscriptions(
   let pinnedSeasonId: string | undefined;
   let pinnedSeason: { id: string; name: string } | null = null;
   if (seasonName !== undefined) {
-    const seasonResult = await resolveSeason(deps, seasonName);
+    const seasonResult = await resolveSeason(deps, source, seasonName);
     if (!seasonResult.ok) {
       return seasonResult;
-    }
-    // A pin on a finished season would re-add leagues the next unpinned run prunes — flap. Fail
-    // instead of writing rows we know are immediately stale.
-    if (hasSeasonFinished(seasonResult.value.endsOn, today)) {
-      return badRequest(
-        `Season "${seasonResult.value.name}" finished on ${seasonResult.value.endsOn} — nothing to sync`,
-      );
     }
     pinnedSeasonId = seasonResult.value.id;
     pinnedSeason = { id: seasonResult.value.id, name: seasonResult.value.name };

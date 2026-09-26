@@ -1,14 +1,14 @@
-// Season resolution: "which season does this command act on?" in one place. There is no
-// `is_current` flag — `--season <name>` overrides, otherwise the latest row wins.
+// Season resolution: "which season does this command act on?" in one place. Seasons are scoped to a
+// source, so a lookup always names one: another source's `2026` must never be the target.
 
 import {
   notFound,
   ok,
   parseId,
   serverError,
-  type IsoDate,
   type Result,
   type SeasonId,
+  type Source,
 } from "@matchday/domain";
 import type { findLatestSeason, findSeasonByName } from "@matchday/db";
 
@@ -23,10 +23,8 @@ export type SeasonResolverDeps = {
 
 export type ResolvedSeason = {
   id: SeasonId;
+  source: Source;
   name: string;
-  /** Nullable: Dribl gives no dates, so a season may not have them yet. Callers that need to know
-   * whether it has ended read this; a date-less season is never finished. */
-  endsOn: IsoDate | null;
 };
 
 function toSeasonId(id: string): Result<SeasonId> {
@@ -38,9 +36,9 @@ function toSeasonId(id: string): Result<SeasonId> {
 }
 
 /**
- * Resolve the season a command targets: the named one when `name` is given, otherwise the latest
- * season we hold. An unknown name fails rather than falling back to the latest — a typo'd
- * `--season 20227` must not quietly act on the current season instead.
+ * Resolve the season a command targets for one source: the named one when `name` is given,
+ * otherwise the source's latest season. An unknown name fails rather than falling back to the
+ * latest — a typo'd `--season 20227` must not quietly act on the current season instead.
  *
  * A season only exists once the catalog crawl has created it, so next year's rollover needs that
  * crawl to have run first. That ordering is deliberate: there are no leagues to subscribe to
@@ -48,17 +46,20 @@ function toSeasonId(id: string): Result<SeasonId> {
  */
 export async function resolveSeason(
   deps: SeasonResolverDeps,
+  source: Source,
   name?: string,
 ): Promise<Result<ResolvedSeason>> {
   const found =
-    name === undefined ? await deps.findLatestSeason() : await deps.findSeasonByName(name);
+    name === undefined
+      ? await deps.findLatestSeason(source)
+      : await deps.findSeasonByName(source, name);
   if (!found.ok) {
     return found;
   }
 
   if (found.value === null) {
     return name === undefined
-      ? notFound("No seasons exist yet — run `mday catalog` before subscribing anyone")
+      ? notFound(`No seasons exist yet — run \`mday catalog\` before subscribing anyone`)
       : notFound(`No season named "${name}" — run \`mday catalog --season ${name}\` first`);
   }
 
@@ -66,5 +67,5 @@ export async function resolveSeason(
   if (!idResult.ok) {
     return idResult;
   }
-  return ok({ id: idResult.value, name: found.value.name, endsOn: found.value.endsOn });
+  return ok({ id: idResult.value, source: found.value.source, name: found.value.name });
 }

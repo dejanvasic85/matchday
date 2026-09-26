@@ -17,6 +17,7 @@ export function makeFakeEntityResolutionDeps(
     upsertTeam: vi.fn(),
     upsertCompetition: vi.fn(),
     upsertSeason: vi.fn(),
+    ensureCompetitionSeason: vi.fn().mockResolvedValue(ok(undefined)),
     upsertLeague: vi.fn(),
     upsertFixture: vi.fn(),
     upsertTableEntry: vi.fn(),
@@ -26,6 +27,7 @@ export function makeFakeEntityResolutionDeps(
     upsertExternalRef: vi.fn(),
     getLeagueById: vi.fn(),
     getSeasonById: vi.fn().mockResolvedValue(ok(null)),
+    getCompetitionSeason: vi.fn().mockResolvedValue(ok(null)),
     ...overrides,
   };
 }

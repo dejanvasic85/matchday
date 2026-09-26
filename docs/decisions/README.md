@@ -27,6 +27,7 @@ stays in place, marked, so the history stays readable.
 | 0012 | [Subscriptions & multi-source](0012-subscription-multisource.md)           | decided    | Subscribe a client to a league; split catalog from deep crawl; many sources  |
 | 0013 | [API auth](0013-api-auth.md)                                               | proposed   | A `client` entity, with per-client bearer tokens hashed at rest              |
 | 0014 | [Operator & consumer interfaces](0014-operator-and-consumer-interfaces.md) | proposed   | `mday` is the admin surface; any future MCP server is read-only              |
+| 0015 | [Season scope](0015-season-scope.md)                                       | decided    | A season is a source-wide label; each competition's run owns its window      |
 
 ## Format
 

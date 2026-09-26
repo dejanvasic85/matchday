@@ -19,6 +19,8 @@
   our internal `lea_` id, so the rest of this ADR stands.
 - Input: the Dribl identity investigation of 2026-07-15. That plan document is no longer in the
   repo; its findings are summarised in the Context below.
+- Reshaped by: [0015](0015-season-scope.md) — seasons are scoped to their source, and a league's
+  calendar window comes from its competition's run in that season, not from a global season row.
 
 ## Context
 

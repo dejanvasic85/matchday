@@ -17,17 +17,23 @@ function makeDeps(overrides: Partial<SubscriptionServiceDeps> = {}): Subscriptio
     findLatestSeason: vi.fn().mockResolvedValue(
       ok({
         id: "sea_2026000000",
+        source: "dribl" as const,
         name: "2026",
-        startsOn: makeIsoDate("2026-02-12"),
-        endsOn: makeIsoDate("2026-09-20"),
+        startsOn: null,
+        endsOn: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }),
     ),
     findSeasonByName: vi.fn().mockResolvedValue(
       ok({
         id: "sea_2026000000",
+        source: "dribl" as const,
         name: "2026",
-        startsOn: makeIsoDate("2026-02-12"),
-        endsOn: makeIsoDate("2026-09-20"),
+        startsOn: null,
+        endsOn: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }),
     ),
     findClientByName: vi
@@ -177,6 +183,7 @@ describe("createSubscriptionsForClub", () => {
       deps,
       clientName: "Williamstown SC",
       clubName: "Williamstown",
+      source: "dribl",
       dryRun: false,
     });
 
@@ -209,6 +216,7 @@ describe("createSubscriptionsForClub", () => {
       deps,
       clientName: "Williamstown SC",
       clubName: "Williamstown",
+      source: "dribl",
       dryRun: true,
     });
 
@@ -233,6 +241,7 @@ describe("createSubscriptionsForClub", () => {
       deps,
       clientName: "Williamstown SC",
       clubName: "Williamstown",
+      source: "dribl",
       dryRun: false,
     });
 
@@ -261,6 +270,7 @@ describe("createSubscriptionsForClub", () => {
       deps,
       clientName: "Williamstown SC",
       clubName: "Williams",
+      source: "dribl",
       dryRun: false,
     });
 
@@ -281,6 +291,7 @@ describe("createSubscriptionsForClub", () => {
       deps,
       clientName: "Williamstown SC",
       clubName: "Nonexistent FC",
+      source: "dribl",
       dryRun: false,
     });
 
@@ -295,6 +306,7 @@ describe("createSubscriptionsForClub", () => {
       deps,
       clientName: "Typo FC",
       clubName: "Williamstown",
+      source: "dribl",
       dryRun: false,
     });
 
@@ -309,6 +321,7 @@ describe("createSubscriptionsForClub", () => {
       deps,
       clientName: "Williamstown SC",
       clubName: "Williamstown",
+      source: "dribl",
       dryRun: false,
     });
 
@@ -322,6 +335,7 @@ describe("createSubscriptionsForClub", () => {
       deps,
       clientName: "Williamstown SC",
       clubName: "Williamstown",
+      source: "dribl",
       dryRun: false,
     });
 
@@ -337,6 +351,7 @@ describe("createSubscriptionsForClub", () => {
       deps,
       clientName: "Williamstown SC",
       clubName: "Williamstown",
+      source: "dribl",
       dryRun: true,
     });
 
@@ -350,6 +365,7 @@ describe("createSubscriptionsForClub", () => {
       deps,
       clientName: "Williamstown SC",
       clubName: "Williamstown",
+      source: "dribl",
       seasonName: "2027",
       dryRun: false,
     });
@@ -371,6 +387,7 @@ describe("createSubscriptionsForClub", () => {
       deps,
       clientName: "Williamstown SC",
       clubName: "Williamstown",
+      source: "dribl",
       dryRun: false,
     });
 
