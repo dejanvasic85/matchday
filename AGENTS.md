@@ -111,6 +111,11 @@ install/link layer underneath.
 - **Reclaim stale branches with `vp run db:branch:clean`** (`--dry-run` to preview). It deletes
   only this machine's branches whose git branch has gone; `production`, `main` and `pr-*` are
   never touched.
+- **Isolate a whole checkout: `vp run wt <branch>`.** Creates a git worktree beside the repo, gives
+  it its own Neon branch and root `.env`, then installs, builds the packages and migrates it.
+  `--no-db` reuses the shared `.env` instead; `--days N` sets the branch expiry. Remove it with
+  `vp run wt:remove <branch> [--force]`, which drops the worktree, the local git branch and its
+  Neon branch (`--no-db` keeps the database, `--dry-run` previews).
 - **There is no local Docker Postgres.** The **neon-http/serverless driver** speaks Neon's
   HTTP/WebSocket protocol and **cannot** connect to a raw-TCP local Postgres, so don't introduce
   one or add a `pg` driver for it.

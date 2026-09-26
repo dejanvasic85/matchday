@@ -12,7 +12,7 @@ export function loadRootEnv(): void {
   process.loadEnvFile(rootEnvPath);
 }
 
-const databaseUrlKeyValue = "DATABASE_URL";
+export const databaseUrlKeyValue = "DATABASE_URL";
 
 /** Rewrites one key, so every other value in .env survives untouched. */
 export function replaceEnvValue(contents: string, key: string, value: string): string {
