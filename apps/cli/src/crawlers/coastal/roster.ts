@@ -1,7 +1,8 @@
 // The Coastal Football Association roster: 20 clubs, one team each, kept across every season. A
 // club's `key` is its stable identity inside the source — external refs are built from it, so it
 // must not change between seasons. A club's `strength` is a fixed rating where 1 is league average;
-// it gives the ladder a believable shape instead of a random shuffle.
+// it gives the ladder a believable shape instead of a random shuffle. `color` and `accent` are the
+// crest's two colours, written to the club row by enrichment.
 
 import { z } from "zod";
 
@@ -14,6 +15,10 @@ const coastalClubSchema = z.object({
   ground: z.string(),
   /** Rating around 1.0. Higher clubs score more and concede less. */
   strength: z.number().positive(),
+  /** Crest background, as a hex colour. */
+  color: z.string(),
+  /** Crest border and initials, as a hex colour. */
+  accent: z.string(),
 });
 
 export type CoastalClub = z.infer<typeof coastalClubSchema>;
@@ -25,6 +30,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Stadly United",
     ground: "Stadly Park",
     strength: 1.35,
+    color: "#0B7A3B",
+    accent: "#FFFFFF",
   },
   {
     key: "harbourside",
@@ -32,6 +39,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Harbourside FC",
     ground: "Harbourside Oval",
     strength: 1.28,
+    color: "#0B4F9E",
+    accent: "#F2C200",
   },
   {
     key: "kingsmere-rovers",
@@ -39,6 +48,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Kingsmere Rovers",
     ground: "Kingsmere Reserve",
     strength: 1.2,
+    color: "#7A1F2B",
+    accent: "#F5F5F5",
   },
   {
     key: "ashvale-city",
@@ -46,6 +57,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Ashvale City",
     ground: "Ashvale Fields",
     strength: 1.14,
+    color: "#2E2E38",
+    accent: "#E63946",
   },
   {
     key: "brookfield-athletic",
@@ -53,6 +66,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Brookfield Athletic",
     ground: "Brookfield Sports Ground",
     strength: 1.08,
+    color: "#14532D",
+    accent: "#D4AF37",
   },
   {
     key: "redgum-park",
@@ -60,6 +75,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Redgum Park SC",
     ground: "Redgum Park",
     strength: 1.04,
+    color: "#B91C1C",
+    accent: "#FDE68A",
   },
   {
     key: "seaview-albion",
@@ -67,6 +84,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Seaview Albion",
     ground: "Seaview Oval",
     strength: 1.0,
+    color: "#0E7490",
+    accent: "#FFFFFF",
   },
   {
     key: "coral-bay-wanderers",
@@ -74,6 +93,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Coral Bay Wanderers",
     ground: "Coral Bay Oval",
     strength: 0.98,
+    color: "#F97316",
+    accent: "#1E3A8A",
   },
   {
     key: "elmstead-town",
@@ -81,6 +102,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Elmstead Town",
     ground: "Elmstead Recreation Reserve",
     strength: 0.95,
+    color: "#365314",
+    accent: "#F5F5F5",
   },
   {
     key: "port-meridian",
@@ -88,6 +111,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Port Meridian",
     ground: "Meridian Park",
     strength: 0.93,
+    color: "#1E3A8A",
+    accent: "#F97316",
   },
   {
     key: "fernleigh-falcons",
@@ -95,6 +120,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Fernleigh Falcons",
     ground: "Fernleigh Reserve",
     strength: 0.9,
+    color: "#4C1D95",
+    accent: "#FACC15",
   },
   {
     key: "lighthouse-rovers",
@@ -102,6 +129,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Lighthouse Rovers",
     ground: "Beacon Hill Reserve",
     strength: 0.88,
+    color: "#0369A1",
+    accent: "#F8FAFC",
   },
   {
     key: "marlow-heights",
@@ -109,6 +138,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Marlow Heights",
     ground: "Marlow Heights Reserve",
     strength: 0.86,
+    color: "#831843",
+    accent: "#FBCFE8",
   },
   {
     key: "dunmore-athletic",
@@ -116,6 +147,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Dunmore Athletic",
     ground: "Dunmore Recreation Ground",
     strength: 0.84,
+    color: "#3F3F46",
+    accent: "#22C55E",
   },
   {
     key: "silverwood",
@@ -123,6 +156,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Silverwood SC",
     ground: "Silverwood Sports Complex",
     strength: 0.82,
+    color: "#64748B",
+    accent: "#0F172A",
   },
   {
     key: "stonehaven-city",
@@ -130,6 +165,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Stonehaven City",
     ground: "Stonehaven Stadium",
     strength: 0.8,
+    color: "#1F2937",
+    accent: "#38BDF8",
   },
   {
     key: "wattlebrook-united",
@@ -137,6 +174,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Wattlebrook United",
     ground: "Wattlebrook Reserve",
     strength: 0.79,
+    color: "#92400E",
+    accent: "#FEF3C7",
   },
   {
     key: "tidewater-rangers",
@@ -144,6 +183,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Tidewater Rangers",
     ground: "Tidewater Reserve",
     strength: 0.78,
+    color: "#0F766E",
+    accent: "#FDE68A",
   },
   {
     key: "northgate-olympic",
@@ -151,6 +192,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Northgate Olympic",
     ground: "Northgate Park",
     strength: 0.76,
+    color: "#1D4ED8",
+    accent: "#FFFFFF",
   },
   {
     key: "cape-rosella",
@@ -158,6 +201,8 @@ export const coastalClubs: readonly CoastalClub[] = [
     teamName: "Cape Rosella FC",
     ground: "Rosella Point Reserve",
     strength: 0.74,
+    color: "#BE123C",
+    accent: "#FDE047",
   },
 ];
 

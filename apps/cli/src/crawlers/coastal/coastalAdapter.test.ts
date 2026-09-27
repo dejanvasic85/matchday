@@ -169,7 +169,7 @@ describe("coastalAdapter", () => {
     expect(deps.upsertFixture).not.toHaveBeenCalled();
   });
 
-  it("treats club enrichment as a no-op", async () => {
+  it("skips every club whose row is not there yet, listing them all", async () => {
     const assetStorage: AssetStorage = {
       putObject: vi.fn().mockResolvedValue(ok(undefined)),
     };
@@ -187,7 +187,31 @@ describe("coastalAdapter", () => {
       dryRun: false,
     });
 
-    expect(result).toEqual(ok({ listed: 0, updated: 0, skipped: 0 }));
+    expect(result).toEqual(
+      ok({ listed: coastalClubs.length, updated: 0, skipped: coastalClubs.length }),
+    );
+    expect(assetStorage.putObject).not.toHaveBeenCalled();
+  });
+
+  it("writes nothing on a dry-run club enrichment", async () => {
+    const assetStorage: AssetStorage = {
+      putObject: vi.fn().mockResolvedValue(ok(undefined)),
+    };
+    const downloadImage = async (): Promise<Result<DownloadedImage>> =>
+      ok({ bytes: new Uint8Array([1]), contentType: "image/png" });
+    const session = await openSession();
+
+    const result = await session.crawlClubEnrichment({
+      deps: makeCoastalHappyPathDeps(),
+      rawStorage: makeFakeRawStorage(),
+      assetStorage,
+      downloadImage,
+      publicAssetsBaseUrl: "https://assets.example.com",
+      logger: makeFakeLogger(),
+      dryRun: true,
+    });
+
+    expect(result).toEqual(ok({ listed: coastalClubs.length, updated: 0, skipped: 0 }));
     expect(assetStorage.putObject).not.toHaveBeenCalled();
   });
 });
