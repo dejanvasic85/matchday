@@ -1,5 +1,5 @@
 import { ok } from "@matchday/domain";
-import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 
 /** Most methods default to a `vi.fn()` returning `undefined` — override per test as needed. The
  * club-bridge lookups default to `ok(null)` since resolveTeamForFixture calls them unconditionally. */

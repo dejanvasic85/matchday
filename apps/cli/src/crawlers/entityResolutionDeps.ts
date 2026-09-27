@@ -1,4 +1,4 @@
-// Shared collaborator shape for this directory's entity-resolution services, with `db` already
+// Shared collaborator shape for the source-agnostic entity-resolution services, with `db` already
 // bound — DI over mocking the DB, so tests pass vi.fn() fakes instead of vi.mock("@matchday/db").
 
 import {

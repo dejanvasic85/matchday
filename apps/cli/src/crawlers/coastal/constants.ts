@@ -4,6 +4,14 @@
 
 import { isIsoDate, type IsoDate } from "@matchday/domain";
 
+/** Names the generated entities carry. The source key itself is registered with the crawler. */
+export const coastalValue = {
+  competitionName: "Coastal Premier League",
+  leagueName: "Coastal Premier League",
+  /** The one competition's `external_ref` source id. */
+  competitionSourceId: "coastal-premier-league",
+} as const;
+
 /** Every season starts on the first Friday on or after this August day, and runs into May. */
 const seasonStartValue = {
   month: 8,

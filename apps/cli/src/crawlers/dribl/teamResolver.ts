@@ -13,8 +13,8 @@ import {
 } from "@matchday/domain";
 import { findClubBridgeMatch } from "#crawlers/dribl/clubBridgeResolver.ts";
 import { resolveClub } from "#crawlers/dribl/clubResolver.ts";
-import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
-import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
+import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
+import { resolveEntityByExternalRef } from "#crawlers/externalRefEntityResolver.ts";
 
 type ResolveTeamForFixtureDeps = Pick<
   EntityResolutionDeps,

@@ -12,7 +12,7 @@ import {
   type Result,
 } from "@matchday/domain";
 import { findClubBridgeMatch } from "#crawlers/dribl/clubBridgeResolver.ts";
-import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 
 export type ResolveClubForEnrichmentInput = {
   deps: Pick<

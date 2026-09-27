@@ -16,7 +16,7 @@ import type { CrawlSource } from "#crawlers/constants.ts";
 import {
   createEntityResolutionDeps,
   type EntityResolutionDeps,
-} from "#crawlers/dribl/entityResolutionDeps.ts";
+} from "#crawlers/entityResolutionDeps.ts";
 import type { SourceSession } from "#crawlers/sourceAdapter.ts";
 import { getSourceAdapter } from "#crawlers/sourceRegistry.ts";
 import { crawlLeagueBatch } from "#services/leagueBatch.ts";

@@ -2,7 +2,7 @@
 // idempotent, so a partial run is safe to retry rather than persisting a half-mapped league.
 
 import { ok, type Logger, type Result } from "@matchday/domain";
-import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 import type { DriblFixturesApiResponse } from "#crawlers/dribl/external/driblFixture.ts";
 import type { DriblTableApiResponse } from "#crawlers/dribl/external/driblTableEntry.ts";
 import { mapDriblFixture } from "#crawlers/dribl/mappers/mapDriblFixture.ts";

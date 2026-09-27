@@ -10,8 +10,8 @@ import {
   type Source,
 } from "@matchday/domain";
 import type { CrawlCatalogLeagueResult } from "#crawlers/dribl/catalogCrawler.ts";
-import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
-import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
+import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
+import { resolveEntityByExternalRef } from "#crawlers/externalRefEntityResolver.ts";
 import { resolveTableEntryEntities } from "#crawlers/dribl/tableEntryEntityResolver.ts";
 import { resolveTeamForFixture } from "#crawlers/dribl/teamResolver.ts";
 

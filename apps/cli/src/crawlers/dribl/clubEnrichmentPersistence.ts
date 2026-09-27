@@ -3,7 +3,7 @@
 
 import { ok, type Logger, type Result } from "@matchday/domain";
 import type { AssetStorage } from "#storage/assetStorage.ts";
-import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 import type { MappedClubDetail } from "#crawlers/dribl/mappers/mapDriblClubDetail.ts";
 import { mirrorClubLogo, type DownloadedImage } from "#storage/clubLogoMirror.ts";
 import { resolveClubForEnrichment } from "#crawlers/dribl/clubEnrichmentResolver.ts";

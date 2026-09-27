@@ -2,7 +2,7 @@
 // external_ref.sourceUrl (never rewritten) first, then club.logoUrl (overwritten to R2 on enrichment), then exact-name.
 
 import { ok, parseId, serverError, type ClubId, type Result } from "@matchday/domain";
-import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 
 export type ClubBridgeDeps = Pick<
   EntityResolutionDeps,
