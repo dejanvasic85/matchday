@@ -15,12 +15,12 @@ import { resolveEntityByExternalRef } from "#crawlers/externalRefEntityResolver.
 import { coastalClubs, type CoastalClub } from "#crawlers/coastal/roster.ts";
 import { coastalClubSourceId, coastalTeamSourceId } from "#crawlers/coastal/sourceIds.ts";
 
-export type CoastalClubIds = {
+type CoastalClubIds = {
   clubId: ClubId;
   teamId: TeamId;
 };
 
-export async function resolveCoastalClubAndTeam(
+async function resolveCoastalClubAndTeam(
   deps: EntityResolutionDeps,
   club: CoastalClub,
 ): Promise<Result<CoastalClubIds>> {
