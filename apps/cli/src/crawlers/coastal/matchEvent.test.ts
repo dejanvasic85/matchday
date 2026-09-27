@@ -1,3 +1,5 @@
+import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
+import { melbourneInstant, melbourneWallClock } from "#crawlers/coastal/melbourneTime.ts";
 import { createSeededRandom } from "#crawlers/coastal/random.ts";
 import {
   drawMatchEvent,
@@ -33,22 +35,33 @@ describe("drawMatchEvent", () => {
 });
 
 describe("rescheduleKickoff", () => {
-  it("moves the match on by whole weeks", () => {
-    const kickoff = new Date("2026-10-02T09:30:00.000Z");
-    const moved = rescheduleKickoff(kickoff, createSeededRandom(1));
-    const weeks = (moved.getTime() - kickoff.getTime()) / (7 * 24 * 60 * 60 * 1000);
-    expect(Number.isInteger(weeks)).toBe(true);
-    expect(weeks).toBeGreaterThanOrEqual(1);
-    expect(weeks).toBeLessThanOrEqual(3);
+  // A Saturday 3pm kickoff two weeks before the October daylight-saving change.
+  const kickoff = melbourneInstant(makeIsoDate("2027-09-25"), 15, 0);
+
+  it("moves the match on by one to three whole weeks", () => {
+    expect(melbourneWallClock(rescheduleKickoff(kickoff, constantRandom(0)))).toEqual({
+      date: "2027-10-02",
+      hour: 15,
+      minute: 0,
+    });
+    expect(melbourneWallClock(rescheduleKickoff(kickoff, constantRandom(0.34)))).toEqual({
+      date: "2027-10-09",
+      hour: 15,
+      minute: 0,
+    });
+    expect(melbourneWallClock(rescheduleKickoff(kickoff, constantRandom(0.99)))).toEqual({
+      date: "2027-10-16",
+      hour: 15,
+      minute: 0,
+    });
   });
 
-  it("keeps the same day of the week", () => {
-    const kickoff = new Date("2026-10-02T09:30:00.000Z");
-    expect(rescheduleKickoff(kickoff, createSeededRandom(1)).getUTCDay()).toBe(kickoff.getUTCDay());
+  it("keeps the Melbourne kickoff time across a daylight-saving change", () => {
+    expect(melbourneWallClock(kickoff).hour).toBe(15);
+    expect(melbourneWallClock(rescheduleKickoff(kickoff, constantRandom(0.99))).hour).toBe(15);
   });
 
   it("is deterministic", () => {
-    const kickoff = new Date("2026-10-02T09:30:00.000Z");
     expect(rescheduleKickoff(kickoff, createSeededRandom(5))).toEqual(
       rescheduleKickoff(kickoff, createSeededRandom(5)),
     );

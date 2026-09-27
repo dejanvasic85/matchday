@@ -3,6 +3,8 @@
 // fixtures.
 
 import { matchEventChanceValue, rescheduleWeekRangeValue } from "#crawlers/coastal/constants.ts";
+import { addDays } from "#crawlers/coastal/isoDateMath.ts";
+import { melbourneInstant, melbourneWallClock } from "#crawlers/coastal/melbourneTime.ts";
 import type { SeededRandom } from "#crawlers/coastal/random.ts";
 
 export const matchEventValue = {
@@ -30,9 +32,11 @@ export function drawMatchEvent(random: SeededRandom): MatchEvent {
   return matchEventValue.normal;
 }
 
-/** A reschedule pushes the match back one to three whole weeks, keeping its slot. */
+/** A reschedule moves the match on whole calendar weeks, keeping the same Melbourne wall-clock
+ * kickoff. Adding elapsed milliseconds would shift it an hour across a daylight-saving change. */
 export function rescheduleKickoff(kickoffAt: Date, random: SeededRandom): Date {
   const { min, max } = rescheduleWeekRangeValue;
   const weeks = min + Math.floor(random() * (max - min + 1));
-  return new Date(kickoffAt.getTime() + weeks * 7 * 24 * 60 * 60 * 1000);
+  const wall = melbourneWallClock(kickoffAt);
+  return melbourneInstant(addDays(wall.date, weeks * 7), wall.hour, wall.minute);
 }
