@@ -6,7 +6,7 @@ import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";
 import { crawlFixturesByRound } from "#crawlers/dribl/fixturesByRoundCrawler.ts";
 import { crawlTable } from "#crawlers/dribl/tableCrawler.ts";
 import { persistLeagueCrawl } from "#crawlers/dribl/leagueCrawlPersistence.ts";
-import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 import type { RawStorage } from "#storage/rawStorage.ts";
 import { resolveDriblLeagueIds } from "#crawlers/dribl/driblLeagueIdResolver.ts";
 

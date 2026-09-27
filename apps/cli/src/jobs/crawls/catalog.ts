@@ -5,7 +5,7 @@ import { ok, type Logger, type Result } from "@matchday/domain";
 import { createDbClient } from "@matchday/db";
 import type { CliConfig } from "#config.ts";
 import type { CrawlSource } from "#crawlers/constants.ts";
-import { createEntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import { createEntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 import { getSourceAdapter } from "#crawlers/sourceRegistry.ts";
 
 export type RunCatalogJobInput = {

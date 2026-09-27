@@ -7,9 +7,7 @@ import type { AssetStorage } from "#storage/assetStorage.ts";
 import type { DownloadedImage } from "#storage/clubLogoMirror.ts";
 import type { RawStorage } from "#storage/rawStorage.ts";
 import type { CrawlSource } from "#crawlers/constants.ts";
-// `EntityResolutionDeps` is source-agnostic but still lives under crawlers/dribl/ (too wide a blast radius to move now).
-// Relocate when a second importer actually needs it from outside crawlers/dribl/.
-import type { EntityResolutionDeps } from "#crawlers/dribl/entityResolutionDeps.ts";
+import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 
 export type CrawlCatalogParams = {
   deps: EntityResolutionDeps;
