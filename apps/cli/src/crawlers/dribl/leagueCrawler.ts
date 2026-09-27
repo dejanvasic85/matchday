@@ -1,5 +1,5 @@
-// Crawls + persists fixtures and the table for one subscribed league. One invocation = one
-// league, so leagues crawl independently and a failure in one never blocks another.
+// Crawls + persists fixtures and the table for one league. One invocation = one league, so
+// leagues crawl independently and a failure in one never blocks another.
 
 import { ok, type LeagueId, type Logger, type Result } from "@matchday/domain";
 import type { FetchPage } from "#crawlers/dribl/browserFetch.ts";

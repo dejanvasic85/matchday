@@ -134,6 +134,13 @@
       "when": 1790410843788,
       "tag": "0018_remarkable_major_mapleleaf",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790468111634,
+      "tag": "0019_solid_red_wolf",
+      "breakpoints": true
     }
   ]
 }

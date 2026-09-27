@@ -52,9 +52,9 @@ responses are staged there even on a dry run).
 > ⚠️ **That is the production database.** There is no separate dev database, because keeping a
 > second crawled copy in sync cost more than it was worth. Every local command that writes,
 > writes to live data. So use `--dry-run` while you iterate, and treat `client add`,
-> `add-subscription` and `create-token` as production changes. Neon branching will give the
-> isolation back — a copy-on-write branch of `matchday` that needs no re-crawl — but it is not
-> set up yet.
+> `crawl-target add`, `follow-club` and `create-token` as production changes. Neon branching will
+> give the isolation back — a copy-on-write branch of `matchday` that needs no re-crawl — but it is
+> not set up yet.
 
 **2. Run a command.** From the repo root, `pnpm mday <command>` forwards straight to the CLI and
 passes your arguments through unchanged:
@@ -112,28 +112,26 @@ wrong league by accident.
 
 ### `client` — onboarding an API consumer
 
-A client is an API consumer. Its **subscriptions** decide which leagues the league crawl visits, and
-its **tokens** authenticate its requests. Onboarding one takes four commands:
+A client is an API consumer. Its **tokens** authenticate its requests, and the **clubs it follows**
+receive post-crawl webhooks. Which leagues we crawl is **not** a client concern — set that
+separately with `crawl-target` below. Onboarding a client takes three commands:
 
 ```sh
 # 1. Create the client (idempotent — prints its cli_ id)
 pnpm mday client add "Williamstown SC"
 
-# 2. Subscribe it to a league, putting that league in the league crawl's scope
-pnpm mday client add-subscription --client "Williamstown SC" --league lea_xxxxxxxxxxxx
-
-# 3. Issue a bearer token — shown once, never recoverable, only rotatable
+# 2. Issue a bearer token — shown once, never recoverable, only rotatable
 pnpm mday client create-token "Williamstown SC"
 
-# 4. Check the result
+# 3. Check the result
 pnpm mday client list
 ```
 
 `client list` prints the roster, one line per followed club (`--json` for scripting):
 
 ```
-CLIENT ID         NAME             TOKENS  LAST API USE  FOLLOWED CLUB    WEBHOOK  SUBSCRIPTIONS
-cli_xxxxxxxxxxxx  Williamstown SC  1       2026-09-05    Williamstown SC  yes      2026: 2
+CLIENT ID         NAME             TOKENS  LAST API USE  FOLLOWED CLUB    WEBHOOK
+cli_xxxxxxxxxxxx  Williamstown SC  1       2026-09-05    Williamstown SC  yes
 ```
 
 `client list-tokens` breaks that down per token, so you can see which one a client actually calls
@@ -149,19 +147,41 @@ A token is `unused` when it has never authenticated a request, `idle` after 90 d
 (safe to revoke), and flagged `renew` once it is over a year old. The API stamps last use at most
 once an hour per token, so the date lags live traffic by that much and no request pays for a write.
 
-To undo either one, use the id from those tables:
+To revoke a token, use its id from that table:
 
 ```sh
-pnpm mday client remove-subscription sub_xxxxxxxxxxxx
 pnpm mday client revoke-token tok_xxxxxxxxxxxx
 ```
 
-`add-subscription` and `create-token` both need an **existing** client, and fail on an unknown
-name. The client name is free text, so creating one implicitly would turn a typo into a second
-silent tenant holding its own tokens. Only `client add` creates a client.
+`create-token` needs an **existing** client and fails on an unknown name. The client name is free
+text, so creating one implicitly would turn a typo into a second silent tenant holding its own
+tokens. Only `client add` creates a client.
 
-`client` also manages each subscription's optional post-crawl webhook. Run
-`pnpm mday client --help` for the full list.
+To tell a client about crawled leagues, follow a club and give the follow a webhook:
+
+```sh
+pnpm mday client follow-club --client "Williamstown SC" --club "Williamstown SC"
+pnpm mday client set-webhook --client "Williamstown SC" --club "Williamstown SC" --url https://example.com/hook
+```
+
+### `crawl-target` — what the league crawl visits
+
+The crawl scope is a system setting, not a client's. A target names one league in a competition, by
+name, so it survives a season rollover:
+
+```sh
+# Add a target — run `catalog` first so the competition and league exist
+pnpm mday crawl-target add --competition "Junior Boys Sunday (U17 - U18)" --league "U13 YSL Boys - North-West"
+
+# See what is in scope
+pnpm mday crawl-target list
+
+# Remove one, by id or by the same names
+pnpm mday crawl-target remove --id crt_xxxxxxxxxxxx
+```
+
+`subscribed-leagues` resolves each target to its competition's current season and prints the league
+ids the league crawl visits.
 
 ### Other commands
 

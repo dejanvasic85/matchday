@@ -15,14 +15,6 @@ function makeClient(overrides: Partial<ClientSummary> = {}): ClientSummary {
         hasWebhook: false,
       },
     ],
-    subscriptions: [
-      {
-        id: "sub_one0000000",
-        leagueId: "lea_abc123",
-        leagueName: "Div 1 North",
-        seasonName: "2026",
-      },
-    ],
     ...overrides,
   };
 }
@@ -38,21 +30,6 @@ describe("renderClientTable", () => {
 
     expect(row).toContain("cli_willy00000");
     expect(row).toContain("Williamstown SC");
-    expect(row).toContain("2026: 1");
-  });
-
-  it("counts subscriptions per season so a leftover season stands out", () => {
-    const output = renderClientTable([
-      makeClient({
-        subscriptions: [
-          { id: "sub_one", leagueId: "lea_a", leagueName: "Div 1", seasonName: "2026" },
-          { id: "sub_two", leagueId: "lea_b", leagueName: "Div 2", seasonName: "2026" },
-          { id: "sub_old", leagueId: "lea_c", leagueName: "Div 3", seasonName: "2025" },
-        ],
-      }),
-    ]);
-
-    expect(output).toContain("2025: 1, 2026: 2");
   });
 
   it("puts each extra followed club on its own line", () => {
@@ -75,9 +52,7 @@ describe("renderClientTable", () => {
   });
 
   it("renders a placeholder for a client that follows no clubs", () => {
-    const output = renderClientTable([
-      makeClient({ clubs: [], subscriptions: [], activeTokenCount: 0 }),
-    ]);
+    const output = renderClientTable([makeClient({ clubs: [], activeTokenCount: 0 })]);
 
     expect(output.split("\n")).toHaveLength(2);
     expect(output).not.toContain("ccl_");

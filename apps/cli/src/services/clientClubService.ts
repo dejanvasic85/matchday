@@ -1,6 +1,4 @@
-// Client-club follows: the provenance a subscription can't record on its own. Following a club
-// is what makes a season rollover a re-derivation (`sync-subscriptions`) instead of per-row
-// surgery, and it owns the webhook, which therefore outlives any one season's subscriptions.
+// Client-club follows: a client's interest in a club, and the owner of the post-crawl webhook.
 
 import {
   badRequest,
@@ -37,8 +35,7 @@ export type FollowedClub = {
 };
 
 /** Record that a client follows a club. Idempotent, and never touches an already-configured
- * webhook. Writing no subscriptions is deliberate — `sync-subscriptions` is where rows get
- * created, so the operator always sees the diff before anything lands. */
+ * webhook. */
 export async function followClub(
   deps: Pick<ClientClubServiceDeps, "findClientByName" | "findClubsByName" | "upsertClientClub">,
   clientName: string,
@@ -68,8 +65,7 @@ export async function followClub(
   return ok({ client: clientName, club: clubResult.value });
 }
 
-/** Stop a client following a club. The subscriptions it derived stay active until the next
- * `sync-subscriptions` prunes them, so unfollowing never silently drops a league mid-season. */
+/** Stop a client following a club. Any webhook on the follow is removed with it. */
 export async function unfollowClub(
   deps: Pick<ClientClubServiceDeps, "findClientByName" | "findClubsByName" | "deleteClientClub">,
   clientName: string,
@@ -118,9 +114,8 @@ export type ConfiguredWebhook = {
  * secret, and persists both. Re-running rotates the secret — there's no "keep the old secret"
  * path, matching how `create-token` always mints a new token rather than exposing an existing one.
  *
- * The webhook fires for every league the club plays in that the client is subscribed to, and the
- * delivery names the league in its signed body — so one webhook per club covers a whole season
- * and survives the next rollover.
+ * The webhook fires for every crawled league the club plays in, and the delivery names the league
+ * in its signed body — so one webhook per club covers a whole season and survives the next rollover.
  */
 export async function setClientClubWebhook(
   deps: Pick<

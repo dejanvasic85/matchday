@@ -18,7 +18,6 @@ export {
 } from "#result.ts";
 export { parseEnv } from "#config.ts";
 export {
-  hasSeasonFinished,
   isIsoDate,
   isoDateSchema,
   melbourneTimeZone,
@@ -52,7 +51,6 @@ export {
   type LeagueTeamId,
   type CrawlTargetId,
   type SeasonId,
-  type SubscriptionId,
   type TableEntryId,
   type TeamId,
 } from "#id.ts";
@@ -81,6 +79,5 @@ export { fixtureSchema, type Fixture } from "#entities/fixture.ts";
 export { tableEntrySchema, type TableEntry } from "#entities/tableEntry.ts";
 export { externalRefSchema, type ExternalRef } from "#entities/externalRef.ts";
 export { crawlTargetSchema, type CrawlTarget } from "#entities/crawlTarget.ts";
-export { subscriptionSchema, type Subscription } from "#entities/subscription.ts";
 export { clientSchema, type Client } from "#entities/client.ts";
 export { apiTokenSchema, type ApiToken } from "#entities/apiToken.ts";

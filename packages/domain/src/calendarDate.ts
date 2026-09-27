@@ -55,10 +55,3 @@ export function todayInMelbourne(instant: Date = new Date()): IsoDate {
   }
   return value;
 }
-
-/** True when `endsOn` is a date strictly before `today` — the season has finished. A season with
- * no end date is never finished: we cannot say when it ended, so we never prune its
- * subscriptions. */
-export function hasSeasonFinished(endsOn: IsoDate | null, today: IsoDate): boolean {
-  return endsOn !== null && endsOn < today;
-}

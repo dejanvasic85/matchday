@@ -67,33 +67,8 @@ export async function listClientClubs(db: Db): Promise<Result<ClientClubWithClub
   );
 }
 
-/** The clubs one client follows — the input `sync-subscriptions` derives its target league set
- * from. Client-scoped in SQL rather than by filtering a full dump (AGENTS.md). */
-export async function listClientClubsByClientId(
-  db: Db,
-  clientId: string,
-): Promise<Result<ClientClubWithClub[]>> {
-  return runQuery(
-    () =>
-      db
-        .select({
-          id: clientClub.id,
-          clientId: clientClub.clientId,
-          clubId: clientClub.clubId,
-          clubName: club.name,
-          webhookUrl: clientClub.webhookUrl,
-        })
-        .from(clientClub)
-        .innerJoin(club, eq(clientClub.clubId, club.id))
-        .where(eq(clientClub.clientId, clientId))
-        .orderBy(asc(club.name)),
-    "Failed to list client clubs by client id",
-  );
-}
-
 /** Hard-delete a follow, returning the removed row — or `null` when no such follow existed.
- * Unlike a subscription there's no soft delete: a follow carries no history worth reviving, and
- * the subscriptions it derived stay put until the next `sync-subscriptions` prunes them. */
+ * A follow carries no history worth reviving, so there is no soft delete. */
 export async function deleteClientClub(
   db: Db,
   clientId: string,

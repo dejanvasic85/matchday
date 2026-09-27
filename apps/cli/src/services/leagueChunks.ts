@@ -1,8 +1,8 @@
-// Splits the subscribed leagues into a capped number of groups, one per crawl-leagues matrix job.
+// Splits the crawl scope's leagues into a capped number of groups, one per crawl-leagues matrix job.
 
 /**
  * Deal `leagueIds` round-robin into at most `maxChunks` groups. Round-robin rather than
- * contiguous slices: leagues sit next to each other in subscription order, not by how long they
+ * contiguous slices: leagues sit next to each other in crawl-scope order, not by how long they
  * take, so dealing spreads a slow run of them instead of landing it all on one job.
  */
 export function chunkLeagueIds(leagueIds: string[], maxChunks: number): string[][] {

@@ -111,7 +111,7 @@ export async function findClubByName(db: Db, name: string): Promise<Result<Club 
 
 /**
  * Find clubs by a case-insensitive partial name match — the operator lookup behind
- * `mday club leagues` and `client add-subscription --club`, where the operator types a
+ * `mday club leagues` and `mday client follow-club`, where the operator types a
  * human-recognisable fragment ("Williamstown") rather than the exact stored name. Returns every
  * match so the caller (clubResolver) can fail on ambiguity instead of guessing.
  */

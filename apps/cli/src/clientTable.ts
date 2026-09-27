@@ -4,26 +4,6 @@
 import type { ClientSummary } from "#services/clientService.ts";
 import { emptyCell, renderTable } from "#terminalTable.ts";
 
-/** Subscriptions counted per season rather than listed: a client holds dozens, and the roster's
- * job is to make a leftover season obvious ("2025: 18") — `client list-subscriptions` is where
- * the individual rows live. */
-function subscriptionCell(client: ClientSummary): string {
-  const countsBySeason = new Map<string, number>();
-  for (const subscription of client.subscriptions) {
-    countsBySeason.set(
-      subscription.seasonName,
-      (countsBySeason.get(subscription.seasonName) ?? 0) + 1,
-    );
-  }
-  if (countsBySeason.size === 0) {
-    return emptyCell;
-  }
-  return [...countsBySeason.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([season, count]) => `${season}: ${count}`)
-    .join(", ");
-}
-
 /** Date only, and "never" spelled out: the stamp behind it is written at most hourly, so a time
  * would imply a precision it doesn't have. */
 function lastApiUseCell(client: ClientSummary): string {
@@ -32,8 +12,8 @@ function lastApiUseCell(client: ClientSummary): string {
     : client.lastApiUseAt.toISOString().slice(0, "yyyy-mm-dd".length);
 }
 
-/** One line per followed club so the webhook column is per-club; a client's id/name/tokens and
- * subscription summary are printed on its first line only, blank on continuation lines. */
+/** One line per followed club so the webhook column is per-club; a client's id/name/tokens are
+ * printed on its first line only, blank on continuation lines. */
 function toRows(clients: ClientSummary[]): string[][] {
   return clients.flatMap((client) => {
     const summary = [
@@ -42,14 +22,13 @@ function toRows(clients: ClientSummary[]): string[][] {
       String(client.activeTokenCount),
       lastApiUseCell(client),
     ];
-    const subscriptions = subscriptionCell(client);
     if (client.clubs.length === 0) {
-      return [[...summary, emptyCell, emptyCell, subscriptions]];
+      return [[...summary, emptyCell, emptyCell]];
     }
     return client.clubs.map((club, index) =>
       index === 0
-        ? [...summary, club.clubName, club.hasWebhook ? "yes" : emptyCell, subscriptions]
-        : ["", "", "", "", club.clubName, club.hasWebhook ? "yes" : emptyCell, ""],
+        ? [...summary, club.clubName, club.hasWebhook ? "yes" : emptyCell]
+        : ["", "", "", "", club.clubName, club.hasWebhook ? "yes" : emptyCell],
     );
   });
 }
@@ -60,7 +39,7 @@ export function renderClientTable(clients: ClientSummary[]): string {
   }
 
   return renderTable(
-    ["CLIENT ID", "NAME", "TOKENS", "LAST API USE", "FOLLOWED CLUB", "WEBHOOK", "SUBSCRIPTIONS"],
+    ["CLIENT ID", "NAME", "TOKENS", "LAST API USE", "FOLLOWED CLUB", "WEBHOOK"],
     toRows(clients),
   );
 }

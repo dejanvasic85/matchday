@@ -8,13 +8,11 @@ import {
   type ApiTokenId,
   type CrawlTargetId,
   type LeagueId,
-  type SubscriptionId,
 } from "@matchday/domain";
 import { Command, InvalidArgumentError, Option } from "commander";
 import { renderApiTokenTable } from "#apiTokenTable.ts";
 import { renderClientTable } from "#clientTable.ts";
 import { renderCrawlTargetTable } from "#crawlTargetTable.ts";
-import { renderSubscriptionTable, renderSyncPlan } from "#subscriptionTable.ts";
 import { renderSeasonTable } from "#seasonTable.ts";
 import { renderClubLeagueTable } from "#clubLeagueTable.ts";
 import { getCliConfig } from "#config.ts";
@@ -32,19 +30,14 @@ import { runListClubLeaguesJob } from "#jobs/clubs/listClubLeagues.ts";
 import { runListApiTokenUsageJob } from "#jobs/clients/apiTokenUsage.ts";
 import { runCreateApiTokenJob } from "#jobs/clients/createApiToken.ts";
 import { runCreateClientJob } from "#jobs/clients/createClient.ts";
-import { runCreateSubscriptionJob } from "#jobs/clients/createSubscription.ts";
-import { runCreateSubscriptionsForClubJob } from "#jobs/clients/createSubscriptionsForClub.ts";
 import {
   runClearClientClubWebhookJob,
   runSetClientClubWebhookJob,
 } from "#jobs/clients/clientClubWebhook.ts";
 import { runFollowClubJob, runUnfollowClubJob } from "#jobs/clients/followClub.ts";
-import { runListSubscriptionsJob } from "#jobs/clients/listSubscriptions.ts";
-import { runSyncSubscriptionsJob } from "#jobs/clients/syncSubscriptions.ts";
 import { runCrawlLeaguesJob } from "#jobs/crawls/crawlLeagues.ts";
 import { runListClientsJob } from "#jobs/clients/listClients.ts";
 import { runBackfillLeagueTeamsJob } from "#jobs/maintenance/backfillLeagueTeams.ts";
-import { runRemoveSubscriptionJob } from "#jobs/clients/removeSubscription.ts";
 import { runRevokeApiTokenJob } from "#jobs/clients/revokeApiToken.ts";
 import { runListSeasonsJob } from "#jobs/seasons/listSeasons.ts";
 import { runSetSeasonDatesJob } from "#jobs/seasons/setSeasonDates.ts";
@@ -90,14 +83,6 @@ function parseApiTokenId(value: string): ApiTokenId {
   const id = parseId(value, "apiToken");
   if (id === undefined) {
     throw new InvalidArgumentError('must be a "tok_"-prefixed api token id');
-  }
-  return id;
-}
-
-function parseSubscriptionId(value: string): SubscriptionId {
-  const id = parseId(value, "subscription");
-  if (id === undefined) {
-    throw new InvalidArgumentError('must be a "sub_"-prefixed subscription id');
   }
   return id;
 }
@@ -252,9 +237,9 @@ export function createCli(): Command {
   program
     .command("crawl-leagues")
     .description(
-      "Crawl fixtures + table for one or more subscribed leagues, discovering clubs/teams and " +
-        "persisting via entity resolution. Leagues given together share one browser session and " +
-        "are crawled in order; one failing league does not stop the rest, but does fail the " +
+      "Crawl fixtures + table for one or more leagues in the crawl scope, discovering clubs/teams " +
+        "and persisting via entity resolution. Leagues given together share one browser session " +
+        "and are crawled in order; one failing league does not stop the rest, but does fail the " +
         "command. Expensive; run at a cadence derived from fixture dates.",
     )
     .option(
@@ -364,17 +349,15 @@ export function createCli(): Command {
   const client = program
     .command("client")
     .description(
-      "Manage API consumers: the clients themselves, the clubs they follow, the league " +
-        "subscriptions derived from those clubs (which drive the crawl's scope), their bearer " +
+      "Manage API consumers: the clients themselves, the clubs they follow, their bearer " +
         "tokens, and each followed club's optional post-crawl webhook.",
     );
 
   client
     .command("list")
     .description(
-      "List every client with its active token count, followed clubs (and whether each has a " +
-        "webhook), and a per-season subscription count. Run `client list-subscriptions` for the " +
-        "individual rows and their sub_ ids.",
+      "List every client with its active token count, followed clubs, and whether each followed " +
+        "club has a webhook.",
     )
     .option("--json", "print the roster as JSON instead of a table", false)
     .action(async (options: { json: boolean }) => {
@@ -479,10 +462,8 @@ export function createCli(): Command {
   client
     .command("follow-club")
     .description(
-      "Record that a client follows a club. This is the provenance `sync-subscriptions` " +
-        "re-derives from at a season rollover, and it owns the webhook — so both survive the " +
-        "season the subscriptions were created in. Writes no subscriptions itself: run " +
-        "`client sync-subscriptions` to see the diff and apply it.",
+      "Record that a client follows a club. The follow owns the post-crawl webhook. It never " +
+        "widens the crawl — which leagues we crawl is set separately with `mday crawl-target`.",
     )
     .requiredOption("--client <name>", "the client name")
     .requiredOption("--club <name>", "the club name, or an unambiguous fragment of one")
@@ -505,15 +486,11 @@ export function createCli(): Command {
       process.stdout.write(
         `"${options.client}" now follows ${result.value.club.name} (${result.value.club.id})\n`,
       );
-      process.stdout.write("Run `mday client sync-subscriptions` to subscribe to its leagues.\n");
     });
 
   client
     .command("unfollow-club")
-    .description(
-      "Stop a client following a club. Existing subscriptions stay active until the next " +
-        "`sync-subscriptions` prunes them, so this never silently drops a league mid-season.",
-    )
+    .description("Stop a client following a club. Any webhook on the follow goes with it.")
     .requiredOption("--client <name>", "the client name")
     .requiredOption("--club <name>", "the club name, or an unambiguous fragment of one")
     .action(async (options: { client: string; club: string }) => {
@@ -538,250 +515,10 @@ export function createCli(): Command {
     });
 
   client
-    .command("sync-subscriptions")
-    .description(
-      "Reconcile a client's subscriptions against the clubs it follows, for the seasons its " +
-        "clubs play in. Adds every league a followed club plays in that isn't subscribed yet, " +
-        "and removes subscriptions whose season has finished (its end date is in the past) — so " +
-        "a season rollover is this one command. Seasons are resolved per club, never globally, " +
-        "so a second source's season can't prune a Dribl client's live subscriptions. Prints the " +
-        "diff and writes nothing unless --apply is passed. Subscriptions are derived, so a " +
-        "`remove-subscription` on a followed club's current-season league comes back on the next " +
-        "sync; use `unfollow-club` to drop one for good.",
-    )
-    .requiredOption("--client <name>", "the client name")
-    .addOption(
-      seasonSourceOption("with --season, the source whose seasons to resolve (ignored otherwise)"),
-    )
-    .option(
-      "--season <year>",
-      "pin the sync to one season by name (default: every season the followed clubs play in)",
-    )
-    .option("--apply", "write the diff instead of only printing it", false)
-    .option("--json", "print the plan as JSON instead of a table", false)
-    .action(
-      async (options: {
-        client: string;
-        source: CrawlSource;
-        season?: string;
-        apply: boolean;
-        json: boolean;
-      }) => {
-        const config = getCliConfig();
-        const logger = createConsoleLogger();
-        const result = await runSyncSubscriptionsJob({
-          logger,
-          config,
-          clientName: options.client,
-          source: options.source,
-          seasonName: options.season,
-          apply: options.apply,
-        });
-        if (!result.ok) {
-          logger.error("subscription.syncfailed", result.error.message, {
-            cause: result.error.cause,
-          });
-          process.exitCode = 1;
-          return;
-        }
-        const output = options.json
-          ? JSON.stringify(result.value, null, 2)
-          : renderSyncPlan(result.value);
-        process.stdout.write(`${output}\n`);
-      },
-    );
-
-  client
-    .command("list-subscriptions")
-    .description(
-      "List one client's active subscriptions with the season each league belongs to, so " +
-        "subscriptions left behind by a finished season are obvious. Filtered server-side; " +
-        "--json prints the rows alone for piping into jq.",
-    )
-    .requiredOption("--client <name>", "the client name")
-    .addOption(seasonSourceOption())
-    .option("--season <year>", "only show subscriptions in this season (default: all seasons)")
-    .option("--json", "print the rows as JSON instead of a table", false)
-    .action(
-      async (options: { client: string; source: CrawlSource; season?: string; json: boolean }) => {
-        const config = getCliConfig();
-        const logger = createConsoleLogger();
-        const result = await runListSubscriptionsJob({
-          config,
-          clientName: options.client,
-          source: options.source,
-          seasonName: options.season,
-        });
-        if (!result.ok) {
-          logger.error("subscription.listfailed", result.error.message, {
-            cause: result.error.cause,
-          });
-          process.exitCode = 1;
-          return;
-        }
-        const output = options.json
-          ? JSON.stringify(result.value, null, 2)
-          : renderSubscriptionTable(result.value);
-        process.stdout.write(`${output}\n`);
-      },
-    );
-
-  client
-    .command("add-subscription")
-    .description(
-      "Subscribe an existing client to a league, or to every league a club's teams play in " +
-        "this season — exactly one of --league/--club. --club also records the follow, so a " +
-        "later `sync-subscriptions` can re-derive the same set for a new season. --club resolves " +
-        "via league_team, only discoverable once the catalog crawl has run for a league at least " +
-        "once; run `club leagues <name>` or pass --dry-run first to preview before writing N " +
-        "subscription rows off a single fuzzy name match.",
-    )
-    .requiredOption("--client <name>", "the client name")
-    .addOption(
-      new Option("--league <lea_id>", "subscribe to a single league by id")
-        .argParser(parseLeagueId)
-        .conflicts("club"),
-    )
-    .addOption(
-      new Option(
-        "--club <name>",
-        "subscribe to every league this club's teams play in (a name fragment is enough, as " +
-          "long as it's unambiguous)",
-      ).conflicts("league"),
-    )
-    .option(
-      "--season <year>",
-      "with --club, the season to subscribe for (default: the latest season we hold)",
-    )
-    .addOption(seasonSourceOption("with --club, the source whose seasons to use"))
-    .option(
-      "--dry-run",
-      "with --club, resolve and print the club + leagues without subscribing to anything",
-      false,
-    )
-    .action(
-      async (options: {
-        client: string;
-        league?: LeagueId;
-        club?: string;
-        season?: string;
-        source: CrawlSource;
-        dryRun: boolean;
-      }) => {
-        const logger = createConsoleLogger();
-
-        if (options.league === undefined && options.club === undefined) {
-          logger.error("subscription.failed", "one of --league or --club is required");
-          process.exitCode = 1;
-          return;
-        }
-
-        if (options.dryRun && options.league !== undefined) {
-          logger.error("subscription.failed", "--dry-run only applies to --club, not --league");
-          process.exitCode = 1;
-          return;
-        }
-
-        if (options.season !== undefined && options.league !== undefined) {
-          logger.error("subscription.failed", "--season only applies to --club, not --league");
-          process.exitCode = 1;
-          return;
-        }
-
-        const config = getCliConfig();
-
-        if (options.league !== undefined) {
-          const result = await runCreateSubscriptionJob({
-            logger,
-            config,
-            clientName: options.client,
-            leagueId: options.league,
-          });
-          if (!result.ok) {
-            logger.error("subscription.failed", result.error.message, {
-              cause: result.error.cause,
-            });
-            process.exitCode = 1;
-            return;
-          }
-          process.stdout.write(`${result.value}\n`);
-          return;
-        }
-
-        const clubName = options.club;
-        if (clubName === undefined) {
-          // Unreachable: the check above ruled out both undefined, Option.conflicts rules out
-          // both set. Kept so `clubName` narrows to `string` without a cast.
-          logger.error("subscription.failed", "one of --league or --club is required");
-          process.exitCode = 1;
-          return;
-        }
-
-        const result = await runCreateSubscriptionsForClubJob({
-          logger,
-          config,
-          clientName: options.client,
-          clubName,
-          source: options.source,
-          seasonName: options.season,
-          dryRun: options.dryRun,
-        });
-        if (!result.ok) {
-          logger.error("subscription.clubfailed", result.error.message, {
-            cause: result.error.cause,
-          });
-          process.exitCode = 1;
-          return;
-        }
-
-        const { club: matchedClub, leagues, season, subscriptionIds } = result.value;
-        process.stdout.write(`Club: ${matchedClub.name} (${matchedClub.id})\n`);
-        process.stdout.write(`Season: ${season.name}\n`);
-        if (options.dryRun) {
-          process.stdout.write(
-            `Dry run — would subscribe "${options.client}" to ${leagues.length} league(s):\n`,
-          );
-          for (const league of leagues) {
-            process.stdout.write(`  ${league.id}  ${league.name}\n`);
-          }
-          return;
-        }
-        process.stdout.write(
-          `Subscribed "${options.client}" to ${subscriptionIds.length} league(s):\n`,
-        );
-        for (const id of subscriptionIds) {
-          process.stdout.write(`${id}\n`);
-        }
-      },
-    );
-
-  client
-    .command("remove-subscription")
-    .description(
-      "Unsubscribe a client from a league by subscription id (find it via " +
-        "`client list-subscriptions`). The league leaves the crawl's scope once no client " +
-        "subscribes to it.",
-    )
-    .argument("<sub_id>", "the subscription id to remove", parseSubscriptionId)
-    .action(async (id: SubscriptionId) => {
-      const config = getCliConfig();
-      const logger = createConsoleLogger();
-      const result = await runRemoveSubscriptionJob({ logger, config, id });
-      if (!result.ok) {
-        logger.error("subscription.removefailed", result.error.message, {
-          cause: result.error.cause,
-        });
-        process.exitCode = 1;
-        return;
-      }
-      process.stdout.write(`Removed subscription: ${id}\n`);
-    });
-
-  client
     .command("set-webhook")
     .description(
       "Configure (or rotate) a followed club's webhook: after each crawl of a league that " +
-        "club plays in and the client subscribes to, matchday POSTs " +
+        "club plays in, matchday POSTs " +
         "{ leagueId, hasChanges, crawledAt } to this URL, signed with a freshly minted secret " +
         "(X-Matchday-Signature: sha256=<hex>). Verify the signature over the raw body and read " +
         "leagueId from it. The secret is shown once here and never recoverable again — " +
@@ -845,8 +582,8 @@ export function createCli(): Command {
     .command("list")
     .description(
       "List each season window: the source, the season, the competition that runs it, and its " +
-        "start/end dates. A window still missing dates is obvious before a " +
-        "`client sync-subscriptions` relies on it. --json prints the rows alone for piping into jq.",
+        "start/end dates. A window still missing dates is obvious before the crawl relies on it. " +
+        "--json prints the rows alone for piping into jq.",
     )
     .option(
       "--source <name>",
