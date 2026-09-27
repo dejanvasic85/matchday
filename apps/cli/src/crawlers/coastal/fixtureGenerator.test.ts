@@ -2,6 +2,7 @@ import { fixtureStatusValue, type FixtureStatus } from "@matchday/domain";
 import { addDays } from "#crawlers/coastal/isoDateMath.ts";
 import { generateSeasonFixtures } from "#crawlers/coastal/fixtureGenerator.ts";
 import { kickoffInstant } from "#crawlers/coastal/kickoffSchedule.ts";
+import { melbourneWallClock } from "#crawlers/coastal/melbourneTime.ts";
 import { findCoastalClub } from "#crawlers/coastal/roster.ts";
 import { seasonWindowForYear } from "#crawlers/coastal/seasonCalendar.ts";
 
@@ -35,6 +36,14 @@ describe("generateSeasonFixtures", () => {
 
   it("is deterministic for the same season and moment", () => {
     expect(generateSeasonFixtures(season, midSeason)).toEqual(fixtures);
+  });
+
+  it("keeps every kickoff inside the season window, reschedules included", () => {
+    for (const fixture of fixtures) {
+      const day = melbourneWallClock(fixture.kickoffAt).date;
+      expect(day >= season.startsOn).toBe(true);
+      expect(day <= season.endsOn).toBe(true);
+    }
   });
 
   it("only scores a completed match", () => {

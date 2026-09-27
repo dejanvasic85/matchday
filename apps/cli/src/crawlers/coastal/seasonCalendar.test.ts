@@ -27,7 +27,7 @@ describe("seasonWindowForYear", () => {
     expect(seasonWindowForYear(2026)).toEqual({
       name: "2026-27",
       startsOn: "2026-08-21",
-      endsOn: "2027-05-09",
+      endsOn: "2027-05-30",
     });
   });
 
@@ -35,7 +35,7 @@ describe("seasonWindowForYear", () => {
     expect(seasonWindowForYear(2027)).toEqual({
       name: "2027-28",
       startsOn: "2027-08-20",
-      endsOn: "2028-05-07",
+      endsOn: "2028-05-28",
     });
   });
 
@@ -64,9 +64,9 @@ describe("seasonsAt", () => {
   });
 
   it("counts the last day as running and the day after as off-season", () => {
-    expect(seasonsAt(makeIsoDate("2027-05-09")).running?.name).toBe("2026-27");
+    expect(seasonsAt(makeIsoDate("2027-05-30")).running?.name).toBe("2026-27");
 
-    const offSeason = seasonsAt(makeIsoDate("2027-05-10"));
+    const offSeason = seasonsAt(makeIsoDate("2027-05-31"));
     expect(offSeason.running).toBeNull();
     expect(offSeason.next.name).toBe("2027-28");
   });

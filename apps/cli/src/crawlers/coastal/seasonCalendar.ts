@@ -4,12 +4,17 @@
 // and August is the off-season.
 
 import type { IsoDate } from "@matchday/domain";
-import { seasonAnchor, seasonRoundCountValue } from "#crawlers/coastal/constants.ts";
+import {
+  rescheduleWeekRangeValue,
+  seasonAnchor,
+  seasonRoundCountValue,
+} from "#crawlers/coastal/constants.ts";
 import { addDays, firstWeekdayOnOrAfter } from "#crawlers/coastal/isoDateMath.ts";
 import { coastalSeasonSchema, type CoastalSeason } from "#crawlers/coastal/schemas.ts";
 
-/** A round's weekend runs Friday-to-Sunday: the last match is two days after the Friday. */
-const playDaysPerSeason = (seasonRoundCountValue - 1) * 7 + 2;
+/** A round's weekend runs Friday-to-Sunday, and a late fixture may be rescheduled up to the maximum
+ * delay. The window covers that, so a delayed result is never left after the season "finished". */
+const playDaysPerSeason = (seasonRoundCountValue - 1) * 7 + 2 + rescheduleWeekRangeValue.max * 7;
 
 const friday = 5;
 
