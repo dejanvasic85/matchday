@@ -89,22 +89,27 @@ function withoutId(value: { id: string }): Record<string, unknown> {
   return Object.fromEntries(Object.entries(value).filter(([key]) => key !== "id"));
 }
 
+/** `?? null` in one place: a chain of them in the mapper trips the complexity audit. */
+function orNull<T>(value: T | null | undefined): T | null {
+  return value ?? null;
+}
+
 function toFixtureRow(values: FixtureInsert): FixtureRow {
   return {
     id: values.id,
     leagueId: values.leagueId,
     competitionId: values.competitionId,
     seasonId: values.seasonId,
-    round: values.round ?? null,
-    homeTeamId: values.homeTeamId ?? null,
-    awayTeamId: values.awayTeamId ?? null,
-    venue: values.venue ?? null,
-    latitude: values.latitude ?? null,
-    longitude: values.longitude ?? null,
-    kickoffAt: values.kickoffAt ?? null,
+    round: orNull(values.round),
+    homeTeamId: orNull(values.homeTeamId),
+    awayTeamId: orNull(values.awayTeamId),
+    venue: orNull(values.venue),
+    latitude: orNull(values.latitude),
+    longitude: orNull(values.longitude),
+    kickoffAt: orNull(values.kickoffAt),
     status: values.status,
-    homeScore: values.homeScore ?? null,
-    awayScore: values.awayScore ?? null,
+    homeScore: orNull(values.homeScore),
+    awayScore: orNull(values.awayScore),
     isBye: values.isBye ?? false,
     createdAt: epoch,
     updatedAt: epoch,
