@@ -35,7 +35,7 @@ export async function backfillLeagueTeams(
   let upserted = 0;
   for (const pair of pairs) {
     // Sequential, not Promise.all: a failure should stop the run, not fire remaining upserts
-    // concurrently (same reasoning as createSubscriptionsForClub's loop).
+    // concurrently (the same reason the catalog crawl persists one league at a time).
     const result = await deps.upsertLeagueTeam({
       id: generateId("leagueTeam"),
       leagueId: pair.leagueId,

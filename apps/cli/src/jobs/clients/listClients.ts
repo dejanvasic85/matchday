@@ -2,13 +2,7 @@
 // roster assembly to the service.
 
 import { type Result } from "@matchday/domain";
-import {
-  createDbClient,
-  listApiTokens,
-  listClientClubs,
-  listClients,
-  listSubscriptionsWithLeague,
-} from "@matchday/db";
+import { createDbClient, listApiTokens, listClientClubs, listClients } from "@matchday/db";
 import type { CliConfig } from "#config.ts";
 import { listClientSummaries, type ClientSummary } from "#services/clientService.ts";
 
@@ -28,6 +22,5 @@ export async function runListClientsJob(
     listClients: () => listClients(db),
     listApiTokens: () => listApiTokens(db),
     listClientClubs: () => listClientClubs(db),
-    listSubscriptionsWithLeague: (filter) => listSubscriptionsWithLeague(db, filter),
   });
 }

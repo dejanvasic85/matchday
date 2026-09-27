@@ -84,19 +84,10 @@ export {
   type CrawlTargetLeagueCandidate,
 } from "#crawlTargetDb.ts";
 export { upsertExternalRef, findExternalRef, findExternalRefByInternalId } from "#externalRefDb.ts";
-export {
-  upsertSubscription,
-  listSubscribedLeagueIds,
-  listSubscriptionsWithLeague,
-  deleteSubscription,
-  type SubscriptionWithLeague,
-  type ListSubscriptionsFilter,
-} from "#subscriptionDb.ts";
 export { upsertClientByName, listClients, findClientByName } from "#clientDb.ts";
 export {
   upsertClientClub,
   listClientClubs,
-  listClientClubsByClientId,
   deleteClientClub,
   setClientClubWebhook,
   clearClientClubWebhook,

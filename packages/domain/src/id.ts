@@ -16,7 +16,6 @@ export const idPrefixValue = {
   leagueTeam: "lgt",
   crawlTarget: "crt",
   externalRef: "ext",
-  subscription: "sub",
   client: "cli",
   clientClub: "ccl",
   apiToken: "tok",
@@ -42,7 +41,6 @@ export type TableEntryId = EntityId<"tableEntry">;
 export type LeagueTeamId = EntityId<"leagueTeam">;
 export type CrawlTargetId = EntityId<"crawlTarget">;
 export type ExternalRefId = EntityId<"externalRef">;
-export type SubscriptionId = EntityId<"subscription">;
 export type ClientId = EntityId<"client">;
 export type ClientClubId = EntityId<"clientClub">;
 export type ApiTokenId = EntityId<"apiToken">;

@@ -1,5 +1,5 @@
 // Table entry service: maps DB rows to the wire shape. Catalog data, open to any
-// authenticated client — subscriptions only gate which leagues get crawled.
+// authenticated client — the crawl scope gates which leagues get crawled.
 
 import { mapResult, type Result } from "@matchday/domain";
 import { listTableEntriesByLeagueId, type Db, type schema } from "@matchday/db";

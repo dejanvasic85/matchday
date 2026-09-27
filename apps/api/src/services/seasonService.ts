@@ -1,5 +1,5 @@
 // Season service: maps DB rows to the wire shape. Catalog data, open to any authenticated
-// client, no subscription scoping.
+// client, no crawl-scope scoping.
 
 import { requireFound, type Result, type Season } from "@matchday/domain";
 import { mapPage, type PagedResponse } from "#services/pagedResponse.ts";

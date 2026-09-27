@@ -39,7 +39,7 @@ export type RunListClubLeaguesJobInput = {
   clubName: string;
   source: Source;
   /** A season year to scope to. Omitted lists every season the club has ever played in — right
-   * for browsing history, which is why `add-subscription` resolves a season instead. */
+   * for browsing history; pass `--season` to scope to one. */
   seasonName?: string;
 };
 

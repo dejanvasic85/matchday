@@ -22,7 +22,7 @@ export async function listTableEntryTeamPairs(db: Db): Promise<Result<TableEntry
   );
 }
 
-/** A league's ladder, position-ordered (subscription-scoped). */
+/** A league's ladder, position-ordered. */
 export async function listTableEntriesByLeagueId(
   db: Db,
   leagueId: string,

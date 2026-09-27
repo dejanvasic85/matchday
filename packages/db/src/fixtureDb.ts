@@ -11,7 +11,7 @@ type Fixture = typeof fixture.$inferSelect;
 type FixtureInsert = typeof fixture.$inferInsert;
 
 /** A league's fixtures, round-then-kickoff ordered — the shape a fixture list/table page reads
- * naturally in (subscription-scoped). */
+ * naturally in. */
 export async function listFixturesByLeagueId(db: Db, leagueId: string): Promise<Result<Fixture[]>> {
   return runQuery(
     () =>

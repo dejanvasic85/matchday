@@ -27,18 +27,6 @@ function makeDeps(overrides: Partial<ClientServiceDeps> = {}): ClientServiceDeps
         },
       ]),
     ),
-    listSubscriptionsWithLeague: vi.fn().mockResolvedValue(
-      ok([
-        {
-          id: "sub_one0000000",
-          clientId: "cli_willy00000",
-          leagueId: "lea_abc123",
-          leagueName: "Div 1 North",
-          seasonId: "sea_abc123",
-          seasonName: "2026",
-        },
-      ]),
-    ),
     listClientClubs: vi.fn().mockResolvedValue(
       ok([
         {
@@ -55,23 +43,6 @@ function makeDeps(overrides: Partial<ClientServiceDeps> = {}): ClientServiceDeps
 }
 
 describe("listClientSummaries", () => {
-  it("attaches each client's subscriptions", async () => {
-    const result = await listClientSummaries(makeDeps());
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      const [willy] = result.value;
-      expect(willy?.subscriptions).toEqual([
-        {
-          id: "sub_one0000000",
-          leagueId: "lea_abc123",
-          leagueName: "Div 1 North",
-          seasonName: "2026",
-        },
-      ]);
-    }
-  });
-
   it("attaches each client's followed clubs", async () => {
     const result = await listClientSummaries(makeDeps());
 
@@ -154,7 +125,7 @@ describe("listClientSummaries", () => {
     }
   });
 
-  it("reports zero tokens and no subscriptions for a client with neither", async () => {
+  it("reports zero tokens and no followed clubs for a client with neither", async () => {
     const result = await listClientSummaries(makeDeps());
 
     expect(result.ok).toBe(true);
@@ -163,7 +134,6 @@ describe("listClientSummaries", () => {
       expect(altona).toMatchObject({
         activeTokenCount: 0,
         lastApiUseAt: null,
-        subscriptions: [],
         clubs: [],
       });
     }
@@ -180,15 +150,6 @@ describe("listClientSummaries", () => {
   it("propagates a client listing failure", async () => {
     const listError = serverError("Failed to list clients");
     const deps = makeDeps({ listClients: vi.fn().mockResolvedValue(listError) });
-
-    const result = await listClientSummaries(deps);
-
-    expect(result).toEqual(listError);
-  });
-
-  it("propagates a subscription listing failure", async () => {
-    const listError = serverError("Failed to list subscriptions with league");
-    const deps = makeDeps({ listSubscriptionsWithLeague: vi.fn().mockResolvedValue(listError) });
 
     const result = await listClientSummaries(deps);
 

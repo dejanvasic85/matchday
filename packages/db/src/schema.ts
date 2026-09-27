@@ -229,7 +229,7 @@ export const externalRef = pgTable(
   ],
 );
 
-// A client of the API: the entity both subscriptions and API tokens belong to.
+// A client of the API: the entity both club follows and API tokens belong to.
 export const client = pgTable(
   "client",
   {
@@ -240,10 +240,8 @@ export const client = pgTable(
   (table) => [uniqueIndex("client_name_key").on(table.name)],
 );
 
-// A client follows a club: the provenance a subscription alone can't record. Subscriptions are
-// derived from this (club's teams -> their leagues in a season), so a season rollover is a
-// re-derivation rather than per-row surgery. Also carries the webhook, which therefore outlives
-// any one season's subscriptions.
+// A client follows a club: the client's interest, and the provenance a webhook needs. Carries the
+// webhook, which therefore outlives any one season.
 export const clientClub = pgTable(
   "client_club",
   {
@@ -263,30 +261,6 @@ export const clientClub = pgTable(
     ...timestamps,
   },
   (table) => [uniqueIndex("client_club_client_club_key").on(table.clientId, table.clubId)],
-);
-
-// A client subscribes to one of our leagues: drives the deep crawl (fixtures +
-// tables crawled only for subscribed leagues). Subsumes the old tracked_competition.
-export const subscription = pgTable(
-  "client_subscription",
-  {
-    id: text("id").primaryKey(),
-    clientId: text("client_id")
-      .notNull()
-      .references(() => client.id),
-    leagueId: text("league_id")
-      .notNull()
-      .references(() => league.id),
-    // Soft delete: `client remove-subscription` sets this instead of deleting the row, so
-    // re-subscribing (the upsert's conflict branch) revives it instead of colliding on the unique index.
-    deletedAt: timestamp("deleted_at", { withTimezone: true }),
-    ...timestamps,
-  },
-  (table) => [
-    // One *active* subscription per (client, league), enforced in app code (upsert revives a
-    // soft-deleted row) since a partial unique index isn't expressible via Drizzle's builder.
-    uniqueIndex("client_subscription_client_league_key").on(table.clientId, table.leagueId),
-  ],
 );
 
 // A client's API bearer token, hashed at rest — never the plaintext.
@@ -354,7 +328,6 @@ export const leagueRelations = relations(league, ({ one, many }) => ({
   fixtures: many(fixture),
   tableEntries: many(tableEntry),
   leagueTeams: many(leagueTeam),
-  subscriptions: many(subscription),
 }));
 
 export const fixtureRelations = relations(fixture, ({ one }) => ({
@@ -378,13 +351,7 @@ export const leagueTeamRelations = relations(leagueTeam, ({ one }) => ({
   team: one(team, { fields: [leagueTeam.teamId], references: [team.id] }),
 }));
 
-export const subscriptionRelations = relations(subscription, ({ one }) => ({
-  league: one(league, { fields: [subscription.leagueId], references: [league.id] }),
-  client: one(client, { fields: [subscription.clientId], references: [client.id] }),
-}));
-
 export const clientRelations = relations(client, ({ many }) => ({
-  subscriptions: many(subscription),
   clientClubs: many(clientClub),
   apiTokens: many(apiToken),
 }));
