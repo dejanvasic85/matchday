@@ -12,7 +12,7 @@ import {
 } from "@matchday/domain";
 import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 import type { MappedFixture } from "#crawlers/dribl/mappers/mapDriblFixture.ts";
-import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
+import { resolveEntityByExternalRef } from "#crawlers/externalRefEntityResolver.ts";
 import { resolveTeamForFixture } from "#crawlers/dribl/teamResolver.ts";
 
 export type FixtureContext = {

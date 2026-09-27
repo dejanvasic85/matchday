@@ -1,6 +1,6 @@
 import { ok } from "@matchday/domain";
 import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
-import { resolveEntityByExternalRef } from "#crawlers/dribl/externalRefEntityResolver.ts";
+import { resolveEntityByExternalRef } from "#crawlers/externalRefEntityResolver.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 
