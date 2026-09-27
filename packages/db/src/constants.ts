@@ -5,6 +5,7 @@
 export const sourceValue = {
   dribl: "dribl",
   driblClubCode: "dribl_club_code",
+  coastal: "coastal",
 } as const;
 
 export type Source = (typeof sourceValue)[keyof typeof sourceValue];

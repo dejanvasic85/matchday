@@ -2,11 +2,13 @@
 // no other file in src/jobs or cli.ts needs to change.
 
 import { crawlSourceValue, type CrawlSource } from "#crawlers/constants.ts";
+import { coastalAdapter } from "#crawlers/coastal/coastalAdapter.ts";
 import { driblAdapter } from "#crawlers/dribl/driblAdapter.ts";
 import type { SourceAdapter } from "#crawlers/sourceAdapter.ts";
 
 const registry: Record<CrawlSource, SourceAdapter> = {
   [crawlSourceValue.dribl]: driblAdapter,
+  [crawlSourceValue.coastal]: coastalAdapter,
 };
 
 export function getSourceAdapter(source: CrawlSource): SourceAdapter {

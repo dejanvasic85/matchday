@@ -3,6 +3,7 @@
 
 export const crawlSourceValue = {
   dribl: "dribl",
+  coastal: "coastal",
 } as const;
 
 export type CrawlSource = (typeof crawlSourceValue)[keyof typeof crawlSourceValue];
