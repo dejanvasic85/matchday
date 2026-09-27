@@ -4,11 +4,14 @@ import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDep
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 
-export function makeCoastalExternalRefRow(sourceId: string): ExternalRef {
+export function makeCoastalExternalRefRow(
+  sourceId: string,
+  internalId = "lea_new00000001",
+): ExternalRef {
   return {
     id: "ext_row0000001",
     entityType: "league",
-    internalId: "lea_new00000001",
+    internalId,
     source: "coastal",
     sourceId,
     sourceUrl: null,
