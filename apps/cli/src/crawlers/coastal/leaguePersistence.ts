@@ -19,9 +19,8 @@ import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 import { resolveEntityByExternalRef } from "#crawlers/externalRefEntityResolver.ts";
 import { generateSeasonFixtures } from "#crawlers/coastal/fixtureGenerator.ts";
 import { buildLadder } from "#crawlers/coastal/ladder.ts";
-import { coastalClubs } from "#crawlers/coastal/roster.ts";
-import { resolveCoastalClubAndTeam } from "#crawlers/coastal/rosterPersistence.ts";
-import type { CoastalSeason } from "#crawlers/coastal/schemas.ts";
+import { resolveCoastalRosterTeams } from "#crawlers/coastal/rosterPersistence.ts";
+import type { CoastalFixture, CoastalSeason } from "#crawlers/coastal/schemas.ts";
 import { coastalFixtureSourceId } from "#crawlers/coastal/sourceIds.ts";
 
 export type PersistLeagueSeasonSummary = {
@@ -36,29 +35,27 @@ export type PersistLeagueSeasonInput = {
   season: CoastalSeason;
 };
 
-export async function persistLeagueSeason(
+type LeagueSeasonContext = Omit<PersistLeagueSeasonInput, "season">;
+
+function requireTeam(teamIdByClubKey: Map<string, TeamId>, clubKey: string): Result<TeamId> {
+  const teamId = teamIdByClubKey.get(clubKey);
+  return teamId === undefined ? serverError(`Club "${clubKey}" is not in the roster`) : ok(teamId);
+}
+
+async function persistFixtureResults(
   deps: EntityResolutionDeps,
-  logger: Logger,
-  input: PersistLeagueSeasonInput,
-  now: Date = new Date(),
-): Promise<Result<PersistLeagueSeasonSummary>> {
-  const { competitionId, seasonId, leagueId, season } = input;
-
-  const teamIdByClubKey = new Map<string, TeamId>();
-  for (const club of coastalClubs) {
-    const ids = await resolveCoastalClubAndTeam(deps, club);
-    if (!ids.ok) {
-      return ids;
-    }
-    teamIdByClubKey.set(club.key, ids.value.teamId);
-  }
-
-  const fixtures = generateSeasonFixtures(season, now);
+  context: LeagueSeasonContext,
+  fixtures: CoastalFixture[],
+  teamIdByClubKey: Map<string, TeamId>,
+): Promise<Result<void>> {
   for (const fixture of fixtures) {
-    const homeTeamId = teamIdByClubKey.get(fixture.homeClubKey);
-    const awayTeamId = teamIdByClubKey.get(fixture.awayClubKey);
-    if (homeTeamId === undefined || awayTeamId === undefined) {
-      return serverError(`Fixture "${fixture.key}" names a club outside the roster`);
+    const homeTeamId = requireTeam(teamIdByClubKey, fixture.homeClubKey);
+    const awayTeamId = requireTeam(teamIdByClubKey, fixture.awayClubKey);
+    if (!homeTeamId.ok) {
+      return homeTeamId;
+    }
+    if (!awayTeamId.ok) {
+      return awayTeamId;
     }
 
     const persisted = await resolveEntityByExternalRef({
@@ -69,12 +66,12 @@ export async function persistLeagueSeason(
       upsertEntity: (id) =>
         deps.upsertFixture({
           id,
-          leagueId,
-          competitionId,
-          seasonId,
+          leagueId: context.leagueId,
+          competitionId: context.competitionId,
+          seasonId: context.seasonId,
           round: fixture.round,
-          homeTeamId,
-          awayTeamId,
+          homeTeamId: homeTeamId.value,
+          awayTeamId: awayTeamId.value,
           venue: fixture.venue,
           latitude: null,
           longitude: null,
@@ -89,20 +86,29 @@ export async function persistLeagueSeason(
       return persisted;
     }
   }
+  return ok(undefined);
+}
 
+/** Recompute the ladder and upsert one row per club, plus its membership. Returns the row count. */
+async function persistLadder(
+  deps: EntityResolutionDeps,
+  context: LeagueSeasonContext,
+  fixtures: CoastalFixture[],
+  teamIdByClubKey: Map<string, TeamId>,
+): Promise<Result<number>> {
   const ladder = buildLadder(fixtures);
   for (const row of ladder) {
-    const teamId = teamIdByClubKey.get(row.clubKey);
-    if (teamId === undefined) {
-      return serverError(`Ladder names a club outside the roster: "${row.clubKey}"`);
+    const teamId = requireTeam(teamIdByClubKey, row.clubKey);
+    if (!teamId.ok) {
+      return teamId;
     }
 
     const entry = await deps.upsertTableEntry({
       id: generateId("tableEntry"),
-      leagueId,
-      competitionId,
-      seasonId,
-      teamId,
+      leagueId: context.leagueId,
+      competitionId: context.competitionId,
+      seasonId: context.seasonId,
+      teamId: teamId.value,
       position: row.position,
       played: row.played,
       won: row.won,
@@ -119,19 +125,46 @@ export async function persistLeagueSeason(
 
     const membership = await deps.upsertLeagueTeam({
       id: generateId("leagueTeam"),
-      leagueId,
-      teamId,
+      leagueId: context.leagueId,
+      teamId: teamId.value,
     });
     if (!membership.ok) {
       return membership;
     }
   }
+  return ok(ladder.length);
+}
+
+export async function persistLeagueSeason(
+  deps: EntityResolutionDeps,
+  logger: Logger,
+  input: PersistLeagueSeasonInput,
+  now: Date = new Date(),
+): Promise<Result<PersistLeagueSeasonSummary>> {
+  const { competitionId, seasonId, leagueId, season } = input;
+  const context: LeagueSeasonContext = { competitionId, seasonId, leagueId };
+
+  const teams = await resolveCoastalRosterTeams(deps);
+  if (!teams.ok) {
+    return teams;
+  }
+
+  const fixtures = generateSeasonFixtures(season, now);
+  const results = await persistFixtureResults(deps, context, fixtures, teams.value);
+  if (!results.ok) {
+    return results;
+  }
+
+  const tableEntries = await persistLadder(deps, context, fixtures, teams.value);
+  if (!tableEntries.ok) {
+    return tableEntries;
+  }
 
   logger.info("crawl.league.persisted", "persisted coastal league", {
     season: season.name,
     fixtures: fixtures.length,
-    tableEntries: ladder.length,
+    tableEntries: tableEntries.value,
   });
 
-  return ok({ fixtures: fixtures.length, tableEntries: ladder.length });
+  return ok({ fixtures: fixtures.length, tableEntries: tableEntries.value });
 }

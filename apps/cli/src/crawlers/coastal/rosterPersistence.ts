@@ -12,7 +12,7 @@ import {
 } from "@matchday/domain";
 import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 import { resolveEntityByExternalRef } from "#crawlers/externalRefEntityResolver.ts";
-import type { CoastalClub } from "#crawlers/coastal/roster.ts";
+import { coastalClubs, type CoastalClub } from "#crawlers/coastal/roster.ts";
 import { coastalClubSourceId, coastalTeamSourceId } from "#crawlers/coastal/sourceIds.ts";
 
 export type CoastalClubIds = {
@@ -61,4 +61,19 @@ export async function resolveCoastalClubAndTeam(
   }
 
   return ok({ clubId: clubResult.value, teamId: teamResult.value });
+}
+
+/** Resolve every roster club and its team to internal ids, keyed by the roster key. */
+export async function resolveCoastalRosterTeams(
+  deps: EntityResolutionDeps,
+): Promise<Result<Map<string, TeamId>>> {
+  const teamIdByClubKey = new Map<string, TeamId>();
+  for (const club of coastalClubs) {
+    const ids = await resolveCoastalClubAndTeam(deps, club);
+    if (!ids.ok) {
+      return ids;
+    }
+    teamIdByClubKey.set(club.key, ids.value.teamId);
+  }
+  return ok(teamIdByClubKey);
 }

@@ -10,16 +10,18 @@ import {
   ok,
   serverError,
   sourceValue,
+  type CompetitionId,
+  type LeagueId,
   type Logger,
   type Result,
+  type SeasonId,
   type TeamId,
 } from "@matchday/domain";
 import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 import { resolveEntityByExternalRef } from "#crawlers/externalRefEntityResolver.ts";
 import { coastalValue } from "#crawlers/coastal/constants.ts";
 import { generateSeasonFixtures } from "#crawlers/coastal/fixtureGenerator.ts";
-import { coastalClubs } from "#crawlers/coastal/roster.ts";
-import { resolveCoastalClubAndTeam } from "#crawlers/coastal/rosterPersistence.ts";
+import { resolveCoastalRosterTeams } from "#crawlers/coastal/rosterPersistence.ts";
 import type { CoastalSeason } from "#crawlers/coastal/schemas.ts";
 import {
   coastalCompetitionSourceId,
@@ -36,12 +38,17 @@ export type PersistCatalogSeasonSummary = {
   fixturesCreated: number;
 };
 
-export async function persistCatalogSeason(
+type CatalogStructure = {
+  competitionId: CompetitionId;
+  seasonId: SeasonId;
+  leagueId: LeagueId;
+};
+
+/** Find-or-create the competition, season and league, and ensure the season's calendar window. */
+async function resolveCatalogStructure(
   deps: EntityResolutionDeps,
-  logger: Logger,
   season: CoastalSeason,
-  now: Date = new Date(),
-): Promise<Result<PersistCatalogSeasonSummary>> {
+): Promise<Result<CatalogStructure>> {
   const competitionResult = await resolveEntityByExternalRef({
     deps,
     entityType: externalRefEntityTypeValue.competition,
@@ -95,25 +102,40 @@ export async function persistCatalogSeason(
     return leagueResult;
   }
 
-  const teamIdByClubKey = new Map<string, TeamId>();
-  for (const club of coastalClubs) {
-    const ids = await resolveCoastalClubAndTeam(deps, club);
-    if (!ids.ok) {
-      return ids;
-    }
-    teamIdByClubKey.set(club.key, ids.value.teamId);
+  return ok({
+    competitionId: competitionResult.value,
+    seasonId: seasonResult.value,
+    leagueId: leagueResult.value,
+  });
+}
 
+async function persistMembership(
+  deps: EntityResolutionDeps,
+  leagueId: LeagueId,
+  teamIdByClubKey: Map<string, TeamId>,
+): Promise<Result<void>> {
+  for (const teamId of teamIdByClubKey.values()) {
     const membership = await deps.upsertLeagueTeam({
       id: generateId("leagueTeam"),
-      leagueId: leagueResult.value,
-      teamId: ids.value.teamId,
+      leagueId,
+      teamId,
     });
     if (!membership.ok) {
       return membership;
     }
   }
+  return ok(undefined);
+}
 
-  let fixturesCreated = 0;
+/** Create a fixture for every scheduled match not already known. Returns how many it created. */
+async function createScheduledFixtures(
+  deps: EntityResolutionDeps,
+  structure: CatalogStructure,
+  season: CoastalSeason,
+  teamIdByClubKey: Map<string, TeamId>,
+  now: Date,
+): Promise<Result<number>> {
+  let created = 0;
   for (const fixture of generateSeasonFixtures(season, now)) {
     const existing = await deps.findExternalRef(
       sourceValue.coastal,
@@ -140,9 +162,9 @@ export async function persistCatalogSeason(
       upsertEntity: (id) =>
         deps.upsertFixture({
           id,
-          leagueId: leagueResult.value,
-          competitionId: competitionResult.value,
-          seasonId: seasonResult.value,
+          leagueId: structure.leagueId,
+          competitionId: structure.competitionId,
+          seasonId: structure.seasonId,
           round: fixture.round,
           homeTeamId,
           awayTeamId,
@@ -159,20 +181,54 @@ export async function persistCatalogSeason(
     if (!persisted.ok) {
       return persisted;
     }
-    fixturesCreated += 1;
+    created += 1;
+  }
+  return ok(created);
+}
+
+export async function persistCatalogSeason(
+  deps: EntityResolutionDeps,
+  logger: Logger,
+  season: CoastalSeason,
+  now: Date = new Date(),
+): Promise<Result<PersistCatalogSeasonSummary>> {
+  const structure = await resolveCatalogStructure(deps, season);
+  if (!structure.ok) {
+    return structure;
+  }
+
+  const teams = await resolveCoastalRosterTeams(deps);
+  if (!teams.ok) {
+    return teams;
+  }
+
+  const membership = await persistMembership(deps, structure.value.leagueId, teams.value);
+  if (!membership.ok) {
+    return membership;
+  }
+
+  const fixturesCreated = await createScheduledFixtures(
+    deps,
+    structure.value,
+    season,
+    teams.value,
+    now,
+  );
+  if (!fixturesCreated.ok) {
+    return fixturesCreated;
   }
 
   logger.info("catalog.persist.season", "persisted coastal season", {
     season: season.name,
-    clubs: coastalClubs.length,
-    fixturesCreated,
+    clubs: teams.value.size,
+    fixturesCreated: fixturesCreated.value,
   });
 
   return ok({
     competitions: 1,
     leagues: 1,
-    clubs: coastalClubs.length,
-    teams: coastalClubs.length,
-    fixturesCreated,
+    clubs: teams.value.size,
+    teams: teams.value.size,
+    fixturesCreated: fixturesCreated.value,
   });
 }

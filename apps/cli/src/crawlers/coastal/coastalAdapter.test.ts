@@ -1,8 +1,9 @@
 import { ok, type Result } from "@matchday/domain";
 import type { CliConfig } from "#config.ts";
 import { crawlSourceValue } from "#crawlers/constants.ts";
-import { coastalAdapter } from "#crawlers/coastal/coastalAdapter.ts";
+import { coastalAdapter, seasonFromRefSourceId } from "#crawlers/coastal/coastalAdapter.ts";
 import { coastalClubs } from "#crawlers/coastal/roster.ts";
+import { seasonWindowForYear } from "#crawlers/coastal/seasonCalendar.ts";
 import type { AssetStorage } from "#storage/assetStorage.ts";
 import type { DownloadedImage } from "#storage/clubLogoMirror.ts";
 import { makeCoastalExternalRefRow, makeCoastalHappyPathDeps } from "#test/fixtures/coastalDeps.ts";
@@ -44,6 +45,22 @@ async function openSession() {
   }
   return result.value;
 }
+
+describe("seasonFromRefSourceId", () => {
+  it("builds the season from a season or league id", () => {
+    expect(seasonFromRefSourceId("season-2026-27")).toEqual(ok(seasonWindowForYear(2026)));
+    expect(seasonFromRefSourceId("league-2027-28")).toEqual(ok(seasonWindowForYear(2027)));
+  });
+
+  it("rejects an id that is neither a season nor a league", () => {
+    expect(seasonFromRefSourceId("club-stadly-united").ok).toBe(false);
+  });
+
+  it("rejects an id with no four-digit start year", () => {
+    expect(seasonFromRefSourceId("season-").ok).toBe(false);
+    expect(seasonFromRefSourceId("season-26").ok).toBe(false);
+  });
+});
 
 describe("coastalAdapter", () => {
   it("registers as the coastal source", () => {

@@ -41,13 +41,29 @@ type CoastalLeagueContext = {
   seasonId: SeasonId;
 };
 
+const seasonYearPattern = /^(\d{4})/;
+
 const seasonYearFromName = (name: string): number | undefined => {
-  const year = Number(name.slice(0, 4));
-  return Number.isInteger(year) ? year : undefined;
+  const match = seasonYearPattern.exec(name);
+  return match?.[1] === undefined ? undefined : Number(match[1]);
 };
 
+/** The season a coastal season or league `external_ref` source id names. The name carries the start
+ * year the calendar regenerates from. */
+export function seasonFromRefSourceId(sourceId: string): Result<CoastalSeason> {
+  const name = coastalSeasonNameFromSourceId(sourceId);
+  if (name === undefined) {
+    return serverError(`Coastal season ref "${sourceId}" is not a season or league id`);
+  }
+  const year = seasonYearFromName(name);
+  if (year === undefined) {
+    return serverError(`Coastal season ref "${sourceId}" carries no start year`);
+  }
+  return ok(seasonWindowForYear(year));
+}
+
 /** Resolve the season a league belongs to. The league row gives the internal ids; the season's
- * external_ref gives the name, which carries the start year the calendar regenerates from. */
+ * external_ref gives the name. */
 async function resolveLeagueContext(
   deps: EntityResolutionDeps,
   leagueId: string,
@@ -78,13 +94,12 @@ async function resolveLeagueContext(
     return serverError(`League "${leagueId}" has no coastal season external_ref`);
   }
 
-  const name = coastalSeasonNameFromSourceId(seasonRef.value.sourceId);
-  const year = name === undefined ? undefined : seasonYearFromName(name);
-  if (name === undefined || year === undefined) {
-    return serverError(`Coastal season ref "${seasonRef.value.sourceId}" carries no start year`);
+  const season = seasonFromRefSourceId(seasonRef.value.sourceId);
+  if (!season.ok) {
+    return season;
   }
 
-  return ok({ season: seasonWindowForYear(year), competitionId, seasonId });
+  return ok({ season: season.value, competitionId, seasonId });
 }
 
 async function runCatalogCrawl(params: CrawlCatalogParams): Promise<Result<CrawlCatalogSummary>> {
