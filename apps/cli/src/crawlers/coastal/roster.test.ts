@@ -1,8 +1,8 @@
 import { coastalClubs, findCoastalClub } from "#crawlers/coastal/roster.ts";
 
 describe("coastalClubs", () => {
-  it("has the twelve-club roster with one team each", () => {
-    expect(coastalClubs).toHaveLength(12);
+  it("has the twenty-club roster with one team each", () => {
+    expect(coastalClubs).toHaveLength(20);
     for (const club of coastalClubs) {
       expect(club.name).toBe(club.teamName);
       expect(club.ground.length).toBeGreaterThan(0);

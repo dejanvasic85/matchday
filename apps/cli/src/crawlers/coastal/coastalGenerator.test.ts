@@ -1,18 +1,18 @@
 import { fixtureStatusValue } from "@matchday/domain";
 import { generateCoastalSeason } from "#crawlers/coastal/coastalGenerator.ts";
-import { seasonWindowForIndex } from "#crawlers/coastal/seasonCalendar.ts";
+import { seasonWindowForYear } from "#crawlers/coastal/seasonCalendar.ts";
 
-const season = seasonWindowForIndex(0);
-const now = new Date("2027-03-01T00:00:00.000Z");
+const season = seasonWindowForYear(2026);
+const now = new Date("2027-06-01T00:00:00.000Z");
 
 describe("generateCoastalSeason", () => {
   it("returns the season, its fixtures and a full ladder", () => {
     const generated = generateCoastalSeason(season, now);
     expect(generated.season).toEqual(season);
-    expect(generated.fixtures).toHaveLength(78);
-    expect(generated.ladder).toHaveLength(12);
+    expect(generated.fixtures).toHaveLength(380);
+    expect(generated.ladder).toHaveLength(20);
     expect(generated.ladder.map((row) => row.position)).toEqual(
-      Array.from({ length: 12 }, (_, index) => index + 1),
+      Array.from({ length: 20 }, (_, index) => index + 1),
     );
   });
 

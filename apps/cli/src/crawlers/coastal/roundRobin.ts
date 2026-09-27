@@ -1,6 +1,5 @@
-// Round-robin pairing for the Coastal league. A full round-robin gives every club one home and one
-// away match against each rival; the association then replays the first two rounds with home and
-// away swapped, turning 11 rounds into 13 weekly rounds.
+// Round-robin pairing for the Coastal league. A full double round-robin gives every club one home
+// and one away match against each rival, which is 38 weekly rounds for a 20-club league.
 
 export type RoundPairing = {
   homeIndex: number;
@@ -58,14 +57,17 @@ function swapVenue(pairing: RoundPairing): RoundPairing {
   return { homeIndex: pairing.awayIndex, awayIndex: pairing.homeIndex };
 }
 
-/** A Coastal season's rounds: the full round-robin, then rounds 1 and 2 replayed with venues
- * swapped. Cheap — the first two rounds repeat rather than a second full round-robin. */
+/** Rounds in a Coastal season: every club home and away against each rival. */
+export function seasonRoundCount(teamCount: number): number {
+  if (teamCount < 2 || teamCount % 2 !== 0) {
+    throw new Error(`Season needs an even team count of at least 2, got ${teamCount}`);
+  }
+  return 2 * (teamCount - 1);
+}
+
+/** A Coastal season's rounds: the full round-robin, then the same fixtures again with venues
+ * swapped, so every club plays each rival once at home and once away. */
 export function seasonRounds(teamCount: number): RoundPairing[][] {
   const rounds = roundRobinRounds(teamCount);
-  const first = rounds[0];
-  const second = rounds[1];
-  if (first === undefined || second === undefined) {
-    throw new Error(`Season rounds need at least two round-robin rounds, got ${rounds.length}`);
-  }
-  return [...rounds, first.map(swapVenue), second.map(swapVenue)];
+  return [...rounds, ...rounds.map((round) => round.map(swapVenue))];
 }

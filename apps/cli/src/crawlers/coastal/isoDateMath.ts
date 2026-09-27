@@ -6,8 +6,6 @@ import { parseIsoDate, type IsoDate } from "@matchday/domain";
 
 const millisecondsPerDay = 24 * 60 * 60 * 1000;
 
-const weekdayNamesValue = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
-
 /** Build a branded `IsoDate` from a literal we control, failing loudly on a typo. */
 export function isoDateLiteral(value: string): IsoDate {
   const parsed = parseIsoDate(value);
@@ -33,22 +31,12 @@ export function addDays(date: IsoDate, days: number): IsoDate {
   return fromUtcMilliseconds(toUtcMilliseconds(date) + days * millisecondsPerDay);
 }
 
-/** Whole days from `from` to `to`; negative when `to` is earlier. */
-export function differenceInDays(from: IsoDate, to: IsoDate): number {
-  return Math.round((toUtcMilliseconds(to) - toUtcMilliseconds(from)) / millisecondsPerDay);
-}
-
 /** Day of week, `0` = Sunday through `6` = Saturday. */
 export function weekdayIndex(date: IsoDate): number {
   return new Date(toUtcMilliseconds(date)).getUTCDay();
 }
 
-/** The three-letter day name, for readable test failures and logs. */
-export function weekdayName(date: IsoDate): string {
-  return weekdayNamesValue[weekdayIndex(date)] ?? "???";
-}
-
-/** True when `date` is within the inclusive `[startsOn, endsOn]` range. */
-export function isWithinRange(date: IsoDate, startsOn: IsoDate, endsOn: IsoDate): boolean {
-  return startsOn <= date && date <= endsOn;
+/** The first `weekday` (0 = Sunday) on or after `date`. */
+export function firstWeekdayOnOrAfter(date: IsoDate, weekday: number): IsoDate {
+  return addDays(date, (weekday - weekdayIndex(date) + 7) % 7);
 }

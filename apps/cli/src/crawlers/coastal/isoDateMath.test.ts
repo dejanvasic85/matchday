@@ -1,11 +1,9 @@
 import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
 import {
   addDays,
-  differenceInDays,
-  isWithinRange,
+  firstWeekdayOnOrAfter,
   isoDateLiteral,
   weekdayIndex,
-  weekdayName,
 } from "#crawlers/coastal/isoDateMath.ts";
 
 describe("addDays", () => {
@@ -26,37 +24,20 @@ describe("addDays", () => {
   });
 });
 
-describe("differenceInDays", () => {
-  it("counts whole days forward", () => {
-    expect(differenceInDays(makeIsoDate("2026-10-02"), makeIsoDate("2026-10-02"))).toBe(0);
-    expect(differenceInDays(makeIsoDate("2026-10-02"), makeIsoDate("2026-10-12"))).toBe(10);
-  });
-
-  it("is negative when the second date is earlier", () => {
-    expect(differenceInDays(makeIsoDate("2026-10-12"), makeIsoDate("2026-10-02"))).toBe(-10);
-  });
-});
-
-describe("weekday", () => {
+describe("weekdayIndex", () => {
   it("identifies the day of week", () => {
     expect(weekdayIndex(makeIsoDate("2026-10-02"))).toBe(5);
-    expect(weekdayName(makeIsoDate("2026-10-02"))).toBe("Fri");
-    expect(weekdayName(makeIsoDate("2026-10-04"))).toBe("Sun");
+    expect(weekdayIndex(makeIsoDate("2026-10-04"))).toBe(0);
   });
 });
 
-describe("isWithinRange", () => {
-  const startsOn = makeIsoDate("2026-10-02");
-  const endsOn = makeIsoDate("2026-12-27");
-
-  it("includes both ends", () => {
-    expect(isWithinRange(startsOn, startsOn, endsOn)).toBe(true);
-    expect(isWithinRange(endsOn, startsOn, endsOn)).toBe(true);
+describe("firstWeekdayOnOrAfter", () => {
+  it("returns the day itself when it already matches", () => {
+    expect(firstWeekdayOnOrAfter(makeIsoDate("2026-10-02"), 5)).toBe("2026-10-02");
   });
 
-  it("excludes days outside", () => {
-    expect(isWithinRange(makeIsoDate("2026-10-01"), startsOn, endsOn)).toBe(false);
-    expect(isWithinRange(makeIsoDate("2026-12-28"), startsOn, endsOn)).toBe(false);
+  it("returns the next matching day otherwise", () => {
+    expect(firstWeekdayOnOrAfter(makeIsoDate("2026-08-15"), 5)).toBe("2026-08-21");
   });
 });
 

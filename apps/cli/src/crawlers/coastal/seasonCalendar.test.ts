@@ -1,88 +1,104 @@
 import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
 import {
   seasonKey,
-  seasonNameForStart,
-  seasonWindowForIndex,
+  seasonNameForYear,
+  seasonStartForYear,
+  seasonWindowForYear,
   seasonsAt,
   seasonsToGenerate,
 } from "#crawlers/coastal/seasonCalendar.ts";
 
-describe("seasonWindowForIndex", () => {
-  it("starts the first season on the anchor Friday", () => {
-    const season = seasonWindowForIndex(0);
-    expect(season).toEqual({
-      name: "2026 Spring",
-      startsOn: "2026-10-02",
-      endsOn: "2026-12-27",
-    });
-  });
-
-  it("names the second season by the summer it starts in", () => {
-    expect(seasonWindowForIndex(1)).toEqual({
-      name: "2027 Summer",
-      startsOn: "2027-01-15",
-      endsOn: "2027-04-11",
-    });
-  });
-
-  it("tiles seasons 105 days apart", () => {
-    expect(seasonWindowForIndex(2).startsOn).toBe("2027-04-30");
-    expect(seasonWindowForIndex(3).startsOn).toBe("2027-08-13");
-    expect(seasonWindowForIndex(4).startsOn).toBe("2027-11-26");
+describe("seasonStartForYear", () => {
+  it("starts on the first Friday on or after mid-August", () => {
+    expect(seasonStartForYear(2026)).toBe("2026-08-21");
+    expect(seasonStartForYear(2027)).toBe("2027-08-20");
   });
 });
 
-describe("seasonNameForStart", () => {
-  it("labels a start by its season of the year", () => {
-    expect(seasonNameForStart(makeIsoDate("2026-10-02"))).toBe("2026 Spring");
-    expect(seasonNameForStart(makeIsoDate("2027-01-15"))).toBe("2027 Summer");
-    expect(seasonNameForStart(makeIsoDate("2027-04-30"))).toBe("2027 Autumn");
-    expect(seasonNameForStart(makeIsoDate("2027-08-13"))).toBe("2027 Winter");
+describe("seasonNameForYear", () => {
+  it("names the season across the two years it runs", () => {
+    expect(seasonNameForYear(2026)).toBe("2026-27");
+    expect(seasonNameForYear(2027)).toBe("2027-28");
+  });
+});
+
+describe("seasonWindowForYear", () => {
+  it("runs from August into May the following year", () => {
+    expect(seasonWindowForYear(2026)).toEqual({
+      name: "2026-27",
+      startsOn: "2026-08-21",
+      endsOn: "2027-05-09",
+    });
+  });
+
+  it("accounts for a leap year in the end date", () => {
+    expect(seasonWindowForYear(2027)).toEqual({
+      name: "2027-28",
+      startsOn: "2027-08-20",
+      endsOn: "2028-05-07",
+    });
+  });
+
+  it("spans two calendar years", () => {
+    const season = seasonWindowForYear(2026);
+    expect(season.startsOn.slice(0, 4)).not.toBe(season.endsOn.slice(0, 4));
   });
 });
 
 describe("seasonKey", () => {
   it("slugifies the name", () => {
-    expect(seasonKey(seasonWindowForIndex(0))).toBe("2026-spring");
+    expect(seasonKey(seasonWindowForYear(2026))).toBe("2026-27");
   });
 });
 
 describe("seasonsAt", () => {
-  it("finds the running season and the next one", () => {
-    const { running, next } = seasonsAt(makeIsoDate("2026-10-15"));
-    expect(running?.name).toBe("2026 Spring");
-    expect(next.name).toBe("2027 Summer");
+  it("finds the running season after it starts", () => {
+    const { running, next } = seasonsAt(makeIsoDate("2026-10-01"));
+    expect(running?.name).toBe("2026-27");
+    expect(next.name).toBe("2027-28");
   });
 
-  it("counts both the first and last day as running", () => {
-    const season = seasonWindowForIndex(0);
-    expect(seasonsAt(season.startsOn).running?.name).toBe("2026 Spring");
-    expect(seasonsAt(season.endsOn).running?.name).toBe("2026 Spring");
+  it("keeps last year's season running into the new year", () => {
+    const { running } = seasonsAt(makeIsoDate("2027-01-15"));
+    expect(running?.name).toBe("2026-27");
   });
 
-  it("returns only the next season during the break", () => {
-    const { running, next } = seasonsAt(makeIsoDate("2026-12-28"));
+  it("counts the last day as running and the day after as off-season", () => {
+    expect(seasonsAt(makeIsoDate("2027-05-09")).running?.name).toBe("2026-27");
+
+    const offSeason = seasonsAt(makeIsoDate("2027-05-10"));
+    expect(offSeason.running).toBeNull();
+    expect(offSeason.next.name).toBe("2027-28");
+  });
+
+  it("is off-season through June, July and early August", () => {
+    for (const day of ["2027-06-15", "2027-07-15", "2027-08-14"]) {
+      expect(seasonsAt(makeIsoDate(day)).running).toBeNull();
+    }
+    expect(seasonsAt(makeIsoDate("2027-08-14")).next.name).toBe("2027-28");
+  });
+
+  it("starts the new season on its first Friday", () => {
+    expect(seasonsAt(makeIsoDate("2027-08-20")).running?.name).toBe("2027-28");
+  });
+
+  it("returns the first season before the association's first kickoff", () => {
+    const { running, next } = seasonsAt(makeIsoDate("2026-08-14"));
     expect(running).toBeNull();
-    expect(next.name).toBe("2027 Summer");
-  });
-
-  it("returns the first season before the anchor", () => {
-    const { running, next } = seasonsAt(makeIsoDate("2026-09-01"));
-    expect(running).toBeNull();
-    expect(next.name).toBe("2026 Spring");
+    expect(next.name).toBe("2026-27");
   });
 });
 
 describe("seasonsToGenerate", () => {
   it("generates the running season while it plays", () => {
-    expect(seasonsToGenerate(makeIsoDate("2026-11-01")).map((season) => season.name)).toEqual([
-      "2026 Spring",
+    expect(seasonsToGenerate(makeIsoDate("2027-02-01")).map((season) => season.name)).toEqual([
+      "2026-27",
     ]);
   });
 
-  it("generates the next season during the break", () => {
-    expect(seasonsToGenerate(makeIsoDate("2027-01-01")).map((season) => season.name)).toEqual([
-      "2027 Summer",
+  it("generates the next season over the off-season", () => {
+    expect(seasonsToGenerate(makeIsoDate("2027-06-20")).map((season) => season.name)).toEqual([
+      "2027-28",
     ]);
   });
 });

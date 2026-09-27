@@ -3,7 +3,7 @@ import { generateSeasonFixtures } from "#crawlers/coastal/fixtureGenerator.ts";
 import { buildLadder } from "#crawlers/coastal/ladder.ts";
 import { coastalClubs } from "#crawlers/coastal/roster.ts";
 import type { CoastalFixture } from "#crawlers/coastal/schemas.ts";
-import { seasonWindowForIndex } from "#crawlers/coastal/seasonCalendar.ts";
+import { seasonWindowForYear } from "#crawlers/coastal/seasonCalendar.ts";
 
 function makeFixture(overrides: Partial<CoastalFixture>): CoastalFixture {
   return {
@@ -97,8 +97,8 @@ describe("buildLadder", () => {
   });
 
   it("accounts for every completed match over a full season", () => {
-    const season = seasonWindowForIndex(0);
-    const fixtures = generateSeasonFixtures(season, new Date("2027-03-01T00:00:00.000Z"));
+    const season = seasonWindowForYear(2026);
+    const fixtures = generateSeasonFixtures(season, new Date("2027-06-01T00:00:00.000Z"));
     const completed = fixtures.filter(
       (fixture) => fixture.status === fixtureStatusValue.completed,
     ).length;

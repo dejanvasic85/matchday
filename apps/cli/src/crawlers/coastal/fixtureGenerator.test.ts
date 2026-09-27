@@ -3,17 +3,17 @@ import { addDays } from "#crawlers/coastal/isoDateMath.ts";
 import { generateSeasonFixtures } from "#crawlers/coastal/fixtureGenerator.ts";
 import { kickoffInstant } from "#crawlers/coastal/kickoffSchedule.ts";
 import { findCoastalClub } from "#crawlers/coastal/roster.ts";
-import { seasonWindowForIndex } from "#crawlers/coastal/seasonCalendar.ts";
+import { seasonWindowForYear } from "#crawlers/coastal/seasonCalendar.ts";
 
-const season = seasonWindowForIndex(0);
+const season = seasonWindowForYear(2026);
 const midSeason = new Date("2026-11-01T00:00:00.000Z");
 const fixtures = generateSeasonFixtures(season, midSeason);
 
 describe("generateSeasonFixtures", () => {
-  it("generates 13 rounds of six matches", () => {
-    expect(fixtures).toHaveLength(78);
-    for (let round = 1; round <= 13; round += 1) {
-      expect(fixtures.filter((fixture) => fixture.round === round)).toHaveLength(6);
+  it("generates 38 rounds of ten matches", () => {
+    expect(fixtures).toHaveLength(380);
+    for (let round = 1; round <= 38; round += 1) {
+      expect(fixtures.filter((fixture) => fixture.round === round)).toHaveLength(10);
     }
   });
 
@@ -63,14 +63,14 @@ describe("season events", () => {
   it("covers every status across a few seasons and moments", () => {
     const statuses = new Set<FixtureStatus>();
     for (let seasonIndex = 0; seasonIndex < 4; seasonIndex += 1) {
-      const window = seasonWindowForIndex(seasonIndex);
+      const window = seasonWindowForYear(2026 + seasonIndex);
+      const liveRounds = [1, 10, 20, 30, 38];
       const moments = [
         new Date(`${window.startsOn}T00:00:00.000Z`),
-        new Date(`${addDays(window.startsOn, 70)}T00:00:00.000Z`),
+        new Date(`${addDays(window.startsOn, 150)}T00:00:00.000Z`),
         new Date(`${window.endsOn}T00:00:00.000Z`),
-        ...Array.from(
-          { length: 13 },
-          (_, round) => new Date(kickoffInstant(window, round + 1, 0).getTime() + 30 * 60 * 1000),
+        ...liveRounds.map(
+          (round) => new Date(kickoffInstant(window, round, 0).getTime() + 30 * 60 * 1000),
         ),
       ];
       for (const moment of moments) {
@@ -93,9 +93,9 @@ describe("season events", () => {
   it("moves a rescheduled match later than its round's slot", () => {
     const moved: { kickoffAt: Date; scheduled: Date; status: FixtureStatus }[] = [];
     for (let seasonIndex = 0; seasonIndex < 4; seasonIndex += 1) {
-      const window = seasonWindowForIndex(seasonIndex);
+      const window = seasonWindowForYear(2026 + seasonIndex);
       generateSeasonFixtures(window, midSeason).forEach((fixture, index) => {
-        const scheduled = kickoffInstant(window, fixture.round, index % 6);
+        const scheduled = kickoffInstant(window, fixture.round, index % 10);
         if (fixture.kickoffAt.getTime() !== scheduled.getTime()) {
           moved.push({ kickoffAt: fixture.kickoffAt, scheduled, status: fixture.status });
         }

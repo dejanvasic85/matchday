@@ -1,95 +1,73 @@
-// The Coastal season calendar. Seasons tile forward from the first season by whole 15-week cycles,
-// so "which season is it?" is a pure lookup on today's date — no stored schedule. A season's name
-// comes from the season of the year its first round lands in, which yields names like "2026 Spring"
-// and "2027 Summer".
+// The Coastal season calendar. Each season starts on the first Friday on or after mid-August and
+// runs into May, so a season straddles two calendar years and its name shows both, e.g. "2026-27".
+// "Which season is it?" is a pure lookup on today's date — no stored schedule. The gap between May
+// and August is the off-season.
 
 import type { IsoDate } from "@matchday/domain";
-import {
-  firstSeasonStartsOn,
-  seasonCycleWeeks,
-  seasonPlayWeeks,
-} from "#crawlers/coastal/constants.ts";
-import { addDays, differenceInDays, isWithinRange } from "#crawlers/coastal/isoDateMath.ts";
+import { seasonAnchor, seasonRoundCountValue } from "#crawlers/coastal/constants.ts";
+import { addDays, firstWeekdayOnOrAfter } from "#crawlers/coastal/isoDateMath.ts";
 import { coastalSeasonSchema, type CoastalSeason } from "#crawlers/coastal/schemas.ts";
 
 /** A round's weekend runs Friday-to-Sunday: the last match is two days after the Friday. */
-const playDaysPerSeason = (seasonPlayWeeks - 1) * 7 + 2;
+const playDaysPerSeason = (seasonRoundCountValue - 1) * 7 + 2;
 
-const cycleDays = seasonCycleWeeks * 7;
+const friday = 5;
 
-/** Southern-hemisphere meteorological season for each month, January first. */
-const seasonLabelByMonth = [
-  "Summer",
-  "Summer",
-  "Autumn",
-  "Autumn",
-  "Autumn",
-  "Winter",
-  "Winter",
-  "Winter",
-  "Spring",
-  "Spring",
-  "Spring",
-  "Summer",
-] as const;
-
-function seasonLabelForMonth(month: number): string {
-  const label = seasonLabelByMonth[month - 1];
-  if (label === undefined) {
-    throw new Error(`No season label for month ${month}`);
-  }
-  return label;
+/** The Friday a season's first round kicks off: the first Friday on or after the August anchor. */
+export function seasonStartForYear(year: number): IsoDate {
+  return firstWeekdayOnOrAfter(seasonAnchor(year), friday);
 }
 
-/** The season a start date belongs to, e.g. "2026 Spring". */
-export function seasonNameForStart(startsOn: IsoDate): string {
-  const year = startsOn.slice(0, 4);
-  const month = Number(startsOn.slice(5, 7));
-  return `${year} ${seasonLabelForMonth(month)}`;
+/** A season's name, spanning the years it runs across, e.g. 2026 → "2026-27". */
+export function seasonNameForYear(year: number): string {
+  const nextYear = String((year + 1) % 100).padStart(2, "0");
+  return `${year}-${nextYear}`;
+}
+
+/** The `year`-started season's calendar window. */
+export function seasonWindowForYear(year: number): CoastalSeason {
+  const startsOn = seasonStartForYear(year);
+  return coastalSeasonSchema.parse({
+    name: seasonNameForYear(year),
+    startsOn,
+    endsOn: addDays(startsOn, playDaysPerSeason),
+  });
 }
 
 /** A stable slug for a season, used to build fixture keys. */
 export function seasonKey(season: CoastalSeason): string {
-  return season.name.toLowerCase().replaceAll(" ", "-");
-}
-
-/** The `index`-th season counting from the first, 0-based. Negative indexes reach into the past
- * only in arithmetic, never in generated output. */
-export function seasonWindowForIndex(index: number): CoastalSeason {
-  const startsOn = addDays(firstSeasonStartsOn, index * cycleDays);
-  const endsOn = addDays(startsOn, playDaysPerSeason);
-  return coastalSeasonSchema.parse({
-    name: seasonNameForStart(startsOn),
-    startsOn,
-    endsOn,
-  });
+  return season.name.toLowerCase();
 }
 
 export type CoastalSeasonLookup = {
-  /** The season in play today, or null during the break between seasons. */
+  /** The season in play today, or null during the May-to-August off-season. */
   running: CoastalSeason | null;
-  /** The season after the running one, or the first season when today predates it. */
+  /** The season after the running one, or the next to start when today is in the off-season. */
   next: CoastalSeason;
 };
 
-/** Resolve today's running and upcoming seasons. */
+/**
+ * Resolve today's running and upcoming seasons. From August the season started this year is running;
+ * from January to May the one started last year still is; over June and July neither is.
+ */
 export function seasonsAt(today: IsoDate): CoastalSeasonLookup {
-  const elapsedDays = differenceInDays(firstSeasonStartsOn, today);
-  if (elapsedDays < 0) {
-    return { running: null, next: seasonWindowForIndex(0) };
+  const year = Number(today.slice(0, 4));
+  const thisYear = seasonWindowForYear(year);
+  if (today >= thisYear.startsOn) {
+    return { running: thisYear, next: seasonWindowForYear(year + 1) };
   }
 
-  const index = Math.floor(elapsedDays / cycleDays);
-  const candidate = seasonWindowForIndex(index);
-  if (isWithinRange(today, candidate.startsOn, candidate.endsOn)) {
-    return { running: candidate, next: seasonWindowForIndex(index + 1) };
+  const lastYear = seasonWindowForYear(year - 1);
+  if (today <= lastYear.endsOn) {
+    return { running: lastYear, next: thisYear };
   }
-  return { running: null, next: seasonWindowForIndex(index + 1) };
+  return { running: null, next: thisYear };
 }
 
 /**
  * The seasons the catalog crawl should ensure exist today. While a season is running, that one;
- * during a break, the next one — so the following league's fixtures are ready before it starts.
+ * during the off-season, the next one — so the following league's fixtures are ready before it
+ * starts.
  */
 export function seasonsToGenerate(today: IsoDate): CoastalSeason[] {
   const { running, next } = seasonsAt(today);
