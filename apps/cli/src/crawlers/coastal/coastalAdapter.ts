@@ -18,6 +18,8 @@ import {
 import { crawlSourceValue } from "#crawlers/constants.ts";
 import type { EntityResolutionDeps } from "#crawlers/entityResolutionDeps.ts";
 import { persistCatalogSeason } from "#crawlers/coastal/catalogPersistence.ts";
+import { persistCoastalClubEnrichment } from "#crawlers/coastal/clubEnrichmentPersistence.ts";
+import { coastalClubLogo } from "#crawlers/coastal/coastalLogo.ts";
 import { generateSeasonFixtures } from "#crawlers/coastal/fixtureGenerator.ts";
 import { persistLeagueSeason } from "#crawlers/coastal/leaguePersistence.ts";
 import { coastalClubs } from "#crawlers/coastal/roster.ts";
@@ -28,6 +30,7 @@ import type {
   CountCatalogLeaguesSummary,
   CrawlCatalogParams,
   CrawlCatalogSummary,
+  CrawlClubEnrichmentParams,
   CrawlClubEnrichmentSummary,
   CrawlLeagueParams,
   CrawlLeagueSummary,
@@ -165,8 +168,41 @@ async function runLeagueCrawl(params: CrawlLeagueParams): Promise<Result<CrawlLe
   });
 }
 
-function runClubEnrichment(): Promise<Result<CrawlClubEnrichmentSummary>> {
-  return Promise.resolve(ok({ listed: 0, updated: 0, skipped: 0 }));
+async function runClubEnrichment(
+  params: CrawlClubEnrichmentParams,
+): Promise<Result<CrawlClubEnrichmentSummary>> {
+  const { deps, assetStorage, publicAssetsBaseUrl, logger, dryRun } = params;
+  let updated = 0;
+  let skipped = 0;
+
+  for (const club of coastalClubs) {
+    if (dryRun) {
+      logger.info("clubenrichment.dryrun.club", "would persist coastal club logo", {
+        key: club.key,
+        name: club.name,
+      });
+      continue;
+    }
+
+    const persisted = await persistCoastalClubEnrichment({
+      deps,
+      assetStorage,
+      loadLogo: coastalClubLogo,
+      publicAssetsBaseUrl,
+      logger,
+      club,
+    });
+    if (!persisted.ok) {
+      return persisted;
+    }
+    if (persisted.value === "updated") {
+      updated += 1;
+    } else {
+      skipped += 1;
+    }
+  }
+
+  return ok({ listed: coastalClubs.length, updated, skipped });
 }
 
 export const coastalAdapter: SourceAdapter = {
@@ -176,7 +212,7 @@ export const coastalAdapter: SourceAdapter = {
       crawlCatalog: (params) => runCatalogCrawl(params),
       countCatalogLeagues: () => Promise.resolve(ok<CountCatalogLeaguesSummary>({ total: 1 })),
       crawlLeague: (params) => runLeagueCrawl(params),
-      crawlClubEnrichment: () => runClubEnrichment(),
+      crawlClubEnrichment: (params) => runClubEnrichment(params),
       close: () => Promise.resolve(),
     };
     return ok(session);
