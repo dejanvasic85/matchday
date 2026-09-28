@@ -18,6 +18,9 @@ export type DispatchWorkflowInput = {
   /** Git ref to run the workflow from — must be a branch GitHub holds the workflow on. */
   ref: string;
   token: string;
+  /** `workflow_dispatch` inputs, for workflows that declare them. Omitted when the workflow has
+   * none, so a plain dispatch keeps its original body. */
+  inputs?: Record<string, string>;
 };
 
 /**
@@ -29,14 +32,14 @@ export async function dispatchWorkflow(
   fetchImpl: FetchLike,
   input: DispatchWorkflowInput,
 ): Promise<Result<void>> {
-  const { owner, repo, workflow, ref, token } = input;
+  const { owner, repo, workflow, ref, token, inputs } = input;
   const url = `${githubApiBaseUrl}/repos/${owner}/${repo}/actions/workflows/${workflow}/dispatches`;
 
   try {
     const response = await fetchImpl(url, {
       method: "POST",
       headers: githubHeaders(token, "json"),
-      body: JSON.stringify({ ref }),
+      body: JSON.stringify(inputs === undefined ? { ref } : { ref, inputs }),
       signal: AbortSignal.timeout(githubRequestTimeoutMs),
     });
 
