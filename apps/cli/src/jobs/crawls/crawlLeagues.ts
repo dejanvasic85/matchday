@@ -78,6 +78,17 @@ export async function runCrawlLeaguesJob(input: RunCrawlLeaguesJobInput): Promis
   const { logger, config, source, leagueIds, dryRun } = input;
 
   const adapter = getSourceAdapter(source);
+  const db = createDbClient(config.DATABASE_URL);
+  const deps = createEntityResolutionDeps(db);
+
+  // No ids given: ask the source which leagues it should visit. Resolved before the browser opens,
+  // so a source with no implicit scope fails without paying for a session.
+  const resolved =
+    leagueIds.length > 0 ? ok(leagueIds) : await adapter.resolveLeagueScope({ deps, logger });
+  if (!resolved.ok) {
+    return resolved;
+  }
+
   const sessionResult = await adapter.openSession(config);
   if (!sessionResult.ok) {
     return sessionResult;
@@ -85,8 +96,6 @@ export async function runCrawlLeaguesJob(input: RunCrawlLeaguesJobInput): Promis
   const session = sessionResult.value;
 
   try {
-    const db = createDbClient(config.DATABASE_URL);
-    const deps = createEntityResolutionDeps(db);
     const rawStorage = createR2RawStorage({
       accountId: config.R2_ACCOUNT_ID,
       accessKeyId: config.R2_ACCESS_KEY_ID,
@@ -100,7 +109,7 @@ export async function runCrawlLeaguesJob(input: RunCrawlLeaguesJobInput): Promis
         crawlLeague: (leagueId) =>
           crawlOneLeague({ logger, db, deps, session, rawStorage, source, leagueId, dryRun }),
       },
-      leagueIds,
+      resolved.value,
     );
     return batch.ok ? ok(undefined) : batch;
   } finally {
