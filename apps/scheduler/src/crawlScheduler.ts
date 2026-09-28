@@ -7,14 +7,23 @@ import { decideDispatch, type DispatchReason } from "#crawlReconciler.ts";
 import type { WindowDecision } from "#crawlWindow.ts";
 import type { WorkflowRunSummary } from "#workflowRuns.ts";
 
-export type DispatchFn = (workflow: string) => Promise<Result<void>>;
-export type ListRunsFn = (workflow: string) => Promise<Result<WorkflowRunSummary[]>>;
+export type DispatchInputs = Record<string, string>;
 
-/** One workflow, the ticks it is eligible on, and how often it should actually run. */
+export type DispatchFn = (workflow: string, inputs: DispatchInputs) => Promise<Result<void>>;
+export type ListRunsFn = (
+  workflow: string,
+  inputs: DispatchInputs,
+) => Promise<Result<WorkflowRunSummary[]>>;
+
+/** One workflow, the source it runs as, the ticks it is eligible on, and how often it should
+ * actually run. The same workflow appears once per source so each keeps its own cadence. */
 export type CrawlSchedule = {
   workflow: string;
+  /** Dispatch inputs. The workflow tags its runs with `source`, which is how the run lookup tells
+   * one source's history from the other's. */
+  inputs: DispatchInputs;
   isInWindow: (instant: Date) => WindowDecision;
-  minIntervalMs: number;
+  minIntervalMs: (instant: Date) => number;
 };
 
 export type RunCrawlScheduleInput = {
@@ -28,6 +37,7 @@ export type RunCrawlScheduleInput = {
 
 export type ScheduleOutcome = {
   workflow: string;
+  source: string | undefined;
   dispatched: boolean;
   reason: DispatchReason | "lookup-failed";
   localHour: number;
@@ -51,10 +61,11 @@ export async function runCrawlSchedule(
   let firstFailure: Result<never> | undefined;
 
   for (const schedule of schedules) {
-    const { workflow, minIntervalMs } = schedule;
+    const { workflow, inputs, minIntervalMs } = schedule;
     const window = schedule.isInWindow(now);
     const context = {
       workflow,
+      source: inputs.source,
       localHour: window.localHour,
       localWeekday: window.localWeekday,
     };
@@ -70,7 +81,7 @@ export async function runCrawlSchedule(
       continue;
     }
 
-    const runs = await listRuns(workflow);
+    const runs = await listRuns(workflow, inputs);
     if (!runs.ok) {
       logger.error("scheduler.lookupfailed", runs.error.message, {
         ...context,
@@ -81,7 +92,12 @@ export async function runCrawlSchedule(
       continue;
     }
 
-    const decision = decideDispatch({ now, inWindow: true, minIntervalMs, runs: runs.value });
+    const decision = decideDispatch({
+      now,
+      inWindow: true,
+      minIntervalMs: minIntervalMs(now),
+      runs: runs.value,
+    });
     if (!decision.dispatch) {
       logger.debug("scheduler.skipped", "no crawl due on this tick", {
         ...context,
@@ -92,7 +108,7 @@ export async function runCrawlSchedule(
       continue;
     }
 
-    const dispatched = await dispatch(workflow);
+    const dispatched = await dispatch(workflow, inputs);
     if (!dispatched.ok) {
       logger.error("scheduler.dispatchfailed", dispatched.error.message, {
         ...context,

@@ -12,6 +12,7 @@ import {
   sourceValue,
   todayInMelbourne,
   type CompetitionId,
+  type LeagueId,
   type Result,
   type SeasonId,
 } from "@matchday/domain";
@@ -25,7 +26,10 @@ import { persistLeagueSeason } from "#crawlers/coastal/leaguePersistence.ts";
 import { coastalClubs } from "#crawlers/coastal/roster.ts";
 import { seasonWindowForYear, seasonsToGenerate } from "#crawlers/coastal/seasonCalendar.ts";
 import type { CoastalSeason } from "#crawlers/coastal/schemas.ts";
-import { coastalSeasonNameFromSourceId } from "#crawlers/coastal/sourceIds.ts";
+import {
+  coastalLeagueSourceId,
+  coastalSeasonNameFromSourceId,
+} from "#crawlers/coastal/sourceIds.ts";
 import type {
   CountCatalogLeaguesSummary,
   CrawlCatalogParams,
@@ -34,6 +38,7 @@ import type {
   CrawlClubEnrichmentSummary,
   CrawlLeagueParams,
   CrawlLeagueSummary,
+  ResolveLeagueScopeParams,
   SourceAdapter,
   SourceSession,
 } from "#crawlers/sourceAdapter.ts";
@@ -205,8 +210,42 @@ async function runClubEnrichment(
   return ok({ listed: coastalClubs.length, updated, skipped });
 }
 
+/** The coastal leagues the deep crawl visits when the caller names none: the season the catalog
+ * crawl is currently maintaining. A season with no league row yet (the catalog hasn't run) is
+ * skipped with a warning, not crawled. */
+async function resolveLeagueScope(params: ResolveLeagueScopeParams): Promise<Result<LeagueId[]>> {
+  const { deps, logger } = params;
+  const leagueIds: LeagueId[] = [];
+
+  for (const season of seasonsToGenerate(todayInMelbourne())) {
+    const ref = await deps.findExternalRef(sourceValue.coastal, coastalLeagueSourceId(season));
+    if (!ref.ok) {
+      return ref;
+    }
+    if (ref.value === null) {
+      logger.warn("crawlleagues.missingleague", "no coastal league row for season, skipping", {
+        season: season.name,
+      });
+      continue;
+    }
+
+    const leagueId = parseId(ref.value.internalId, "league");
+    if (leagueId === undefined) {
+      logger.warn("crawlleagues.badref", "coastal league ref is not a league id", {
+        season: season.name,
+        internalId: ref.value.internalId,
+      });
+      continue;
+    }
+    leagueIds.push(leagueId);
+  }
+
+  return ok(leagueIds);
+}
+
 export const coastalAdapter: SourceAdapter = {
   source: crawlSourceValue.coastal,
+  resolveLeagueScope,
   async openSession() {
     const session: SourceSession = {
       crawlCatalog: (params) => runCatalogCrawl(params),

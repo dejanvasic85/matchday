@@ -15,11 +15,12 @@ function makeFakeLogger() {
 const tick = new Date("2026-09-01T12:00:00Z");
 const hourMs = 60 * 60 * 1000;
 
-function makeSchedule(workflow: string, inWindow: boolean): CrawlSchedule {
+function makeSchedule(workflow: string, inWindow: boolean, source = "dribl"): CrawlSchedule {
   return {
     workflow,
+    inputs: { source },
     isInWindow: vi.fn().mockReturnValue({ inWindow, localHour: 19, localWeekday: "Mon" }),
-    minIntervalMs: hourMs,
+    minIntervalMs: vi.fn().mockReturnValue(hourMs),
   };
 }
 
@@ -52,6 +53,7 @@ describe("runCrawlSchedule", () => {
       ok([
         {
           workflow: "crawl-leagues.yml",
+          source: "dribl",
           dispatched: true,
           reason: "due",
           localHour: 19,
@@ -59,6 +61,7 @@ describe("runCrawlSchedule", () => {
         },
         {
           workflow: "crawl-catalog.yml",
+          source: "dribl",
           dispatched: false,
           reason: "outside-window",
           localHour: 19,
@@ -66,7 +69,9 @@ describe("runCrawlSchedule", () => {
         },
       ]),
     );
-    expect(input.dispatch).toHaveBeenCalledExactlyOnceWith("crawl-leagues.yml");
+    expect(input.dispatch).toHaveBeenCalledExactlyOnceWith("crawl-leagues.yml", {
+      source: "dribl",
+    });
   });
 
   it("decides every schedule against the tick it was given", async () => {
@@ -78,6 +83,18 @@ describe("runCrawlSchedule", () => {
     for (const schedule of schedules) {
       expect(schedule.isInWindow).toHaveBeenCalledWith(tick);
     }
+  });
+
+  it("dispatches each source sharing a workflow independently", async () => {
+    const dribl = makeSchedule("crawl-leagues.yml", true, "dribl");
+    const coastal = makeSchedule("crawl-leagues.yml", true, "coastal");
+    const input = makeInput({ schedules: [dribl, coastal] });
+
+    const result = await runCrawlSchedule(input);
+
+    expect(input.dispatch).toHaveBeenCalledWith("crawl-leagues.yml", { source: "dribl" });
+    expect(input.dispatch).toHaveBeenCalledWith("crawl-leagues.yml", { source: "coastal" });
+    expect(result.ok && result.value.every((outcome) => outcome.dispatched)).toBe(true);
   });
 
   it("does not ask GitHub for runs when the window is shut", async () => {
@@ -101,6 +118,7 @@ describe("runCrawlSchedule", () => {
       ok([
         {
           workflow: "crawl-leagues.yml",
+          source: "dribl",
           dispatched: false,
           reason: "ran-recently",
           localHour: 19,
@@ -184,7 +202,7 @@ describe("runCrawlSchedule", () => {
 
     const result = await runCrawlSchedule(input);
 
-    expect(dispatch).toHaveBeenCalledWith("crawl-leagues.yml");
+    expect(dispatch).toHaveBeenCalledWith("crawl-leagues.yml", { source: "dribl" });
     expect(result).toEqual(dispatchError);
   });
 });

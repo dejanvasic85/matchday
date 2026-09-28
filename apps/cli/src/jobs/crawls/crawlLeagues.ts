@@ -17,7 +17,7 @@ import {
   createEntityResolutionDeps,
   type EntityResolutionDeps,
 } from "#crawlers/entityResolutionDeps.ts";
-import type { SourceSession } from "#crawlers/sourceAdapter.ts";
+import type { SourceAdapter, SourceSession } from "#crawlers/sourceAdapter.ts";
 import { getSourceAdapter } from "#crawlers/sourceRegistry.ts";
 import { crawlLeagueBatch } from "#services/leagueBatch.ts";
 import { withLeagueChangeNotification } from "#services/leagueChangeNotifier.ts";
@@ -74,10 +74,32 @@ async function crawlOneLeague(input: CrawlOneInput): Promise<Result<void>> {
   return ok(undefined);
 }
 
+/** The ids to crawl: the caller's, or the source's own scope when none were named. */
+async function resolveLeagueIds(
+  adapter: SourceAdapter,
+  deps: EntityResolutionDeps,
+  logger: Logger,
+  leagueIds: LeagueId[],
+): Promise<Result<LeagueId[]>> {
+  if (leagueIds.length > 0) {
+    return ok(leagueIds);
+  }
+  return adapter.resolveLeagueScope({ deps, logger });
+}
+
 export async function runCrawlLeaguesJob(input: RunCrawlLeaguesJobInput): Promise<Result<void>> {
   const { logger, config, source, leagueIds, dryRun } = input;
 
   const adapter = getSourceAdapter(source);
+  const db = createDbClient(config.DATABASE_URL);
+  const deps = createEntityResolutionDeps(db);
+
+  // Resolved before the browser opens, so a source with no implicit scope fails without a session.
+  const resolved = await resolveLeagueIds(adapter, deps, logger, leagueIds);
+  if (!resolved.ok) {
+    return resolved;
+  }
+
   const sessionResult = await adapter.openSession(config);
   if (!sessionResult.ok) {
     return sessionResult;
@@ -85,8 +107,6 @@ export async function runCrawlLeaguesJob(input: RunCrawlLeaguesJobInput): Promis
   const session = sessionResult.value;
 
   try {
-    const db = createDbClient(config.DATABASE_URL);
-    const deps = createEntityResolutionDeps(db);
     const rawStorage = createR2RawStorage({
       accountId: config.R2_ACCOUNT_ID,
       accessKeyId: config.R2_ACCESS_KEY_ID,
@@ -100,7 +120,7 @@ export async function runCrawlLeaguesJob(input: RunCrawlLeaguesJobInput): Promis
         crawlLeague: (leagueId) =>
           crawlOneLeague({ logger, db, deps, session, rawStorage, source, leagueId, dryRun }),
       },
-      leagueIds,
+      resolved.value,
     );
     return batch.ok ? ok(undefined) : batch;
   } finally {
