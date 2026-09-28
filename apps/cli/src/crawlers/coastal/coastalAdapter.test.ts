@@ -1,4 +1,4 @@
-import { ok, type Result } from "@matchday/domain";
+import { ok, serverError, type Result } from "@matchday/domain";
 import type { CliConfig } from "#config.ts";
 import { crawlSourceValue } from "#crawlers/constants.ts";
 import { coastalAdapter, seasonFromRefSourceId } from "#crawlers/coastal/coastalAdapter.ts";
@@ -7,6 +7,7 @@ import { seasonWindowForYear } from "#crawlers/coastal/seasonCalendar.ts";
 import type { AssetStorage } from "#storage/assetStorage.ts";
 import type { DownloadedImage } from "#storage/clubLogoMirror.ts";
 import { makeCoastalExternalRefRow, makeCoastalHappyPathDeps } from "#test/fixtures/coastalDeps.ts";
+import { makeFakeEntityResolutionDeps } from "#test/fixtures/entityResolutionDeps.ts";
 import { makeFakeLogger } from "#test/fixtures/logger.ts";
 import { makeFakeRawStorage } from "#test/fixtures/rawStorage.ts";
 
@@ -213,5 +214,51 @@ describe("coastalAdapter", () => {
 
     expect(result).toEqual(ok({ listed: coastalClubs.length, updated: 0, skipped: 0 }));
     expect(assetStorage.putObject).not.toHaveBeenCalled();
+  });
+});
+
+describe("coastalAdapter.resolveLeagueScope", () => {
+  it("returns the current season's coastal league id", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(makeCoastalExternalRefRow("league-2026-27"))),
+    });
+
+    const result = await coastalAdapter.resolveLeagueScope({ deps, logger: makeFakeLogger() });
+
+    expect(result).toEqual(ok(["lea_new00000001"]));
+  });
+
+  it("skips a season with no league row yet", async () => {
+    const logger = makeFakeLogger();
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(ok(null)),
+    });
+
+    const result = await coastalAdapter.resolveLeagueScope({ deps, logger });
+
+    expect(result).toEqual(ok([]));
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it("skips a ref whose internal id is not a league id", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi
+        .fn()
+        .mockResolvedValue(ok(makeCoastalExternalRefRow("league-2026-27", "club-nope"))),
+    });
+
+    const result = await coastalAdapter.resolveLeagueScope({ deps, logger: makeFakeLogger() });
+
+    expect(result).toEqual(ok([]));
+  });
+
+  it("propagates a lookup failure", async () => {
+    const deps = makeFakeEntityResolutionDeps({
+      findExternalRef: vi.fn().mockResolvedValue(serverError("db down")),
+    });
+
+    const result = await coastalAdapter.resolveLeagueScope({ deps, logger: makeFakeLogger() });
+
+    expect(result.ok).toBe(false);
   });
 });

@@ -68,6 +68,11 @@ export type CrawlClubEnrichmentSummary = {
   skipped: number;
 };
 
+export type ResolveLeagueScopeParams = {
+  deps: EntityResolutionDeps;
+  logger: Logger;
+};
+
 export type SourceSession = {
   crawlCatalog(params: CrawlCatalogParams): Promise<Result<CrawlCatalogSummary>>;
   /** Cheap listing-only companion to `crawlCatalog` (no table/fixture fetches, no persistence) —
@@ -85,4 +90,7 @@ export type SourceSession = {
 export type SourceAdapter = {
   source: CrawlSource;
   openSession(config: CliConfig): Promise<Result<SourceSession>>;
+  /** The league ids this source crawls when the caller names none. Sources whose scope is resolved
+   * outside the adapter (from crawl targets) return an error instead of guessing. */
+  resolveLeagueScope(params: ResolveLeagueScopeParams): Promise<Result<LeagueId[]>>;
 };

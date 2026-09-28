@@ -1,7 +1,7 @@
 // The Dribl `SourceAdapter`: opens a Cloudflare-cleared browser session and exposes the
 // crawl operations plus countCatalogLeagues, a cheap listing-only sizer for crawl-catalog.yml.
 
-import { ok, sourceValue, type Result } from "@matchday/domain";
+import { badRequest, ok, sourceValue, type Result } from "@matchday/domain";
 import type {
   CountCatalogLeaguesParams,
   CountCatalogLeaguesSummary,
@@ -254,6 +254,10 @@ async function runClubEnrichmentCrawl(
 
 export const driblAdapter: SourceAdapter = {
   source: crawlSourceValue.dribl,
+  // Dribl's scope is client-driven and resolved from crawl targets by the crawl-leagues workflow,
+  // which passes the ids in. There is no useful "every Dribl league" default here.
+  resolveLeagueScope: () =>
+    Promise.resolve(badRequest("Dribl leagues must be supplied explicitly via --league")),
   async openSession(config) {
     const sessionResult = await openBrowserSession({
       driblSiteUrl: crawlerConfigValue.tenantSiteUrl,

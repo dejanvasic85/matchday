@@ -240,7 +240,8 @@ export function createCli(): Command {
       "Crawl fixtures + table for one or more leagues in the crawl scope, discovering clubs/teams " +
         "and persisting via entity resolution. Leagues given together share one browser session " +
         "and are crawled in order; one failing league does not stop the rest, but does fail the " +
-        "command. Expensive; run at a cadence derived from fixture dates.",
+        "command. Expensive; run at a cadence derived from fixture dates. Omit --league to crawl " +
+        "every league the source maintains itself (coastal does; dribl needs explicit ids).",
     )
     .option(
       "--source <name>",
@@ -248,7 +249,7 @@ export function createCli(): Command {
       parseCrawlSource,
       crawlSourceValue.dribl,
     )
-    .requiredOption(
+    .option(
       "--league <lea_id>",
       "a league id to crawl; repeat the flag to crawl several in one browser session",
       collectLeagueId,
@@ -258,14 +259,14 @@ export function createCli(): Command {
       "crawl and stage to R2, logging a summary, without writing to the database",
       false,
     )
-    .action(async (options: { source: CrawlSource; league: LeagueId[]; dryRun: boolean }) => {
+    .action(async (options: { source: CrawlSource; league?: LeagueId[]; dryRun: boolean }) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
       const result = await runCrawlLeaguesJob({
         logger,
         config,
         source: options.source,
-        leagueIds: options.league,
+        leagueIds: options.league ?? [],
         dryRun: options.dryRun,
       });
       if (!result.ok) {
