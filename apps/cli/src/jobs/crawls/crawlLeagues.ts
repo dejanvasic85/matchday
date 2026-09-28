@@ -17,7 +17,7 @@ import {
   createEntityResolutionDeps,
   type EntityResolutionDeps,
 } from "#crawlers/entityResolutionDeps.ts";
-import type { SourceSession } from "#crawlers/sourceAdapter.ts";
+import type { SourceAdapter, SourceSession } from "#crawlers/sourceAdapter.ts";
 import { getSourceAdapter } from "#crawlers/sourceRegistry.ts";
 import { crawlLeagueBatch } from "#services/leagueBatch.ts";
 import { withLeagueChangeNotification } from "#services/leagueChangeNotifier.ts";
@@ -74,6 +74,19 @@ async function crawlOneLeague(input: CrawlOneInput): Promise<Result<void>> {
   return ok(undefined);
 }
 
+/** The ids to crawl: the caller's, or the source's own scope when none were named. */
+async function resolveLeagueIds(
+  adapter: SourceAdapter,
+  deps: EntityResolutionDeps,
+  logger: Logger,
+  leagueIds: LeagueId[],
+): Promise<Result<LeagueId[]>> {
+  if (leagueIds.length > 0) {
+    return ok(leagueIds);
+  }
+  return adapter.resolveLeagueScope({ deps, logger });
+}
+
 export async function runCrawlLeaguesJob(input: RunCrawlLeaguesJobInput): Promise<Result<void>> {
   const { logger, config, source, leagueIds, dryRun } = input;
 
@@ -81,10 +94,8 @@ export async function runCrawlLeaguesJob(input: RunCrawlLeaguesJobInput): Promis
   const db = createDbClient(config.DATABASE_URL);
   const deps = createEntityResolutionDeps(db);
 
-  // No ids given: ask the source which leagues it should visit. Resolved before the browser opens,
-  // so a source with no implicit scope fails without paying for a session.
-  const resolved =
-    leagueIds.length > 0 ? ok(leagueIds) : await adapter.resolveLeagueScope({ deps, logger });
+  // Resolved before the browser opens, so a source with no implicit scope fails without a session.
+  const resolved = await resolveLeagueIds(adapter, deps, logger, leagueIds);
   if (!resolved.ok) {
     return resolved;
   }
