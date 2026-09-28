@@ -19,6 +19,22 @@ const leagueWindowValue = {
  * crawl has the runner to itself. Wide enough that a dropped tick still lands inside it. */
 const catalogWindowValue = { weekday: "Tue", startHour: 2, endHour: 6 } as const;
 
+/** The coastal league's weekend game window: Friday evening through Sunday evening. Inside it the
+ * crawl runs on every eligible tick; outside it, hourly. */
+const coastalGameWindowValue = {
+  startWeekday: "Fri",
+  startHour: 18,
+  endWeekday: "Sun",
+  endHour: 23,
+} as const;
+
+/** The coastal catalog's daily slot. A season is a handful of DB writes, so it runs daily to keep
+ * the next season's fixtures ready. */
+const coastalCatalogWindowValue = { startHour: 3, endHour: 5 } as const;
+
+const coastalGameIntervalMs = 15 * 60_000;
+const coastalOffGameIntervalMs = 60 * 60_000;
+
 const melbourneTimeZone = "Australia/Melbourne";
 
 /** Local hour (0-23) and weekday for `instant` in Melbourne, DST included. Workers ship the full
@@ -82,6 +98,68 @@ export function isInCatalogWindow(instant: Date): WindowDecision {
       weekday === catalogWindowValue.weekday &&
       hour >= catalogWindowValue.startHour &&
       hour <= catalogWindowValue.endHour,
+    localHour: hour,
+    localWeekday: weekday,
+  };
+}
+
+const weekdayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+
+function weekdayIndex(weekday: string): number | undefined {
+  const index = weekdayOrder.findIndex((day) => day === weekday);
+  return index === -1 ? undefined : index;
+}
+
+function withinCoastalGameWindow(weekday: string, hour: number): boolean {
+  const day = weekdayIndex(weekday);
+  const start = weekdayIndex(coastalGameWindowValue.startWeekday);
+  const end = weekdayIndex(coastalGameWindowValue.endWeekday);
+  if (day === undefined || start === undefined || end === undefined) {
+    return false;
+  }
+
+  if (day === start) {
+    return hour >= coastalGameWindowValue.startHour;
+  }
+  if (day === end) {
+    return hour <= coastalGameWindowValue.endHour;
+  }
+  return day > start && day < end;
+}
+
+/** True from Friday evening to Sunday evening in Melbourne local time. */
+export function isInCoastalGameWindow(instant: Date): WindowDecision {
+  const { hour, weekday } = toMelbourneParts(instant);
+
+  return {
+    inWindow: withinCoastalGameWindow(weekday, hour),
+    localHour: hour,
+    localWeekday: weekday,
+  };
+}
+
+/** Coastal league crawls are eligible on every tick: results come from the clock, so a frequent
+ * run turns over `in_progress`/`completed` states within minutes. The game window only tightens
+ * the interval, it never closes the crawl. */
+export function isInCoastalLeagueWindow(instant: Date): WindowDecision {
+  const { hour, weekday } = toMelbourneParts(instant);
+
+  return { inWindow: true, localHour: hour, localWeekday: weekday };
+}
+
+/** How long after a coastal league run the next one is due: every 15 minutes over a game weekend,
+ * hourly the rest of the week. */
+export function coastalLeagueMinIntervalMs(instant: Date): number {
+  return isInCoastalGameWindow(instant).inWindow ? coastalGameIntervalMs : coastalOffGameIntervalMs;
+}
+
+/** True inside the coastal catalog's daily slot, in Melbourne local time. */
+export function isInCoastalCatalogWindow(instant: Date): WindowDecision {
+  const { hour, weekday } = toMelbourneParts(instant);
+
+  return {
+    inWindow:
+      hour >= coastalCatalogWindowValue.startHour && hour <= coastalCatalogWindowValue.endHour,
     localHour: hour,
     localWeekday: weekday,
   };

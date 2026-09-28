@@ -8,7 +8,7 @@ const input: FetchRecentRunsInput = {
   limit: 2,
 };
 
-function makeResponse(runs: { created_at: string; status: string }[]) {
+function makeResponse(runs: { display_title?: string; created_at: string; status: string }[]) {
   return new Response(JSON.stringify({ workflow_runs: runs }), { status: 200 });
 }
 
@@ -108,5 +108,75 @@ describe("fetchRecentRuns", () => {
     if (!result.ok) {
       expect(result.error.message).toBe("Run lookup for crawl-leagues.yml failed");
     }
+  });
+
+  it("keeps only this source's runs when a run-name suffix is given", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      makeResponse([
+        {
+          display_title: "Crawl leagues (dribl)",
+          created_at: "2026-09-01T12:17:41Z",
+          status: "in_progress",
+        },
+        {
+          display_title: "Crawl leagues (coastal)",
+          created_at: "2026-09-01T12:00:00Z",
+          status: "completed",
+        },
+      ]),
+    );
+
+    const result = await fetchRecentRuns(fetchImpl, {
+      ...input,
+      runNameFilter: { suffix: "(coastal)" },
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      value: [{ createdAt: new Date("2026-09-01T12:00:00Z"), active: false }],
+    });
+  });
+
+  it("keeps legacy untagged runs for the source that predates tagging", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      makeResponse([
+        {
+          display_title: "Crawl leagues (coastal)",
+          created_at: "2026-09-01T12:17:41Z",
+          status: "completed",
+        },
+        {
+          display_title: "Crawl leagues",
+          created_at: "2026-09-01T12:00:00Z",
+          status: "in_progress",
+        },
+        {
+          display_title: "Crawl leagues (dribl)",
+          created_at: "2026-09-01T11:00:00Z",
+          status: "completed",
+        },
+      ]),
+    );
+
+    const result = await fetchRecentRuns(fetchImpl, {
+      ...input,
+      runNameFilter: { suffix: "(dribl)", includeUntagged: true },
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      value: [
+        { createdAt: new Date("2026-09-01T12:00:00Z"), active: true },
+        { createdAt: new Date("2026-09-01T11:00:00Z"), active: false },
+      ],
+    });
+  });
+
+  it("fetches a deeper page when filtering by run name, so interleaved runs cannot hide ours", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(makeResponse([]));
+
+    await fetchRecentRuns(fetchImpl, { ...input, runNameFilter: { suffix: "(coastal)" } });
+
+    expect(fetchImpl.mock.calls[0]?.[0]).toContain("per_page=20");
   });
 });

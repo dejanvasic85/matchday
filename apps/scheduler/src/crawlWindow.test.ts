@@ -1,4 +1,11 @@
-import { isInCatalogWindow, isInLeagueWindow } from "#crawlWindow.ts";
+import {
+  coastalLeagueMinIntervalMs,
+  isInCatalogWindow,
+  isInCoastalCatalogWindow,
+  isInCoastalGameWindow,
+  isInCoastalLeagueWindow,
+  isInLeagueWindow,
+} from "#crawlWindow.ts";
 
 // Melbourne is UTC+10 (AEST) in winter and UTC+11 (AEDT) from the first Sunday in October.
 // These fixtures deliberately straddle that switch — a UTC-only cron cannot get both right.
@@ -102,5 +109,75 @@ describe("isInCatalogWindow", () => {
 
     expect(isInLeagueWindow(instant).inWindow).toBe(true);
     expect(isInCatalogWindow(instant).inWindow).toBe(false);
+  });
+});
+
+// 2026-08-28 is a Friday: Fri 18:00 Melbourne (AEST, UTC+10) is 08:00Z.
+describe("isInCoastalGameWindow", () => {
+  it("opens at Friday evening", () => {
+    expect(isInCoastalGameWindow(new Date("2026-08-28T08:00:00Z"))).toEqual({
+      inWindow: true,
+      localHour: 18,
+      localWeekday: "Fri",
+    });
+  });
+
+  it("stays shut on Friday afternoon", () => {
+    expect(isInCoastalGameWindow(new Date("2026-08-28T07:00:00Z")).inWindow).toBe(false);
+  });
+
+  it("covers all of Saturday and Sunday", () => {
+    // Sat 12:00 and Sun 14:00 Melbourne.
+    expect(isInCoastalGameWindow(new Date("2026-08-29T02:00:00Z")).inWindow).toBe(true);
+    expect(isInCoastalGameWindow(new Date("2026-08-30T04:00:00Z")).inWindow).toBe(true);
+  });
+
+  it("closes at Sunday 23:00 local", () => {
+    // Sun 23:00 is in, Mon 00:00 is out.
+    expect(isInCoastalGameWindow(new Date("2026-08-30T13:00:00Z")).inWindow).toBe(true);
+    expect(isInCoastalGameWindow(new Date("2026-08-30T14:00:00Z")).inWindow).toBe(false);
+  });
+
+  it("is shut midweek", () => {
+    // Thu 20:00 Melbourne.
+    expect(isInCoastalGameWindow(new Date("2026-08-27T10:00:00Z")).inWindow).toBe(false);
+  });
+});
+
+describe("coastalLeagueMinIntervalMs", () => {
+  it("crawls every 15 minutes over a game weekend", () => {
+    expect(coastalLeagueMinIntervalMs(new Date("2026-08-28T08:00:00Z"))).toBe(15 * 60_000);
+  });
+
+  it("backs off to hourly midweek", () => {
+    expect(coastalLeagueMinIntervalMs(new Date("2026-08-27T10:00:00Z"))).toBe(60 * 60_000);
+  });
+});
+
+describe("isInCoastalLeagueWindow", () => {
+  it("is eligible on every tick, even midweek", () => {
+    // Thu 20:00 Melbourne — outside the game window, still eligible for the hourly crawl.
+    expect(isInCoastalLeagueWindow(new Date("2026-08-27T10:00:00Z"))).toEqual({
+      inWindow: true,
+      localHour: 20,
+      localWeekday: "Thu",
+    });
+  });
+});
+
+describe("isInCoastalCatalogWindow", () => {
+  it("opens at 03:00 local every day", () => {
+    // Tue 03:00 and Wed 03:00 Melbourne.
+    expect(isInCoastalCatalogWindow(new Date("2026-08-31T17:00:00Z"))).toEqual({
+      inWindow: true,
+      localHour: 3,
+      localWeekday: "Tue",
+    });
+    expect(isInCoastalCatalogWindow(new Date("2026-09-01T17:00:00Z")).inWindow).toBe(true);
+  });
+
+  it("closes outside the daily slot", () => {
+    // Tue 01:00 Melbourne.
+    expect(isInCoastalCatalogWindow(new Date("2026-08-31T15:00:00Z")).inWindow).toBe(false);
   });
 });

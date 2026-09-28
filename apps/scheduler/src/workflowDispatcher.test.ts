@@ -22,6 +22,20 @@ describe("dispatchWorkflow", () => {
     );
   });
 
+  it("sends workflow_dispatch inputs when given", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+
+    await dispatchWorkflow(fetchImpl, { ...input, inputs: { source: "coastal" } });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://api.github.com/repos/dejanvasic85/matchday/actions/workflows/crawl-leagues.yml/dispatches",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ ref: "main", inputs: { source: "coastal" } }),
+      }),
+    );
+  });
+
   it("sends the bearer token and a user agent, which GitHub rejects requests without", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
 
