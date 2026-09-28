@@ -17,7 +17,7 @@ import {
   isInLeagueWindow,
 } from "#crawlWindow.ts";
 import { dispatchWorkflow } from "#workflowDispatcher.ts";
-import { fetchRecentRuns } from "#workflowRuns.ts";
+import { fetchRecentRuns, type RunNameFilter } from "#workflowRuns.ts";
 
 const minuteMs = 60_000;
 const hourMs = 60 * minuteMs;
@@ -33,10 +33,15 @@ const coastalCatalogMinIntervalMs = 20 * hourMs;
 // Two runs is enough to see an in-flight run and the last completed one.
 const runLookupLimit = 2;
 
-/** The tag a workflow's `run-name` appends for a source, e.g. `(coastal)`. Runs are matched on it
- * so the two sources sharing a workflow reconcile against their own history. */
-function runNameSuffixFor(inputs: DispatchInputs): string | undefined {
-  return inputs.source === undefined ? undefined : `(${inputs.source})`;
+/** How to pick a source's runs out of the shared workflow history, by the `run-name` tag. Dribl
+ * predates tagging, so its older runs have no tag and are matched too — otherwise the first
+ * tick after deploy would miss an in-flight Dribl run and start a second one. */
+function runNameFilterFor(inputs: DispatchInputs): RunNameFilter | undefined {
+  const source = inputs.source;
+  if (source === undefined) {
+    return undefined;
+  }
+  return { suffix: `(${source})`, includeUntagged: source === sourceValue.dribl };
 }
 
 /** The crawls this scheduler drives: when each is eligible, and how often it should actually run.
@@ -86,7 +91,7 @@ export default {
           ...githubRepoValue,
           workflow,
           limit: runLookupLimit,
-          runNameSuffix: runNameSuffixFor(inputs),
+          runNameFilter: runNameFilterFor(inputs),
         }),
       logger,
       now: new Date(event.scheduledTime),

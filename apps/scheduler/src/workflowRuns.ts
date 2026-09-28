@@ -29,6 +29,15 @@ const workflowRunsResponseSchema = z.object({
  * interleave in the list and would otherwise hide this source's newest ones. */
 const runLookupPageSize = 20;
 
+/** How to tell one source's runs from another's, by the `run-name` the workflow sets. */
+export type RunNameFilter = {
+  /** Keep runs whose name ends with this, e.g. `(coastal)`. */
+  suffix: string;
+  /** Also keep runs with no `(source)` tag at all. Set for the source that predates run tagging,
+   * so its older, untagged runs are still reconciled during the transition. */
+  includeUntagged?: boolean;
+};
+
 export type WorkflowRunSummary = {
   createdAt: Date;
   /** Queued or running — dispatching again now would only pile up behind it. */
@@ -43,10 +52,18 @@ export type FetchRecentRunsInput = {
   token: string;
   /** How many of the most recent runs to read, newest first. */
   limit: number;
-  /** Keep only runs whose `run-name` ends with this, e.g. `(coastal)`. Sources sharing a workflow
-   * tag their runs this way, so each reconciles against its own history. */
-  runNameSuffix?: string;
+  /** Keep only this source's runs. Sources sharing a workflow tag their runs with `run-name`, so
+   * each reconciles against its own history. */
+  runNameFilter?: RunNameFilter;
 };
+
+/** Workflow names never end with `)`, so an untagged run is one without a `(source)` suffix. */
+function matchesRunName(title: string, filter: RunNameFilter | undefined): boolean {
+  if (filter === undefined) {
+    return true;
+  }
+  return title.endsWith(filter.suffix) || (filter.includeUntagged === true && !title.endsWith(")"));
+}
 
 /**
  * Read a workflow's most recent runs, newest first. Returns a `Result` rather than throwing, so a
@@ -56,8 +73,8 @@ export async function fetchRecentRuns(
   fetchImpl: FetchLike,
   input: FetchRecentRunsInput,
 ): Promise<Result<WorkflowRunSummary[]>> {
-  const { owner, repo, workflow, token, limit, runNameSuffix } = input;
-  const perPage = runNameSuffix === undefined ? limit : Math.max(limit, runLookupPageSize);
+  const { owner, repo, workflow, token, limit, runNameFilter } = input;
+  const perPage = runNameFilter === undefined ? limit : Math.max(limit, runLookupPageSize);
   const url = `${githubApiBaseUrl}/repos/${owner}/${repo}/actions/workflows/${workflow}/runs?per_page=${perPage}`;
 
   try {
@@ -81,9 +98,7 @@ export async function fetchRecentRuns(
 
     return ok(
       parsed.data.workflow_runs
-        .filter(
-          (run) => runNameSuffix === undefined || (run.display_title ?? "").endsWith(runNameSuffix),
-        )
+        .filter((run) => matchesRunName(run.display_title ?? "", runNameFilter))
         .slice(0, limit)
         .map((run) => ({
           createdAt: new Date(run.created_at),
