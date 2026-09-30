@@ -34,3 +34,4 @@ data/external/
 
 # generated SDK types (regenerated from the live OpenAPI spec on every build)
 packages/sdk/src/generated/
+.vitest/

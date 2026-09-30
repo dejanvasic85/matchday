@@ -51,7 +51,9 @@ export default defineConfig({
       // Root scripts' tests, picked up by `vp run -r test` alongside every package.
       test: {
         command: "vp test run",
-        input: [{ auto: true }],
+        cache: {
+          input: [{ auto: true }],
+        },
       },
       // Points the root .env at this git branch's own Neon database. Talks to the Neon
       // CLI, so it never caches.
