@@ -1,7 +1,7 @@
 // League service: maps DB rows to the wire shape. Catalog data, open to any authenticated
 // client, no crawl-scope scoping.
 
-import { requireFound, type Result } from "@matchday/domain";
+import { requireFound, type IsoDate, type Result } from "@matchday/domain";
 import { mapPage, type PagedResponse } from "#services/pagedResponse.ts";
 import {
   getLeagueById,
@@ -42,6 +42,10 @@ export type LeagueResponse = Pick<LeagueWithRefs, "id" | "name" | "competitionId
   hasTable: boolean;
   competition: LeagueRefSummaryResponse;
   season: LeagueRefSummaryResponse;
+  /** From the league's competition-season, not the season: one season label covers competitions
+   * that run on different calendars. Null until an operator sets the window. */
+  seasonStartsOn: IsoDate | null;
+  seasonEndsOn: IsoDate | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -55,6 +59,8 @@ function mapToLeagueResponse(league: LeagueWithRefs): LeagueResponse {
     hasTable: league.hasTable ?? false,
     competition: { id: league.competition.id, name: league.competition.name },
     season: { id: league.season.id, name: league.season.name },
+    seasonStartsOn: league.competitionSeason?.startsOn ?? null,
+    seasonEndsOn: league.competitionSeason?.endsOn ?? null,
     createdAt: league.createdAt.toISOString(),
     updatedAt: league.updatedAt.toISOString(),
   };
