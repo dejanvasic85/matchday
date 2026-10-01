@@ -1,5 +1,11 @@
 # @dejanvasic85/matchday-sdk
 
+## 2.6.0
+
+### Minor Changes
+
+- 31fd659: `League` now has `seasonStartsOn` and `seasonEndsOn`: the first and last day of the league's competition in its season, as `YYYY-MM-DD`. Both are `null` until the window is set.
+
 ## 2.5.0
 
 ### Minor Changes
