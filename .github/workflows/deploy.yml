@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
+        uses: voidzero-dev/setup-vp@v1.21.1
 
       - name: Install dependencies
         run: vp install --frozen-lockfile
@@ -52,7 +52,7 @@ jobs:
           version: 12.8.1
 
       - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
+        uses: voidzero-dev/setup-vp@v1.21.1
 
       - name: Install dependencies
         run: vp install --frozen-lockfile
@@ -63,7 +63,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/api
-          wranglerVersion: "4.143.0"
+          wranglerVersion: "4.144.0"
           packageManager: pnpm
           secrets: |
             DATABASE_URL
@@ -96,7 +96,7 @@ jobs:
           version: 12.8.1
 
       - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
+        uses: voidzero-dev/setup-vp@v1.21.1
 
       - name: Install dependencies
         run: vp install --frozen-lockfile
@@ -107,7 +107,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/scheduler
-          wranglerVersion: "4.143.0"
+          wranglerVersion: "4.144.0"
           packageManager: pnpm
           secrets: |
             GITHUB_TOKEN
