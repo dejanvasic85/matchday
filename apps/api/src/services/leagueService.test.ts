@@ -23,6 +23,19 @@ function makeSeasonRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function makeCompetitionSeasonRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "cse_abc123",
+    competitionId: "cmp_abc123",
+    seasonId: "sea_abc123",
+    startsOn: "2026-03-01",
+    endsOn: "2026-09-30",
+    createdAt: epoch,
+    updatedAt: epoch,
+    ...overrides,
+  };
+}
+
 function makeLeagueRow(overrides: Record<string, unknown> = {}) {
   return {
     id: "lea_abc123",
@@ -32,6 +45,7 @@ function makeLeagueRow(overrides: Record<string, unknown> = {}) {
     hasTable: true,
     competition: makeCompetitionRow(),
     season: makeSeasonRow(),
+    competitionSeason: makeCompetitionSeasonRow(),
     createdAt: epoch,
     updatedAt: epoch,
     ...overrides,
@@ -167,6 +181,46 @@ describe("getLeague", () => {
           season: { id: "sea_abc123", name: "2026" },
         }),
       ),
+    );
+  });
+
+  it("carries the competition-season window as the league's season dates", async () => {
+    const deps = makeDeps();
+
+    const result = await getLeague(deps, "lea_abc123");
+
+    expect(result).toEqual(
+      ok(expect.objectContaining({ seasonStartsOn: "2026-03-01", seasonEndsOn: "2026-09-30" })),
+    );
+  });
+
+  it("returns null season dates when the window hasn't been set", async () => {
+    const deps = makeDeps({
+      getLeagueById: vi.fn().mockResolvedValue(
+        ok(
+          makeLeagueRow({
+            competitionSeason: makeCompetitionSeasonRow({ startsOn: null, endsOn: null }),
+          }),
+        ),
+      ),
+    });
+
+    const result = await getLeague(deps, "lea_abc123");
+
+    expect(result).toEqual(
+      ok(expect.objectContaining({ seasonStartsOn: null, seasonEndsOn: null })),
+    );
+  });
+
+  it("returns null season dates when the league has no competition-season row", async () => {
+    const deps = makeDeps({
+      getLeagueById: vi.fn().mockResolvedValue(ok(makeLeagueRow({ competitionSeason: null }))),
+    });
+
+    const result = await getLeague(deps, "lea_abc123");
+
+    expect(result).toEqual(
+      ok(expect.objectContaining({ seasonStartsOn: null, seasonEndsOn: null })),
     );
   });
 

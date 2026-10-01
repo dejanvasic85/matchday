@@ -21,6 +21,16 @@ export const leagueResponseSchema = z
     }),
     competition: summarySchema("CompetitionSummary", "cmp_V1StGXR8Z5"),
     season: summarySchema("SeasonSummary", "sea_V1StGXR8Z5"),
+    seasonStartsOn: z.iso.date().nullable().openapi({
+      example: "2026-03-01",
+      description:
+        "First day of this league's competition in the season (YYYY-MM-DD). Null until it is set.",
+    }),
+    seasonEndsOn: z.iso.date().nullable().openapi({
+      example: "2026-09-30",
+      description:
+        "Last day of this league's competition in the season (YYYY-MM-DD). Null until it is set.",
+    }),
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
   })
