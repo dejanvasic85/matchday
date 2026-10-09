@@ -6,26 +6,26 @@ packages:
 catalogMode: prefer
 
 catalog:
-  "@cloudflare/workers-types": 5.20261006.1
+  "@cloudflare/workers-types": 5.20261007.1
   "@hono/zod-openapi": 1.6.3
   "@neondatabase/serverless": 1.2.0
-  "@sentry/cloudflare": 11.4.0
-  "@sentry/hono": 11.4.0
+  "@sentry/cloudflare": 11.5.0
+  "@sentry/hono": 11.5.0
   "@types/node": ^26.0.0
   aws4fetch: 1.0.20
   commander: 15.0.0
   drizzle-kit: 0.31.11
   drizzle-orm: 0.45.3
-  fallow: 3.31.0
+  fallow: 3.32.0
   hono: 4.13.13
   nanoid: 6.0.2
-  playwright-core: 1.63.0
+  playwright-core: 1.64.0
   typescript: 6.0.3
   wrangler: 4.148.0
   zod: 4.6.5
-  vite: npm:@voidzero-dev/vite-plus-core@1.0.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.1.0
   vitest: 5.0.3
-  vite-plus: 1.0.0
+  vite-plus: 1.1.0
   "@vitest/coverage-v8": 5.0.3
 
 overrides:
