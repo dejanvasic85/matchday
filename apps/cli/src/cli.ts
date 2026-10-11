@@ -12,13 +12,14 @@ import {
 import { Command, InvalidArgumentError, Option } from "commander";
 import { renderApiTokenTable } from "#apiTokenTable.ts";
 import { renderClientTable } from "#clientTable.ts";
-import { renderCrawlTargetTable } from "#crawlTargetTable.ts";
+import { renderClubCrawlTargetsResult, renderCrawlTargetTable } from "#crawlTargetTable.ts";
 import { renderSeasonTable } from "#seasonTable.ts";
 import { renderClubLeagueTable } from "#clubLeagueTable.ts";
 import { getCliConfig } from "#config.ts";
 import { crawlSourceValue, type CrawlSource } from "#crawlers/constants.ts";
 import { runCatalogJob } from "#jobs/crawls/catalog.ts";
 import { runCountCatalogLeaguesJob } from "#jobs/crawls/countCatalogLeagues.ts";
+import { runAddClubCrawlTargetsJob } from "#jobs/crawlTargets/addClubCrawlTargets.ts";
 import { runAddCrawlTargetJob } from "#jobs/crawlTargets/addCrawlTarget.ts";
 import { runListCrawlTargetsJob } from "#jobs/crawlTargets/listCrawlTargets.ts";
 import {
@@ -711,6 +712,42 @@ export function createCli(): Command {
           `(${result.value.id})\n`,
       );
     });
+
+  crawlTarget
+    .command("add-club")
+    .description(
+      "Add every league a club's teams play in to the crawl scope in one pass — the onboarding " +
+        "step for a new club. Requires --season, because an unscoped club spans every season it " +
+        "has ever played and those are wrong to subscribe. Discover leagues first with " +
+        "`mday club leagues`. Leagues already in scope are left alone, so re-running is safe. " +
+        "--dry-run prints what would be added without writing.",
+    )
+    .requiredOption("--club <name>", "the club name, or an unambiguous fragment of one")
+    .requiredOption("--season <year>", "the season to scope discovery to (required)")
+    .addOption(seasonSourceOption("the source whose season to use"))
+    .option("--dry-run", "list the leagues that would be added without writing them", false)
+    .action(
+      async (options: { club: string; season: string; source: CrawlSource; dryRun: boolean }) => {
+        const config = getCliConfig();
+        const logger = createConsoleLogger();
+        const result = await runAddClubCrawlTargetsJob({
+          logger,
+          config,
+          source: options.source,
+          clubName: options.club,
+          seasonName: options.season,
+          dryRun: options.dryRun,
+        });
+        if (!result.ok) {
+          logger.error("crawltarget.clubaddfailed", result.error.message, {
+            cause: result.error.cause,
+          });
+          process.exitCode = 1;
+          return;
+        }
+        process.stdout.write(`${renderClubCrawlTargetsResult(result.value)}\n`);
+      },
+    );
 
   crawlTarget
     .command("list")

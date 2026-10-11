@@ -1,13 +1,16 @@
 import { ok, serverError } from "@matchday/domain";
 import {
+  addClubCrawlTargets,
   addCrawlTarget,
   describeAddCrawlTargetFailure,
   describeRemoveCrawlTargetFailure,
   listCrawlTargetsSummary,
   removeCrawlTargetById,
   removeCrawlTargetByLeague,
+  type AddClubCrawlTargetsDeps,
   type CrawlTargetServiceDeps,
 } from "#services/crawlTargetService.ts";
+import { makeLeagueWithRefs } from "#test/fixtures/league.ts";
 
 const epoch = new Date("2026-01-01T00:00:00.000Z");
 
@@ -40,6 +43,7 @@ function makeDeps(overrides: Partial<CrawlTargetServiceDeps> = {}): CrawlTargetS
     listLeagueNamesByCompetitionId: vi
       .fn()
       .mockResolvedValue(ok(["U13 YPL1 Boys", "U14 YPL1 Boys"])),
+    listLeaguesByClubId: vi.fn().mockResolvedValue(ok([])),
     upsertCrawlTarget: vi.fn().mockResolvedValue(ok(makeTargetRow())),
     deleteCrawlTargetById: vi.fn().mockResolvedValue(ok(makeTargetRow())),
     deleteCrawlTargetByLeague: vi.fn().mockResolvedValue(ok(makeTargetRow())),
@@ -142,6 +146,207 @@ describe("addCrawlTarget", () => {
     const result = await addCrawlTarget(deps, addInput);
 
     expect(result.ok).toBe(false);
+  });
+});
+
+describe("addClubCrawlTargets", () => {
+  const clubInput = { clubName: "Brunswick City SC", seasonId: "sea_2026000000" };
+
+  function makeClubDeps(overrides: Partial<AddClubCrawlTargetsDeps> = {}): AddClubCrawlTargetsDeps {
+    return {
+      findClubsByName: vi
+        .fn()
+        .mockResolvedValue(ok([{ id: "clb_brunswick00", name: "Brunswick City SC" }])),
+      listLeaguesByClubId: vi.fn().mockResolvedValue(ok([])),
+      listCrawlTargets: vi.fn().mockResolvedValue(ok([])),
+      upsertCrawlTarget: vi.fn().mockResolvedValue(ok(makeTargetRow())),
+      ...overrides,
+    };
+  }
+
+  it("adds a target per distinct league the club plays in", async () => {
+    const deps = makeClubDeps({
+      listLeaguesByClubId: vi.fn().mockResolvedValue(
+        ok([
+          makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" }),
+          makeLeagueWithRefs({
+            id: "lea_div2south",
+            name: "Div 2 South",
+            competitionId: "cmp_state00000",
+            competition: {
+              id: "cmp_state00000",
+              name: "State League",
+              createdAt: epoch,
+              updatedAt: epoch,
+            },
+          }),
+        ]),
+      ),
+    });
+
+    const result = await addClubCrawlTargets(deps, clubInput);
+
+    expect(result).toEqual(
+      ok({
+        club: { id: "clb_brunswick00", name: "Brunswick City SC" },
+        added: [
+          { competitionName: "Senol NPL Victoria Men", leagueName: "Div 1 North" },
+          { competitionName: "State League", leagueName: "Div 2 South" },
+        ],
+        alreadyTargeted: [],
+        dryRun: false,
+      }),
+    );
+    expect(deps.upsertCrawlTarget).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ competitionId: "cmp_abc123", leagueName: "Div 1 North" }),
+    );
+    expect(deps.upsertCrawlTarget).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ competitionId: "cmp_state00000", leagueName: "Div 2 South" }),
+    );
+  });
+
+  it("scopes league discovery to the given season", async () => {
+    const deps = makeClubDeps();
+
+    await addClubCrawlTargets(deps, clubInput);
+
+    expect(deps.listLeaguesByClubId).toHaveBeenCalledWith("clb_brunswick00", "sea_2026000000");
+  });
+
+  it("collapses the one-row-per-team duplicate a league appears as", async () => {
+    const deps = makeClubDeps({
+      listLeaguesByClubId: vi
+        .fn()
+        .mockResolvedValue(
+          ok([
+            makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" }),
+            makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" }),
+          ]),
+        ),
+    });
+
+    const result = await addClubCrawlTargets(deps, clubInput);
+
+    expect(result.ok && result.value.added).toHaveLength(1);
+    expect(deps.upsertCrawlTarget).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the same league name under two competitions as two targets", async () => {
+    const deps = makeClubDeps({
+      listLeaguesByClubId: vi.fn().mockResolvedValue(
+        ok([
+          makeLeagueWithRefs({
+            id: "lea_one000000",
+            name: "Div 1 North",
+            competitionId: "cmp_one",
+          }),
+          makeLeagueWithRefs({
+            id: "lea_two000000",
+            name: "Div 1 North",
+            competitionId: "cmp_two",
+            competition: {
+              id: "cmp_two",
+              name: "Another Cup",
+              createdAt: epoch,
+              updatedAt: epoch,
+            },
+          }),
+        ]),
+      ),
+    });
+
+    const result = await addClubCrawlTargets(deps, clubInput);
+
+    expect(result.ok && result.value.added).toHaveLength(2);
+    expect(deps.upsertCrawlTarget).toHaveBeenCalledTimes(2);
+  });
+
+  it("reports a league already in scope without rewriting it", async () => {
+    const deps = makeClubDeps({
+      listLeaguesByClubId: vi.fn().mockResolvedValue(
+        ok([
+          makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" }),
+          makeLeagueWithRefs({
+            id: "lea_div2south",
+            name: "Div 2 South",
+            competitionId: "cmp_state00000",
+            competition: {
+              id: "cmp_state00000",
+              name: "State League",
+              createdAt: epoch,
+              updatedAt: epoch,
+            },
+          }),
+        ]),
+      ),
+      listCrawlTargets: vi.fn().mockResolvedValue(
+        ok([
+          {
+            id: "crt_existing000",
+            competitionId: "cmp_abc123",
+            competitionName: "Senol NPL Victoria Men",
+            leagueName: "Div 1 North",
+          },
+        ]),
+      ),
+    });
+
+    const result = await addClubCrawlTargets(deps, clubInput);
+
+    expect(result.ok && result.value.alreadyTargeted).toEqual([
+      { competitionName: "Senol NPL Victoria Men", leagueName: "Div 1 North" },
+    ]);
+    expect(result.ok && result.value.added).toEqual([
+      { competitionName: "State League", leagueName: "Div 2 South" },
+    ]);
+    expect(deps.upsertCrawlTarget).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports what would be added on a dry run without writing", async () => {
+    const deps = makeClubDeps({
+      listLeaguesByClubId: vi
+        .fn()
+        .mockResolvedValue(ok([makeLeagueWithRefs({ id: "lea_div1north", name: "Div 1 North" })])),
+    });
+
+    const result = await addClubCrawlTargets(deps, { ...clubInput, dryRun: true });
+
+    expect(result.ok && result.value.added).toEqual([
+      { competitionName: "Senol NPL Victoria Men", leagueName: "Div 1 North" },
+    ]);
+    expect(result.ok && result.value.dryRun).toBe(true);
+    expect(deps.upsertCrawlTarget).not.toHaveBeenCalled();
+  });
+
+  it("fails listing candidates when the club name matches more than one club", async () => {
+    const deps = makeClubDeps({
+      findClubsByName: vi.fn().mockResolvedValue(
+        ok([
+          { id: "clb_brunswick00", name: "Brunswick City SC" },
+          { id: "clb_juventus000", name: "Brunswick Juventus FC" },
+        ]),
+      ),
+    });
+
+    const result = await addClubCrawlTargets(deps, clubInput);
+
+    expect(result.ok).toBe(false);
+    expect(result.ok || result.error.message).toContain("matches more than one club");
+    expect(deps.listLeaguesByClubId).not.toHaveBeenCalled();
+    expect(deps.upsertCrawlTarget).not.toHaveBeenCalled();
+  });
+
+  it("propagates a league listing failure", async () => {
+    const deps = makeClubDeps({
+      listLeaguesByClubId: vi.fn().mockResolvedValue(serverError("db down")),
+    });
+
+    const result = await addClubCrawlTargets(deps, clubInput);
+
+    expect(result.ok).toBe(false);
+    expect(deps.upsertCrawlTarget).not.toHaveBeenCalled();
   });
 });
 
