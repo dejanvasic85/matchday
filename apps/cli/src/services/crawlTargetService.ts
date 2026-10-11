@@ -172,20 +172,13 @@ export type AddClubCrawlTargetsOutcome = {
 };
 
 /** Targets are keyed on (competition, league name), so that pair both dedupes a club's one-row-
- * per-team listing and decides whether a league is already in scope. NUL can't appear in a name. */
+ * per-team listing and decides whether a league is already targeted. NUL can't appear in a name. */
 function crawlTargetKey(competitionId: string, leagueName: string): string {
   return `${competitionId}\u0000${leagueName}`;
 }
 
-/**
- * Add every league a club's teams play in to the crawl scope — the onboarding step for a new club,
- * so an operator adds one club rather than one league per invocation.
- *
- * Discovery reuses the same fuzzy club lookup and season-scoped league listing as `mday club
- * leagues`, and each league's own competition id, so there is no name to mistype. A league already
- * targeted is reported rather than re-written; the upsert is idempotent, so re-running after a
- * season rollover adds only what is new.
- */
+/** Add every league a club's teams play in to the crawl scope, so onboarding a club is one command
+ * rather than one per league. Idempotent: a league already targeted is reported, not re-written. */
 export async function addClubCrawlTargets(
   deps: AddClubCrawlTargetsDeps,
   input: AddClubCrawlTargetsInput,
