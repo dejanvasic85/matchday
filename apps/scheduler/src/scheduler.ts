@@ -15,6 +15,7 @@ import {
   isInCoastalCatalogWindow,
   isInCoastalLeagueWindow,
   isInLeagueWindow,
+  leagueMinIntervalMs,
 } from "#crawlWindow.ts";
 import { dispatchWorkflow } from "#workflowDispatcher.ts";
 import { fetchRecentRuns, type RunNameFilter } from "#workflowRuns.ts";
@@ -24,8 +25,7 @@ const hourMs = 60 * minuteMs;
 const dayMs = 24 * hourMs;
 
 // A run every 15 minutes gives four chances to catch each of these, so one dropped tick costs
-// minutes rather than a whole interval.
-const leagueMinIntervalMs = 55 * minuteMs;
+// minutes rather than a whole interval. The league interval is window-aware (see crawlWindow.ts).
 const catalogMinIntervalMs = 6 * dayMs;
 // Coastal results come from the clock, so a daily run is plenty to publish the next season.
 const coastalCatalogMinIntervalMs = 20 * hourMs;
@@ -51,7 +51,7 @@ const crawlScheduleValue: readonly CrawlSchedule[] = [
     workflow: "crawl-leagues.yml",
     inputs: { source: sourceValue.dribl },
     isInWindow: isInLeagueWindow,
-    minIntervalMs: () => leagueMinIntervalMs,
+    minIntervalMs: leagueMinIntervalMs,
   },
   {
     workflow: "crawl-leagues.yml",
