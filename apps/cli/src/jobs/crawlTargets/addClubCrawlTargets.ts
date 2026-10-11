@@ -57,12 +57,20 @@ export async function runAddClubCrawlTargetsJob(
   );
 
   if (result.ok) {
-    logger.info("crawltarget.clubadded", "added a club's leagues to the crawl scope", {
-      club: result.value.club.name,
-      added: result.value.added.length,
-      alreadyTargeted: result.value.alreadyTargeted.length,
-      dryRun: result.value.dryRun,
-    });
+    const { club, added, alreadyTargeted, dryRun } = result.value;
+    if (dryRun) {
+      logger.info("crawltarget.clubpreview", "previewed a club's leagues for the crawl scope", {
+        club: club.name,
+        wouldAdd: added.length,
+        alreadyTargeted: alreadyTargeted.length,
+      });
+    } else {
+      logger.info("crawltarget.clubadded", "added a club's leagues to the crawl scope", {
+        club: club.name,
+        added: added.length,
+        alreadyTargeted: alreadyTargeted.length,
+      });
+    }
   }
 
   return result;
