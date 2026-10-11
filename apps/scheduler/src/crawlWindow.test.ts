@@ -5,6 +5,7 @@ import {
   isInCoastalGameWindow,
   isInCoastalLeagueWindow,
   isInLeagueWindow,
+  leagueMinIntervalMs,
 } from "#crawlWindow.ts";
 
 // Melbourne is UTC+10 (AEST) in winter and UTC+11 (AEDT) from the first Sunday in October.
@@ -66,6 +67,24 @@ describe("isInLeagueWindow", () => {
 
     expect(decision.inWindow).toBe(false);
     expect(decision.localHour).toBe(0);
+  });
+});
+
+describe("leagueMinIntervalMs", () => {
+  it("runs every 55 minutes on a weekday evening", () => {
+    // Mon 19:00 Melbourne (AEST).
+    expect(leagueMinIntervalMs(new Date("2026-08-31T09:00:00Z"))).toBe(55 * 60_000);
+  });
+
+  it("backs off to two hours on a Saturday", () => {
+    // Sat 11:00 Melbourne (AEST).
+    expect(leagueMinIntervalMs(new Date("2026-08-29T01:00:00Z"))).toBe(2 * 60 * 60_000);
+  });
+
+  it("backs off to two hours on a Sunday, either side of the daylight-saving switch", () => {
+    // Sun 14:00 Melbourne, in AEST and then in AEDT.
+    expect(leagueMinIntervalMs(new Date("2026-08-30T04:00:00Z"))).toBe(2 * 60 * 60_000);
+    expect(leagueMinIntervalMs(new Date("2026-11-08T03:00:00Z"))).toBe(2 * 60 * 60_000);
   });
 });
 

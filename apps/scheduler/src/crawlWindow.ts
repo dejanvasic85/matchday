@@ -34,6 +34,8 @@ const coastalCatalogWindowValue = { startHour: 3, endHour: 5 } as const;
 
 const coastalGameIntervalMs = 15 * 60_000;
 const coastalOffGameIntervalMs = 60 * 60_000;
+const leagueWeekdayIntervalMs = 55 * 60_000;
+const leagueWeekendIntervalMs = 120 * 60_000;
 
 const melbourneTimeZone = "Australia/Melbourne";
 
@@ -86,6 +88,13 @@ export function isInLeagueWindow(instant: Date): WindowDecision {
     localHour: hour,
     localWeekday: weekday,
   };
+}
+
+/** How long after a Dribl league run the next one is due: hourly-ish on weekdays, but every two
+ * hours over the weekend, where the busier game day makes each run longer and stack up. */
+export function leagueMinIntervalMs(instant: Date): number {
+  const { weekday } = toMelbourneParts(instant);
+  return weekendDayValue.includes(weekday) ? leagueWeekendIntervalMs : leagueWeekdayIntervalMs;
 }
 
 /** True inside the catalog's weekly slot, pinned to Melbourne local time so it stays put through
