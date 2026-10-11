@@ -8,8 +8,10 @@ import type {
   findCompetitionsBySourceAndName,
   listCrawlTargets,
   listLeagueNamesByCompetitionId,
+  listLeaguesByClubId,
   upsertCrawlTarget,
 } from "@matchday/db";
+import { resolveClub, type ClubResolverDeps, type ResolvedClub } from "#services/clubResolver.ts";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
   ? (...rest: Rest) => Return
@@ -18,6 +20,7 @@ type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
 export type CrawlTargetServiceDeps = {
   findCompetitionsBySourceAndName: WithoutDb<typeof findCompetitionsBySourceAndName>;
   listLeagueNamesByCompetitionId: WithoutDb<typeof listLeagueNamesByCompetitionId>;
+  listLeaguesByClubId: WithoutDb<typeof listLeaguesByClubId>;
   upsertCrawlTarget: WithoutDb<typeof upsertCrawlTarget>;
   deleteCrawlTargetById: WithoutDb<typeof deleteCrawlTargetById>;
   deleteCrawlTargetByLeague: WithoutDb<typeof deleteCrawlTargetByLeague>;
@@ -143,6 +146,100 @@ export async function addCrawlTarget(
     competitionName,
     leagueName: input.leagueName,
   });
+}
+
+/** A crawl target named the way an operator reads it, rather than by its generated id. */
+export type CrawlTargetName = { competitionName: string; leagueName: string };
+
+export type AddClubCrawlTargetsDeps = ClubResolverDeps &
+  Pick<CrawlTargetServiceDeps, "listLeaguesByClubId" | "listCrawlTargets" | "upsertCrawlTarget">;
+
+export type AddClubCrawlTargetsInput = {
+  clubName: string;
+  /** The season to scope discovery to. A club keeps league_team rows from every season it has ever
+   * played, so an unscoped add would subscribe finished seasons alongside the current one. */
+  seasonId: string;
+  dryRun?: boolean;
+};
+
+export type AddClubCrawlTargetsOutcome = {
+  club: ResolvedClub;
+  /** Leagues newly added to the crawl scope — or, on a dry run, the leagues that would be. */
+  added: CrawlTargetName[];
+  /** Leagues the club plays in that are already in the crawl scope. */
+  alreadyTargeted: CrawlTargetName[];
+  dryRun: boolean;
+};
+
+/** Targets are keyed on (competition, league name), so that pair both dedupes a club's one-row-
+ * per-team listing and decides whether a league is already in scope. NUL can't appear in a name. */
+function crawlTargetKey(competitionId: string, leagueName: string): string {
+  return `${competitionId}\u0000${leagueName}`;
+}
+
+/**
+ * Add every league a club's teams play in to the crawl scope — the onboarding step for a new club,
+ * so an operator adds one club rather than one league per invocation.
+ *
+ * Discovery reuses the same fuzzy club lookup and season-scoped league listing as `mday club
+ * leagues`, and each league's own competition id, so there is no name to mistype. A league already
+ * targeted is reported rather than re-written; the upsert is idempotent, so re-running after a
+ * season rollover adds only what is new.
+ */
+export async function addClubCrawlTargets(
+  deps: AddClubCrawlTargetsDeps,
+  input: AddClubCrawlTargetsInput,
+): Promise<Result<AddClubCrawlTargetsOutcome>> {
+  const clubResult = await resolveClub(deps, input.clubName);
+  if (!clubResult.ok) {
+    return clubResult;
+  }
+
+  const leaguesResult = await deps.listLeaguesByClubId(clubResult.value.id, input.seasonId);
+  if (!leaguesResult.ok) {
+    return leaguesResult;
+  }
+
+  const existingResult = await deps.listCrawlTargets();
+  if (!existingResult.ok) {
+    return existingResult;
+  }
+  const targeted = new Set(
+    existingResult.value.map((row) => crawlTargetKey(row.competitionId, row.leagueName)),
+  );
+
+  const dryRun = input.dryRun ?? false;
+  const added: CrawlTargetName[] = [];
+  const alreadyTargeted: CrawlTargetName[] = [];
+  const seen = new Set<string>();
+
+  for (const league of leaguesResult.value) {
+    const key = crawlTargetKey(league.competitionId, league.name);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+
+    const name = { competitionName: league.competition.name, leagueName: league.name };
+    if (targeted.has(key)) {
+      alreadyTargeted.push(name);
+      continue;
+    }
+
+    if (!dryRun) {
+      const written = await deps.upsertCrawlTarget({
+        id: generateId("crawlTarget"),
+        competitionId: league.competitionId,
+        leagueName: league.name,
+      });
+      if (!written.ok) {
+        return written;
+      }
+    }
+    added.push(name);
+  }
+
+  return ok({ club: clubResult.value, added, alreadyTargeted, dryRun });
 }
 
 /** Remove a target by its id. A missing id reports "not found" rather than a silent no-op. */
