@@ -23,8 +23,8 @@ export function renderClubCrawlTargetsResult(outcome: AddClubCrawlTargetsOutcome
   const { club, added, alreadyTargeted, dryRun } = outcome;
   const header = `${club.name} (${club.id})`;
   const summary = dryRun
-    ? `${header}\nWould add ${added.length} league(s); ${alreadyTargeted.length} already in scope.`
-    : `${header}\nAdded ${added.length} league(s); ${alreadyTargeted.length} already in scope.`;
+    ? `${header}\nWould add ${added.length} league(s); ${alreadyTargeted.length} already targeted.`
+    : `${header}\nAdded ${added.length} league(s); ${alreadyTargeted.length} already targeted.`;
 
   if (added.length === 0 && alreadyTargeted.length === 0) {
     return `${summary}\nNo leagues found — run \`mday catalog\` for this club's leagues first.`;
@@ -33,7 +33,7 @@ export function renderClubCrawlTargetsResult(outcome: AddClubCrawlTargetsOutcome
   const addedLabel = dryRun ? "would add" : "added";
   const rows = [
     ...added.map((name) => [addedLabel, name.competitionName, name.leagueName]),
-    ...alreadyTargeted.map((name) => ["in scope", name.competitionName, name.leagueName]),
+    ...alreadyTargeted.map((name) => ["already targeted", name.competitionName, name.leagueName]),
   ];
   return `${summary}\n${renderTable(["STATUS", "COMPETITION", "LEAGUE"], rows)}`;
 }

@@ -24,7 +24,7 @@ describe("renderClubCrawlTargetsResult", () => {
     expect(output.split("\n")[0]).toBe("Brunswick City SC (clb_brunswick00)");
   });
 
-  it("summarises how many leagues were added and how many were already in scope", () => {
+  it("summarises how many leagues were added and how many were already targeted", () => {
     const output = renderClubCrawlTargetsResult(
       makeOutcome({
         added: [makeName(), makeName({ leagueName: "Div 2 South" })],
@@ -32,10 +32,10 @@ describe("renderClubCrawlTargetsResult", () => {
       }),
     );
 
-    expect(output.split("\n")[1]).toBe("Added 2 league(s); 1 already in scope.");
+    expect(output.split("\n")[1]).toBe("Added 2 league(s); 1 already targeted.");
   });
 
-  it("lists an added league and one already in scope with their status", () => {
+  it("lists an added league and one already targeted with their status", () => {
     const output = renderClubCrawlTargetsResult(
       makeOutcome({
         added: [makeName()],
@@ -45,14 +45,14 @@ describe("renderClubCrawlTargetsResult", () => {
 
     expect(output).toContain("added");
     expect(output).toContain("Div 1 North");
-    expect(output).toContain("in scope");
+    expect(output).toContain("already targeted");
     expect(output).toContain("Div 3 East");
   });
 
   it("reads as a dry run when nothing was written", () => {
     const output = renderClubCrawlTargetsResult(makeOutcome({ dryRun: true }));
 
-    expect(output.split("\n")[1]).toBe("Would add 1 league(s); 0 already in scope.");
+    expect(output.split("\n")[1]).toBe("Would add 1 league(s); 0 already targeted.");
     expect(output).toContain("would add");
   });
 

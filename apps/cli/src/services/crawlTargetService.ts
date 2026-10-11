@@ -172,13 +172,13 @@ export type AddClubCrawlTargetsOutcome = {
 };
 
 /** Targets are keyed on (competition, league name), so that pair both dedupes a club's one-row-
- * per-team listing and decides whether a league is already in scope. NUL can't appear in a name. */
+ * per-team listing and decides whether a league is already targeted. NUL can't appear in a name. */
 function crawlTargetKey(competitionId: string, leagueName: string): string {
   return `${competitionId}\u0000${leagueName}`;
 }
 
 /** Add every league a club's teams play in to the crawl scope, so onboarding a club is one command
- * rather than one per league. Idempotent: a league already in scope is reported, not re-written. */
+ * rather than one per league. Idempotent: a league already targeted is reported, not re-written. */
 export async function addClubCrawlTargets(
   deps: AddClubCrawlTargetsDeps,
   input: AddClubCrawlTargetsInput,

@@ -719,7 +719,7 @@ export function createCli(): Command {
       "Add every league a club's teams play in to the crawl scope in one pass — the onboarding " +
         "step for a new club. Requires --season, because an unscoped club spans every season it " +
         "has ever played and those are wrong to subscribe. Discover leagues first with " +
-        "`mday club leagues`. Leagues already in scope are left alone, so re-running is safe. " +
+        "`mday club leagues`. Leagues already targeted are left alone, so re-running is safe. " +
         "--dry-run prints what would be added without writing.",
     )
     .requiredOption("--club <name>", "the club name, or an unambiguous fragment of one")
