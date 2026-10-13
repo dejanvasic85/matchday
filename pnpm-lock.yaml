@@ -165,8 +165,8 @@ settings:
 catalogs:
   default:
     '@cloudflare/workers-types':
-      specifier: 5.20261010.1
-      version: 5.20261010.1
+      specifier: 5.20261011.1
+      version: 5.20261011.1
     '@hono/zod-openapi':
       specifier: 1.6.3
       version: 1.6.3
@@ -225,8 +225,8 @@ catalogs:
       specifier: 4.149.0
       version: 4.149.0
     zod:
-      specifier: 4.6.5
-      version: 4.6.5
+      specifier: 4.6.6
+      version: 4.6.6
 
 overrides:
   vite@*: npm:@voidzero-dev/vite-plus-core@1.1.0
@@ -265,7 +265,7 @@ importers:
     dependencies:
       '@hono/zod-openapi':
         specifier: 'catalog:'
-        version: 1.6.3(hono@4.13.13)(zod@4.6.5)
+        version: 1.6.3(hono@4.13.13)(zod@4.6.6)
       '@matchday/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -274,20 +274,20 @@ importers:
         version: link:../../packages/domain
       '@sentry/cloudflare':
         specifier: 'catalog:'
-        version: 11.6.0(@cloudflare/workers-types@5.20261010.1)(wrangler@4.149.0(@cloudflare/workers-types@5.20261010.1)(@types/node@26.6.5))
+        version: 11.6.0(@cloudflare/workers-types@5.20261011.1)(wrangler@4.149.0(@cloudflare/workers-types@5.20261011.1)(@types/node@26.6.5))
       '@sentry/hono':
         specifier: 'catalog:'
-        version: 11.6.0(@cloudflare/workers-types@5.20261010.1)(@sentry/cloudflare@11.6.0(@cloudflare/workers-types@5.20261010.1)(wrangler@4.149.0(@cloudflare/workers-types@5.20261010.1)(@types/node@26.6.5)))(hono@4.13.13)
+        version: 11.6.0(@cloudflare/workers-types@5.20261011.1)(@sentry/cloudflare@11.6.0(@cloudflare/workers-types@5.20261011.1)(wrangler@4.149.0(@cloudflare/workers-types@5.20261011.1)(@types/node@26.6.5)))(hono@4.13.13)
       hono:
         specifier: 'catalog:'
         version: 4.13.13
       zod:
         specifier: 'catalog:'
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 'catalog:'
-        version: 5.20261010.1
+        version: 5.20261011.1
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.5
@@ -299,7 +299,7 @@ importers:
         version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(esbuild@0.28.2)(tsx@4.23.13)(typescript@6.0.3)(yaml@2.9.0)
       wrangler:
         specifier: 'catalog:'
-        version: 4.149.0(@cloudflare/workers-types@5.20261010.1)(@types/node@26.6.5)
+        version: 4.149.0(@cloudflare/workers-types@5.20261011.1)(@types/node@26.6.5)
 
   apps/cli:
     dependencies:
@@ -320,7 +320,7 @@ importers:
         version: 1.64.0
       zod:
         specifier: 'catalog:'
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -339,11 +339,11 @@ importers:
         version: link:../../packages/domain
       zod:
         specifier: 'catalog:'
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 'catalog:'
-        version: 5.20261010.1
+        version: 5.20261011.1
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.5
@@ -355,7 +355,7 @@ importers:
         version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(@vitest/coverage-v8@5.0.3)(@vitest/ui@5.0.3)(esbuild@0.28.2)(tsx@4.23.13)(typescript@6.0.3)(yaml@2.9.0)
       wrangler:
         specifier: 'catalog:'
-        version: 4.149.0(@cloudflare/workers-types@5.20261010.1)(@types/node@26.6.5)
+        version: 4.149.0(@cloudflare/workers-types@5.20261011.1)(@types/node@26.6.5)
 
   packages/db:
     dependencies:
@@ -367,10 +367,10 @@ importers:
         version: 1.2.0
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.4(@cloudflare/workers-types@5.20261010.1)(@neondatabase/serverless@1.2.0)(@opentelemetry/api@1.9.1)
+        version: 0.45.4(@cloudflare/workers-types@5.20261011.1)(@neondatabase/serverless@1.2.0)(@opentelemetry/api@1.9.1)
       zod:
         specifier: 'catalog:'
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -392,7 +392,7 @@ importers:
         version: 6.0.2
       zod:
         specifier: 'catalog:'
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -577,8 +577,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@cloudflare/workers-types@5.20261010.1':
-    resolution: {integrity: sha512-Csvu2Wsd8JWnP8HNg/uAAEYzoGw+eKEvoftoHrbMWuFDoC0g6e5XSP8XO9vJsdjjVpPaURdFoL3g/xpZSdQr3Q==}
+  '@cloudflare/workers-types@5.20261011.1':
+    resolution: {integrity: sha512-6dgFMnwq6Wn238QWGHHb93gqIXjbSQMALcurXmI+9SHkM0QeEdHDhbyxwnE8v1m41MUzCtNO/gnTRwI4FsS9fQ==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -3016,15 +3016,15 @@ packages:
   yuku-parser@0.9.5:
     resolution: {integrity: sha512-IBnAdNVMswWbJcM7woPluOudectJzFjJ1N8jVRxP9Uq4CIv5hZdBIcdmtRbFDYF/Ph2j2gVup4YJ4N9mh0jYFA==}
 
-  zod@4.6.5:
-    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
+  zod@4.6.6:
+    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
 snapshots:
 
-  '@asteasolutions/zod-to-openapi@9.1.0(zod@4.6.5)':
+  '@asteasolutions/zod-to-openapi@9.1.0(zod@4.6.6)':
     dependencies:
       openapi3-ts: 4.6.1
-      zod: 4.6.5
+      zod: 4.6.6
 
   '@babel/code-frame@7.29.7':
     dependencies:
@@ -3190,7 +3190,7 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20261006.1':
     optional: true
 
-  '@cloudflare/workers-types@5.20261010.1': {}
+  '@cloudflare/workers-types@5.20261011.1': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
@@ -3459,18 +3459,18 @@ snapshots:
   '@fallow-cli/win32-x64-msvc@3.33.1':
     optional: true
 
-  '@hono/zod-openapi@1.6.3(hono@4.13.13)(zod@4.6.5)':
+  '@hono/zod-openapi@1.6.3(hono@4.13.13)(zod@4.6.6)':
     dependencies:
-      '@asteasolutions/zod-to-openapi': 9.1.0(zod@4.6.5)
-      '@hono/zod-validator': 0.9.1(hono@4.13.13)(zod@4.6.5)
+      '@asteasolutions/zod-to-openapi': 9.1.0(zod@4.6.6)
+      '@hono/zod-validator': 0.9.1(hono@4.13.13)(zod@4.6.6)
       hono: 4.13.13
       openapi3-ts: 4.6.1
-      zod: 4.6.5
+      zod: 4.6.6
 
-  '@hono/zod-validator@0.9.1(hono@4.13.13)(zod@4.6.5)':
+  '@hono/zod-validator@0.9.1(hono@4.13.13)(zod@4.6.6)':
     dependencies:
       hono: 4.13.13
-      zod: 4.6.5
+      zod: 4.6.6
 
   '@img/colour@1.1.0': {}
 
@@ -3788,7 +3788,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sentry/cloudflare@11.6.0(@cloudflare/workers-types@5.20261010.1)(wrangler@4.149.0(@cloudflare/workers-types@5.20261010.1)(@types/node@26.6.5))':
+  '@sentry/cloudflare@11.6.0(@cloudflare/workers-types@5.20261011.1)(wrangler@4.149.0(@cloudflare/workers-types@5.20261011.1)(@types/node@26.6.5))':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@sentry/conventions': 0.26.0
@@ -3797,8 +3797,8 @@ snapshots:
       '@sentry/server-utils': 11.6.0
       magic-string: 0.30.21
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20261010.1
-      wrangler: 4.149.0(@cloudflare/workers-types@5.20261010.1)(@types/node@26.6.5)
+      '@cloudflare/workers-types': 5.20261011.1
+      wrangler: 4.149.0(@cloudflare/workers-types@5.20261011.1)(@types/node@26.6.5)
 
   '@sentry/conventions@0.26.0': {}
 
@@ -3806,7 +3806,7 @@ snapshots:
     dependencies:
       '@sentry/conventions': 0.26.0
 
-  '@sentry/hono@11.6.0(@cloudflare/workers-types@5.20261010.1)(@sentry/cloudflare@11.6.0(@cloudflare/workers-types@5.20261010.1)(wrangler@4.149.0(@cloudflare/workers-types@5.20261010.1)(@types/node@26.6.5)))(hono@4.13.13)':
+  '@sentry/hono@11.6.0(@cloudflare/workers-types@5.20261011.1)(@sentry/cloudflare@11.6.0(@cloudflare/workers-types@5.20261011.1)(wrangler@4.149.0(@cloudflare/workers-types@5.20261011.1)(@types/node@26.6.5)))(hono@4.13.13)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@sentry/conventions': 0.26.0
@@ -3814,8 +3814,8 @@ snapshots:
       '@sentry/server-utils': 11.6.0
       hono: 4.13.13
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20261010.1
-      '@sentry/cloudflare': 11.6.0(@cloudflare/workers-types@5.20261010.1)(wrangler@4.149.0(@cloudflare/workers-types@5.20261010.1)(@types/node@26.6.5))
+      '@cloudflare/workers-types': 5.20261011.1
+      '@sentry/cloudflare': 11.6.0(@cloudflare/workers-types@5.20261011.1)(wrangler@4.149.0(@cloudflare/workers-types@5.20261011.1)(@types/node@26.6.5))
 
   '@sentry/opentelemetry@11.6.0(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -4263,9 +4263,9 @@ snapshots:
       esbuild: 0.25.12
       tsx: 4.23.13
 
-  drizzle-orm@0.45.4(@cloudflare/workers-types@5.20261010.1)(@neondatabase/serverless@1.2.0)(@opentelemetry/api@1.9.1):
+  drizzle-orm@0.45.4(@cloudflare/workers-types@5.20261011.1)(@neondatabase/serverless@1.2.0)(@opentelemetry/api@1.9.1):
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20261010.1
+      '@cloudflare/workers-types': 5.20261011.1
       '@neondatabase/serverless': 1.2.0
       '@opentelemetry/api': 1.9.1
 
@@ -5005,7 +5005,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20261006.1
       '@cloudflare/workerd-windows-64': 1.20261006.1
 
-  wrangler@4.149.0(@cloudflare/workers-types@5.20261010.1)(@types/node@26.6.5):
+  wrangler@4.149.0(@cloudflare/workers-types@5.20261011.1)(@types/node@26.6.5):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261006.1)
@@ -5016,7 +5016,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       workerd: 1.20261006.1
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20261010.1
+      '@cloudflare/workers-types': 5.20261011.1
       fsevents: 2.3.3
     transitivePeerDependencies:
       - '@types/node'
@@ -5085,4 +5085,4 @@ snapshots:
       '@yuku-parser/binding-win32-arm64': 0.9.5
       '@yuku-parser/binding-win32-x64': 0.9.5
 
-  zod@4.6.5: {}
+  zod@4.6.6: {}

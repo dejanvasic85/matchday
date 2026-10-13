@@ -6,7 +6,7 @@ packages:
 catalogMode: prefer
 
 catalog:
-  "@cloudflare/workers-types": 5.20261010.1
+  "@cloudflare/workers-types": 5.20261011.1
   "@hono/zod-openapi": 1.6.3
   "@neondatabase/serverless": 1.2.0
   "@sentry/cloudflare": 11.6.0
@@ -22,7 +22,7 @@ catalog:
   playwright-core: 1.64.0
   typescript: 6.0.3
   wrangler: 4.149.0
-  zod: 4.6.5
+  zod: 4.6.6
   vite: npm:@voidzero-dev/vite-plus-core@1.1.0
   vitest: 5.0.3
   vite-plus: 1.1.0
