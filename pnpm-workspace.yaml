@@ -6,11 +6,11 @@ packages:
 catalogMode: prefer
 
 catalog:
-  "@cloudflare/workers-types": 5.20261011.1
+  "@cloudflare/workers-types": 5.20261012.1
   "@hono/zod-openapi": 1.6.3
   "@neondatabase/serverless": 1.2.0
-  "@sentry/cloudflare": 11.6.0
-  "@sentry/hono": 11.6.0
+  "@sentry/cloudflare": 11.7.0
+  "@sentry/hono": 11.7.0
   "@types/node": ^26.0.0
   aws4fetch: 1.0.20
   commander: 15.0.0
@@ -22,11 +22,11 @@ catalog:
   playwright-core: 1.64.0
   typescript: 6.0.3
   wrangler: 4.149.0
-  zod: 4.6.6
+  zod: 4.6.7
   vite: npm:@voidzero-dev/vite-plus-core@1.1.0
-  vitest: 5.0.3
+  vitest: 5.0.4
   vite-plus: 1.1.0
-  "@vitest/coverage-v8": 5.0.3
+  "@vitest/coverage-v8": 5.0.4
 
 overrides:
   vite@*: "catalog:"
