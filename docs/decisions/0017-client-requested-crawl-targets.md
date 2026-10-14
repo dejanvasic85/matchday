@@ -12,7 +12,7 @@ secret across to stadly by hand.
 
 stadly already knows when a club links to matchday, so it could do this itself. It can't, because:
 
-- **The API is read only.** 0014 made `mday` the only administration surface and kept consumers to
+- **The API is read-only.** 0014 made `mday` the only administration surface and kept consumers to
   reads.
 - **Only an admin adds a crawl target.** 0016 said a follow never widens the crawl, and an admin
   adds targets on purpose.
@@ -43,6 +43,11 @@ as an admin running `mday crawl-target add`, just made by the client. The target
 league's competition and name, as in 0016, so it covers the current edition of that league even
 when the id came from a past season.
 
+The response includes `currentLeagueId`: the edition the next crawl will visit, or null when there
+is none yet. A null tells the caller the target is not crawled today. That happens between seasons,
+before the next edition exists, or when the league was renamed and the old name no longer matches.
+We still add the target, so a valid add between seasons is not refused.
+
 ### A client cannot remove a target
 
 Another client may rely on the same league. Removing a target stays an admin task in `mday`.
@@ -54,14 +59,33 @@ client cannot follow a club or rotate a secret for another.
 
 ### Following sets the webhook in the same call
 
-`PUT /clubs/{id}/follow` takes the webhook URL. It creates the follow if needed, then sets the
+`POST /clubs/{id}/follow` takes the webhook URL. It creates the follow if needed and sets the
 webhook with a fresh secret. The response shows the secret once. Calling it again rotates the
 secret, as `mday client set-webhook` does today.
+
+It is `POST`, not `PUT`, because each call has an effect: two identical calls give two different
+secrets. The secret in the latest successful response is the live one. A client that times out
+calls again and uses the new secret. The SDK never retries a `POST`, so it cannot rotate one behind
+the caller's back.
+
+### Webhooks only reach public https hosts
+
+A client now chooses where our crawl runner sends requests, so we limit the destination:
+
+- **https only.** Plain `http` is refused.
+- **No internal hosts.** We refuse `localhost` and any IP address that is loopback, private,
+  link-local or otherwise not public.
+- **Checked twice.** We check when the URL is saved, and again before each delivery, so a URL saved
+  before this rule cannot slip through.
+- **No redirects.** Delivery does not follow a redirect, so a public host cannot bounce the request
+  to an internal one. A redirect counts as a failed delivery.
+
+The CLI follows the same rules, so the API and `mday` cannot store different kinds of URL.
 
 ## Consequences
 
 - **The API gains a write surface.** It is narrow and scoped to the calling client. 0014's split
-  still holds: `mday` stays the admin surface, and any MCP server stays read only.
+  still holds: `mday` stays the admin surface, and any MCP server stays read-only.
 - **One copy of the logic.** The follow, webhook and crawl-target writes move to a new
   `@matchday/services` package that takes ids. The CLI resolves names to ids and calls it. The API
   calls it with ids from the URL.
@@ -70,7 +94,8 @@ secret, as `mday client set-webhook` does today.
   interactive transaction, so this needs one statement, not two.
 - **The SDK grows.** `followClub`, `unfollowClub` and `addLeagueCrawlTarget` ship in a minor
   release.
-- **A follow without a webhook stays CLI only.** The API always takes a webhook URL.
+- **A follow without a webhook stays CLI-only.** The API always takes a webhook URL.
+- **Existing webhooks are unaffected.** The one webhook in production uses a public https host.
 
 ## Deferred
 
@@ -79,3 +104,7 @@ secret, as `mday client set-webhook` does today.
   Revisit when a second client can add targets.
 - **No record of who asked for a target.** The log line is the only trace. If clients start adding
   targets often, store the requesting client on `crawl_target`.
+- **No DNS-rebinding defence.** A public hostname can still resolve to an internal address at
+  delivery time. Only clients holding an admin-issued token can set a webhook, and the crawl runs
+  on a short-lived GitHub Actions runner, so we accept that for now. Revisit before issuing tokens
+  to clients we don't know, or before moving delivery onto long-lived infrastructure.
