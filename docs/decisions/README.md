@@ -29,6 +29,7 @@ stays in place, marked, so the history stays readable.
 | 0014 | [Operator & consumer interfaces](0014-operator-and-consumer-interfaces.md) | proposed   | `mday` is the admin surface; any future MCP server is read-only                                      |
 | 0015 | [Season scope](0015-season-scope.md)                                       | decided    | A season is a source-wide label; each competition's run owns its window                              |
 | 0016 | [Crawl scope](0016-crawl-scope.md)                                         | decided    | Crawl scope is a system table of targets, not per-client subscriptions                               |
+| 0017 | [Client-requested crawl targets](0017-client-requested-crawl-targets.md)   | decided    | Clients follow clubs and request crawl targets through the API; only admins remove targets           |
 
 ## Format
 

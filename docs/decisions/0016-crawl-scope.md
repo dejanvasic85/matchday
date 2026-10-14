@@ -4,6 +4,8 @@
 - Date: 2026-09-26
 - Supersedes: 0012 (league subscriptions)
 - Reshapes: 0011 (data model)
+- Reshaped by: [0017](0017-client-requested-crawl-targets.md) — a client may add a target for one
+  league through the API. A follow still never adds one, and only an admin removes one.
 
 ## Context
 
