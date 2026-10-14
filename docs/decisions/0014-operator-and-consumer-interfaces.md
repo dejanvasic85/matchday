@@ -2,6 +2,8 @@
 
 - Status: proposed
 - Date: 2026-08-10
+- Reshaped by: [0017](0017-client-requested-crawl-targets.md) — the API gains a narrow write
+  surface, scoped to the calling client: follow a club, unfollow it, and request a crawl target.
 
 ## Context
 
