@@ -157,7 +157,8 @@ pnpm mday client revoke-token tok_xxxxxxxxxxxx
 text, so creating one implicitly would turn a typo into a second silent tenant holding its own
 tokens. Only `client add` creates a client.
 
-To tell a client about crawled leagues, follow a club and give the follow a webhook:
+To tell a client about crawled leagues, follow a club and give the follow a webhook. An API client
+can do the same through the SDK (`followClub`), so these CLI steps are optional for it:
 
 ```sh
 pnpm mday client follow-club --client "Williamstown SC" --club "Williamstown SC"
@@ -166,8 +167,9 @@ pnpm mday client set-webhook --client "Williamstown SC" --club "Williamstown SC"
 
 ### `crawl-target` — what the league crawl visits
 
-The crawl scope is a system setting, not a client's. A target names one league in a competition, by
-name, so it survives a season rollover:
+An admin manages the crawl scope with this command. An API client can also add a target for one
+league (`addLeagueCrawlTarget` in the SDK), but only an admin can remove one. A target names one
+league in a competition, by name, so it survives a season rollover:
 
 ```sh
 # Add a target — run `catalog` first so the competition and league exist

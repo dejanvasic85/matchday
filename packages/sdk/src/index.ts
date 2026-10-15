@@ -45,3 +45,5 @@ export {
   listAllLeagues,
   type LeagueFilter,
 } from "#leagueTasks.ts";
+
+export { addLeagueCrawlTarget, followClub, unfollowClub } from "#onboardingTasks.ts";
