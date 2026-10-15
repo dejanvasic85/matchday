@@ -217,6 +217,7 @@ if (databaseUrl === undefined) {
       });
 
       it("unfollows the club, then returns 404 when it is not followed", async () => {
+        await request(followPath, databaseUrl, token, { method: "POST", body: { webhookUrl } });
         const removed = await request(followPath, databaseUrl, token, { method: "DELETE" });
         const again = await request(followPath, databaseUrl, token, { method: "DELETE" });
 
