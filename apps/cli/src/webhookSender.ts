@@ -3,6 +3,7 @@
 
 import { ok, serverError, type Result } from "@matchday/domain";
 import { validateWebhookUrl } from "@matchday/services";
+import { checkResolvedHost } from "#webhookHost.ts";
 import type { SendWebhook } from "#services/webhookNotificationService.ts";
 
 const webhookTimeoutMs = 5000;
@@ -12,6 +13,11 @@ export const sendWebhook: SendWebhook = async ({ url, body, signature }): Promis
   const allowed = validateWebhookUrl(url);
   if (!allowed.ok) {
     return serverError(`Webhook delivery refused: ${allowed.error.message}`);
+  }
+
+  const resolved = await checkResolvedHost(new URL(url).hostname);
+  if (!resolved.ok) {
+    return serverError(`Webhook delivery refused: ${resolved.error.message}`);
   }
 
   try {

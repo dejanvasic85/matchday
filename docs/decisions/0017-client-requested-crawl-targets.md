@@ -78,6 +78,9 @@ A client now chooses where our crawl runner sends requests, so we limit the dest
   wrong, and a webhook with a public https certificate almost always uses a hostname.
 - **Checked twice.** We check when the URL is saved, and again before each delivery, so a URL saved
   before this rule cannot slip through.
+- **Names are resolved before delivery.** A hostname can point at an internal address. Before each
+  send we look the name up and refuse it if any answer is loopback, private, link-local or
+  otherwise internal.
 - **No redirects.** Delivery does not follow a redirect, so a public host cannot bounce the request
   to an internal one. A redirect counts as a failed delivery.
 
@@ -105,7 +108,8 @@ The CLI follows the same rules, so the API and `mday` cannot store different kin
   Revisit when a second client can add targets.
 - **No record of who asked for a target.** The log line is the only trace. If clients start adding
   targets often, store the requesting client on `crawl_target`.
-- **No DNS-rebinding defence.** A public hostname can still resolve to an internal address at
-  delivery time. Only clients holding an admin-issued token can set a webhook, and the crawl runs
-  on a short-lived GitHub Actions runner, so we accept that for now. Revisit before issuing tokens
-  to clients we don't know, or before moving delivery onto long-lived infrastructure.
+- **No DNS-rebinding defence.** The name is resolved once before the send, and `fetch` resolves it
+  again, so the answer can change in between. Only clients holding an admin-issued token can set a
+  webhook, and the crawl runs on a short-lived GitHub Actions runner, so we accept that for now.
+  Revisit before issuing tokens to clients we don't know, or before moving delivery onto
+  long-lived infrastructure.
