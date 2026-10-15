@@ -1,6 +1,14 @@
+import { badRequest, ok } from "@matchday/domain";
+import { checkResolvedHost } from "#webhookHost.ts";
 import { sendWebhook } from "#webhookSender.ts";
 
+vi.mock("#webhookHost.ts");
+
 describe("sendWebhook", () => {
+  beforeEach(() => {
+    vi.mocked(checkResolvedHost).mockResolvedValue(ok(undefined));
+  });
+
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -97,5 +105,23 @@ describe("sendWebhook", () => {
     });
 
     assert(!result.ok);
+  });
+
+  it("refuses to send when the host resolves to an internal address", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    vi.mocked(checkResolvedHost).mockResolvedValue(
+      badRequest("Webhook host hooks.example.com resolves to an internal address"),
+    );
+
+    const result = await sendWebhook({
+      url: "https://hooks.example.com/webhooks/matchday",
+      body: "{}",
+      signature: "deadbeef",
+    });
+
+    assert(!result.ok);
+    expect(result.error.message).toContain("Webhook delivery refused");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

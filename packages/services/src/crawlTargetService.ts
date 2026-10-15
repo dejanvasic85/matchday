@@ -28,10 +28,7 @@ export type LeagueCrawlTarget = {
   currentLeagueId: string | null;
 };
 
-/**
- * Add the league's competition and name as a crawl target. The target names the league, not its
- * season, so an id from a past edition targets the current one. Adding it again changes nothing.
- */
+// Targets the league by name, not season, so a past edition's id covers the current one.
 export async function addCrawlTargetForLeague(
   deps: CrawlTargetServiceDeps,
   leagueId: string,
