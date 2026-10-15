@@ -73,8 +73,9 @@ the caller's back.
 A client now chooses where our crawl runner sends requests, so we limit the destination:
 
 - **https only.** Plain `http` is refused.
-- **No internal hosts.** We refuse `localhost` and any IP address that is loopback, private,
-  link-local or otherwise not public.
+- **No internal hosts.** We refuse `localhost`, single-label names such as `intranet`, and every
+  IP address, public or not. Listing every private range, across IPv4 and IPv6, is easy to get
+  wrong, and a webhook with a public https certificate almost always uses a hostname.
 - **Checked twice.** We check when the URL is saved, and again before each delivery, so a URL saved
   before this rule cannot slip through.
 - **No redirects.** Delivery does not follow a redirect, so a public host cannot bounce the request

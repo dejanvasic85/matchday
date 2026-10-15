@@ -1,12 +1,13 @@
 // Client-club follows: a client's interest in a club, and the owner of the post-crawl webhook.
 
 import {
-  badRequest,
+  err,
+  errorKindValue,
   generateId,
-  generateWebhookSecret,
   notFound,
   ok,
   type Result,
+  type ResultError,
 } from "@matchday/domain";
 import type {
   clearClientClubWebhook as clearClientClubWebhookDb,
@@ -14,6 +15,7 @@ import type {
   setClientClubWebhook as setClientClubWebhookDb,
   upsertClientClub,
 } from "@matchday/db";
+import { setClubWebhookById, unfollowClubById } from "@matchday/services";
 import { resolveClub, type ClubResolverDeps, type ResolvedClub } from "#services/clubResolver.ts";
 import { resolveClient, type ClientResolverDeps } from "#services/clientResolver.ts";
 
@@ -81,24 +83,21 @@ export async function unfollowClub(
     return clientResult;
   }
 
-  const deleted = await deps.deleteClientClub(clientResult.value, clubResult.value.id);
+  const deleted = await unfollowClubById(deps, {
+    clientId: clientResult.value,
+    clubId: clubResult.value.id,
+  });
   if (!deleted.ok) {
-    return deleted;
-  }
-  if (deleted.value === null) {
-    return notFound(`"${clientName}" doesn't follow "${clubResult.value.name}"`);
+    return withNames(deleted.error, `"${clientName}" doesn't follow "${clubResult.value.name}"`);
   }
 
   return ok({ client: clientName, club: clubResult.value });
 }
 
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
+/** Swap the shared service's id-based "not following" message for one naming what the operator
+ * typed. Every other failure passes through unchanged. */
+function withNames(error: ResultError, message: string): Result<never> {
+  return error.kind === errorKindValue.notFound ? notFound(message) : err(error);
 }
 
 export type ConfiguredWebhook = {
@@ -126,10 +125,6 @@ export async function setClientClubWebhook(
   clubName: string,
   webhookUrl: string,
 ): Promise<Result<ConfiguredWebhook>> {
-  if (!isHttpUrl(webhookUrl)) {
-    return badRequest(`Webhook URL must be a valid http(s) URL: ${webhookUrl}`);
-  }
-
   const clubResult = await resolveClub(deps, clubName);
   if (!clubResult.ok) {
     return clubResult;
@@ -140,23 +135,23 @@ export async function setClientClubWebhook(
     return clientResult;
   }
 
-  const webhookSecret = generateWebhookSecret();
-  const updated = await deps.setClientClubWebhook(
-    clientResult.value,
-    clubResult.value.id,
+  const configured = await setClubWebhookById(deps, {
+    clientId: clientResult.value,
+    clubId: clubResult.value.id,
     webhookUrl,
-    webhookSecret,
-  );
-  if (!updated.ok) {
-    return updated;
-  }
-  if (updated.value === null) {
-    return notFound(
+  });
+  if (!configured.ok) {
+    return withNames(
+      configured.error,
       `"${clientName}" doesn't follow "${clubResult.value.name}" — run \`mday client follow-club\` first`,
     );
   }
 
-  return ok({ club: clubResult.value, webhookUrl, webhookSecret });
+  return ok({
+    club: clubResult.value,
+    webhookUrl: configured.value.webhookUrl,
+    webhookSecret: configured.value.webhookSecret,
+  });
 }
 
 /** Clear a followed club's webhook, reporting a client that doesn't follow the club as

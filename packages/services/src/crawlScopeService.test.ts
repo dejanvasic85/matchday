@@ -1,10 +1,6 @@
 import { ok, serverError, type Result } from "@matchday/domain";
 import type { CrawlTargetLeagueCandidate } from "@matchday/db";
-import {
-  resolveCrawlScope,
-  selectCurrentLeague,
-  type CrawlScopeDeps,
-} from "#services/crawlScopeService.ts";
+import { resolveCrawlScope, selectCurrentLeague, type CrawlScopeDeps } from "#crawlScopeService.ts";
 import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
 
 const today = makeIsoDate("2026-06-01");

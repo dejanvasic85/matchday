@@ -18,6 +18,7 @@
   "dependencies": {
     "@matchday/db": "workspace:*",
     "@matchday/domain": "workspace:*",
+    "@matchday/services": "workspace:*",
     "aws4fetch": "catalog:",
     "commander": "catalog:",
     "playwright-core": "catalog:",

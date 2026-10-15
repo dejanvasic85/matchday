@@ -4,8 +4,8 @@
 
 import { ok, todayInMelbourne, type IsoDate, type Logger, type Result } from "@matchday/domain";
 import { createDbClient, listCrawlTargetLeagueCandidates } from "@matchday/db";
+import { resolveCrawlScope } from "@matchday/services";
 import type { CliConfig } from "#config.ts";
-import { resolveCrawlScope } from "#services/crawlScopeService.ts";
 import { chunkLeagueIds, labelLeagueChunks, type LeagueChunk } from "#services/leagueChunks.ts";
 
 export type RunCrawlScopeJobInput = {
