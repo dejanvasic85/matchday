@@ -46,6 +46,39 @@ export async function upsertClientClub(
   );
 }
 
+type ClientClubWebhookUpsert = {
+  id: string;
+  clientId: string;
+  clubId: string;
+  webhookUrl: string;
+  webhookSecret: string;
+};
+
+/** Upsert a follow and set its webhook in one statement, so a follow never exists without the
+ * webhook it was created for. The failure context omits the secret, so it never reaches a log. */
+export async function upsertClientClubWithWebhook(
+  db: Db,
+  values: ClientClubWebhookUpsert,
+): Promise<Result<ClientClub>> {
+  return runUpsert(
+    () =>
+      db
+        .insert(clientClub)
+        .values(values)
+        .onConflictDoUpdate({
+          target: [clientClub.clientId, clientClub.clubId],
+          set: {
+            webhookUrl: values.webhookUrl,
+            webhookSecret: values.webhookSecret,
+            updatedAt: new Date(),
+          },
+        })
+        .returning(),
+    "client club",
+    { clientId: values.clientId, clubId: values.clubId },
+  );
+}
+
 /** Every follow with its club's name, club-ordered. Not client-scoped: `client list` renders the
  * whole roster in one pass, so it groups these by `clientId` itself rather than issuing a query
  * per client. */

@@ -51,6 +51,39 @@ describe("sendWebhook", () => {
     expect(result.error.message).toContain("HTTP 500");
   });
 
+  it("does not follow redirects, so a 3xx fails the delivery", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 302 });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await sendWebhook({
+      url: "https://example.com/webhooks/matchday",
+      body: "{}",
+      signature: "deadbeef",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://example.com/webhooks/matchday",
+      expect.objectContaining({ redirect: "manual" }),
+    );
+    assert(!result.ok);
+    expect(result.error.message).toContain("HTTP 302");
+  });
+
+  it("refuses an internal URL without sending anything", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await sendWebhook({
+      url: "https://169.254.169.254/latest",
+      body: "{}",
+      signature: "deadbeef",
+    });
+
+    assert(!result.ok);
+    expect(result.error.message).toContain("refused");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("returns err when the fetch call throws (e.g. timeout)", async () => {
     vi.stubGlobal(
       "fetch",

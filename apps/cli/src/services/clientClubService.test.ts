@@ -115,7 +115,7 @@ describe("setClientClubWebhook", () => {
     }
   });
 
-  it("rejects a non-http(s) URL without touching the database", async () => {
+  it("rejects a URL that is not a public https host without writing", async () => {
     const deps = makeDeps();
 
     const result = await setClientClubWebhook(
@@ -126,7 +126,7 @@ describe("setClientClubWebhook", () => {
     );
 
     expect(result).toEqual(
-      badRequest("Webhook URL must be a valid http(s) URL: ftp://example.com/hook"),
+      badRequest("Webhook URL must be https with a public hostname: ftp://example.com/hook"),
     );
     expect(deps.setClientClubWebhook).not.toHaveBeenCalled();
   });

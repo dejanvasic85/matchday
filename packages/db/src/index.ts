@@ -87,6 +87,7 @@ export { upsertExternalRef, findExternalRef, findExternalRefByInternalId } from 
 export { upsertClientByName, listClients, findClientByName } from "#clientDb.ts";
 export {
   upsertClientClub,
+  upsertClientClubWithWebhook,
   listClientClubs,
   deleteClientClub,
   setClientClubWebhook,
