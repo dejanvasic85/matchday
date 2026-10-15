@@ -8,9 +8,8 @@ import { unwrap, unwrapNoContent, type Result } from "#result.ts";
 type ClubFollow = components["schemas"]["ClubFollow"];
 type CrawlTarget = components["schemas"]["CrawlTarget"];
 
-/** Follow a club and set the webhook that hears about its changes. Each call issues a new
- * `webhookSecret`; only the latest response holds the live one, so store it straight away.
- * The webhook must be an https URL with a public hostname. */
+/** Follow a club and set its webhook, which must be https with a public hostname. Each call
+ * issues a new `webhookSecret`, so keep the latest one. */
 export async function followClub(
   client: MatchdayClient,
   clubId: string,
@@ -43,9 +42,8 @@ export async function unfollowClub(
   );
 }
 
-/** Ask for a league to be crawled. The target covers every edition of the league, so any season's
- * id works, and adding it again changes nothing. `currentLeagueId` is the edition the next crawl
- * visits, or null when none is crawlable yet. */
+/** Ask for a league to be crawled; any season's id works, and adding it again changes nothing.
+ * `currentLeagueId` is the edition the next crawl visits, or null when none is crawlable yet. */
 export async function addLeagueCrawlTarget(
   client: MatchdayClient,
   leagueId: string,
