@@ -80,11 +80,11 @@ describe("edgeCache", () => {
     expect(cache.put).not.toHaveBeenCalled();
   });
 
-  it("does not cache a non-GET", async () => {
+  it.each(["POST", "PUT", "DELETE"])("does not cache a %s", async (method) => {
     const cache = stubCaches();
     const app = makeApp(() => new Response("{}", { status: 200 }));
 
-    await app.request("/clubs", { method: "POST" }, {}, executionCtx);
+    await app.request("/clubs", { method }, {}, executionCtx);
 
     expect(cache.match).not.toHaveBeenCalled();
     expect(cache.put).not.toHaveBeenCalled();

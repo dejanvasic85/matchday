@@ -43,7 +43,27 @@ describe("openapi.json", () => {
   });
 });
 
+describe("follow and crawl-target routes", () => {
+  it("lists the write routes in the spec", async () => {
+    const doc = await fetchOpenApiDoc();
+
+    expect(doc.paths["/clubs/{id}/follow"]).toHaveProperty("post");
+    expect(doc.paths["/clubs/{id}/follow"]).toHaveProperty("delete");
+    expect(doc.paths["/leagues/{id}/crawl-target"]).toHaveProperty("put");
+  });
+});
+
 describe("auth wiring", () => {
+  it.each([
+    { method: "POST", path: "/clubs/clb_V1StGXR8Z5/follow" },
+    { method: "DELETE", path: "/clubs/clb_V1StGXR8Z5/follow" },
+    { method: "PUT", path: "/leagues/lea_V1StGXR8Z5/crawl-target" },
+  ])("rejects $method $path with no Authorization header", async ({ method, path }) => {
+    const res = await app.request(path, { method }, testEnv);
+
+    expect(res.status).toBe(401);
+  });
+
   it("rejects a protected route with no Authorization header", async () => {
     const res = await app.request("/leagues", {}, testEnv);
 

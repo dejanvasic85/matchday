@@ -18,6 +18,7 @@
     "@hono/zod-openapi": "catalog:",
     "@matchday/db": "workspace:*",
     "@matchday/domain": "workspace:*",
+    "@matchday/services": "workspace:*",
     "@sentry/cloudflare": "catalog:",
     "@sentry/hono": "catalog:",
     "hono": "catalog:",

@@ -1,7 +1,11 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createConsoleLogger, todayInMelbourne } from "@matchday/domain";
+import { addCrawlTargetForLeague } from "@matchday/services";
 import type { ApiBindings } from "#config.ts";
+import type { ApiTokenAuthVariables } from "#middleware/apiTokenAuth.ts";
 import type { DbVariables } from "#middleware/dbClient.ts";
 import { jsonResult } from "#resultResponse.ts";
+import { crawlTargetResponseSchema } from "#schemas/crawlTargetSchema.ts";
 import { errorResponsesValue } from "#schemas/errorResponses.ts";
 import { fixtureResponseSchema } from "#schemas/fixtureSchema.ts";
 import { idParamSchema } from "#schemas/idParamSchema.ts";
@@ -10,6 +14,7 @@ import { leagueResponseSchema } from "#schemas/leagueSchema.ts";
 import { pagedSchema, pagingQuerySchema } from "#schemas/pagedSchema.ts";
 import { tableEntryResponseSchema } from "#schemas/tableEntrySchema.ts";
 import { teamResponseSchema } from "#schemas/teamSchema.ts";
+import { createCrawlTargetServiceDeps } from "#services/crawlTargetService.ts";
 import { createFixtureServiceDeps, listLeagueFixtures } from "#services/fixtureService.ts";
 import {
   createLeagueOverviewServiceDeps,
@@ -21,7 +26,7 @@ import { createTeamServiceDeps, listLeagueTeams } from "#services/teamService.ts
 
 export const leagueRoute = new OpenAPIHono<{
   Bindings: ApiBindings;
-  Variables: DbVariables;
+  Variables: DbVariables & ApiTokenAuthVariables;
 }>();
 
 const listLeaguesRoute = createRoute({
@@ -193,4 +198,40 @@ leagueRoute.openapi(listLeagueTeamsRoute, async (c) => {
   const { id } = c.req.valid("param");
   const result = await listLeagueTeams(createTeamServiceDeps(c.get("db")), id);
   return jsonResult(c, result, "api.league.teams.failed");
+});
+
+const addCrawlTargetRoute = createRoute({
+  method: "put",
+  path: "/{id}/crawl-target",
+  tags: ["Leagues"],
+  summary: "Ask for a league to be crawled",
+  description:
+    "Adds the league, by competition and name, to the crawl. It covers every edition of the " +
+    "league, so a past season's id works. Adding it again changes nothing. Only an admin can " +
+    "remove a target.",
+  request: { params: idParamSchema("league", "lea_V1StGXR8Z5") },
+  responses: {
+    200: {
+      description: "The crawl target",
+      content: { "application/json": { schema: crawlTargetResponseSchema } },
+    },
+    ...errorResponsesValue,
+  },
+});
+
+leagueRoute.openapi(addCrawlTargetRoute, async (c) => {
+  const { id } = c.req.valid("param");
+  const result = await addCrawlTargetForLeague(
+    createCrawlTargetServiceDeps(c.get("db")),
+    id,
+    todayInMelbourne(),
+  );
+  if (result.ok) {
+    createConsoleLogger().info("api.crawlTarget.add", "Client added a crawl target", {
+      clientId: c.get("clientId"),
+      leagueId: id,
+      targetId: result.value.id,
+    });
+  }
+  return jsonResult(c, result, "api.crawlTarget.add.failed");
 });
