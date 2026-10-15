@@ -38,6 +38,9 @@ catalog:
 | `getLeagueOverview(client, leagueId)` | league + fixtures + table + teams, in one request |
 | `getLeagueTeams(client, leagueId)`    | a league's teams, each with its club embedded     |
 | `getClubLeagues(client, clubId)`      | every league a club's teams play in               |
+| `followClub(client, clubId, url)`     | follows a club and sets its webhook; the secret   |
+| `unfollowClub(client, clubId)`        | stops following a club                            |
+| `addLeagueCrawlTarget(client, id)`    | asks for a league to be crawled                   |
 
 ```ts
 import { getLeagueOverview } from "matchday-sdk";
@@ -50,6 +53,33 @@ if (result.ok) {
 
 Use `getLeagueTeams` rather than `GET /teams` plus `GET /clubs`. The full catalog runs to roughly
 6,500 teams and 2.4 MB, which is a lot to download to resolve the handful in one league.
+
+### Following a club and requesting a crawl
+
+You can onboard a club without the `mday` CLI. The client is always the one your token belongs to.
+
+```ts
+import { addLeagueCrawlTarget, followClub } from "matchday-sdk";
+
+const follow = await followClub(client, "clb_V1StGXR8Z5", "https://example.com/hook");
+if (follow.ok) {
+  // Store this now. Only the latest response holds the live secret.
+  saveSecret(follow.value.webhookSecret);
+}
+
+const target = await addLeagueCrawlTarget(client, "lea_V1StGXR8Z5");
+if (target.ok && target.value.currentLeagueId === null) {
+  console.log("Added, but no edition is crawlable yet. Try again once the season starts.");
+}
+```
+
+- **The webhook** must be an https URL with a public hostname. A host name that points at a private
+  address is refused when we deliver.
+- **Following again** issues a new secret and stops the old one working. The SDK never retries
+  these writes, so a timed-out call is safe for you to repeat.
+- **A follow never adds a crawl target.** Ask for one on purpose with `addLeagueCrawlTarget`. It
+  covers every edition of the league, and only an admin can remove it.
+- **`unfollowClub`** returns `ok` with no value, or a 404 when your client doesn't follow the club.
 
 ### Framework-specific fetch options (Next.js `next`, etc.)
 

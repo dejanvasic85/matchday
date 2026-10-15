@@ -61,6 +61,20 @@ export function unwrap<T>(outcome: FetchOutcome<T>): Result<T> {
   return ok(data);
 }
 
+/** `unwrap` for a call that succeeds with no body, such as a 204 from a DELETE. */
+export function unwrapNoContent(outcome: Omit<FetchOutcome<unknown>, "data">): Result<void> {
+  const { error, response } = outcome;
+
+  if (error !== undefined || !response.ok) {
+    return err({
+      status: response.status,
+      message: messageFor(response.status, error),
+      cause: error,
+    });
+  }
+  return ok(undefined);
+}
+
 /**
  * `unwrap`, but throws on failure — for a transport boundary that wants an exception, or a script
  * where a failure should just stop things.
