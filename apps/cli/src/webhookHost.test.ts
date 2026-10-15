@@ -23,6 +23,7 @@ describe("checkResolvedHost", () => {
     "::1",
     "fd00::1",
     "fe80::1",
+    "fec0::1",
     "::ffff:10.0.0.5",
     "::ffff:169.254.169.254",
   ])("refuses a host that resolves to %s", async (address) => {

@@ -20,6 +20,7 @@ const internalRangesValue: ReadonlyArray<readonly [string, number, "ipv4" | "ipv
   ["::1", 128, "ipv6"],
   ["fc00::", 7, "ipv6"],
   ["fe80::", 10, "ipv6"],
+  ["fec0::", 10, "ipv6"],
   ["ff00::", 8, "ipv6"],
 ];
 
