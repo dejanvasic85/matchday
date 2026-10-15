@@ -33,8 +33,24 @@ export function jsonResult<E extends Env, T>(c: Context<E>, result: Result<T>, e
   if (result.ok) {
     return c.json(result.value, 200);
   }
+  return failureResponse(c, result.error, event);
+}
 
-  const { kind, message } = result.error;
+/** Like `jsonResult`, for a success with nothing to return: 204 with no body. Same failure
+ * statuses, so a route spreads `errorResponsesValue` here too. */
+export function noContentResult<E extends Env>(
+  c: Context<E>,
+  result: Result<unknown>,
+  event: string,
+) {
+  if (result.ok) {
+    return c.body(null, 204);
+  }
+  return failureResponse(c, result.error, event);
+}
+
+function failureResponse<E extends Env>(c: Context<E>, error: ResultError, event: string) {
+  const { kind, message } = error;
   switch (kind) {
     case errorKindValue.notFound:
       return c.json({ error: message }, 404);
@@ -45,7 +61,7 @@ export function jsonResult<E extends Env, T>(c: Context<E>, result: Result<T>, e
     case errorKindValue.conflict:
       return c.json({ error: message }, 409);
     case errorKindValue.serverError:
-      logFailure(event, result.error);
+      logFailure(event, error);
       return c.json({ error: "Internal server error" }, 500);
     default: {
       const unhandled: never = kind;

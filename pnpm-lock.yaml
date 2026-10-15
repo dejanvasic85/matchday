@@ -297,6 +297,9 @@ importers:
       '@matchday/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@matchday/services':
+        specifier: workspace:*
+        version: link:../../packages/services
       '@sentry/cloudflare':
         specifier: 'catalog:'
         version: 11.7.0(@cloudflare/workers-types@5.20261013.1)(wrangler@4.150.0(@cloudflare/workers-types@5.20261013.1)(@types/node@26.6.5))

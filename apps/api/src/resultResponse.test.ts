@@ -1,14 +1,15 @@
 import { badRequest, conflict, notFound, ok, serverError, unauthorized } from "@matchday/domain";
 import type { Context, Env } from "hono";
-import { jsonResult } from "#resultResponse.ts";
+import { jsonResult, noContentResult } from "#resultResponse.ts";
 
-/** The helper only ever touches `c.json`, so a fake that records its arguments is enough — no
+/** The helpers only ever touch `c.json` and `c.body`, so a fake that records its arguments is enough — no
  * Hono request/response plumbing needed to assert the status mapping. */
 function makeContext() {
   const json = vi.fn((body: unknown, status: number) => ({ body, status }));
+  const body = vi.fn((data: null, status: number) => ({ data, status }));
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- a `c.json`-only stand-in is
   // all this helper consumes; building a real Hono Context here would test the framework.
-  return { json } as unknown as Context<Env> & { json: typeof json };
+  return { json, body } as unknown as Context<Env> & { json: typeof json; body: typeof body };
 }
 
 describe("jsonResult", () => {
@@ -61,5 +62,33 @@ describe("jsonResult", () => {
     jsonResult(c, notFound("Club not found"), "api.club.get.failed");
 
     expect(consoleError).not.toHaveBeenCalled();
+  });
+});
+
+describe("noContentResult", () => {
+  it("returns 204 with no body on success", () => {
+    const c = makeContext();
+
+    noContentResult(c, ok({ clubId: "clb_1" }), "api.club.unfollow.failed");
+
+    expect(c.body).toHaveBeenCalledWith(null, 204);
+    expect(c.json).not.toHaveBeenCalled();
+  });
+
+  it("maps a NotFound failure to 404, returning its message", () => {
+    const c = makeContext();
+
+    noContentResult(c, notFound("Not followed"), "api.club.unfollow.failed");
+
+    expect(c.json).toHaveBeenCalledWith({ error: "Not followed" }, 404);
+  });
+
+  it("returns a 500 that withholds the message on a ServerError", () => {
+    const c = makeContext();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    noContentResult(c, serverError("connection to Neon refused"), "api.club.unfollow.failed");
+
+    expect(c.json).toHaveBeenCalledWith({ error: "Internal server error" }, 500);
   });
 });
