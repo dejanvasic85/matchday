@@ -22,6 +22,15 @@ describe("validateWebhookUrl", () => {
     );
   });
 
+  it.each(["https://user:secret@hooks.example.com/x", "https://user@hooks.example.com/x"])(
+    "refuses credentials in %s without echoing them",
+    (url) => {
+      expect(validateWebhookUrl(url)).toEqual(
+        badRequest("Webhook URL must not contain a username or password"),
+      );
+    },
+  );
+
   it("refuses text that is not a URL", () => {
     expect(validateWebhookUrl("not a url").ok).toBe(false);
   });

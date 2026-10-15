@@ -31,6 +31,11 @@ export function validateWebhookUrl(value: string): Result<string> {
     return refused;
   }
 
+  // Credentials would be stored and then logged with the URL; the message leaves the value out.
+  if (url.username !== "" || url.password !== "") {
+    return badRequest("Webhook URL must not contain a username or password");
+  }
+
   const hostname = url.hostname.replace(/\.$/, "");
   if (url.protocol !== requiredProtocol || isIpAddress(hostname) || isInternalName(hostname)) {
     return refused;
