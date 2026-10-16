@@ -2,10 +2,18 @@
 // `Result` of rows. No business rules here (AGENTS.md).
 
 import { ok, type IsoDate, type Result } from "@matchday/domain";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, exists } from "drizzle-orm";
 import type { Db } from "#client.ts";
+import { externalRefEntityTypeValue, sourceValue } from "#constants.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
-import { competition, competitionSeason, crawlTarget, league, season } from "#schema.ts";
+import {
+  competition,
+  competitionSeason,
+  crawlTarget,
+  externalRef,
+  league,
+  season,
+} from "#schema.ts";
 
 type CrawlTarget = typeof crawlTarget.$inferSelect;
 export type CrawlTargetInsert = typeof crawlTarget.$inferInsert;
@@ -78,7 +86,8 @@ export type CrawlTargetLeagueCandidate = {
 
 /** Every target's candidate leagues, so the crawl scope can pick each target's current edition. The
  * league and its window are left-joined: a target whose name matches no league still returns one row
- * with nulls, which the caller warns about rather than dropping silently. */
+ * with nulls, which the caller warns about rather than dropping silently. Only leagues with a Dribl
+ * ref count, since the league crawl this feeds is a Dribl crawl; other sources run on their own. */
 export async function listCrawlTargetLeagueCandidates(
   db: Db,
 ): Promise<Result<CrawlTargetLeagueCandidate[]>> {
@@ -104,6 +113,18 @@ export async function listCrawlTargetLeagueCandidates(
           and(
             eq(league.competitionId, crawlTarget.competitionId),
             eq(league.name, crawlTarget.leagueName),
+            exists(
+              db
+                .select({ id: externalRef.id })
+                .from(externalRef)
+                .where(
+                  and(
+                    eq(externalRef.entityType, externalRefEntityTypeValue.league),
+                    eq(externalRef.internalId, league.id),
+                    eq(externalRef.source, sourceValue.dribl),
+                  ),
+                ),
+            ),
           ),
         )
         .leftJoin(season, eq(season.id, league.seasonId))
