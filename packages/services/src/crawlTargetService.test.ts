@@ -16,6 +16,7 @@ function makeCandidate(
     targetLeagueName: "U13 YPL1 Boys",
     leagueId: "lea_2026000000",
     leagueName: "U13 YPL1 Boys",
+    source: "dribl",
     seasonId: "sea_2026000000",
     seasonName: "2026",
     startsOn: makeIsoDate("2026-02-01"),

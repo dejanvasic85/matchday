@@ -2,7 +2,14 @@
 // scopes the crawl-leagues GitHub Actions matrix; the CLI command keeps its name so the workflow is
 // unchanged.
 
-import { ok, todayInMelbourne, type IsoDate, type Logger, type Result } from "@matchday/domain";
+import {
+  ok,
+  sourceValue,
+  todayInMelbourne,
+  type IsoDate,
+  type Logger,
+  type Result,
+} from "@matchday/domain";
 import { createDbClient, listCrawlTargetLeagueCandidates } from "@matchday/db";
 import { resolveCrawlScope } from "@matchday/services";
 import type { CliConfig } from "#config.ts";
@@ -32,6 +39,7 @@ export async function runCrawlScopeJob(
   const scope = await resolveCrawlScope(
     { listCrawlTargetLeagueCandidates: () => listCrawlTargetLeagueCandidates(db) },
     today,
+    sourceValue.dribl,
   );
   if (!scope.ok) {
     return scope;
@@ -40,7 +48,7 @@ export async function runCrawlScopeJob(
   // Warn on the way to the result: a target that resolved to nothing would otherwise just vanish
   // from the crawl. stdout keeps the one result line the workflow parses.
   for (const target of scope.value.skipped) {
-    logger.warn("crawlscope.targetskipped", "crawl target has no league to crawl", {
+    logger.warn("crawlscope.targetskipped", "crawl target has no dribl league to crawl", {
       competition: target.competitionName,
       league: target.leagueName,
     });

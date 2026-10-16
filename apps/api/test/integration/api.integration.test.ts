@@ -8,6 +8,7 @@ import {
   deleteCrawlTargetById,
   insertApiToken,
   listClientClubs,
+  listCrawlTargetLeagueCandidates,
   upsertClientByName,
   upsertClub,
   upsertCompetition,
@@ -15,7 +16,14 @@ import {
   upsertLeague,
   upsertSeason,
 } from "@matchday/db";
-import { generateApiToken, generateId, hashApiToken, type Result } from "@matchday/domain";
+import {
+  generateApiToken,
+  generateId,
+  hashApiToken,
+  todayInMelbourne,
+  type Result,
+} from "@matchday/domain";
+import { resolveCrawlScope } from "@matchday/services";
 import { z } from "zod";
 import app from "#api.ts";
 
@@ -299,7 +307,7 @@ if (databaseUrl === undefined) {
         expect(crawlTargetSchema.parse(await second.json()).id).toBe(target.id);
       });
 
-      it("adds a league the Dribl crawl can't visit, with no current league", async () => {
+      it("adds a league from another source, which names its own league", async () => {
         const res = await request(`/leagues/${coastalLeagueId}/crawl-target`, databaseUrl, token, {
           method: "PUT",
         });
@@ -307,7 +315,25 @@ if (databaseUrl === undefined) {
         const target = crawlTargetSchema.parse(await res.json());
         crawlTargetIds.push(target.id);
         expect(res.status).toBe(200);
-        expect(target.currentLeagueId).toBeNull();
+        expect(target.currentLeagueId).toBe(coastalLeagueId);
+      });
+
+      it("gives each source's crawl only its own leagues from the shared targets", async () => {
+        for (const id of [leagueId, coastalLeagueId]) {
+          const res = await request(`/leagues/${id}/crawl-target`, databaseUrl, token, {
+            method: "PUT",
+          });
+          crawlTargetIds.push(crawlTargetSchema.parse(await res.json()).id);
+        }
+        const deps = { listCrawlTargetLeagueCandidates: () => listCrawlTargetLeagueCandidates(db) };
+
+        const dribl = valueOrThrow(await resolveCrawlScope(deps, todayInMelbourne(), "dribl"));
+        const coastal = valueOrThrow(await resolveCrawlScope(deps, todayInMelbourne(), "coastal"));
+
+        expect(dribl.leagueIds).toContain(leagueId);
+        expect(dribl.leagueIds).not.toContain(coastalLeagueId);
+        expect(coastal.leagueIds).toContain(coastalLeagueId);
+        expect(coastal.leagueIds).not.toContain(leagueId);
       });
     });
   });

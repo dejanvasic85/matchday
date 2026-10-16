@@ -1,4 +1,4 @@
-import { ok, serverError, type Result } from "@matchday/domain";
+import { ok, serverError, sourceValue, type Result } from "@matchday/domain";
 import type { CrawlTargetLeagueCandidate } from "@matchday/db";
 import { resolveCrawlScope, selectCurrentLeague, type CrawlScopeDeps } from "#crawlScopeService.ts";
 import { makeIsoDate } from "#test/fixtures/calendarDate.ts";
@@ -15,6 +15,7 @@ function makeCandidate(
     targetLeagueName: "U13 YPL1 Boys",
     leagueId: "lea_2026000000",
     leagueName: "U13 YPL1 Boys",
+    source: sourceValue.dribl,
     seasonId: "sea_2026000000",
     seasonName: "2026",
     startsOn: makeIsoDate("2026-02-01"),
@@ -124,7 +125,7 @@ describe("resolveCrawlScope", () => {
       }),
     ]);
 
-    const result = await resolveCrawlScope(deps, today);
+    const result = await resolveCrawlScope(deps, today, sourceValue.dribl);
 
     expect(result).toEqual(ok({ leagueIds: ["lea_one0000000", "lea_two0000000"], skipped: [] }));
   });
@@ -145,7 +146,7 @@ describe("resolveCrawlScope", () => {
       }),
     ]);
 
-    const result = await resolveCrawlScope(deps, today);
+    const result = await resolveCrawlScope(deps, today, sourceValue.dribl);
 
     expect(result).toEqual(
       ok({
@@ -155,10 +156,54 @@ describe("resolveCrawlScope", () => {
     );
   });
 
+  it("skips a target whose league belongs to another source", async () => {
+    const deps = makeDeps([
+      makeCandidate({ targetId: "crt_one0000000", leagueId: "lea_one0000000" }),
+      makeCandidate({
+        targetId: "crt_coastal000",
+        competitionName: "Coastal Premier League",
+        targetLeagueName: "Coastal Premier League",
+        leagueId: "lea_coastal000",
+        source: sourceValue.coastal,
+      }),
+    ]);
+
+    const result = await resolveCrawlScope(deps, today, sourceValue.dribl);
+
+    expect(result).toEqual(
+      ok({
+        leagueIds: ["lea_one0000000"],
+        skipped: [
+          { competitionName: "Coastal Premier League", leagueName: "Coastal Premier League" },
+        ],
+      }),
+    );
+  });
+
+  it("gives each source its own leagues from the same targets", async () => {
+    const deps = makeDeps([
+      makeCandidate({ targetId: "crt_one0000000", leagueId: "lea_one0000000" }),
+      makeCandidate({
+        targetId: "crt_coastal000",
+        leagueId: "lea_coastal000",
+        source: sourceValue.coastal,
+      }),
+    ]);
+
+    const coastal = await resolveCrawlScope(deps, today, sourceValue.coastal);
+
+    expect(coastal).toEqual(
+      ok({
+        leagueIds: ["lea_coastal000"],
+        skipped: [{ competitionName: "NPL Victoria", leagueName: "U13 YPL1 Boys" }],
+      }),
+    );
+  });
+
   it("passes a data-access failure through", async () => {
     const deps = makeDeps(serverError("db down"));
 
-    const result = await resolveCrawlScope(deps, today);
+    const result = await resolveCrawlScope(deps, today, sourceValue.dribl);
 
     expect(result.ok).toBe(false);
   });
