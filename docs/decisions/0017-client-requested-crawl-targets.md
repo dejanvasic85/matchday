@@ -90,6 +90,8 @@ The CLI follows the same rules, so the API and `mday` cannot store different kin
 
 - **The API gains a write surface.** It is narrow and scoped to the calling client. 0014's split
   still holds: `mday` stays the admin surface, and any MCP server stays read-only.
+- **Targets drive every source.** Each source's crawl asks for its own leagues from the same
+  targets, so a Coastal league is crawled when a client or an admin adds it as a target.
 - **One copy of the logic.** The follow, webhook and crawl-target writes move to a new
   `@matchday/services` package that takes ids. The CLI resolves names to ids and calls it. The API
   calls it with ids from the URL.

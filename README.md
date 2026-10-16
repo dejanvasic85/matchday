@@ -182,8 +182,9 @@ pnpm mday crawl-target list
 pnpm mday crawl-target remove --id crt_xxxxxxxxxxxx
 ```
 
-`subscribed-leagues` resolves each target to its competition's current season and prints the league
-ids the league crawl visits.
+`subscribed-leagues --source <name>` resolves each target to its competition's current season and
+prints the league ids that source's crawl visits. Dribl and Coastal read the same targets and each
+takes only its own leagues.
 
 ### Other commands
 
