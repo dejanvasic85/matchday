@@ -61,8 +61,10 @@ jobs:
 
       - name: List subscribed leagues and deal them into matrix chunks
         id: leagues
+        env:
+          SOURCE: ${{ inputs.source }}
         run: |
-          output=$(vp run --filter @matchday/cli mday subscribed-leagues --max-chunks "$MAX_CRAWL_JOBS")
+          output=$(vp run --filter @matchday/cli mday subscribed-leagues --source "$SOURCE" --max-chunks "$MAX_CRAWL_JOBS")
           chunks=$(echo "$output" | grep -o '{.*}' | tail -1 | jq -c '.chunks')
           # Fail here with the output quoted, rather than downstream inside fromJson.
           if [ -z "$chunks" ] || ! echo "$chunks" | jq -e 'type == "array"' > /dev/null; then
@@ -136,9 +138,9 @@ jobs:
           vp run --filter @matchday/cli mday crawl-leagues "${args[@]}"
 
   # Coastal generates results from the clock, so there is no site, no browser and no Chrome install.
-  # `mday` resolves the running Coastal league itself, so no matrix is needed.
+  # It reads the same crawl targets as Dribl and takes only its own leagues, so no matrix is needed.
   crawl-leagues-coastal:
-    name: Crawl Coastal league
+    name: Crawl Coastal leagues
     if: inputs.source == 'coastal'
     runs-on: ubuntu-latest
     environment: production
@@ -153,5 +155,22 @@ jobs:
       - name: Install dependencies
         run: vp install --frozen-lockfile
 
-      - name: Run Coastal league crawl
-        run: vp run --filter @matchday/cli mday crawl-leagues --source coastal
+      - name: Crawl the targeted Coastal leagues
+        run: |
+          output=$(vp run --filter @matchday/cli mday subscribed-leagues --source coastal)
+          result=$(echo "$output" | grep -o '{.*}' | tail -1 || true)
+          # Fail here with the output quoted, rather than crawling the wrong leagues.
+          if ! echo "$result" | jq -e '.leagueIds | type == "array"' > /dev/null; then
+            echo "::error::Failed to parse leagueIds from 'mday subscribed-leagues' output: $output"
+            exit 1
+          fi
+          leagues=$(echo "$result" | jq -r '.leagueIds | join(" ")')
+          if [ -z "$leagues" ]; then
+            echo "No Coastal leagues are targeted; nothing to crawl."
+            exit 0
+          fi
+          args=()
+          for league in $leagues; do
+            args+=(--league "$league")
+          done
+          vp run --filter @matchday/cli mday crawl-leagues --source coastal "${args[@]}"

@@ -1,7 +1,7 @@
 // Crawl scope: pick the league the deep crawl should visit for each crawl target. A target is
 // season-agnostic, so this chooses the competition's current edition from its calendar window.
 
-import { ok, type IsoDate, type Result } from "@matchday/domain";
+import { ok, type IsoDate, type Result, type Source } from "@matchday/domain";
 import type { CrawlTargetLeagueCandidate, listCrawlTargetLeagueCandidates } from "@matchday/db";
 
 type WithoutDb<F> = F extends (db: never, ...rest: infer Rest) => infer Return
@@ -92,11 +92,13 @@ export function selectCurrentLeague(
   return pickLatest(withLeague, (candidate) => candidate.seasonName);
 }
 
-/** Resolve every target to the league the deep crawl should visit, grouping the candidate rows by
- * target first so each target is one decision. */
+/** Resolve every target to the league one source's crawl should visit, grouping the candidate rows
+ * by target first so each target is one decision. A target whose league belongs to another source is
+ * skipped, so each crawl takes only its own leagues from the shared targets. */
 export async function resolveCrawlScope(
   deps: CrawlScopeDeps,
   today: IsoDate,
+  source: Source,
 ): Promise<Result<CrawlScope>> {
   const result = await deps.listCrawlTargetLeagueCandidates();
   if (!result.ok) {
@@ -123,7 +125,8 @@ export async function resolveCrawlScope(
   const leagueIds: string[] = [];
   const skipped: SkippedCrawlTarget[] = [];
   for (const group of groups.values()) {
-    const chosen = selectCurrentLeague(group.candidates, today);
+    const ownLeagues = group.candidates.filter((candidate) => candidate.source === source);
+    const chosen = selectCurrentLeague(ownLeagues, today);
     if (chosen === null) {
       skipped.push({ competitionName: group.competitionName, leagueName: group.leagueName });
       continue;

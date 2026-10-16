@@ -4,16 +4,26 @@
 
 import {
   createDbClient,
+  type Db,
   deleteCrawlTargetById,
   insertApiToken,
   listClientClubs,
+  listCrawlTargetLeagueCandidates,
   upsertClientByName,
   upsertClub,
   upsertCompetition,
+  upsertExternalRef,
   upsertLeague,
   upsertSeason,
 } from "@matchday/db";
-import { generateApiToken, generateId, hashApiToken } from "@matchday/domain";
+import {
+  generateApiToken,
+  generateId,
+  hashApiToken,
+  todayInMelbourne,
+  type Result,
+} from "@matchday/domain";
+import { resolveCrawlScope } from "@matchday/services";
 import { z } from "zod";
 import app from "#api.ts";
 
@@ -66,6 +76,47 @@ async function request(
   );
 }
 
+function valueOrThrow<T>(result: Result<T>): T {
+  if (!result.ok) throw new Error(result.error.message);
+  return result.value;
+}
+
+type LeagueSeed = {
+  competitionId: string;
+  leagueId: string;
+  leagueName: string;
+  seasonId: string;
+  source: "dribl" | "coastal";
+  sourceId: string;
+};
+
+/** A competition, a league in it, and the one source ref that says which crawl owns the league. */
+async function seedLeague(db: Db, seed: LeagueSeed): Promise<void> {
+  valueOrThrow(
+    await upsertCompetition(db, {
+      id: seed.competitionId,
+      name: `${seed.leagueName} competition`,
+    }),
+  );
+  valueOrThrow(
+    await upsertLeague(db, {
+      id: seed.leagueId,
+      name: seed.leagueName,
+      competitionId: seed.competitionId,
+      seasonId: seed.seasonId,
+    }),
+  );
+  valueOrThrow(
+    await upsertExternalRef(db, {
+      id: generateId("externalRef"),
+      entityType: "league",
+      internalId: seed.leagueId,
+      source: seed.source,
+      sourceId: seed.sourceId,
+    }),
+  );
+}
+
 if (databaseUrl === undefined) {
   it.skip("needs INTEGRATION_DATABASE_URL to run", () => undefined);
 } else {
@@ -78,58 +129,59 @@ if (databaseUrl === undefined) {
     const token = generateApiToken();
     const leagueId = generateId("league");
     const competitionId = generateId("competition");
+    const coastalLeagueId = generateId("league");
+    const coastalCompetitionId = generateId("competition");
     const leagueName = `Integration League ${suffix}`;
     const webhookUrl = "https://hooks.example.com/matchday";
     const clientId = generateId("client");
-    let crawlTargetId: string | undefined;
+    const crawlTargetIds: string[] = [];
 
     beforeAll(async () => {
       vi.stubGlobal("caches", {
         default: { match: async () => undefined, put: async () => undefined },
       });
 
-      const client = await upsertClientByName(db, {
-        id: clientId,
-        name: `integration-${suffix}`,
-      });
-      if (!client.ok) throw new Error(client.error.message);
+      const client = valueOrThrow(
+        await upsertClientByName(db, { id: clientId, name: `integration-${suffix}` }),
+      );
+      valueOrThrow(
+        await insertApiToken(db, {
+          id: generateId("apiToken"),
+          clientId: client.id,
+          tokenHash: await hashApiToken(token),
+        }),
+      );
+      valueOrThrow(await upsertClub(db, { id: clubId, name: clubName, displayName: clubName }));
 
-      const inserted = await insertApiToken(db, {
-        id: generateId("apiToken"),
-        clientId: client.value.id,
-        tokenHash: await hashApiToken(token),
-      });
-      if (!inserted.ok) throw new Error(inserted.error.message);
-
-      const club = await upsertClub(db, { id: clubId, name: clubName, displayName: clubName });
-      if (!club.ok) throw new Error(club.error.message);
-
-      const seededCompetition = await upsertCompetition(db, {
-        id: competitionId,
-        name: `Integration Competition ${suffix}`,
-      });
-      if (!seededCompetition.ok) throw new Error(seededCompetition.error.message);
-
-      const seededSeason = await upsertSeason(db, {
-        id: generateId("season"),
-        source: "dribl",
-        name: `Integration Season ${suffix}`,
-      });
-      if (!seededSeason.ok) throw new Error(seededSeason.error.message);
-
-      const seededLeague = await upsertLeague(db, {
-        id: leagueId,
-        name: leagueName,
+      const seededSeason = valueOrThrow(
+        await upsertSeason(db, {
+          id: generateId("season"),
+          source: "dribl",
+          name: `Integration Season ${suffix}`,
+        }),
+      );
+      await seedLeague(db, {
         competitionId,
-        seasonId: seededSeason.value.id,
+        leagueId,
+        leagueName,
+        seasonId: seededSeason.id,
+        source: "dribl",
+        sourceId: `integration-dribl-${suffix}`,
       });
-      if (!seededLeague.ok) throw new Error(seededLeague.error.message);
+      await seedLeague(db, {
+        competitionId: coastalCompetitionId,
+        leagueId: coastalLeagueId,
+        leagueName: `Integration Coastal League ${suffix}`,
+        seasonId: seededSeason.id,
+        source: "coastal",
+        sourceId: `integration-coastal-${suffix}`,
+      });
     });
 
     afterAll(async () => {
       vi.unstubAllGlobals();
-      if (crawlTargetId !== undefined) {
-        await deleteCrawlTargetById(db, crawlTargetId);
+      for (const id of crawlTargetIds) {
+        await deleteCrawlTargetById(db, id);
       }
     });
 
@@ -247,12 +299,41 @@ if (databaseUrl === undefined) {
       it("adds the target, and adding it again returns the same one", async () => {
         const first = await request(targetPath, databaseUrl, token, { method: "PUT" });
         const target = crawlTargetSchema.parse(await first.json());
-        crawlTargetId = target.id;
+        crawlTargetIds.push(target.id);
         const second = await request(targetPath, databaseUrl, token, { method: "PUT" });
 
         expect(first.status).toBe(200);
-        expect(target).toMatchObject({ competitionId, leagueName });
+        expect(target).toMatchObject({ competitionId, leagueName, currentLeagueId: leagueId });
         expect(crawlTargetSchema.parse(await second.json()).id).toBe(target.id);
+      });
+
+      it("adds a league from another source, which names its own league", async () => {
+        const res = await request(`/leagues/${coastalLeagueId}/crawl-target`, databaseUrl, token, {
+          method: "PUT",
+        });
+
+        const target = crawlTargetSchema.parse(await res.json());
+        crawlTargetIds.push(target.id);
+        expect(res.status).toBe(200);
+        expect(target.currentLeagueId).toBe(coastalLeagueId);
+      });
+
+      it("gives each source's crawl only its own leagues from the shared targets", async () => {
+        for (const id of [leagueId, coastalLeagueId]) {
+          const res = await request(`/leagues/${id}/crawl-target`, databaseUrl, token, {
+            method: "PUT",
+          });
+          crawlTargetIds.push(crawlTargetSchema.parse(await res.json()).id);
+        }
+        const deps = { listCrawlTargetLeagueCandidates: () => listCrawlTargetLeagueCandidates(db) };
+
+        const dribl = valueOrThrow(await resolveCrawlScope(deps, todayInMelbourne(), "dribl"));
+        const coastal = valueOrThrow(await resolveCrawlScope(deps, todayInMelbourne(), "coastal"));
+
+        expect(dribl.leagueIds).toContain(leagueId);
+        expect(dribl.leagueIds).not.toContain(coastalLeagueId);
+        expect(coastal.leagueIds).toContain(coastalLeagueId);
+        expect(coastal.leagueIds).not.toContain(leagueId);
       });
     });
   });

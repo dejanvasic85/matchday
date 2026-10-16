@@ -211,20 +211,28 @@ export function createCli(): Command {
     .description(
       "List the league ids in the crawl scope for this run, as JSON — the scope the crawl-leagues " +
         "GitHub Actions matrix crawls each run. Each crawl target resolves to its competition's " +
-        "current season; a target with no league to crawl is warn-logged and skipped. With " +
-        "--max-chunks, also deals them into that many space-separated groups, one per matrix job.",
+        "current season; a target with no league from --source to crawl is warn-logged and " +
+        "skipped. With --max-chunks, also deals them into that many space-separated groups, one " +
+        "per matrix job.",
+    )
+    .option(
+      "--source <name>",
+      `source whose leagues to list (${crawlSources.join(", ")})`,
+      parseCrawlSource,
+      crawlSourceValue.dribl,
     )
     .option(
       "--max-chunks <n>",
       "cap the league ids into at most n groups, one per crawl-leagues matrix job",
       parsePositiveInt,
     )
-    .action(async (options: { maxChunks?: number }) => {
+    .action(async (options: { source: CrawlSource; maxChunks?: number }) => {
       const config = getCliConfig();
       const logger = createConsoleLogger();
       const result = await runCrawlScopeJob({
         logger,
         config,
+        source: options.source,
         maxChunks: options.maxChunks,
       });
       if (!result.ok) {

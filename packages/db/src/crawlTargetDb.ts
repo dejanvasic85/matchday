@@ -4,8 +4,16 @@
 import { ok, type IsoDate, type Result } from "@matchday/domain";
 import { and, asc, eq } from "drizzle-orm";
 import type { Db } from "#client.ts";
+import { externalRefEntityTypeValue, type Source } from "#constants.ts";
 import { runQuery, runUpsert } from "#runQuery.ts";
-import { competition, competitionSeason, crawlTarget, league, season } from "#schema.ts";
+import {
+  competition,
+  competitionSeason,
+  crawlTarget,
+  externalRef,
+  league,
+  season,
+} from "#schema.ts";
 
 type CrawlTarget = typeof crawlTarget.$inferSelect;
 export type CrawlTargetInsert = typeof crawlTarget.$inferInsert;
@@ -70,6 +78,8 @@ export type CrawlTargetLeagueCandidate = {
   targetLeagueName: string;
   leagueId: string | null;
   leagueName: string | null;
+  /** The source that owns the league, or null when it has no ref. */
+  source: Source | null;
   seasonId: string | null;
   seasonName: string | null;
   startsOn: IsoDate | null;
@@ -78,7 +88,8 @@ export type CrawlTargetLeagueCandidate = {
 
 /** Every target's candidate leagues, so the crawl scope can pick each target's current edition. The
  * league and its window are left-joined: a target whose name matches no league still returns one row
- * with nulls, which the caller warns about rather than dropping silently. */
+ * with nulls, which the caller warns about rather than dropping silently. Each row carries the source
+ * that owns the league, so every crawl can pick its own leagues from this one query. */
 export async function listCrawlTargetLeagueCandidates(
   db: Db,
 ): Promise<Result<CrawlTargetLeagueCandidate[]>> {
@@ -92,6 +103,7 @@ export async function listCrawlTargetLeagueCandidates(
           targetLeagueName: crawlTarget.leagueName,
           leagueId: league.id,
           leagueName: league.name,
+          source: externalRef.source,
           seasonId: league.seasonId,
           seasonName: season.name,
           startsOn: competitionSeason.startsOn,
@@ -104,6 +116,13 @@ export async function listCrawlTargetLeagueCandidates(
           and(
             eq(league.competitionId, crawlTarget.competitionId),
             eq(league.name, crawlTarget.leagueName),
+          ),
+        )
+        .leftJoin(
+          externalRef,
+          and(
+            eq(externalRef.entityType, externalRefEntityTypeValue.league),
+            eq(externalRef.internalId, league.id),
           ),
         )
         .leftJoin(season, eq(season.id, league.seasonId))
