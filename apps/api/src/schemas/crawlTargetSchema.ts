@@ -8,7 +8,7 @@ export const crawlTargetResponseSchema = z
     currentLeagueId: z.string().nullable().openapi({
       example: "lea_V1StGXR8Z5",
       description:
-        "The edition the next crawl visits, or null when none is crawlable yet: between seasons, or after a rename.",
+        "The edition the next crawl visits, or null when none is crawlable: between seasons, after a rename, or when the league is not a Dribl league.",
     }),
   })
   .openapi("CrawlTarget");
