@@ -61,8 +61,10 @@ jobs:
 
       - name: List subscribed leagues and deal them into matrix chunks
         id: leagues
+        env:
+          SOURCE: ${{ inputs.source }}
         run: |
-          output=$(vp run --filter @matchday/cli mday subscribed-leagues --max-chunks "$MAX_CRAWL_JOBS")
+          output=$(vp run --filter @matchday/cli mday subscribed-leagues --source "$SOURCE" --max-chunks "$MAX_CRAWL_JOBS")
           chunks=$(echo "$output" | grep -o '{.*}' | tail -1 | jq -c '.chunks')
           # Fail here with the output quoted, rather than downstream inside fromJson.
           if [ -z "$chunks" ] || ! echo "$chunks" | jq -e 'type == "array"' > /dev/null; then
