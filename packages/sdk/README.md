@@ -69,7 +69,7 @@ if (follow.ok) {
 
 const target = await addLeagueCrawlTarget(client, "lea_V1StGXR8Z5");
 if (target.ok && target.value.currentLeagueId === null) {
-  console.log("Added, but the next crawl has no edition to visit yet.");
+  console.log("Added, but no edition is crawlable yet. Try again once the season starts.");
 }
 ```
 

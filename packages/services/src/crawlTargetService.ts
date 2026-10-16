@@ -23,8 +23,8 @@ export type LeagueCrawlTarget = {
   id: string;
   competitionId: string;
   leagueName: string;
-  /** The edition the next crawl visits, or null when none is crawlable: between seasons, after a
-   * rename, or when the league isn't a Dribl league (other sources don't read targets). */
+  /** The edition the next crawl visits, or null when none is crawlable yet: between seasons, or
+   * when the league was renamed and its old name no longer matches. */
   currentLeagueId: string | null;
 };
 

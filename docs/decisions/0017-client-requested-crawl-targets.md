@@ -45,9 +45,7 @@ when the id came from a past season.
 
 The response includes `currentLeagueId`: the edition the next crawl will visit, or null when there
 is none yet. A null tells the caller the target is not crawled today. That happens between seasons,
-before the next edition exists, when the league was renamed and the old name no longer matches, or
-when the league is not a Dribl league. Targets only drive the Dribl crawl, and other sources, such
-as Coastal, run their own job.
+before the next edition exists, or when the league was renamed and the old name no longer matches.
 We still add the target, so a valid add between seasons is not refused.
 
 ### A client cannot remove a target
