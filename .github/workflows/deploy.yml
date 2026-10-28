@@ -49,7 +49,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 12.15.0
+          version: 12.16.1
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1.22.0
@@ -63,7 +63,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/api
-          wranglerVersion: "4.153.0"
+          wranglerVersion: "4.154.0"
           packageManager: pnpm
           secrets: |
             DATABASE_URL
@@ -93,7 +93,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 12.15.0
+          version: 12.16.1
 
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1.22.0
@@ -107,7 +107,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/scheduler
-          wranglerVersion: "4.153.0"
+          wranglerVersion: "4.154.0"
           packageManager: pnpm
           secrets: |
             GITHUB_TOKEN
