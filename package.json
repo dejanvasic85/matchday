@@ -2,9 +2,9 @@
   "name": "matchday",
   "version": "0.0.0",
   "private": true,
+  "homepage": "https://github.com/stadly-au/matchday#readme",
   "license": "UNLICENSED",
   "author": "Stadly Pty Ltd",
-  "homepage": "https://github.com/stadly-au/matchday#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/stadly-au/matchday.git"
