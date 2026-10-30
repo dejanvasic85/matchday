@@ -2,7 +2,7 @@ import { ok } from "@matchday/domain";
 import { dispatchWorkflow, type DispatchWorkflowInput } from "#workflowDispatcher.ts";
 
 const input: DispatchWorkflowInput = {
-  owner: "dejanvasic85",
+  owner: "stadly-au",
   repo: "matchday",
   workflow: "crawl-leagues.yml",
   ref: "main",
@@ -17,7 +17,7 @@ describe("dispatchWorkflow", () => {
 
     expect(result).toEqual(ok(undefined));
     expect(fetchImpl).toHaveBeenCalledWith(
-      "https://api.github.com/repos/dejanvasic85/matchday/actions/workflows/crawl-leagues.yml/dispatches",
+      "https://api.github.com/repos/stadly-au/matchday/actions/workflows/crawl-leagues.yml/dispatches",
       expect.objectContaining({ method: "POST", body: JSON.stringify({ ref: "main" }) }),
     );
   });
@@ -28,7 +28,7 @@ describe("dispatchWorkflow", () => {
     await dispatchWorkflow(fetchImpl, { ...input, inputs: { source: "coastal" } });
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      "https://api.github.com/repos/dejanvasic85/matchday/actions/workflows/crawl-leagues.yml/dispatches",
+      "https://api.github.com/repos/stadly-au/matchday/actions/workflows/crawl-leagues.yml/dispatches",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ ref: "main", inputs: { source: "coastal" } }),

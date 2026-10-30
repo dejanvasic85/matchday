@@ -13,7 +13,7 @@ and we write one before making a significant change.
 
 - Decisions: [docs/decisions](docs/decisions/README.md) — 14 records: 11 decided, 2 proposed, 1
   superseded.
-- Build backlog: [GitHub Issues](https://github.com/dejanvasic85/matchday/issues) — grouped by
+- Build backlog: [GitHub Issues](https://github.com/stadly-au/matchday/issues) — grouped by
   phase milestones, labelled with the ADR each item implements.
 
 ## Background
@@ -194,9 +194,6 @@ membership table. Run `pnpm mday --help`, then `pnpm mday <command> --help`, for
 
 ## License
 
-Copyright © 2026 Dejan Vasic. All rights reserved.
+Copyright © 2026 Stadly Pty Ltd. All rights reserved.
 
-Licensed under the [PolyForm Strict License 1.0.0](https://polyformproject.org/licenses/strict/1.0.0/).
-
-You may use this software for noncommercial purposes only.
-Modification and redistribution are not permitted.
+This software is proprietary. See [LICENSE](LICENSE).
