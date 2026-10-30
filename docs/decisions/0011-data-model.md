@@ -7,7 +7,7 @@
   discovered from the crawl (team by `team_hash_id`, club by `club_code`), not enumerated.
 - Reshaped by: [0013](0013-api-auth.md) — adds `client` (the tenant entity) and `api_token`;
   `subscription.clientName` becomes `subscription.clientId` → `client.id`.
-- Reshaped by: [#141](https://github.com/dejanvasic85/matchday/issues/141) — adds `league_team`
+- Reshaped by: [#141](https://github.com/stadly-au/matchday/issues/141) — adds `league_team`
   (a team's membership in a league, independent of `table_entry`) and the `lgt_` prefix. Deriving
   club/league membership from `table_entry` silently misses table-less divisions (e.g. MiniRoos age
   groups, which publish fixtures but no ladder) — `league_team` is written for every discovered

@@ -1,7 +1,7 @@
 import { fetchRecentRuns, type FetchRecentRunsInput } from "#workflowRuns.ts";
 
 const input: FetchRecentRunsInput = {
-  owner: "dejanvasic85",
+  owner: "stadly-au",
   repo: "matchday",
   workflow: "crawl-leagues.yml",
   token: "ghp_test",
@@ -19,7 +19,7 @@ describe("fetchRecentRuns", () => {
     await fetchRecentRuns(fetchImpl, input);
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      "https://api.github.com/repos/dejanvasic85/matchday/actions/workflows/crawl-leagues.yml/runs?per_page=2",
+      "https://api.github.com/repos/stadly-au/matchday/actions/workflows/crawl-leagues.yml/runs?per_page=2",
       expect.objectContaining({ method: "GET" }),
     );
   });

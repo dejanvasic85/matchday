@@ -3,11 +3,11 @@
 - Status: decided
 - Date: 2026-07-18
 - Supersedes: 0002 (scraping scope); reshapes 0004 (depth), 0011 (data model)
-- Reshaped by: [#141](https://github.com/dejanvasic85/matchday/issues/141) — we now keep a
+- Reshaped by: [#141](https://github.com/stadly-au/matchday/issues/141) — we now keep a
   `league_team` table after all. Deriving membership from `table_entry`, as this ADR proposes
   below, silently misses divisions that publish fixtures but no ladder, such as MiniRoos age
   groups. `league_team` records every discovered team regardless. The rest of this ADR stands.
-- Reshaped by: [#202](https://github.com/dejanvasic85/matchday/issues/202) — a subscription alone
+- Reshaped by: [#202](https://github.com/stadly-au/matchday/issues/202) — a subscription alone
   can't survive a season boundary. Because a `league` is scoped to one season, every subscription
   dies with that season, and this ADR records no provenance to re-derive the next one from. We
   therefore added `client_club`: a client **follows a club**, and subscriptions become derived
